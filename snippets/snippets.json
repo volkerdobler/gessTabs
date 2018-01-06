@@ -1,0 +1,8 @@
+{
+	"table": {
+		"prefix": "tab, table",
+		"body": "table ${1:add }${3:name ${2:tabellenname} }${5:title ${4:tabletitle} }${7:cellelements ( ${6:cellelements} ) }${9:frameelements ( ${8:frameelements} ) }${11:tableformats ( ${10:tableformats} ) }${13:contentkey ${12:contentkey} }= ${14:#KopfTotal} by ${15:Variablen};\r\n",
+		"description": "table - Befehl mit allen Optionen",
+		"scope": "source.gesstabs"
+	}
+}

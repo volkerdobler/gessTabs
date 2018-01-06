@@ -1,0 +1,61 @@
+{
+    "name": "gesstabs",
+    "displayName": "gessTabs",
+    "description": "gess.Tabs Support",
+    "version": "0.0.3",
+    "publisher": "volkerdobler",
+    "engines": {
+        "vscode": "^1.19.0"
+    },
+    "categories": [
+        "Languages",
+        "Snippets"
+    ],
+    "activationEvents": [
+        "onLanguage:gesstabs"
+    ],
+    "main": "./out/extension",
+    "icons": "./gess_mood_tabs.jpg",
+    "contributes": {
+        "languages": [
+            {
+                "id": "gesstabs",
+                "aliases": [
+                    "gessTabs",
+                    "gess.Tabs"
+                ],
+                "extensions": [
+                    ".tab",
+                    ".inc"
+                ],
+                "configuration": "./language-configuration.json"
+            }
+        ],
+        "grammars": [
+            {
+                "language": "gesstabs",
+                "scopeName": "source.gessTabs",
+                "path": "./syntaxes/gessTabs.tmLanguage"
+            }
+        ],
+        "snippets": [
+            {
+                "language": "gesstabs",
+                "path": "./snippets/snippets.json"
+            }
+        ]
+    },
+    "scripts": {
+        "vscode:prepublish": "npm run compile",
+        "compile": "tsc -p ./",
+        "watch": "tsc -watch -p ./",
+        "postinstall": "node ./node_modules/vscode/bin/install",
+        "test": "npm run compile && node ./node_modules/vscode/bin/test"
+    },
+    "devDependencies": {
+        "typescript": "^2.6.1",
+        "vscode": "^1.1.6",
+        "@types/node": "^7.0.43",
+        "@types/mocha": "^2.2.42"
+    }
+}
