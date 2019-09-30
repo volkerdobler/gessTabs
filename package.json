@@ -14,6 +14,10 @@
     "activationEvents": [
         "onLanguage:gesstabs"
     ],
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/volkerdobler/gesstabs.git"
+    },
     "main": "./out/extension",
     "icons": "./gess_mood_tabs.jpg",
     "contributes": {
