@@ -11,3 +11,7 @@ Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how 
 
 ## 0.0.3
 - Now with an icon-picture
+
+## 0.0.4
+- Add excludevalues and include values to language
+- Changed symbol search to "table = KOPF by ACHSE;"

@@ -1,0 +1,1 @@
+#macro als "Symbol/Sprungelement" definieren, damit man da gleich hinspringen kann

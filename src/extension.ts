@@ -29,7 +29,7 @@ class GessTabsDocumentSymbolProvider implements vscode.DocumentSymbolProvider {
 
             for (var i = 0; i < document.lineCount; i++) {
                 var line = document.lineAt(i);
-                if (line.text.search(/\b(singleq|multiq|singlegridq|multigridq|openq|textq|numq) +(.+)\;/i) > -1) { //  startsWith("@")) {
+                if (line.text.search(/\b(table)\b[^=]*=.+\bby\b.+\;/i) > -1) { //  table Befehl
                     symbols.push({
                         name: line.text.substr(0),
                         kind: vscode.SymbolKind.Field,
