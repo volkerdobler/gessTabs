@@ -19,7 +19,6 @@
         "url": "https://github.com/volkerdobler/gessTabs.git"
     },
     "main": "./out/extension",
-    "icon": "./gess_mood_tabs.jpg",
     "contributes": {
         "languages": [
             {
