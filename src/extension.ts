@@ -7,13 +7,13 @@ import * as vscode from 'vscode';
 // your extension is activated the very first time the command is executed
 export function activate(context: vscode.ExtensionContext) {
 
-    // Use the console to output diagnostic information (console.log) and errors (console.error)
-    // This line of code will only be executed once when your extension is activated
-    console.log('Congratulations, your extension "gessTabs" is now active!');
+	// Use the console to output diagnostic information (console.log) and errors (console.error)
+	// This line of code will only be executed once when your extension is activated
+	console.log('Congratulations, your extension "gesstabs" is now active!');
 
-    context.subscriptions.push(vscode.languages.registerDocumentSymbolProvider(
-        {language: "gessTabs"}, new GessTabsDocumentSymbolProvider()
-    ));
+	context.subscriptions.push(vscode.languages.registerDocumentSymbolProvider(
+		{language: "gesstabs"}, new GessTabsDocumentSymbolProvider()
+	));
 
 };
 
@@ -22,23 +22,26 @@ export function deactivate() {
 };
 
 class GessTabsDocumentSymbolProvider implements vscode.DocumentSymbolProvider {
-    public provideDocumentSymbols(document: vscode.TextDocument,
-            token: vscode.CancellationToken): Thenable<vscode.SymbolInformation[]> {
-        return new Promise((resolve, reject) => {
-            var symbols = [];
+	public provideDocumentSymbols(document: vscode.TextDocument,
+		token: vscode.CancellationToken): Thenable<vscode.SymbolInformation[]> {
+		return new Promise((resolve, reject) => {
 
-            for (var i = 0; i < document.lineCount; i++) {
-                var line = document.lineAt(i);
-                if (line.text.search(/\b(table)\b[^=]*=.+\bby\b.+\;/i) > -1) { //  table Befehl
-                    symbols.push({
-                        name: line.text.substr(0),
-                        kind: vscode.SymbolKind.Field,
-                        location: new vscode.Location(document.uri, line.range)
-                    })
-                }
-            }
+			var symbols = [];
+			var tabreg = new RegExp(/\b(table[^=])*=\s*(#?[\w]+\sby\s\w+)\;/i);
 
-            resolve(symbols);
-        });
-    }
+			for (var i = 0; i < document.lineCount; i++) {
+				var line = document.lineAt(i);
+				if (line.text.search(tabreg) > -1) {
+					symbols.push({
+						name: line.text.match(tabreg)![2],
+						kind: vscode.SymbolKind.Method,
+						location: new vscode.Location(document.uri, line.range),
+						containerName: line.text.match(tabreg)![1]
+					})
+				}
+			};
+
+			resolve(symbols);
+		});
+	}
 }
