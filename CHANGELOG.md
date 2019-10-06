@@ -18,3 +18,10 @@ Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how 
 
 ## 0.0.6
 - Changed behaviour of DocumentSymbolProvider - now all table commands are found
+
+## 0.0.7
+- test with icon - still work in progress
+
+
+
+
