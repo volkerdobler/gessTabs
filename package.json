@@ -19,6 +19,7 @@
         "url": "https://github.com/volkerdobler/gessTabs.git"
     },
     "main": "./out/extension",
+    "icon": "images/gesstabs_icon.png",
     "contributes": {
         "languages": [
             {

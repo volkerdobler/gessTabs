@@ -15,3 +15,6 @@ Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how 
 ## 0.0.4
 - Add excludevalues and include values to language
 - Changed symbol search to "table = KOPF by ACHSE;"
+
+## 0.0.6
+- Changed behaviour of DocumentSymbolProvider - now all table commands are found
