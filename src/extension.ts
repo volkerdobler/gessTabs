@@ -1,4 +1,5 @@
 "use strict";
+
 // The module 'vscode' contains the VS Code extensibility API
 // Import the module and reference it with the alias vscode in your code below
 import * as vscode from "vscode";
@@ -53,11 +54,21 @@ class GessTabsDocumentSymbolProvider implements vscode.DocumentSymbolProvider {
   ): Thenable<vscode.SymbolInformation[]> {
     return new Promise((resolve, reject) => {
       var symbols = [];
+      
       var labelRe = new RegExp(
-        /\b(vartext|vartitle|valuelabels|text|title|labels)\b\s*(["']?)([\w\.]*)\2\s*(((["']?)([\w\.]*)\6\s*)*)=/i
+        /\b(vartext|vartitle|valuelabels|text|title|labels|copylabels|uselabels)\b\s*(["']?)([\w\.]*)\2\s*(((["']?)([\w\.]*)\6\s*)*)=/i
       );
       var variableRe = new RegExp(
-        /\b(singleq|variable|varfamily|multiq|familyvar|makefamily|indexvar|invindexvar|combinedvar|vargroup|dichoq|groupvar|makegroup|spssgroup|init|groups)\b\s*(["']?)([\w\.]*)\2\s*=/i
+        /\b(singleq|variable|varfamily|multiq|familyvar|makefamily|indexvar|invindexvar|combinedvar|vargroup|dichoq|groupvar|makegroup|spssgroup|init|groups|count|simplevar|bcdvar|bitgroup|mean|sum|min|max|stddev|variance)\b\s*(["']?)([\w\.]*)\2\s*=/i
+      );
+      var computeWithRe = new RegExp(
+        /\b(compute\s+(?:copy|swap|load|ascend|descend|shuffle|add|eliminate|init)\b)\s*([\w\.]+)\b\s*=/i
+      );
+      var macroRe = new RegExp(
+        /(?!(?:#macro)\s+)(#[\w\.]+)\b\s*\(/i
+      );
+      var expandRe = new RegExp(
+        /(?:#expand)\s+(#[\w\.]+)\b/i
       );
 
       let noComment: number = 1;
@@ -84,10 +95,7 @@ class GessTabsDocumentSymbolProvider implements vscode.DocumentSymbolProvider {
 					switchComment = 1;
         };
 
-        if (
-          validCheck(line.text.search(labelRe), startComment, noComment) &&
-          noComment > -1
-        ) {
+        if (validCheck(line.text.search(labelRe), startComment, noComment) && noComment > -1) {
           let lineMatch = line.text.match(labelRe);
           if (lineMatch.length > 2 && lineMatch[3].length > 0) {
             symbols.push({
@@ -113,20 +121,51 @@ class GessTabsDocumentSymbolProvider implements vscode.DocumentSymbolProvider {
               });
           }
         }
-        if (
-          validCheck(line.text.search(variableRe), startComment, noComment) &&
-          noComment > -1
-        ) {
+        if (validCheck(line.text.search(variableRe), startComment, noComment) && noComment > -1) {
           let lineMatch = line.text.match(variableRe);
           if (lineMatch.length >= 3 && lineMatch[3].length > 0) {
             symbols.push({
               name: lineMatch[3],
-              kind: vscode.SymbolKind.String,
+              kind: vscode.SymbolKind.Variable,
               location: new vscode.Location(document.uri, line.range),
               containerName: lineMatch[1].toLocaleLowerCase()
             });
           }
         };
+        if (validCheck(line.text.search(computeWithRe), startComment, noComment) && noComment > -1) {
+          let lineMatch = line.text.match(computeWithRe);
+          if (lineMatch.length >= 2 && lineMatch[2].length > 0) {
+            symbols.push({
+              name: lineMatch[2],
+              kind: vscode.SymbolKind.Variable,
+              location: new vscode.Location(document.uri, line.range),
+              containerName: lineMatch[1].toLocaleLowerCase()
+            });
+          }
+        };
+        if (validCheck(line.text.search(macroRe), startComment, noComment) && noComment > -1) {
+          let lineMatch = line.text.match(macroRe);
+          if (lineMatch.length >= 1 && lineMatch[1].length > 0) {
+            symbols.push({
+              name: lineMatch[1],
+              kind: vscode.SymbolKind.Function,
+              location: new vscode.Location(document.uri, line.range),
+              containerName: "macro"
+            });
+          }
+        };
+         if (validCheck(line.text.search(expandRe), startComment, noComment) && noComment > -1) {
+          let lineMatch = line.text.match(expandRe);
+          if (lineMatch.length >= 1 && lineMatch[1].length > 0) {
+            symbols.push({
+              name: lineMatch[1],
+              kind: vscode.SymbolKind.Function,
+              location: new vscode.Location(document.uri, line.range),
+              containerName: "expand"
+            });
+          }
+        };
+       
 				if (noComment === 0) {
           noComment = switchComment;
 				};
