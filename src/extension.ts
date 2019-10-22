@@ -12,7 +12,7 @@ export function activate(context: vscode.ExtensionContext) {
 	console.log('Congratulations, your extension "gesstabs" is now active!');
 
 	context.subscriptions.push(vscode.languages.registerDocumentSymbolProvider(
-		{language: "gesstabs"}, new GessTabsDocumentSymbolProvider()
+		{language: "gesstabs", scheme: "file"}, new GessTabsDocumentSymbolProvider()
 	));
 
 };
@@ -27,16 +27,16 @@ class GessTabsDocumentSymbolProvider implements vscode.DocumentSymbolProvider {
 		return new Promise((resolve, reject) => {
 
 			var symbols = [];
-			var tabreg = new RegExp(/\b(table[^=])*=\s*(#?[\w]+\sby\s\w+)\;/i);
+			var variableRe = new RegExp("\\b(vartext|vartitle|varlabels|text|title|labels)\\b\\s*(([\"\']?\\w+[\"\']?)\\s*)+","gi");
 
 			for (var i = 0; i < document.lineCount; i++) {
 				var line = document.lineAt(i);
-				if (line.text.search(tabreg) > -1) {
+				if (line.text.search(variableRe) > -1) {
 					symbols.push({
-						name: line.text.match(tabreg)![2],
+						name: line.text.match(variableRe)[1],
 						kind: vscode.SymbolKind.Method,
 						location: new vscode.Location(document.uri, line.range),
-						containerName: line.text.match(tabreg)![1]
+						containerName: line.text.match(variableRe)![0]
 					})
 				}
 			};
