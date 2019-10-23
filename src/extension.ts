@@ -3,6 +3,8 @@
 // The module 'vscode' contains the VS Code extensibility API
 // Import the module and reference it with the alias vscode in your code below
 import * as vscode from "vscode";
+import path = require('path');
+import fs = require('fs');
 
 // this method is called when your extension is activated
 // your extension is activated the very first time the command is executed
@@ -17,6 +19,13 @@ export function activate(context: vscode.ExtensionContext) {
       new GessTabsDocumentSymbolProvider()
     )
   );
+
+  context.subscriptions.push(vscode.languages.registerDefinitionProvider(
+      {language: "gesstabs", scheme: "file" }, 
+      new GessTabsDefinitionProvider()
+  ));
+
+
 }
 
 // this method is called when your extension is deactivated
@@ -45,6 +54,38 @@ function validCheck(first: number, second: number, noComment: number = 1): boole
   } else {
     return false; // regulärer Ausdruck nicht vorhanden
   }
+}
+
+function fixDriveCasingInWindows(pathToFix: string): string {
+	return (process.platform === 'win32' && pathToFix) ? pathToFix.substr(0, 1).toUpperCase() + pathToFix.substr(1) : pathToFix;
+}
+
+function getWorkspaceFolderPath(fileUri?: vscode.Uri): string {
+	if (fileUri) {
+		const workspace = vscode.workspace.getWorkspaceFolder(fileUri);
+		if (workspace) {
+			return fixDriveCasingInWindows(workspace.uri.fsPath);
+		}
+	}
+
+	// fall back to the first workspace
+	const folders = vscode.workspace.workspaceFolders;
+	if (folders && folders.length) {
+		return fixDriveCasingInWindows(folders[0].uri.fsPath);
+	}
+}
+
+function adjustWordPosition(document: vscode.TextDocument, position: vscode.Position): [boolean, string, vscode.Position] {
+    const wordRange = document.getWordRangeAtPosition(position);
+    const word = wordRange ? document.getText(wordRange) : '';
+    if (!wordRange) {
+        return [false, null, null];
+    }
+    if (position.isEqual(wordRange.end) && position.isAfter(wordRange.start)) {
+        position = position.translate(0, -1);
+    }
+
+    return [true, word, position];
 }
 
 class GessTabsDocumentSymbolProvider implements vscode.DocumentSymbolProvider {
@@ -176,5 +217,80 @@ class GessTabsDocumentSymbolProvider implements vscode.DocumentSymbolProvider {
         resolve(null);
       }
     });
+  }
+}
+
+class GessTabsDefinitionProvider implements vscode.DefinitionProvider {
+    public provideDefinition(document: vscode.TextDocument, position: vscode.Position, 
+            token: vscode.CancellationToken): Thenable<vscode.Location> {
+
+      const adjustedPos = adjustWordPosition(document, position);
+
+      return new Promise((resolve) => {
+        
+        if (!adjustedPos[0]) {
+          return Promise.resolve(null);
+        }
+        const word = adjustedPos[1];
+
+        var variableRe = new RegExp(
+          "\\b(singleq|variable|varfamily|multiq|familyvar|makefamily|indexvar|invindexvar|combinedvar|vargroup|dichoq|groupvar|makegroup|spssgroup|init|groups|count|simplevar|bcdvar|bitgroup|mean|sum|min|max|stddev|variance)\\b\\s*([\"\']?)("+word+")\\2\\s*=", "i"
+        );
+        var computeWithRe = new RegExp(
+          "\\b(compute\\s+(?:copy|swap|load|ascend|descend|shuffle|add|eliminate|init))\\b\\s*("+word+")\\b\\s*=", "i"
+        );
+        var macroRe = new RegExp(
+          "#macro\\s+(#"+word+")\\b\\s*\\(","i"
+        );
+        var expandRe = new RegExp(
+          "#expand\\s+(#"+word+")\\b","i"
+        );
+
+        var wsfolder = getWorkspaceFolderPath(document.uri) || fixDriveCasingInWindows(path.dirname(document.fileName));
+        
+        var defFound : boolean = false;
+        
+        fs.readdirSync(wsfolder).forEach(file => {
+            let regEXP = new RegExp("\.(tab|inc)$");
+            let ok = file.match(regEXP);
+            if (ok && (! defFound)) {
+              vscode.workspace.openTextDocument(wsfolder + "\\" + file).then(
+                function(content) {
+                  for (var i = 0; i < content.lineCount; i++) {
+                    var line = content.lineAt(i);
+                    if (line.text.search(variableRe) > -1) {
+                      let loc = new vscode.Location(content.uri, line.range);
+                      resolve(loc);
+                      defFound = true;
+                    };
+                    if (line.text.search(computeWithRe) > -1) {
+                      let loc = new vscode.Location(content.uri, line.range);
+                      resolve(loc);
+                      defFound = true;
+                    };
+                    if (line.text.search(macroRe) > -1) {
+                      let loc = new vscode.Location(content.uri, line.range);
+                      resolve(loc);
+                      defFound = true;
+                    };
+                    if (line.text.search(expandRe) > -1) {
+                      let loc = new vscode.Location(content.uri, line.range);
+                      resolve(loc);
+                      defFound = true;
+                    };
+                  };
+                  resolve(null); 
+                },
+                function() {
+                  resolve(null);
+                }
+              );
+            };
+          });
+        });
+   }
+
+  private newMethod(): any {
+    return null;
   }
 }
