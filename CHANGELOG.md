@@ -22,6 +22,7 @@ Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how 
 ## 0.0.7
 - test with icon - still work in progress
 
-
+## 0.0.8
+- added Go to Definition, Find all References and Show Symbol provider (CTRL-T) - still in beta testing!
 
 
