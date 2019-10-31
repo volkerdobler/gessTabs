@@ -25,4 +25,7 @@ Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how 
 ## 0.0.8
 - added Go to Definition, Find all References and Show Symbol provider (CTRL-T) - still in beta testing!
 
+## 0.0.9
+- minor bugfix in class clComment
+
 

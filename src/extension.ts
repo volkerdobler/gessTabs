@@ -74,10 +74,10 @@ class clComment {
   status: number;        // 1 = not in Comment; -1 = in Comment
   changing: number;      // 1 ending comment in line; -1 starting comment in line; 0 no comment-char in line
   
-  constructor () {
-    this.oneLine = -1;
-    this.start = -1;
-    this.end = -1;
+  constructor (oneC: number = -1, startC: number = -1, endC: number = -1) {
+    this.oneLine = oneC;
+    this.start = startC;
+    this.end = endC;
     this.status = 1;
     this.changing = 0;
   };
