@@ -178,6 +178,7 @@ class GessTabsDocumentSymbolProvider implements vscode.DocumentSymbolProvider {
       var computeWithRe = new RegExp(/\b(compute\s+(?:copy|swap|load|ascend|descend|shuffle|add|eliminate|init)\b)\s*([\w\.]+)\b\s*=/i);
       var macroRe = new RegExp(/(?!(?:#macro)\s+)(#[\w\.]+)\b\s*\(/i);
       var expandRe = new RegExp(/(?:#expand)\s+(#[\w\.]+)\b/i);
+      var tableRe = new RegExp(/\b(table)\b(?:[^=]*)=\s*[\w\.\s]*([\w\.]+)|\b(table)\b(?:[^=]*)=.+by\s+([\w\.]+)/i);
 
       let comments = new clComment();
       
@@ -257,6 +258,17 @@ class GessTabsDocumentSymbolProvider implements vscode.DocumentSymbolProvider {
               kind: vscode.SymbolKind.Function,
               location: new vscode.Location(document.uri, line.range),
               containerName: "expand"
+            });
+          }
+        };
+        if (comments.checkIfInComment(line.text.search(tableRe))) {
+          let lineMatch = line.text.match(tableRe);
+          if (lineMatch.length >= 2 && lineMatch[2].length > 0) {
+            symbols.push({
+              name: lineMatch[2],
+              kind: vscode.SymbolKind.Function,
+              location: new vscode.Location(document.uri, line.range),
+              containerName: lineMatch[2].toLocaleLowerCase()
             });
           }
         };
