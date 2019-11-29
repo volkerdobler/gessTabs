@@ -28,4 +28,7 @@ Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how 
 ## 0.0.9
 - minor bugfix in class clComment
 
-
+## 0.1.0
+- Changed variable definition. Now, dots are part of a gesstabs variable name. Follows definition from manual,
+  beside the fact, that variables names with quotes (and spaces) are not recognized.
+- updated to minor new version, as go to definition and find all references work more stable and is usable.
