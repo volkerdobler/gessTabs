@@ -27,5 +27,16 @@
         ["(", ")"],
         ["\"", "\""],
         ["'", "'"]
-    ]
+    ],
+    "folding": {
+        "markers": {
+          "start": "^#macro\\b",
+          "end": "^#endmacro\\b"
+        }
+    },
+//    "indentationRules": {
+//      "increaseIndentPattern": "^((?!\\/\\/).)*(\\{[^}\"'`]*|\\([^)\"'`]*|\\[[^\\]\"'`]*)$",
+//      "decreaseIndentPattern": "^((?!.*?\\/\\*).*\\*/)?\\s*[\\}\\]].*$"
+//    }
+    "wordPattern": "[A-Za-zÄÖÜßäöü]([A-Za-zÄÖÜßäöü0-9_\\.]+)"
 }
