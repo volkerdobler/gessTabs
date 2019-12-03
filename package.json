@@ -18,6 +18,7 @@
         "type": "git",
         "url": "https://github.com/volkerdobler/gessTabs.git"
     },
+    "license": "AFL-3.0",
     "main": "./out/extension",
     "icon": "images/gesstabs_icon.png",
     "contributes": {
