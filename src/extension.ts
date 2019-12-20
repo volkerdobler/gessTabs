@@ -67,6 +67,27 @@ function adjustWordPosition(document: vscode.TextDocument, position: vscode.Posi
     return [true, word, position];
 };
 
+function getAllFiles(dir: string, ftype: string): any[] {
+  let results = [];
+  let regEXP = new RegExp("\\."+ftype+"$","i");
+  let list = fs.readdirSync(dir);
+  list.forEach(function(file) {
+    file = dir + '\\' + file;
+    let stat = fs.statSync(file);
+    if (stat && stat.isDirectory()) { 
+    /* Recurse into a subdirectory */
+      results = results.concat(getAllFiles(file, ftype));
+    } else { 
+    /* Is a file */
+      // results.push(file);
+      if (file.match(regEXP)) {
+        results.push(file);
+      };
+    }
+  });
+  return results;
+}
+
 class clComment {
   oneLine: number;       // position of // in line
   start: number;         // position of { in line
@@ -328,13 +349,8 @@ class GessTabsDefinitionProvider implements vscode.DefinitionProvider {
       let wsfolder = getWorkspaceFolderPath(document.uri) || fixDriveCasingInWindows(path.dirname(document.fileName));
       let fileNames: string[] = [];
       
-      fs.readdirSync(wsfolder).forEach(file => {
-        let regEXP = new RegExp("\.(tab|inc)$", "i");
-        let ok = file.match(regEXP);
-        if (ok) {
-          fileNames.push(wsfolder + "\\" + file);
-        };
-      });
+      fileNames = getAllFiles(wsfolder,"(tab|inc)");
+      
       let locations = fileNames.map(file => getDefLocationInDocument(file,word) );
       Promise.all(locations).then(function(content) {
         let locPos: vscode.Location = null;
@@ -409,13 +425,8 @@ class GessTabsReferenceProvider implements vscode.ReferenceProvider {
         let wsfolder = getWorkspaceFolderPath(document.uri) || fixDriveCasingInWindows(path.dirname(document.fileName));
         let fileNames: string[] = [];
         
-        fs.readdirSync(wsfolder).forEach(file => {
-          let regEXP = new RegExp("\\.(tab|inc)$", "i");
-          let ok = file.match(regEXP);
-          if (ok) {
-            fileNames.push(wsfolder + "\\" + file);
-          };
-        });
+        fileNames = getAllFiles(wsfolder,"(tab|inc)");
+
         let locations = fileNames.map(file => getAllLocationInDocument(file,word) );
         Promise.all(locations).then(
           function(content) {
@@ -438,102 +449,95 @@ class GessTabsReferenceProvider implements vscode.ReferenceProvider {
 
 class GessTabsWorkspaceSymbolProvider implements vscode.WorkspaceSymbolProvider {
 
-    public provideWorkspaceSymbols(query: string, token: vscode.CancellationToken):
-      Thenable<vscode.SymbolInformation[]> {
+  public provideWorkspaceSymbols(query: string, token: vscode.CancellationToken):
+    Thenable<vscode.SymbolInformation[]> {
 
-      if (query.length === 0) {
-        return(null);
-      };
-      
-      var symbols = [];
+    if (query.length === 0) {
+      return(null);
+    };
+    
+    var symbols = [];
 
-      var variableRe = new RegExp("\\b(singleq|variable|varfamily|multiq|familyvar|makefamily|indexvar|invindexvar|combinedvar|vargroup|dichoq|groupvar|makegroup|spssgroup|init|groups|count|simplevar|bcdvar|bitgroup|mean|sum|min|max|stddev|variance)\\b\\s*([\"\']?)("+query+")\\2\\s*=", "i");
-      var computeWithRe = new RegExp("\\b(compute\\s+(?:copy|swap|load|ascend|descend|shuffle|add|eliminate|init))\\b\\s*("+query+")\\b\\s*=", "i");
-      var macroRe = new RegExp("#macro\\s+(#"+query+")\\b\\s*\\(","i");
-      var expandRe = new RegExp("#expand\\s+(#"+query+")\\b","i");
-      var tableRe = new RegExp("\\b(table)\\b(?:[^=]*)=\\s*[\\w\\.\\s]*\\b("+query+"[^\\s]*)\\b|\\b(table)\\b(?:[^=]*)=.+by\\s*[\\w\\.\\s]*\\b("+query+"[^\\s]*)\\b","i");
-      let wordRe = new RegExp("(in)\\s*\\b("+query+"[^\\s]*)\\b|\\b("+query+"[^\\s]*)\\s*\\b(eq|ne|le|ge|lt|gt)\\b", "i");
+    var variableRe = new RegExp("\\b(singleq|variable|varfamily|multiq|familyvar|makefamily|indexvar|invindexvar|combinedvar|vargroup|dichoq|groupvar|makegroup|spssgroup|init|groups|count|simplevar|bcdvar|bitgroup|mean|sum|min|max|stddev|variance)\\b\\s*([\"\']?)("+query+")\\2\\s*=", "i");
+    var computeWithRe = new RegExp("\\b(compute\\s+(?:copy|swap|load|ascend|descend|shuffle|add|eliminate|init))\\b\\s*("+query+")\\b\\s*=", "i");
+    var macroRe = new RegExp("#macro\\s+(#"+query+")\\b\\s*\\(","i");
+    var expandRe = new RegExp("#expand\\s+(#"+query+")\\b","i");
+    var tableRe = new RegExp("\\b(table)\\b(?:[^=]*)=\\s*[\\w\\.\\s]*\\b("+query+"[^\\s]*)\\b|\\b(table)\\b(?:[^=]*)=.+by\\s*[\\w\\.\\s]*\\b("+query+"[^\\s]*)\\b","i");
+    let wordRe = new RegExp("(in)\\s*\\b("+query+"[^\\s]*)\\b|\\b("+query+"[^\\s]*)\\s*\\b(eq|ne|le|ge|lt|gt)\\b", "i");
 
-      const wsfolder = getWorkspaceFolderPath(vscode.window.activeTextEditor && vscode.window.activeTextEditor.document.uri) || fixDriveCasingInWindows(path.dirname(vscode.window.activeTextEditor.document.fileName));
- 
-      return new Promise((resolve) => {
-        fs.readdirSync(wsfolder).forEach(file => {
-          let regEXP = new RegExp("\.(tab|inc)$", "i");
-          let ok = file.match(regEXP);
+    const wsfolder = getWorkspaceFolderPath(vscode.window.activeTextEditor && vscode.window.activeTextEditor.document.uri) || fixDriveCasingInWindows(path.dirname(vscode.window.activeTextEditor.document.fileName));
 
-          if (ok) {
-            vscode.workspace.openTextDocument(wsfolder + "\\" + file).then(
-              function(content) {
-
-                let comments = new clComment();
-                
-                for (let i = 0; i < content.lineCount; i++) {
-                  let line = content.lineAt(i);
-
-                  comments.checkCommentsInLine(line.text.search("//"),line.text.search("{"),line.text.search("}"));
-                  
-                  if (line.text.search(query) > -1) {
-                    if (comments.checkIfInComment(line.text.search(variableRe))) {
-                      symbols.push({
-                          name: line.text.match(variableRe)[3],
-                          kind: vscode.SymbolKind.Function,
-                          location: new vscode.Location(content.uri, line.range),
-                          containerName: line.text.match(variableRe)[1]
-                      });
-                    };
-                    if (comments.checkIfInComment(line.text.search(tableRe))) {
-                      let nameStr: string;
-                      let commandStr: string;
-                      if (line.text.match(tableRe)[3] == null) {
-                        nameStr = line.text.match(tableRe)[2];
-                        commandStr = line.text.match(tableRe)[1];
-                      } else {
-                        nameStr = line.text.match(tableRe)[4];
-                        commandStr = line.text.match(tableRe)[3];
-                      }
-                      symbols.push({
-                          name: nameStr,
-                          kind: vscode.SymbolKind.Function,
-                          location: new vscode.Location(content.uri, line.range),
-                          containerName: commandStr
-                      });
-                    };
-                    if (comments.checkIfInComment(line.text.search(wordRe))) {
-                      let nameStr: string;
-                      let commandStr: string;
-                      if (line.text.match(wordRe)[3] == null) {
-                        nameStr = line.text.match(wordRe)[2];
-                        commandStr = line.text.match(wordRe)[1];
-                      } else {
-                        nameStr = line.text.match(wordRe)[3];
-                        commandStr = line.text.match(wordRe)[4];
-                      }
-                      symbols.push({
-                          name: nameStr,
-                          kind: vscode.SymbolKind.Function,
-                          location: new vscode.Location(content.uri, line.range),
-                          containerName: commandStr
-                      });
-                    };
-                    if (comments.checkIfInComment(line.text.search(computeWithRe)) ||
-                        comments.checkIfInComment(line.text.search(macroRe)) ||
-                        comments.checkIfInComment(line.text.search(expandRe)) ) {
-                      symbols.push({
-                          name: line.text.match(computeWithRe)[2],
-                          kind: vscode.SymbolKind.Function,
-                          location: new vscode.Location(content.uri, line.range),
-                          containerName: line.text.match(computeWithRe)[1]
-                      });
-                    };
-                  };
+    return new Promise((resolve) => {
+      getAllFiles(wsfolder,"(tab|inc)").forEach(file => {
+        vscode.workspace.openTextDocument(wsfolder + "\\" + file).then(
+          function(content) {
+            let comments = new clComment();
+            
+            for (let i = 0; i < content.lineCount; i++) {
+              let line = content.lineAt(i);
+              comments.checkCommentsInLine(line.text.search("//"),line.text.search("{"),line.text.search("}"));
+              
+              if (line.text.search(query) > -1) {
+                if (comments.checkIfInComment(line.text.search(variableRe))) {
+                  symbols.push({
+                      name: line.text.match(variableRe)[3],
+                      kind: vscode.SymbolKind.Function,
+                      location: new vscode.Location(content.uri, line.range),
+                      containerName: line.text.match(variableRe)[1]
+                  });
                 };
-                return(symbols);
-              }
-            ).then(result => {
-              resolve(result);
-            });
-          };
-      });
+                if (comments.checkIfInComment(line.text.search(tableRe))) {
+                  let nameStr: string;
+                  let commandStr: string;
+                  if (line.text.match(tableRe)[3] == null) {
+                    nameStr = line.text.match(tableRe)[2];
+                    commandStr = line.text.match(tableRe)[1];
+                  } else {
+                    nameStr = line.text.match(tableRe)[4];
+                    commandStr = line.text.match(tableRe)[3];
+                  }
+                  symbols.push({
+                      name: nameStr,
+                      kind: vscode.SymbolKind.Function,
+                      location: new vscode.Location(content.uri, line.range),
+                      containerName: commandStr
+                  });
+                };
+                if (comments.checkIfInComment(line.text.search(wordRe))) {
+                  let nameStr: string;
+                  let commandStr: string;
+                  if (line.text.match(wordRe)[3] == null) {
+                    nameStr = line.text.match(wordRe)[2];
+                    commandStr = line.text.match(wordRe)[1];
+                  } else {
+                    nameStr = line.text.match(wordRe)[3];
+                    commandStr = line.text.match(wordRe)[4];
+                  }
+                  symbols.push({
+                      name: nameStr,
+                      kind: vscode.SymbolKind.Function,
+                      location: new vscode.Location(content.uri, line.range),
+                      containerName: commandStr
+                  });
+                };
+                if (comments.checkIfInComment(line.text.search(computeWithRe)) ||
+                    comments.checkIfInComment(line.text.search(macroRe)) ||
+                    comments.checkIfInComment(line.text.search(expandRe)) ) {
+                  symbols.push({
+                      name: line.text.match(computeWithRe)[2],
+                      kind: vscode.SymbolKind.Function,
+                      location: new vscode.Location(content.uri, line.range),
+                      containerName: line.text.match(computeWithRe)[1]
+                  });
+                };
+              };
+            };
+            return(symbols);
+          }
+        ).then(result => {
+          resolve(result);
+        });
+      })
     });
   }
-}
+};
