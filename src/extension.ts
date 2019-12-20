@@ -329,7 +329,7 @@ class GessTabsDefinitionProvider implements vscode.DefinitionProvider {
       let fileNames: string[] = [];
       
       fs.readdirSync(wsfolder).forEach(file => {
-        let regEXP = new RegExp("\.(tab|inc)$");
+        let regEXP = new RegExp("\.(tab|inc)$", "i");
         let ok = file.match(regEXP);
         if (ok) {
           fileNames.push(wsfolder + "\\" + file);
@@ -410,7 +410,7 @@ class GessTabsReferenceProvider implements vscode.ReferenceProvider {
         let fileNames: string[] = [];
         
         fs.readdirSync(wsfolder).forEach(file => {
-          let regEXP = new RegExp("\\.(tab|inc)$");
+          let regEXP = new RegExp("\\.(tab|inc)$", "i");
           let ok = file.match(regEXP);
           if (ok) {
             fileNames.push(wsfolder + "\\" + file);
@@ -458,7 +458,7 @@ class GessTabsWorkspaceSymbolProvider implements vscode.WorkspaceSymbolProvider 
  
       return new Promise((resolve) => {
         fs.readdirSync(wsfolder).forEach(file => {
-          let regEXP = new RegExp("\.(tab|inc)$");
+          let regEXP = new RegExp("\.(tab|inc)$", "i");
           let ok = file.match(regEXP);
 
           if (ok) {
