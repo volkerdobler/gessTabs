@@ -32,3 +32,7 @@ Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how 
 - Changed variable definition. Now, dots are part of a gesstabs variable name. Follows definition from manual,
   beside the fact, that variables names with quotes (and spaces) are not recognized.
 - updated to minor new version, as go to definition and find all references work more stable and is usable.
+
+## 0.1.1
+- Added fix to find also files in subdirectories
+- Changed tmLanguage file

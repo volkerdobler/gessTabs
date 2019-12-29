@@ -12,7 +12,7 @@
 	<array>
 		<dict>
 			<key>match</key>
-			<string>//.*</string>
+			<string>//.*$</string>
 			<key>name</key>
 			<string>comment.gessTabs</string>
 		</dict>
@@ -90,7 +90,7 @@
 		</dict>
 		<dict>
 			<key>match</key>
-			<string>(?i:(#DEFINE|#DOMACRO|#DOMACRO2|#ELSE|#END|#ENDEXPORT|#ENDMACRO|#EXPAND|#IFDEF|#IFEMPTY|#IFEXIST|#IFNDEF|#IFNEMPTY|#IFNEXIST|#IGNORECASE|#MACRO|#MACROEND|#STARTEXPORT|#UNDEFINE|#WEIGHT|#WEIGHTEND))\b</string>
+			<string>\b(?i:(#DEFINE|#DOMACRO|#DOMACRO2|#ELSE|#END|#ENDEXPORT|#ENDMACRO|#EXPAND|#IFDEF|#IFEMPTY|#IFEXIST|#IFNDEF|#IFNEMPTY|#IFNEXIST|#IGNORECASE|#MACRO|#MACROEND|#STARTEXPORT|#UNDEFINE|#WEIGHT|#WEIGHTEND))\b</string>
 			<key>name</key>
 			<string>entity.other.attribute-name.gessTabs</string>
 		</dict>
