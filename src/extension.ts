@@ -3,8 +3,8 @@
 // The module 'vscode' contains the VS Code extensibility API
 // Import the module and reference it with the alias vscode in your code below
 import * as vscode from 'vscode';
-import path = require('path');
-import fs = require('fs');
+import * as path from 'path';
+import * as fs from 'fs';
 
 // this method is called when your extension is activated
 // your extension is activated the very first time the command is executed
@@ -103,181 +103,76 @@ function getAllFiles(dir: string, fType: string): any[] {
   return results;
 }
 
-function getScopes(document: vscode.TextDocument) {
-  const normalScope = '';
+function readScopes(document: vscode.TextDocument): string[] {
+  const normalScope = '-';
   const commentScope = 'c';
   const stringScope = 's';
 
-  let prev: string = normalScope;
-  let scopeArr: string[][] = [];
+  let prevScope: string = normalScope;
+  let currScope: string = normalScope;
+  let stringStart: string = '';
+
+  let lineComment: boolean = false;
+
+  let scopeArr: string[] = [];
 
   for (let line = 0; line < document.lineCount; line++) {
-    let lineScope: string[] = [];
+    let lineScope: string = '';
+    let checkScope: string = '';
     let lineStr = document.lineAt(line).text;
 
+    if (lineComment) {
+      lineComment = false;
+      prevScope = normalScope;
+    }
+
     for (let char = 0; char < lineStr.length; char++) {
-      lineScope[char] = prev;
+      checkScope = prevScope;
+      currScope = prevScope;
       if (
         lineStr[char] === '/' &&
         char + 1 < lineStr.length &&
         lineStr[char + 1] === '/' &&
-        prev === normalScope
+        prevScope === normalScope
       ) {
-        prev = commentScope;
-        lineScope[char] = prev;
-        lineScope[char + 1] = prev;
+        currScope = commentScope;
+        checkScope = currScope;
+        lineComment = true;
       }
-      if (lineStr[char] === '{' && prev === normalScope) {
-        prev = commentScope;
-        lineScope[char] = prev;
+      if (lineStr[char] === '{' && prevScope === normalScope) {
+        currScope = commentScope;
+        checkScope = currScope;
       }
-      if (lineStr[char] === '}' && prev === commentScope) {
-        lineScope[char] = prev;
-        prev = normalScope;
+      if (lineStr[char] === '}' && prevScope === commentScope) {
+        checkScope = prevScope;
+        currScope = normalScope;
+      }
+      if (lineStr[char] === stringStart && prevScope === stringScope) {
+        checkScope = prevScope;
+        currScope = normalScope;
       }
       if (
         (lineStr[char] === "'" || lineStr[char] === '"') &&
-        prev === normalScope
+        prevScope === normalScope
       ) {
-        prev = stringScope;
-        lineScope[char] = prev;
+        currScope = stringScope;
+        checkScope = currScope;
+        stringStart = lineStr[char];
       }
-      if (
-        (lineStr[char] === "'" || lineStr[char] === '"') &&
-        prev === stringScope
-      ) {
-        lineScope[char] = prev;
-        prev = normalScope;
-      }
+      prevScope = currScope;
+      lineScope += checkScope;
     }
-    if (lineScope.length > 0) {
-      scopeArr.push(lineScope);
-    }
+    scopeArr.push(lineScope);
   }
-  let x = 1;
+
+  return scopeArr;
 }
 
-class clComment {
-  oneLine: number; // position of // in line
-  start: number; // position of { in line
-  end: number; // position of } in line
-  status: number; // 1 = not in Comment; -1 = in Comment
-  changing: number; // 1 ending comment in line; -1 starting comment in line; 0 no comment-char in line
-
-  constructor(oneC: number = -1, startC: number = -1, endC: number = -1) {
-    this.oneLine = oneC;
-    this.start = startC;
-    this.end = endC;
-    this.status = 1;
-    this.changing = 0;
-  }
-
-  checkCommentsInLine(oneC: number, startC: number, endC: number) {
-    this.oneLine = oneC;
-    this.start = startC;
-    this.end = endC;
-  }
-
-  checkIfInComment(command: number): boolean {
-    if (this.status === -1 && this.end === -1) {
-      // wir befinden uns in einem Kommentarbereich
-      return false;
-    }
-
-    if (command > -1) {
-      // ist der reguläre Ausdruck vorhanden
-      if (this.start > -1) {
-        // es wird ein Kommentar eröffnet
-        if (this.end > -1) {
-          // es wird ein Kommentar geschlossen
-          if (this.start > this.end) {
-            if (
-              command < this.start &&
-              command > this.end &&
-              (this.oneLine === -1 ||
-                (this.oneLine > -1 && command < this.oneLine))
-            ) {
-              return true;
-            } else {
-              return false;
-            }
-          } else {
-            if (
-              (command < this.start || command > this.end) &&
-              (this.oneLine === -1 ||
-                (this.oneLine > -1 && command < this.oneLine))
-            ) {
-              // entweder vor oder nach dem Kommentar
-              return true;
-            } else {
-              return false;
-            }
-          }
-        } else {
-          // nur Kommentar eröffnet
-          if (
-            command < this.start &&
-            (this.oneLine === -1 ||
-              (this.oneLine > -1 && command < this.oneLine))
-          ) {
-            return true;
-          } else {
-            return false;
-          }
-        }
-      } else {
-        // kein Kommentar wird eröffnet
-        if (this.end > -1) {
-          // Kommentar wird geschlossen
-          if (this.oneLine > this.end) {
-            if (command > this.end && command < this.oneLine) {
-              return true;
-            } else {
-              return false;
-            }
-          } else {
-            if (command > this.end) {
-              return true;
-            } else {
-              return false;
-            }
-          }
-        } else {
-          // kein Kommentar wird geschlossen
-          if (this.oneLine > -1) {
-            if (command < this.oneLine) {
-              return true;
-            } else {
-              return false;
-            }
-          } else {
-            if (this.status < 0) {
-              // wir befinden uns bereits in einem Kommentar
-              return false;
-            } else {
-              return true; // nicht in einem Kommentar
-            }
-          }
-        }
-      }
-    } else {
-      return false; // es gibt keinen passenden Text in der Zeile, deshalb false zurückgeben
-    }
-  }
-
-  switchCommentStatus() {
-    if (
-      this.start > -1 &&
-      (this.oneLine === -1 || (this.oneLine > -1 && this.start < this.oneLine))
-    ) {
-      this.status = -1;
-    }
-    if (
-      this.end > -1 &&
-      (this.oneLine === -1 || (this.oneLine > -1 && this.end < this.oneLine))
-    ) {
-      this.status = 1;
-    }
+function getScope(x: number, y: number, scopeArr: string[]): string {
+  if (x >= 0 && y >= 0 && x < scopeArr.length && y < scopeArr[x].length) {
+    return scopeArr[x].substr(y, 1);
+  } else {
+    return '';
   }
 }
 
@@ -288,8 +183,6 @@ class GessTabsDocumentSymbolProvider implements vscode.DocumentSymbolProvider {
   ): Thenable<vscode.SymbolInformation[]> {
     return new Promise((resolve, reject) => {
       var symbols = [];
-
-      getScopes(document);
 
       var labelRe = new RegExp(
         /\b(vartext|vartitle|valuelabels|text|title|labels|copylabels|uselabels)\b\s*(["']?)([\w\.]*)\2\s*(((["']?)([\w\.]*)\6\s*)*)=/i
@@ -306,7 +199,7 @@ class GessTabsDocumentSymbolProvider implements vscode.DocumentSymbolProvider {
         /\b(table)\b(?:[^=]*)=\s*[\w\.\s]*([\w\.]+)|\b(table)\b(?:[^=]*)=.+by\s+([\w\.]+)/i
       );
 
-      let comments = new clComment();
+      let scopeArr = readScopes(document);
 
       for (let i = 0; i < document.lineCount; i++) {
         var line = document.lineAt(i);
@@ -315,13 +208,7 @@ class GessTabsDocumentSymbolProvider implements vscode.DocumentSymbolProvider {
           continue;
         }
 
-        comments.checkCommentsInLine(
-          line.text.search('//'),
-          line.text.search('{'),
-          line.text.search('}')
-        );
-
-        if (comments.checkIfInComment(line.text.search(labelRe))) {
+        if (getScope(i, line.text.search(labelRe), scopeArr) === '-') {
           let lineMatch = line.text.match(labelRe);
           if (lineMatch && lineMatch.length > 2 && lineMatch[3].length > 0) {
             symbols.push({
@@ -349,7 +236,7 @@ class GessTabsDocumentSymbolProvider implements vscode.DocumentSymbolProvider {
               });
           }
         }
-        if (comments.checkIfInComment(line.text.search(variableRe))) {
+        if (getScope(i, line.text.search(variableRe), scopeArr) === '-') {
           let lineMatch = line.text.match(variableRe);
           if (lineMatch && lineMatch.length >= 3 && lineMatch[3].length > 0) {
             symbols.push({
@@ -360,7 +247,7 @@ class GessTabsDocumentSymbolProvider implements vscode.DocumentSymbolProvider {
             });
           }
         }
-        if (comments.checkIfInComment(line.text.search(computeWithRe))) {
+        if (getScope(i, line.text.search(computeWithRe), scopeArr) === '-') {
           let lineMatch = line.text.match(computeWithRe);
           if (lineMatch && lineMatch.length >= 2 && lineMatch[2].length > 0) {
             symbols.push({
@@ -371,7 +258,7 @@ class GessTabsDocumentSymbolProvider implements vscode.DocumentSymbolProvider {
             });
           }
         }
-        if (comments.checkIfInComment(line.text.search(macroRe))) {
+        if (getScope(i, line.text.search(macroRe), scopeArr) === '-') {
           let lineMatch = line.text.match(macroRe);
           if (lineMatch && lineMatch.length >= 1 && lineMatch[1].length > 0) {
             symbols.push({
@@ -382,7 +269,7 @@ class GessTabsDocumentSymbolProvider implements vscode.DocumentSymbolProvider {
             });
           }
         }
-        if (comments.checkIfInComment(line.text.search(expandRe))) {
+        if (getScope(i, line.text.search(expandRe), scopeArr) === '-') {
           let lineMatch = line.text.match(expandRe);
           if (lineMatch && lineMatch.length >= 1 && lineMatch[1].length > 0) {
             symbols.push({
@@ -393,7 +280,7 @@ class GessTabsDocumentSymbolProvider implements vscode.DocumentSymbolProvider {
             });
           }
         }
-        if (comments.checkIfInComment(line.text.search(tableRe))) {
+        if (getScope(i, line.text.search(tableRe), scopeArr) === '-') {
           let lineMatch = line.text.match(tableRe);
           if (lineMatch && lineMatch.length >= 2 && lineMatch[2].length > 0) {
             symbols.push({
@@ -404,7 +291,6 @@ class GessTabsDocumentSymbolProvider implements vscode.DocumentSymbolProvider {
             });
           }
         }
-        comments.switchCommentStatus();
       }
 
       resolve(symbols);
@@ -438,26 +324,19 @@ function getDefLocationInDocument(filename: string, word: string) {
   let locPosition: vscode.Location;
 
   return vscode.workspace.openTextDocument(filename).then((content) => {
-    let comments = new clComment();
+    let scopeArr = readScopes(content);
 
     for (let i = 0; i < content.lineCount; i++) {
       let line = content.lineAt(i);
 
-      comments.checkCommentsInLine(
-        line.text.search('//'),
-        line.text.search('{'),
-        line.text.search('}')
-      );
-
       if (
-        comments.checkIfInComment(line.text.search(variableRe)) ||
-        comments.checkIfInComment(line.text.search(computeWithRe)) ||
-        comments.checkIfInComment(line.text.search(macroRe)) ||
-        comments.checkIfInComment(line.text.search(expandRe))
+        getScope(i, line.text.search(variableRe), scopeArr) === '-' ||
+        getScope(i, line.text.search(computeWithRe), scopeArr) === '-' ||
+        getScope(i, line.text.search(macroRe), scopeArr) === '-' ||
+        getScope(i, line.text.search(expandRe), scopeArr) === '-'
       ) {
         locPosition = new vscode.Location(content.uri, line.range);
       }
-      comments.switchCommentStatus();
     }
     return locPosition;
   });
@@ -551,29 +430,22 @@ function getAllLocationInDocument(filename: string, word: string) {
   let locArray: vscode.Location[] = [];
 
   return vscode.workspace.openTextDocument(filename).then((content) => {
-    let comments = new clComment();
+    let scopeArr = readScopes(content);
 
     for (let i = 0; i < content.lineCount; i++) {
       let line = content.lineAt(i);
 
-      comments.checkCommentsInLine(
-        line.text.search('//'),
-        line.text.search('{'),
-        line.text.search('}')
-      );
-
       if (
-        comments.checkIfInComment(line.text.search(labelRe)) ||
-        comments.checkIfInComment(line.text.search(variableRe)) ||
-        comments.checkIfInComment(line.text.search(computeWithRe)) ||
-        comments.checkIfInComment(line.text.search(macroRe)) ||
-        comments.checkIfInComment(line.text.search(expandRe)) ||
-        comments.checkIfInComment(line.text.search(tableRe)) ||
-        comments.checkIfInComment(line.text.search(wordRe))
+        getScope(i, line.text.search(labelRe), scopeArr) === '-' ||
+        getScope(i, line.text.search(variableRe), scopeArr) === '-' ||
+        getScope(i, line.text.search(computeWithRe), scopeArr) === '-' ||
+        getScope(i, line.text.search(macroRe), scopeArr) === '-' ||
+        getScope(i, line.text.search(expandRe), scopeArr) === '-' ||
+        getScope(i, line.text.search(tableRe), scopeArr) === '-' ||
+        getScope(i, line.text.search(wordRe), scopeArr) === '-'
       ) {
         locArray.push(new vscode.Location(content.uri, line.range));
       }
-      comments.switchCommentStatus();
     }
     return locArray;
   });
@@ -684,16 +556,14 @@ class GessTabsWorkspaceSymbolProvider
         vscode.workspace
           .openTextDocument(wsfolder + '\\' + file)
           .then(function (content) {
-            let comments = new clComment();
+            let scopeArr = readScopes(content);
+
             for (let i = 0; i < content.lineCount; i++) {
               let line: vscode.TextLine = content.lineAt(i);
-              comments.checkCommentsInLine(
-                line.text.search('//'),
-                line.text.search('{'),
-                line.text.search('}')
-              );
               if (line.text.search(query) > -1) {
-                if (comments.checkIfInComment(line.text.search(variableRe))) {
+                if (
+                  getScope(i, line.text.search(variableRe), scopeArr) === '-'
+                ) {
                   let lineMatch = line.text.match(variableRe);
                   let lineMatch1 = lineMatch != null ? lineMatch[1] : '';
                   let lineMatch3 = lineMatch != null ? lineMatch[3] : '';
@@ -704,7 +574,7 @@ class GessTabsWorkspaceSymbolProvider
                     containerName: lineMatch1,
                   });
                 }
-                if (comments.checkIfInComment(line.text.search(tableRe))) {
+                if (getScope(i, line.text.search(tableRe), scopeArr) === '-') {
                   let nameStr: string;
                   let commandStr: string;
                   let lineMatch = line.text.match(tableRe);
@@ -726,7 +596,7 @@ class GessTabsWorkspaceSymbolProvider
                     containerName: commandStr,
                   });
                 }
-                if (comments.checkIfInComment(line.text.search(wordRe))) {
+                if (getScope(i, line.text.search(wordRe), scopeArr) === '-') {
                   let nameStr: string;
                   let commandStr: string;
                   let lineMatch = line.text.match(wordRe);
@@ -749,9 +619,10 @@ class GessTabsWorkspaceSymbolProvider
                   });
                 }
                 if (
-                  comments.checkIfInComment(line.text.search(computeWithRe)) ||
-                  comments.checkIfInComment(line.text.search(macroRe)) ||
-                  comments.checkIfInComment(line.text.search(expandRe))
+                  getScope(i, line.text.search(computeWithRe), scopeArr) !==
+                    'c' ||
+                  getScope(i, line.text.search(macroRe), scopeArr) === '-' ||
+                  getScope(i, line.text.search(expandRe), scopeArr) === '-'
                 ) {
                   let lineMatch = line.text.match(computeWithRe);
                   let lineMatch1 = lineMatch != null ? lineMatch[1] : '';

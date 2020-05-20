@@ -2,4 +2,3 @@ src/test/
 node_modules/
 out/
 package-lock.json
-.vscode/**
