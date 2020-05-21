@@ -6,6 +6,8 @@ import * as vscode from 'vscode';
 import * as path from 'path';
 import * as fs from 'fs';
 
+import * as sc from './scope';
+
 // this method is called when your extension is activated
 // your extension is activated the very first time the command is executed
 export function activate(context: vscode.ExtensionContext) {
@@ -103,86 +105,13 @@ function getAllFiles(dir: string, fType: string): any[] {
   return results;
 }
 
-function readScopes(document: vscode.TextDocument): string[] {
-  const normalScope = '-';
-  const commentScope = 'c';
-  const stringScope = 's';
-
-  let prevScope: string = normalScope;
-  let currScope: string = normalScope;
-  let stringStart: string = '';
-
-  let lineComment: boolean = false;
-
-  let scopeArr: string[] = [];
-
-  for (let line = 0; line < document.lineCount; line++) {
-    let lineScope: string = '';
-    let checkScope: string = '';
-    let lineStr = document.lineAt(line).text;
-
-    if (lineComment) {
-      lineComment = false;
-      prevScope = normalScope;
-    }
-
-    for (let char = 0; char < lineStr.length; char++) {
-      checkScope = prevScope;
-      currScope = prevScope;
-      if (
-        lineStr[char] === '/' &&
-        char + 1 < lineStr.length &&
-        lineStr[char + 1] === '/' &&
-        prevScope === normalScope
-      ) {
-        currScope = commentScope;
-        checkScope = currScope;
-        lineComment = true;
-      }
-      if (lineStr[char] === '{' && prevScope === normalScope) {
-        currScope = commentScope;
-        checkScope = currScope;
-      }
-      if (lineStr[char] === '}' && prevScope === commentScope) {
-        checkScope = prevScope;
-        currScope = normalScope;
-      }
-      if (lineStr[char] === stringStart && prevScope === stringScope) {
-        checkScope = prevScope;
-        currScope = normalScope;
-      }
-      if (
-        (lineStr[char] === "'" || lineStr[char] === '"') &&
-        prevScope === normalScope
-      ) {
-        currScope = stringScope;
-        checkScope = currScope;
-        stringStart = lineStr[char];
-      }
-      prevScope = currScope;
-      lineScope += checkScope;
-    }
-    scopeArr.push(lineScope);
-  }
-
-  return scopeArr;
-}
-
-function getScope(x: number, y: number, scopeArr: string[]): string {
-  if (x >= 0 && y >= 0 && x < scopeArr.length && y < scopeArr[x].length) {
-    return scopeArr[x].substr(y, 1);
-  } else {
-    return '';
-  }
-}
-
 class GessTabsDocumentSymbolProvider implements vscode.DocumentSymbolProvider {
   public provideDocumentSymbols(
     document: vscode.TextDocument,
     token: vscode.CancellationToken
   ): Thenable<vscode.SymbolInformation[]> {
     return new Promise((resolve, reject) => {
-      var symbols = [];
+      var symbols: vscode.SymbolInformation[] = [];
 
       var labelRe = new RegExp(
         /\b(vartext|vartitle|valuelabels|text|title|labels|copylabels|uselabels)\b\s*(["']?)([\w\.]*)\2\s*(((["']?)([\w\.]*)\6\s*)*)=/i
@@ -193,13 +122,13 @@ class GessTabsDocumentSymbolProvider implements vscode.DocumentSymbolProvider {
       var computeWithRe = new RegExp(
         /\b(compute\s+(?:copy|swap|load|ascend|descend|shuffle|add|eliminate|init)\b)\s*([\w\.]+)\b\s*=/i
       );
-      var macroRe = new RegExp(/(?!(?:#macro)\s+)(#[\w\.]+)\b\s*\(/i);
+      var macroRe = new RegExp(/(?:#macro)\s+(#[\w\.]+)\b\s*\(/i);
       var expandRe = new RegExp(/(?:#expand)\s+(#[\w\.]+)\b/i);
       var tableRe = new RegExp(
-        /\b(table)\b(?:[^=]*)=\s*[\w\.\s]*([\w\.]+)|\b(table)\b(?:[^=]*)=.+by\s+([\w\.]+)/i
+        /\b(table)\b(?:[^=]*)=\s*([^\s]+(?:\s[^\s]+)*)\s+by\s+([^\s]+(?:\s[^\s]+)*);/i
       );
 
-      let scopeArr = readScopes(document);
+      let scope = new sc.Scope(document);
 
       for (let i = 0; i < document.lineCount; i++) {
         var line = document.lineAt(i);
@@ -208,7 +137,7 @@ class GessTabsDocumentSymbolProvider implements vscode.DocumentSymbolProvider {
           continue;
         }
 
-        if (getScope(i, line.text.search(labelRe), scopeArr) === '-') {
+        if (scope.isNoSpecialScope(i, line.text.search(labelRe))) {
           let lineMatch = line.text.match(labelRe);
           if (lineMatch && lineMatch.length > 2 && lineMatch[3].length > 0) {
             symbols.push({
@@ -236,7 +165,7 @@ class GessTabsDocumentSymbolProvider implements vscode.DocumentSymbolProvider {
               });
           }
         }
-        if (getScope(i, line.text.search(variableRe), scopeArr) === '-') {
+        if (scope.isNoSpecialScope(i, line.text.search(variableRe))) {
           let lineMatch = line.text.match(variableRe);
           if (lineMatch && lineMatch.length >= 3 && lineMatch[3].length > 0) {
             symbols.push({
@@ -247,7 +176,7 @@ class GessTabsDocumentSymbolProvider implements vscode.DocumentSymbolProvider {
             });
           }
         }
-        if (getScope(i, line.text.search(computeWithRe), scopeArr) === '-') {
+        if (scope.isNoSpecialScope(i, line.text.search(computeWithRe))) {
           let lineMatch = line.text.match(computeWithRe);
           if (lineMatch && lineMatch.length >= 2 && lineMatch[2].length > 0) {
             symbols.push({
@@ -258,7 +187,7 @@ class GessTabsDocumentSymbolProvider implements vscode.DocumentSymbolProvider {
             });
           }
         }
-        if (getScope(i, line.text.search(macroRe), scopeArr) === '-') {
+        if (scope.isNoSpecialScope(i, line.text.search(macroRe))) {
           let lineMatch = line.text.match(macroRe);
           if (lineMatch && lineMatch.length >= 1 && lineMatch[1].length > 0) {
             symbols.push({
@@ -269,7 +198,7 @@ class GessTabsDocumentSymbolProvider implements vscode.DocumentSymbolProvider {
             });
           }
         }
-        if (getScope(i, line.text.search(expandRe), scopeArr) === '-') {
+        if (scope.isNoSpecialScope(i, line.text.search(expandRe))) {
           let lineMatch = line.text.match(expandRe);
           if (lineMatch && lineMatch.length >= 1 && lineMatch[1].length > 0) {
             symbols.push({
@@ -280,14 +209,37 @@ class GessTabsDocumentSymbolProvider implements vscode.DocumentSymbolProvider {
             });
           }
         }
-        if (getScope(i, line.text.search(tableRe), scopeArr) === '-') {
+        if (scope.isNoSpecialScope(i, line.text.search(tableRe))) {
           let lineMatch = line.text.match(tableRe);
-          if (lineMatch && lineMatch.length >= 2 && lineMatch[2].length > 0) {
-            symbols.push({
-              name: lineMatch[2],
-              kind: vscode.SymbolKind.Function,
-              location: new vscode.Location(document.uri, line.range),
-              containerName: lineMatch[2].toLocaleLowerCase(),
+          if (lineMatch && lineMatch.length === 4) {
+            let re: RegExp;
+            if (lineMatch[2].search(/"/) > -1) {
+              re = /\s*"\s*/;
+            } else {
+              re = /\s+/;
+            }
+            lineMatch[2].split(re).forEach(function (value) {
+              if (value.search(/[\s"]*&/) !== 0) {
+                symbols.push({
+                  name: value,
+                  kind: vscode.SymbolKind.Variable,
+                  location: new vscode.Location(document.uri, line.range),
+                  containerName: 'head',
+                });
+              }
+            });
+            if (lineMatch[3].search(/"/) > -1) {
+              re = /\s*"\s*/;
+            } else {
+              re = /\s+/;
+            }
+            lineMatch[3].split(re).forEach(function (value) {
+              symbols.push({
+                name: value,
+                kind: vscode.SymbolKind.Variable,
+                location: new vscode.Location(document.uri, line.range),
+                containerName: 'axis',
+              });
             });
           }
         }
@@ -324,16 +276,16 @@ function getDefLocationInDocument(filename: string, word: string) {
   let locPosition: vscode.Location;
 
   return vscode.workspace.openTextDocument(filename).then((content) => {
-    let scopeArr = readScopes(content);
+    let scope = new sc.Scope(content);
 
     for (let i = 0; i < content.lineCount; i++) {
       let line = content.lineAt(i);
 
       if (
-        getScope(i, line.text.search(variableRe), scopeArr) === '-' ||
-        getScope(i, line.text.search(computeWithRe), scopeArr) === '-' ||
-        getScope(i, line.text.search(macroRe), scopeArr) === '-' ||
-        getScope(i, line.text.search(expandRe), scopeArr) === '-'
+        scope.isNoSpecialScope(i, line.text.search(variableRe)) ||
+        scope.isNoSpecialScope(i, line.text.search(computeWithRe)) ||
+        scope.isNoSpecialScope(i, line.text.search(macroRe)) ||
+        scope.isNoSpecialScope(i, line.text.search(expandRe))
       ) {
         locPosition = new vscode.Location(content.uri, line.range);
       }
@@ -430,19 +382,19 @@ function getAllLocationInDocument(filename: string, word: string) {
   let locArray: vscode.Location[] = [];
 
   return vscode.workspace.openTextDocument(filename).then((content) => {
-    let scopeArr = readScopes(content);
+    let scope = new sc.Scope(content);
 
     for (let i = 0; i < content.lineCount; i++) {
       let line = content.lineAt(i);
 
       if (
-        getScope(i, line.text.search(labelRe), scopeArr) === '-' ||
-        getScope(i, line.text.search(variableRe), scopeArr) === '-' ||
-        getScope(i, line.text.search(computeWithRe), scopeArr) === '-' ||
-        getScope(i, line.text.search(macroRe), scopeArr) === '-' ||
-        getScope(i, line.text.search(expandRe), scopeArr) === '-' ||
-        getScope(i, line.text.search(tableRe), scopeArr) === '-' ||
-        getScope(i, line.text.search(wordRe), scopeArr) === '-'
+        scope.isNoSpecialScope(i, line.text.search(labelRe)) ||
+        scope.isNoSpecialScope(i, line.text.search(variableRe)) ||
+        scope.isNoSpecialScope(i, line.text.search(computeWithRe)) ||
+        scope.isNoSpecialScope(i, line.text.search(macroRe)) ||
+        scope.isNoSpecialScope(i, line.text.search(expandRe)) ||
+        scope.isNoSpecialScope(i, line.text.search(tableRe)) ||
+        scope.isNoSpecialScope(i, line.text.search(wordRe))
       ) {
         locArray.push(new vscode.Location(content.uri, line.range));
       }
@@ -556,14 +508,12 @@ class GessTabsWorkspaceSymbolProvider
         vscode.workspace
           .openTextDocument(wsfolder + '\\' + file)
           .then(function (content) {
-            let scopeArr = readScopes(content);
+            let scope = new sc.Scope(content);
 
             for (let i = 0; i < content.lineCount; i++) {
               let line: vscode.TextLine = content.lineAt(i);
               if (line.text.search(query) > -1) {
-                if (
-                  getScope(i, line.text.search(variableRe), scopeArr) === '-'
-                ) {
+                if (scope.isNoSpecialScope(i, line.text.search(variableRe))) {
                   let lineMatch = line.text.match(variableRe);
                   let lineMatch1 = lineMatch != null ? lineMatch[1] : '';
                   let lineMatch3 = lineMatch != null ? lineMatch[3] : '';
@@ -574,7 +524,7 @@ class GessTabsWorkspaceSymbolProvider
                     containerName: lineMatch1,
                   });
                 }
-                if (getScope(i, line.text.search(tableRe), scopeArr) === '-') {
+                if (scope.isNoSpecialScope(i, line.text.search(tableRe))) {
                   let nameStr: string;
                   let commandStr: string;
                   let lineMatch = line.text.match(tableRe);
@@ -596,7 +546,7 @@ class GessTabsWorkspaceSymbolProvider
                     containerName: commandStr,
                   });
                 }
-                if (getScope(i, line.text.search(wordRe), scopeArr) === '-') {
+                if (scope.isNoSpecialScope(i, line.text.search(wordRe))) {
                   let nameStr: string;
                   let commandStr: string;
                   let lineMatch = line.text.match(wordRe);
@@ -619,10 +569,9 @@ class GessTabsWorkspaceSymbolProvider
                   });
                 }
                 if (
-                  getScope(i, line.text.search(computeWithRe), scopeArr) !==
-                    'c' ||
-                  getScope(i, line.text.search(macroRe), scopeArr) === '-' ||
-                  getScope(i, line.text.search(expandRe), scopeArr) === '-'
+                  scope.isNoSpecialScope(i, line.text.search(computeWithRe)) ||
+                  scope.isNoSpecialScope(i, line.text.search(macroRe)) ||
+                  scope.isNoSpecialScope(i, line.text.search(expandRe))
                 ) {
                   let lineMatch = line.text.match(computeWithRe);
                   let lineMatch1 = lineMatch != null ? lineMatch[1] : '';
