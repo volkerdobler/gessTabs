@@ -51,4 +51,4 @@ Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how 
 ## next release (0.2.0)
 
 - Updated Symbols in tmLanguage file
-- Changed how to identify comments, now the scope will be identified for each char
+- Changed how to identify comments, now the scope will be identified for each char including comments & strings

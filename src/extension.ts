@@ -15,24 +15,35 @@ export function activate(context: vscode.ExtensionContext) {
   // This line of code will only be executed once when your extension is activated
   console.log('Congratulations, your extension "gesstabs" is now active!');
 
+  // Allow the user to see the definition of variables/functions/methods
+  // right where the variables / functions / methods are being used.
   context.subscriptions.push(
-    vscode.languages.registerDocumentSymbolProvider(
-      { language: 'gesstabs', scheme: 'file' },
-      new GessTabsDocumentSymbolProvider()
+    vscode.languages.registerDefinitionProvider(
+      {
+        language: 'gesstabs',
+        scheme: 'file',
+      },
+      new GesstabsDefintionProvider()
     )
   );
 
   context.subscriptions.push(
-    vscode.languages.registerDefinitionProvider(
-      { language: 'gesstabs', scheme: 'file' },
-      new GessTabsDefinitionProvider()
+    vscode.languages.registerDocumentSymbolProvider(
+      {
+        language: 'gesstabs',
+        scheme: 'file',
+      },
+      new GesstabsDocumentSymbolProvider()
     )
   );
 
   context.subscriptions.push(
     vscode.languages.registerReferenceProvider(
-      { language: 'gesstabs', scheme: 'file' },
-      new GessTabsReferenceProvider()
+      {
+        language: 'gesstabs',
+        scheme: 'file',
+      },
+      new GesstabsReferenceProvider()
     )
   );
 
@@ -68,11 +79,88 @@ function getWorkspaceFolderPath(fileUri?: vscode.Uri): string | undefined {
   }
 }
 
-function adjustWordPosition(
+const variableDefRe = function (word: string): RegExp {
+  return new RegExp(
+    '\\b(singleq|variable|varfamily|multiq|familyvar|makefamily|indexvar|invindexvar|combinedvar|vargroup|dichoq|groupvar|makegroup|spssgroup|init|groups|count|simplevar|bcdvar|bitgroup|mean|sum|min|max|stddev|variance)\\b\\s*(["\']?)(' +
+      word +
+      ')\\2\\s*=',
+    'i'
+  );
+};
+
+const computeDefRe = function (word: string): RegExp {
+  return new RegExp(
+    '\\b(f?compute)\\s+.*\\b(["\']?)(' + word + ')\\2\\s*=',
+    'i'
+  );
+};
+
+const macroDefRe = function (word: string): RegExp {
+  return new RegExp('#macro\\s+(' + word + ')\\b\\s*\\(', 'i');
+};
+
+const expandDefRe = function (word: string): RegExp {
+  return new RegExp('#expand\\s+(' + word + ')\\b', 'i');
+};
+
+const labelDefRe = function (word: string): RegExp {
+  return new RegExp(
+    '\\b(vartext|vartitle|valuelabels|text|title|labels|copylabels|uselabels|excludevalues|includevalues)\\b\\s*.*(["\']?)(' +
+      word +
+      ')\\2.*=',
+    'i'
+  );
+};
+
+const labelAllRe = function (): RegExp {
+  return new RegExp(
+    '\\b(vartext|vartitle|valuelabels|text|title|labels|copylabels|uselabels|excludevalues|includevalues)\\b\\s*(["\']?)([\\w\\.]*)\\2\\s*(((["\']?)([\\w\\.]*)\\6\\s*)*)=',
+    'i'
+  );
+};
+
+const varRangeDefRe = function (word: string): RegExp {
+  const wordOhneZahl = word.split(/(.*[^\d])(\d+$)/);
+  let suchWort = wordOhneZahl.length > 1 ? wordOhneZahl[1] : wordOhneZahl[0];
+  return new RegExp(
+    '\\b(variables)\\s+(["\']?)(' +
+      suchWort +
+      '\\d+)\\2\\s*\\bto\\s+(["\']?)(' +
+      suchWort +
+      '\\d+)\\4\\b\\s*=',
+    'i'
+  );
+};
+
+const varListDefRe = function (): RegExp {
+  return new RegExp(
+    '\\b(variables)\\s+(["\']?)([\\w\\.]*)\\2\\s*(((["\']?)([\\w\\.]*)\\6\\s*)*)=',
+    'i'
+  );
+};
+
+const wordDefRe = function (word: string): RegExp {
+  return new RegExp('\\b(["\']?)' + word + '\\1\\b', 'i');
+};
+
+const tableDefRe = function (): RegExp {
+  return new RegExp(
+    '\\b(table)\\b(?:[^=]*)=\\s*([^\\s]+(?:\\s[^\\s]+)*)\\s+by\\s+([^\\s]+(?:\\s[^\\s]+)*);',
+    'i'
+  );
+};
+// sucht das Wort unter dem Cursor, wobei Zahlen, Buchstaben, Punkte sowie # als
+// Wort akzeptiert werden. Gibt dann einen Array zurück, wobei das 1st Element
+// true ist, wenn es ein Wort gefunden hat, sonst false. Das eigentliche Wort
+// steht dann an zweiter Stelle (wenn true)
+function getWordAtPosition(
   document: vscode.TextDocument,
   position: vscode.Position
 ): [boolean, string, vscode.Position] {
-  const wordRange = document.getWordRangeAtPosition(position, /(#?[\w\.]+)\b/);
+  const wordRange = document.getWordRangeAtPosition(
+    position,
+    /\b(#?[\w\.]+)\b/
+  );
   const word = wordRange ? document.getText(wordRange) : '';
   if (!wordRange) {
     return [false, '', position];
@@ -84,28 +172,184 @@ function adjustWordPosition(
   return [true, word, position];
 }
 
-function getAllFiles(dir: string, fType: string): any[] {
-  let results: any[] = [];
-  let regEXP = new RegExp('\\.' + fType + '$', 'i');
-  let list = fs.readdirSync(dir);
-  list.forEach(function (file) {
-    file = dir + '\\' + file;
-    let stat = fs.statSync(file);
-    if (stat && stat.isDirectory()) {
+// durchsucht rekursiv das aktuelle Verzeichnis und gibt alle Dateinamen inkl.
+// Pfad als String zurück, die dem regulären Ausdruck in fType entspricht.
+function getAllFilenamesInDirectory(dir: string, fType: string): string[] {
+  let results: string[] = [];
+  let regEXP: RegExp = new RegExp('\\.' + fType + '$', 'i');
+  let list: fs.Dirent[] = fs.readdirSync(dir, {
+    encoding: 'utf8',
+    withFileTypes: true,
+  });
+
+  list.forEach(function (file: fs.Dirent) {
+    let fileInclDir = dir + '\\' + file.name;
+    if (file.isDirectory()) {
       /* Recursive into a subdirectory */
-      results = results.concat(getAllFiles(file, fType));
+      results = results.concat(getAllFilenamesInDirectory(fileInclDir, fType));
     } else {
       /* Is a file */
       // results.push(file);
-      if (file.match(regEXP)) {
-        results.push(file);
+      if (file.isFile() && file.name.match(regEXP)) {
+        results.push(fileInclDir);
       }
     }
   });
   return results;
 }
 
-class GessTabsDocumentSymbolProvider implements vscode.DocumentSymbolProvider {
+// sucht alle Stellen, an denen eine Definition von "word" im Dokument "filename" vorkommt
+// wobei hier die Definitionen wichtig sind, also sprachenspezifisch für gesstabs
+// d.h. es wird nur dann "word" gefunden, wenn es ein Variablenname, ein compute,
+// ein #macro oder eine #expand Definition ist.
+async function getDefLocationInDocument(
+  filename: string,
+  word: string
+): Promise<vscode.Location> {
+  let locPosition: vscode.Location;
+
+  const varRegExp = variableDefRe(word);
+  const computeRegExp = computeDefRe(word);
+  const macroRegExp = macroDefRe(word);
+  const expandRegExp = expandDefRe(word);
+
+  return vscode.workspace.openTextDocument(filename).then((content) => {
+    let scope = new sc.Scope(content);
+
+    for (let i = 0; i < content.lineCount; i++) {
+      let line = content.lineAt(i);
+
+      if (
+        scope.isNotInComment(i, line.text.search(varRegExp)) ||
+        scope.isNotInComment(i, line.text.search(computeRegExp)) ||
+        scope.isNotInComment(i, line.text.search(macroRegExp)) ||
+        scope.isNotInComment(i, line.text.search(expandRegExp))
+      ) {
+        locPosition = new vscode.Location(content.uri, line.range);
+      }
+    }
+    return locPosition;
+  });
+}
+
+async function getAllLocationsInDocument(filename: string, word: string) {
+  let locArray: vscode.Location[] = [];
+
+  const varRangeRegExp: RegExp = varRangeDefRe(word);
+  const wordRegExp: RegExp = wordDefRe(word);
+
+  return vscode.workspace.openTextDocument(filename).then((content) => {
+    let scope = new sc.Scope(content);
+
+    for (let i = 0; i < content.lineCount; i++) {
+      let line = content.lineAt(i);
+
+      if (
+        scope.isNotInComment(i, line.text.search(varRangeRegExp)) ||
+        scope.isNotInComment(i, line.text.search(wordRegExp))
+      ) {
+        locArray.push(new vscode.Location(content.uri, line.range));
+      }
+    }
+    return locArray;
+  });
+}
+
+// Allow the user to see the definition of variables/functions/methods
+// right where the variables / functions / methods are being used.
+class GesstabsDefintionProvider implements vscode.DefinitionProvider {
+  public provideDefinition(
+    document: vscode.TextDocument,
+    position: vscode.Position,
+    token: vscode.CancellationToken
+  ): Thenable<vscode.Location> {
+    const wordAtPosition: [
+      boolean,
+      string,
+      vscode.Position
+    ] = getWordAtPosition(document, position);
+
+    return new Promise((resolve) => {
+      if (!wordAtPosition[0]) {
+        return Promise.resolve(null);
+      }
+
+      const word = wordAtPosition[1];
+
+      let wsfolder =
+        getWorkspaceFolderPath(document.uri) ||
+        fixDriveCasingInWindows(path.dirname(document.fileName));
+
+      let fileNames: string[] = getAllFilenamesInDirectory(
+        wsfolder,
+        '(tab|inc)'
+      );
+
+      let locations = fileNames.map((file) =>
+        getDefLocationInDocument(file, word)
+      );
+      // has to be a Promise as the OpenTextDocument is async and we have to
+      // wait until it is fullfilled with all filenames.
+      Promise.all(locations).then(function (content) {
+        resolve(content.find((loc) => loc));
+      });
+    });
+  }
+}
+
+// Allow the user to see all the source code locations where a certain
+// variable / function/ method / symbol is being used.
+class GesstabsReferenceProvider implements vscode.ReferenceProvider {
+  public provideReferences(
+    document: vscode.TextDocument,
+    position: vscode.Position,
+    options: { includeDeclaration: boolean },
+    token: vscode.CancellationToken
+  ): Thenable<vscode.Location[]> {
+    return new Promise((resolve) => {
+      const wordAtPosition = getWordAtPosition(document, position);
+
+      if (!wordAtPosition[0]) {
+        return Promise.resolve(null);
+      }
+      const word = wordAtPosition[1];
+
+      let loclist: vscode.Location[] = [];
+
+      let wsfolder =
+        getWorkspaceFolderPath(document.uri) ||
+        fixDriveCasingInWindows(path.dirname(document.fileName));
+
+      let fileNames: string[] = getAllFilenamesInDirectory(
+        wsfolder,
+        '(tab|inc)'
+      );
+
+      let locations = fileNames.map((file) =>
+        getAllLocationsInDocument(file, word)
+      );
+      Promise.all(locations)
+        .then(function (content) {
+          content.forEach((loc) => {
+            if (loc != null && loc[0] != null) {
+              loc.forEach((arr) => {
+                loclist.push(arr);
+              });
+            }
+          });
+          return loclist;
+        })
+        .then((result) => {
+          resolve(result);
+        })
+        .catch((e) => {
+          resolve(undefined);
+        });
+    });
+  }
+}
+
+class GesstabsDocumentSymbolProvider implements vscode.DocumentSymbolProvider {
   public provideDocumentSymbols(
     document: vscode.TextDocument,
     token: vscode.CancellationToken
@@ -113,20 +357,29 @@ class GessTabsDocumentSymbolProvider implements vscode.DocumentSymbolProvider {
     return new Promise((resolve, reject) => {
       var symbols: vscode.SymbolInformation[] = [];
 
-      var labelRe = new RegExp(
-        /\b(vartext|vartitle|valuelabels|text|title|labels|copylabels|uselabels)\b\s*(["']?)([\w\.]*)\2\s*(((["']?)([\w\.]*)\6\s*)*)=/i
-      );
-      var variableRe = new RegExp(
-        /\b(singleq|variable|varfamily|multiq|familyvar|makefamily|indexvar|invindexvar|combinedvar|vargroup|dichoq|groupvar|makegroup|spssgroup|init|groups|count|simplevar|bcdvar|bitgroup|mean|sum|min|max|stddev|variance)\b\s*(["']?)([\w\.]*)\2\s*=/i
-      );
-      var computeWithRe = new RegExp(
-        /\b(compute\s+(?:copy|swap|load|ascend|descend|shuffle|add|eliminate|init)\b)\s*([\w\.]+)\b\s*=/i
-      );
-      var macroRe = new RegExp(/(?:#macro)\s+(#[\w\.]+)\b\s*\(/i);
-      var expandRe = new RegExp(/(?:#expand)\s+(#[\w\.]+)\b/i);
-      var tableRe = new RegExp(
-        /\b(table)\b(?:[^=]*)=\s*([^\s]+(?:\s[^\s]+)*)\s+by\s+([^\s]+(?:\s[^\s]+)*);/i
-      );
+      const labelRegExp: RegExp = labelAllRe();
+      const varRegExp: RegExp = variableDefRe('[\\w\\.]+');
+      const computeRegExp: RegExp = computeDefRe('[\\w\\.]+');
+      const macroRegExp: RegExp = macroDefRe('[\\w\\.]+');
+      const expandRegExp: RegExp = expandDefRe('[\\w\\.]+');
+      const tableRegExp: RegExp = tableDefRe();
+      const varRangeRegExp: RegExp = varRangeDefRe('[\\w\\.]+');
+      const varListRegExp: RegExp = varListDefRe();
+
+      // var labelRe = new RegExp(
+      //   /\b(vartext|vartitle|valuelabels|text|title|labels|copylabels|uselabels)\b\s*(["']?)([\w\.]*)\2\s*(((["']?)([\w\.]*)\6\s*)*)=/i
+      // );
+      // var variableRe = new RegExp(
+      //   /\b(singleq|variable|varfamily|multiq|familyvar|makefamily|indexvar|invindexvar|combinedvar|vargroup|dichoq|groupvar|makegroup|spssgroup|init|groups|count|simplevar|bcdvar|bitgroup|mean|sum|min|max|stddev|variance)\b\s*(["']?)([\w\.]*)\2\s*=/i
+      // );
+      // var computeWithRe = new RegExp(
+      //   /\b(compute\s+(?:copy|swap|load|ascend|descend|shuffle|add|eliminate|init)\b)\s*([\w\.]+)\b\s*=/i
+      // );
+      // var macroRe = new RegExp(/(?:#macro)\s+(#[\w\.]+)\b\s*\(/i);
+      // var expandRe = new RegExp(/(?:#expand)\s+(#[\w\.]+)\b/i);
+      // var tableRe = new RegExp(
+      //   /\b(table)\b(?:[^=]*)=\s*([^\s]+(?:\s[^\s]+)*)\s+by\s+([^\s]+(?:\s[^\s]+)*);/i
+      // );
 
       let scope = new sc.Scope(document);
 
@@ -137,8 +390,8 @@ class GessTabsDocumentSymbolProvider implements vscode.DocumentSymbolProvider {
           continue;
         }
 
-        if (scope.isNoSpecialScope(i, line.text.search(labelRe))) {
-          let lineMatch = line.text.match(labelRe);
+        if (scope.isNotInComment(i, line.text.search(labelRegExp))) {
+          let lineMatch = line.text.match(labelRegExp);
           if (lineMatch && lineMatch.length > 2 && lineMatch[3].length > 0) {
             symbols.push({
               name: lineMatch[3],
@@ -165,8 +418,53 @@ class GessTabsDocumentSymbolProvider implements vscode.DocumentSymbolProvider {
               });
           }
         }
-        if (scope.isNoSpecialScope(i, line.text.search(variableRe))) {
-          let lineMatch = line.text.match(variableRe);
+        if (scope.isNotInComment(i, line.text.search(varRangeRegExp))) {
+          let lineMatch = line.text.match(varRangeRegExp);
+          if (lineMatch) {
+            symbols.push({
+              name: lineMatch[3],
+              kind: vscode.SymbolKind.Variable,
+              location: new vscode.Location(document.uri, line.range),
+              containerName: 'variables',
+            });
+            symbols.push({
+              name: lineMatch[5],
+              kind: vscode.SymbolKind.Variable,
+              location: new vscode.Location(document.uri, line.range),
+              containerName: 'variables',
+            });
+          }
+        } else {
+          if (scope.isNotInComment(i, line.text.search(varListRegExp))) {
+            let lineMatch = line.text.match(varListRegExp);
+            if (lineMatch && lineMatch[3].length > 0) {
+              symbols.push({
+                name: lineMatch[3],
+                kind: vscode.SymbolKind.Variable,
+                location: new vscode.Location(document.uri, line.range),
+                containerName: 'variables',
+              });
+              let re: RegExp;
+              if (lineMatch[4].search(/"/) > -1) {
+                re = /\s*"\s*/;
+              } else {
+                re = /\s+/;
+              }
+              lineMatch[4].split(re).forEach(function (value) {
+                if (value.length > 0 && value.search(/[\s"]*&/) !== 0) {
+                  symbols.push({
+                    name: value,
+                    kind: vscode.SymbolKind.Variable,
+                    location: new vscode.Location(document.uri, line.range),
+                    containerName: 'variables',
+                  });
+                }
+              });
+            }
+          }
+        }
+        if (scope.isNotInComment(i, line.text.search(varRegExp))) {
+          let lineMatch = line.text.match(varRegExp);
           if (lineMatch && lineMatch.length >= 3 && lineMatch[3].length > 0) {
             symbols.push({
               name: lineMatch[3],
@@ -176,8 +474,8 @@ class GessTabsDocumentSymbolProvider implements vscode.DocumentSymbolProvider {
             });
           }
         }
-        if (scope.isNoSpecialScope(i, line.text.search(computeWithRe))) {
-          let lineMatch = line.text.match(computeWithRe);
+        if (scope.isNormalScope(i, line.text.search(computeRegExp))) {
+          let lineMatch = line.text.match(computeRegExp);
           if (lineMatch && lineMatch.length >= 2 && lineMatch[2].length > 0) {
             symbols.push({
               name: lineMatch[2],
@@ -187,8 +485,8 @@ class GessTabsDocumentSymbolProvider implements vscode.DocumentSymbolProvider {
             });
           }
         }
-        if (scope.isNoSpecialScope(i, line.text.search(macroRe))) {
-          let lineMatch = line.text.match(macroRe);
+        if (scope.isNormalScope(i, line.text.search(macroRegExp))) {
+          let lineMatch = line.text.match(macroRegExp);
           if (lineMatch && lineMatch.length >= 1 && lineMatch[1].length > 0) {
             symbols.push({
               name: lineMatch[1],
@@ -198,8 +496,8 @@ class GessTabsDocumentSymbolProvider implements vscode.DocumentSymbolProvider {
             });
           }
         }
-        if (scope.isNoSpecialScope(i, line.text.search(expandRe))) {
-          let lineMatch = line.text.match(expandRe);
+        if (scope.isNormalScope(i, line.text.search(expandRegExp))) {
+          let lineMatch = line.text.match(expandRegExp);
           if (lineMatch && lineMatch.length >= 1 && lineMatch[1].length > 0) {
             symbols.push({
               name: lineMatch[1],
@@ -209,8 +507,8 @@ class GessTabsDocumentSymbolProvider implements vscode.DocumentSymbolProvider {
             });
           }
         }
-        if (scope.isNoSpecialScope(i, line.text.search(tableRe))) {
-          let lineMatch = line.text.match(tableRe);
+        if (scope.isNormalScope(i, line.text.search(tableRegExp))) {
+          let lineMatch = line.text.match(tableRegExp);
           if (lineMatch && lineMatch.length === 4) {
             let re: RegExp;
             if (lineMatch[2].search(/"/) > -1) {
@@ -246,207 +544,6 @@ class GessTabsDocumentSymbolProvider implements vscode.DocumentSymbolProvider {
       }
 
       resolve(symbols);
-    });
-  }
-}
-
-function getDefLocationInDocument(filename: string, word: string) {
-  var variableRe = new RegExp(
-    '\\b(singleq|variable|varfamily|multiq|familyvar|makefamily|indexvar|invindexvar|combinedvar|vargroup|dichoq|groupvar|makegroup|spssgroup|init|groups|count|simplevar|bcdvar|bitgroup|mean|sum|min|max|stddev|variance)\\b\\s*(["\']?)(' +
-      word +
-      ')\\2\\s*=',
-    'i'
-  );
-  var computeWithRe = new RegExp(
-    '\\b(compute\\s+(?:copy|swap|load|ascend|descend|shuffle|add|eliminate|init))\\b\\s*(' +
-      word +
-      ')\\b\\s*=',
-    'i'
-  );
-  var macroRe = new RegExp(
-    '#macro\\s*(' +
-      word +
-      ')\\b\\s*\\(|#[\\w\\.]+\\b\\s*\\(.*\\b(' +
-      word +
-      ')\\b',
-    'i'
-  );
-  var expandRe = new RegExp('#expand\\s+(' + word + ')\\b', 'i');
-
-  let locPosition: vscode.Location;
-
-  return vscode.workspace.openTextDocument(filename).then((content) => {
-    let scope = new sc.Scope(content);
-
-    for (let i = 0; i < content.lineCount; i++) {
-      let line = content.lineAt(i);
-
-      if (
-        scope.isNoSpecialScope(i, line.text.search(variableRe)) ||
-        scope.isNoSpecialScope(i, line.text.search(computeWithRe)) ||
-        scope.isNoSpecialScope(i, line.text.search(macroRe)) ||
-        scope.isNoSpecialScope(i, line.text.search(expandRe))
-      ) {
-        locPosition = new vscode.Location(content.uri, line.range);
-      }
-    }
-    return locPosition;
-  });
-}
-
-class GessTabsDefinitionProvider implements vscode.DefinitionProvider {
-  public provideDefinition(
-    document: vscode.TextDocument,
-    position: vscode.Position,
-    token: vscode.CancellationToken
-  ): Thenable<vscode.Location> {
-    const adjustedPos = adjustWordPosition(document, position);
-
-    return new Promise((resolve) => {
-      if (!adjustedPos[0]) {
-        return Promise.resolve(null);
-      }
-
-      const word = adjustedPos[1];
-
-      let wsfolder =
-        getWorkspaceFolderPath(document.uri) ||
-        fixDriveCasingInWindows(path.dirname(document.fileName));
-      let fileNames: string[] = [];
-
-      fileNames = getAllFiles(wsfolder, '(tab|inc)');
-
-      let locations = fileNames.map((file) =>
-        getDefLocationInDocument(file, word)
-      );
-      Promise.all(locations)
-        .then(function (content) {
-          content.forEach((loc) => {
-            if (loc != null) {
-              return loc;
-            }
-          });
-        })
-        .then((result: any) => {
-          resolve(result);
-        });
-    });
-  }
-}
-
-function getAllLocationInDocument(filename: string, word: string) {
-  var labelRe = new RegExp(
-    '\\b(vartext|vartitle|valuelabels|text|title|labels|copylabels|uselabels)\\b\\s*.*(["\']?)(' +
-      word +
-      ')\\2.*=',
-    'i'
-  );
-  var variableRe = new RegExp(
-    '\\b(singleq|variable|varfamily|multiq|familyvar|makefamily|indexvar|invindexvar|combinedvar|vargroup|dichoq|groupvar|makegroup|spssgroup|init|groups|count|simplevar|bcdvar|bitgroup|mean|sum|min|max|stddev|variance|excludevalues|includevalues)\\b\\s*(["\']?)(' +
-      word +
-      ')\\2\\s*',
-    'i'
-  );
-  var computeWithRe = new RegExp(
-    '\\b(compute\\s+(?:copy|swap|load|ascend|descend|shuffle|add|eliminate|init))\\b\\s*(' +
-      word +
-      ')\\b\\s*',
-    'i'
-  );
-  var macroRe = new RegExp(
-    '#macro\\s*(' +
-      word +
-      ')\\b\\s*\\(|#[\\w\\.]+\\b\\s*\\(.*\\b(' +
-      word +
-      ')\\b',
-    'i'
-  );
-  var expandRe = new RegExp('#expand\\s+(' + word + ')\\b', 'i');
-  var tableRe = new RegExp(
-    '\\b(table)\\b(?:[^=]*)=\\s*[\\w\\.\\s]*(' +
-      word +
-      '[^\\s]*)\\b|\\b(table)\\b(?:[^=]*)=.+by\\s*[\\w\\.\\s]*(' +
-      word +
-      '[^\\s]*)\\b',
-    'i'
-  );
-  let wordRe = new RegExp(
-    '(in)\\s*\\b(' +
-      word +
-      '[^\\s]*)\\b|\\b(' +
-      word +
-      '[^\\s]*)\\s*\\b(eq|ne|le|ge|lt|gt)\\b',
-    'i'
-  );
-
-  let locArray: vscode.Location[] = [];
-
-  return vscode.workspace.openTextDocument(filename).then((content) => {
-    let scope = new sc.Scope(content);
-
-    for (let i = 0; i < content.lineCount; i++) {
-      let line = content.lineAt(i);
-
-      if (
-        scope.isNoSpecialScope(i, line.text.search(labelRe)) ||
-        scope.isNoSpecialScope(i, line.text.search(variableRe)) ||
-        scope.isNoSpecialScope(i, line.text.search(computeWithRe)) ||
-        scope.isNoSpecialScope(i, line.text.search(macroRe)) ||
-        scope.isNoSpecialScope(i, line.text.search(expandRe)) ||
-        scope.isNoSpecialScope(i, line.text.search(tableRe)) ||
-        scope.isNoSpecialScope(i, line.text.search(wordRe))
-      ) {
-        locArray.push(new vscode.Location(content.uri, line.range));
-      }
-    }
-    return locArray;
-  });
-}
-
-class GessTabsReferenceProvider implements vscode.ReferenceProvider {
-  public provideReferences(
-    document: vscode.TextDocument,
-    position: vscode.Position,
-    options: { includeDeclaration: boolean },
-    token: vscode.CancellationToken
-  ): Thenable<vscode.Location[]> {
-    const adjustedPos = adjustWordPosition(document, position);
-
-    return new Promise((resolve) => {
-      if (!adjustedPos[0]) {
-        return Promise.resolve(null);
-      }
-      const word = adjustedPos[1];
-
-      let loclist: vscode.Location[] = [];
-
-      let wsfolder =
-        getWorkspaceFolderPath(document.uri) ||
-        fixDriveCasingInWindows(path.dirname(document.fileName));
-      let fileNames: string[] = [];
-
-      fileNames = getAllFiles(wsfolder, '(tab|inc)');
-
-      let locations = fileNames.map((file) =>
-        getAllLocationInDocument(file, word)
-      );
-      Promise.all(locations)
-        .then(function (content) {
-          content.forEach((loc) => {
-            if (loc != null && loc[0] != null) {
-              loc.forEach((arr) => {
-                loclist.push(arr);
-              });
-            }
-          });
-          return loclist;
-        })
-        .then((result) => {
-          resolve(result);
-        })
-        .catch((e) => {
-          resolve(undefined);
-        });
     });
   }
 }
@@ -504,7 +601,7 @@ class GessTabsWorkspaceSymbolProvider
         )
       );
     return new Promise((resolve) => {
-      getAllFiles(wsfolder, '(tab|inc)').forEach((file) => {
+      getAllFilenamesInDirectory(wsfolder, '(tab|inc)').forEach((file) => {
         vscode.workspace
           .openTextDocument(wsfolder + '\\' + file)
           .then(function (content) {
@@ -513,7 +610,7 @@ class GessTabsWorkspaceSymbolProvider
             for (let i = 0; i < content.lineCount; i++) {
               let line: vscode.TextLine = content.lineAt(i);
               if (line.text.search(query) > -1) {
-                if (scope.isNoSpecialScope(i, line.text.search(variableRe))) {
+                if (scope.isNormalScope(i, line.text.search(variableRe))) {
                   let lineMatch = line.text.match(variableRe);
                   let lineMatch1 = lineMatch != null ? lineMatch[1] : '';
                   let lineMatch3 = lineMatch != null ? lineMatch[3] : '';
@@ -524,7 +621,7 @@ class GessTabsWorkspaceSymbolProvider
                     containerName: lineMatch1,
                   });
                 }
-                if (scope.isNoSpecialScope(i, line.text.search(tableRe))) {
+                if (scope.isNormalScope(i, line.text.search(tableRe))) {
                   let nameStr: string;
                   let commandStr: string;
                   let lineMatch = line.text.match(tableRe);
@@ -546,7 +643,7 @@ class GessTabsWorkspaceSymbolProvider
                     containerName: commandStr,
                   });
                 }
-                if (scope.isNoSpecialScope(i, line.text.search(wordRe))) {
+                if (scope.isNormalScope(i, line.text.search(wordRe))) {
                   let nameStr: string;
                   let commandStr: string;
                   let lineMatch = line.text.match(wordRe);
@@ -569,9 +666,9 @@ class GessTabsWorkspaceSymbolProvider
                   });
                 }
                 if (
-                  scope.isNoSpecialScope(i, line.text.search(computeWithRe)) ||
-                  scope.isNoSpecialScope(i, line.text.search(macroRe)) ||
-                  scope.isNoSpecialScope(i, line.text.search(expandRe))
+                  scope.isNormalScope(i, line.text.search(computeWithRe)) ||
+                  scope.isNormalScope(i, line.text.search(macroRe)) ||
+                  scope.isNormalScope(i, line.text.search(expandRe))
                 ) {
                   let lineMatch = line.text.match(computeWithRe);
                   let lineMatch1 = lineMatch != null ? lineMatch[1] : '';

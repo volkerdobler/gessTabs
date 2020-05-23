@@ -138,15 +138,19 @@ export class Scope {
       : undefined;
   }
 
-  public isNoSpecialScope(x: number, y: number): boolean {
+  public isNormalScope(x: number, y: number): boolean {
     return this.getScope(x, y) === ScopeEnum.n;
   }
 
-  public isInComment(x: number, y: number): boolean {
+  public isCommentScope(x: number, y: number): boolean {
     return this.getScope(x, y) === ScopeEnum.c;
   }
 
-  public isInString(x: number, y: number): boolean {
+  public isNotInComment(x: number, y: number): boolean {
+    return this.isNormalScope(x, y) || this.isStringScope(x, y);
+  }
+
+  public isStringScope(x: number, y: number): boolean {
     return this.getScope(x, y) === ScopeEnum.s;
   }
 }
