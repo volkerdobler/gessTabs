@@ -79,76 +79,206 @@ function getWorkspaceFolderPath(fileUri?: vscode.Uri): string | undefined {
   }
 }
 
-const variableDefRe = function (word: string): RegExp {
-  return new RegExp(
-    '\\b(singleq|variable|varfamily|multiq|familyvar|makefamily|indexvar|invindexvar|combinedvar|vargroup|dichoq|groupvar|makegroup|spssgroup|init|groups|count|simplevar|bcdvar|bitgroup|mean|sum|min|max|stddev|variance)\\b\\s*(["\']?)(' +
-      word +
-      ')\\2\\s*=',
-    'i'
-  );
+const constTokenVarName: string =
+  '(?:(?:\\b[A-Za-zÄÖÜßäöü][A-Za-zÄÖÜßäöü\\w\\.]+\\b))';
+const constStringVarName: string = '(?:"[^"]+")|(?:\'[^\']+\')';
+
+const constVarName: string =
+  '(?:' + constTokenVarName + '|' + constStringVarName + ')';
+
+const constVarList: string =
+  '(' + constVarName + '(?:\\s+(?:' + constVarName + '))*)';
+const constVarToList: string =
+  '(?:' + constVarList + '\\s*\\bto\\b\\s*' + constVarList + ')';
+
+const constAllVarList: string =
+  '(?:' + constVarToList + '|' + constVarList + ')';
+
+function getWordDefinition(word: string): string {
+  return '(?:(?:' + word + ')|(?:"' + word + '")|(?:\'' + word + "'))";
+}
+
+// {
+//   let tempWord =
+//     word.length > 0
+//       ? '(?:.*"' + word + '".*)|(?:.*\'' + word + "'.*)"
+//       : ;
+//   return ;
+// }
+
+const wordDefRe = function (word: string): RegExp {
+  return new RegExp(getWordDefinition(word), 'i');
+};
+
+const singleVarDefRe = function (word: string): RegExp {
+  const singleVarConst =
+    '(?:singleq|variable|varfamily|multiq|familyvar|makefamily|indexvar|invindexvar|combinedvar|vargroup|dichoq|groupvar|makegroup|spssgroup|init|groups|assocvar|count|simplevar|bcdvar|bitgroup|mean|sum|min|max|stddev|variance|static)';
+
+  let retVal: string = '';
+  if (word && word.length > 0) {
+    retVal =
+      '\\b' + singleVarConst + '\\b\\s*' + getWordDefinition(word) + '\\s*=';
+  } else {
+    retVal = '\\b' + singleVarConst + '\\b\\s*(' + constVarName + ')\\s*=';
+  }
+  return new RegExp(retVal, 'i');
+};
+
+const multiVarDefRe = function (word: string): RegExp {
+  const multiVarConst = '(?:variables)';
+
+  let retVal: string = '';
+  if (word && word.length > 0) {
+    retVal =
+      '\\b' +
+      multiVarConst +
+      '\\b\\s*' +
+      '(?:' +
+      '(?:' +
+      constVarList +
+      '*\\s*' +
+      getWordDefinition(word) +
+      ')|' +
+      '(?:.*\\bto\\b\\s*' +
+      constVarList +
+      '*\\s*\\b' +
+      getWordDefinition(word) +
+      '\\b)' +
+      ').*=';
+  } else {
+    retVal = '\\b' + multiVarConst + '\\b\\s*(?:' + constAllVarList + ')\\s*=';
+  }
+  return new RegExp(retVal, 'i');
 };
 
 const computeDefRe = function (word: string): RegExp {
-  return new RegExp(
-    '\\b(f?compute)\\s+.*\\b(["\']?)(' + word + ')\\2\\s*=',
-    'i'
-  );
+  const varDefWithOptions = '(?:f?compute|weightcells)';
+
+  if (word && word.length > 0) {
+    return new RegExp(
+      '\\b' +
+        varDefWithOptions +
+        '\\s+.*\\b' +
+        getWordDefinition(word) +
+        '\\s*=',
+      'i'
+    );
+  } else {
+    return new RegExp(
+      '\\b' + varDefWithOptions + '\\s+.*\\b' + constVarName + '\\s*=',
+      'i'
+    );
+  }
 };
 
 const macroDefRe = function (word: string): RegExp {
-  return new RegExp('#macro\\s+(' + word + ')\\b\\s*\\(', 'i');
+  let tempWord: string =
+    word && word.length > 0 ? getWordDefinition(word) : constTokenVarName;
+
+  return new RegExp('#macro\\s+(#' + tempWord + ')\\s*\\(', 'i');
+};
+
+const macroRe = function (word: string): RegExp {
+  let tempWord: string =
+    word && word.length > 0 ? getWordDefinition(word) : constTokenVarName;
+
+  return new RegExp(
+    '#' + constTokenVarName + '\\s*\\(.*(' + tempWord + ').*',
+    'i'
+  );
 };
 
 const expandDefRe = function (word: string): RegExp {
-  return new RegExp('#expand\\s+(' + word + ')\\b', 'i');
+  let tempWord =
+    word && word.length > 0 ? getWordDefinition(word) : constTokenVarName;
+  return new RegExp('#expand\\s+(#' + tempWord + ')', 'i');
 };
 
-const labelDefRe = function (word: string): RegExp {
-  return new RegExp(
-    '\\b(vartext|vartitle|valuelabels|text|title|labels|copylabels|uselabels|excludevalues|includevalues)\\b\\s*.*(["\']?)(' +
-      word +
-      ')\\2.*=',
-    'i'
-  );
+const expandRe = function (word: string): RegExp {
+  let tempWord =
+    word && word.length > 0 ? getWordDefinition(word) : constTokenVarName;
+  return new RegExp('#' + tempWord + '\\b', 'i');
 };
 
-const labelAllRe = function (): RegExp {
-  return new RegExp(
-    '\\b(vartext|vartitle|valuelabels|text|title|labels|copylabels|uselabels|excludevalues|includevalues)\\b\\s*(["\']?)([\\w\\.]*)\\2\\s*(((["\']?)([\\w\\.]*)\\6\\s*)*)=',
-    'i'
-  );
+const multiVarRe = function (word: string): RegExp {
+  const multiVarConst =
+    '(?:vartext|vartitle|valuelabels|text|title|labels|copylabels|uselabels|excludevalues|includevalues)';
+
+  let retVal: string = '';
+  if (word && word.length > 0) {
+    retVal =
+      '\\b' +
+      multiVarConst +
+      '\\b\\s*' +
+      '(?:' +
+      '(?:' +
+      constVarList +
+      '*\\s*' +
+      getWordDefinition(word) +
+      ')|' +
+      '(?:.*\\s*\\bto\\b\\s*' +
+      constVarList +
+      '*\\s*\\b' +
+      getWordDefinition(word) +
+      '\\b)' +
+      ').*=';
+  } else {
+    retVal = '\\b' + multiVarConst + '\\b\\s*(?:' + constAllVarList + ')\\s*=';
+  }
+  return new RegExp(retVal, 'i');
 };
 
-const varRangeDefRe = function (word: string): RegExp {
-  const wordOhneZahl = word.split(/(.*[^\d])(\d+$)/);
-  let suchWort = wordOhneZahl.length > 1 ? wordOhneZahl[1] : wordOhneZahl[0];
-  return new RegExp(
-    '\\b(variables)\\s+(["\']?)(' +
-      suchWort +
-      '\\d+)\\2\\s*\\bto\\s+(["\']?)(' +
-      suchWort +
-      '\\d+)\\4\\b\\s*=',
-    'i'
-  );
+const tableHeadRe = function (word: string): RegExp {
+  const tableVarConst = '(?:table)';
+
+  let retVal: string = '';
+  if (word && word.length > 0) {
+    retVal =
+      '\\b' +
+      tableVarConst +
+      '\\b[^=]*=\\s*' +
+      '(?:' +
+      constAllVarList +
+      '*\\s*' +
+      getWordDefinition(word) +
+      '.*\\bby\\b)';
+  } else {
+    retVal =
+      '\\b' +
+      tableVarConst +
+      '\\b[^=]*=\\s*(?:' +
+      constAllVarList +
+      ')\\s*\\bby\\b';
+  }
+  return new RegExp(retVal, 'i');
 };
 
-const varListDefRe = function (): RegExp {
-  return new RegExp(
-    '\\b(variables)\\s+(["\']?)([\\w\\.]*)\\2\\s*(((["\']?)([\\w\\.]*)\\6\\s*)*)=',
-    'i'
-  );
+const tableAxisRe = function (word: string): RegExp {
+  const tableVarConst = '(?:table)';
+
+  let retVal: string = '';
+  if (word && word.length > 0) {
+    retVal =
+      '\\b' +
+      tableVarConst +
+      '\\b[^=]*=\\s*' +
+      '(?:.*\\s*\\bby\\b\\s*' +
+      constAllVarList +
+      '*\\s*' +
+      getWordDefinition(word) +
+      ')';
+  } else {
+    retVal =
+      '\\b' +
+      tableVarConst +
+      '\\b[^=]*=\\s*.+\\s*\\bby\\b\\s*' +
+      '(?:' +
+      constAllVarList +
+      ')';
+  }
+  return new RegExp(retVal, 'i');
 };
 
-const wordDefRe = function (word: string): RegExp {
-  return new RegExp('\\b(["\']?)' + word + '\\1\\b', 'i');
-};
-
-const tableDefRe = function (): RegExp {
-  return new RegExp(
-    '\\b(table)\\b(?:[^=]*)=\\s*([^\\s]+(?:\\s[^\\s]+)*)\\s+by\\s+([^\\s]+(?:\\s[^\\s]+)*);',
-    'i'
-  );
-};
 // sucht das Wort unter dem Cursor, wobei Zahlen, Buchstaben, Punkte sowie # als
 // Wort akzeptiert werden. Gibt dann einen Array zurück, wobei das 1st Element
 // true ist, wenn es ein Wort gefunden hat, sonst false. Das eigentliche Wort
@@ -157,11 +287,11 @@ function getWordAtPosition(
   document: vscode.TextDocument,
   position: vscode.Position
 ): [boolean, string, vscode.Position] {
-  const wordRange = document.getWordRangeAtPosition(
-    position,
-    /\b(#?[\w\.]+)\b/
-  );
-  const word = wordRange ? document.getText(wordRange) : '';
+  const wordLimits: RegExp = new RegExp(constVarName, 'i');
+  const wordRange = document.getWordRangeAtPosition(position, wordLimits);
+  const word = wordRange
+    ? document.getText(wordRange).replace(/"/g, '').replace(/'/g, '')
+    : '';
   if (!wordRange) {
     return [false, '', position];
   }
@@ -208,7 +338,8 @@ async function getDefLocationInDocument(
 ): Promise<vscode.Location> {
   let locPosition: vscode.Location;
 
-  const varRegExp = variableDefRe(word);
+  const singleVarRegExp = singleVarDefRe(word);
+  const multiVarRegExp = multiVarDefRe(word);
   const computeRegExp = computeDefRe(word);
   const macroRegExp = macroDefRe(word);
   const expandRegExp = expandDefRe(word);
@@ -218,9 +349,13 @@ async function getDefLocationInDocument(
 
     for (let i = 0; i < content.lineCount; i++) {
       let line = content.lineAt(i);
+      if (line.text.length === 0) {
+        continue;
+      }
 
       if (
-        scope.isNotInComment(i, line.text.search(varRegExp)) ||
+        scope.isNotInComment(i, line.text.search(singleVarRegExp)) ||
+        scope.isNotInComment(i, line.text.search(multiVarRegExp)) ||
         scope.isNotInComment(i, line.text.search(computeRegExp)) ||
         scope.isNotInComment(i, line.text.search(macroRegExp)) ||
         scope.isNotInComment(i, line.text.search(expandRegExp))
@@ -232,21 +367,43 @@ async function getDefLocationInDocument(
   });
 }
 
+// sucht alle Stellen, an denen die Variable genutzt wird, also nicht nur, wo
+// sie definiert wird, sondern auch in tables.
 async function getAllLocationsInDocument(filename: string, word: string) {
   let locArray: vscode.Location[] = [];
 
-  const varRangeRegExp: RegExp = varRangeDefRe(word);
-  const wordRegExp: RegExp = wordDefRe(word);
+  //  const wordRegExp: RegExp = wordDefRe(word);
+  const singleVarRegExp = singleVarDefRe(word);
+  const multiVarRegExp = multiVarRe(word);
+  const multiVarDefRegExp = multiVarDefRe(word);
+  const computeRegExp = computeDefRe(word);
+  const macroDefRegExp = macroDefRe(word);
+  const macroRegExp = macroRe(word);
+  const expandDefRegExp = expandDefRe(word);
+  const expandRegExp = expandRe(word);
+  const tableHeadRegExp = tableHeadRe(word);
+  const tableAxisRegExp = tableAxisRe(word);
 
   return vscode.workspace.openTextDocument(filename).then((content) => {
     let scope = new sc.Scope(content);
 
     for (let i = 0; i < content.lineCount; i++) {
       let line = content.lineAt(i);
+      if (line.text.length === 0) {
+        continue;
+      }
 
       if (
-        scope.isNotInComment(i, line.text.search(varRangeRegExp)) ||
-        scope.isNotInComment(i, line.text.search(wordRegExp))
+        scope.isNotInComment(i, line.text.search(singleVarRegExp)) ||
+        scope.isNotInComment(i, line.text.search(multiVarRegExp)) ||
+        scope.isNotInComment(i, line.text.search(computeRegExp)) ||
+        scope.isNotInComment(i, line.text.search(macroDefRegExp)) ||
+        scope.isNotInComment(i, line.text.search(macroRegExp)) ||
+        scope.isNotInComment(i, line.text.search(expandDefRegExp)) ||
+        scope.isNotInComment(i, line.text.search(expandRegExp)) ||
+        scope.isNotInComment(i, line.text.search(tableHeadRegExp)) ||
+        scope.isNotInComment(i, line.text.search(tableAxisRegExp)) ||
+        scope.isNotInComment(i, line.text.search(multiVarDefRegExp))
       ) {
         locArray.push(new vscode.Location(content.uri, line.range));
       }
@@ -349,196 +506,182 @@ class GesstabsReferenceProvider implements vscode.ReferenceProvider {
   }
 }
 
+// Allow the user to quickly navigate to any symbol definition in the open editor.
+// CTRL-SHIFT o is default keybinding
 class GesstabsDocumentSymbolProvider implements vscode.DocumentSymbolProvider {
   public provideDocumentSymbols(
     document: vscode.TextDocument,
     token: vscode.CancellationToken
   ): Thenable<vscode.SymbolInformation[]> {
     return new Promise((resolve, reject) => {
-      var symbols: vscode.SymbolInformation[] = [];
+      let symbols: vscode.SymbolInformation[] = [];
 
-      const labelRegExp: RegExp = labelAllRe();
-      const varRegExp: RegExp = variableDefRe('[\\w\\.]+');
-      const computeRegExp: RegExp = computeDefRe('[\\w\\.]+');
-      const macroRegExp: RegExp = macroDefRe('[\\w\\.]+');
-      const expandRegExp: RegExp = expandDefRe('[\\w\\.]+');
-      const tableRegExp: RegExp = tableDefRe();
-      const varRangeRegExp: RegExp = varRangeDefRe('[\\w\\.]+');
-      const varListRegExp: RegExp = varListDefRe();
+      function spush(
+        kind: vscode.SymbolKind,
+        container: string,
+        m1: string,
+        m2: string,
+        m3: string,
+        uri: vscode.Uri,
+        range: vscode.Range
+      ) {
+        const varName = new RegExp(
+          '(' + constTokenVarName + ')|(' + constStringVarName + ')|(.+)'
+        );
+        function lpush(teststring: string) {
+          while (teststring && teststring.length > 0) {
+            teststring = teststring.trim();
+            let xname = teststring.match(varName);
+            if (xname) {
+              let pname = xname[2]
+                ? xname[2].substring(1, xname[2].length - 1)
+                : xname[1]
+                ? xname[1]
+                : xname[3];
+              symbols.push({
+                name: pname,
+                kind: kind,
+                location: new vscode.Location(uri, range),
+                containerName: container,
+              });
+              teststring = teststring.replace(xname[0], '');
+            }
+          }
+        }
 
-      // var labelRe = new RegExp(
-      //   /\b(vartext|vartitle|valuelabels|text|title|labels|copylabels|uselabels)\b\s*(["']?)([\w\.]*)\2\s*(((["']?)([\w\.]*)\6\s*)*)=/i
-      // );
-      // var variableRe = new RegExp(
-      //   /\b(singleq|variable|varfamily|multiq|familyvar|makefamily|indexvar|invindexvar|combinedvar|vargroup|dichoq|groupvar|makegroup|spssgroup|init|groups|count|simplevar|bcdvar|bitgroup|mean|sum|min|max|stddev|variance)\b\s*(["']?)([\w\.]*)\2\s*=/i
-      // );
-      // var computeWithRe = new RegExp(
-      //   /\b(compute\s+(?:copy|swap|load|ascend|descend|shuffle|add|eliminate|init)\b)\s*([\w\.]+)\b\s*=/i
-      // );
-      // var macroRe = new RegExp(/(?:#macro)\s+(#[\w\.]+)\b\s*\(/i);
-      // var expandRe = new RegExp(/(?:#expand)\s+(#[\w\.]+)\b/i);
-      // var tableRe = new RegExp(
-      //   /\b(table)\b(?:[^=]*)=\s*([^\s]+(?:\s[^\s]+)*)\s+by\s+([^\s]+(?:\s[^\s]+)*);/i
-      // );
+        lpush(m1);
+        lpush(m2);
+        lpush(m3);
+      }
+
+      const singleVarRegExp: RegExp = singleVarDefRe('');
+      const multiVarRegExp: RegExp = multiVarRe('');
+      const multiVarDefRegExp: RegExp = multiVarDefRe('');
+      const computeRegExp: RegExp = computeDefRe('');
+      const macroRegExp: RegExp = macroDefRe('');
+      const expandRegExp: RegExp = expandDefRe('');
+      const tableHeadRegExp: RegExp = tableHeadRe('');
+      const tableAxisRegExp: RegExp = tableAxisRe('');
 
       let scope = new sc.Scope(document);
 
       for (let i = 0; i < document.lineCount; i++) {
-        var line = document.lineAt(i);
+        let line = document.lineAt(i);
 
         if (line.text.length === 0) {
           continue;
         }
 
-        if (scope.isNotInComment(i, line.text.search(labelRegExp))) {
-          let lineMatch = line.text.match(labelRegExp);
-          if (lineMatch && lineMatch.length > 2 && lineMatch[3].length > 0) {
-            symbols.push({
-              name: lineMatch[3],
-              kind: vscode.SymbolKind.String,
-              location: new vscode.Location(document.uri, line.range),
-              containerName: lineMatch[1].toLocaleLowerCase(),
-            });
-          }
-          if (lineMatch && lineMatch.length >= 4 && lineMatch[4].length > 0) {
-            lineMatch[4]
-              .replace(/\"/g, '')
-              .split(' ')
-              .forEach(function (elem, index) {
-                if (elem.length > 0) {
-                  symbols.push({
-                    name: elem,
-                    kind: vscode.SymbolKind.String,
-                    location: new vscode.Location(document.uri, line.range),
-                    containerName: lineMatch
-                      ? lineMatch[1].toLocaleLowerCase()
-                      : '',
-                  });
-                }
-              });
-          }
-        }
-        if (scope.isNotInComment(i, line.text.search(varRangeRegExp))) {
-          let lineMatch = line.text.match(varRangeRegExp);
+        if (scope.isNotInComment(i, line.text.search(singleVarRegExp))) {
+          let lineMatch = line.text.match(singleVarRegExp);
           if (lineMatch) {
-            symbols.push({
-              name: lineMatch[3],
-              kind: vscode.SymbolKind.Variable,
-              location: new vscode.Location(document.uri, line.range),
-              containerName: 'variables',
-            });
-            symbols.push({
-              name: lineMatch[5],
-              kind: vscode.SymbolKind.Variable,
-              location: new vscode.Location(document.uri, line.range),
-              containerName: 'variables',
-            });
-          }
-        } else {
-          if (scope.isNotInComment(i, line.text.search(varListRegExp))) {
-            let lineMatch = line.text.match(varListRegExp);
-            if (lineMatch && lineMatch[3].length > 0) {
-              symbols.push({
-                name: lineMatch[3],
-                kind: vscode.SymbolKind.Variable,
-                location: new vscode.Location(document.uri, line.range),
-                containerName: 'variables',
-              });
-              let re: RegExp;
-              if (lineMatch[4].search(/"/) > -1) {
-                re = /\s*"\s*/;
-              } else {
-                re = /\s+/;
-              }
-              lineMatch[4].split(re).forEach(function (value) {
-                if (value.length > 0 && value.search(/[\s"]*&/) !== 0) {
-                  symbols.push({
-                    name: value,
-                    kind: vscode.SymbolKind.Variable,
-                    location: new vscode.Location(document.uri, line.range),
-                    containerName: 'variables',
-                  });
-                }
-              });
-            }
+            spush(
+              vscode.SymbolKind.Variable,
+              'variables',
+              lineMatch[1],
+              '',
+              '',
+              document.uri,
+              line.range
+            );
           }
         }
-        if (scope.isNotInComment(i, line.text.search(varRegExp))) {
-          let lineMatch = line.text.match(varRegExp);
-          if (lineMatch && lineMatch.length >= 3 && lineMatch[3].length > 0) {
-            symbols.push({
-              name: lineMatch[3],
-              kind: vscode.SymbolKind.Variable,
-              location: new vscode.Location(document.uri, line.range),
-              containerName: lineMatch[1].toLocaleLowerCase(),
-            });
+        if (scope.isNotInComment(i, line.text.search(multiVarRegExp))) {
+          let lineMatch = line.text.match(multiVarRegExp);
+          if (lineMatch) {
+            spush(
+              vscode.SymbolKind.Variable,
+              'variables',
+              lineMatch[1],
+              lineMatch[2],
+              lineMatch[3],
+              document.uri,
+              line.range
+            );
+          }
+        }
+        if (scope.isNotInComment(i, line.text.search(multiVarDefRegExp))) {
+          let lineMatch = line.text.match(multiVarDefRegExp);
+          if (lineMatch) {
+            spush(
+              vscode.SymbolKind.Variable,
+              'variables',
+              lineMatch[1],
+              lineMatch[2],
+              lineMatch[3],
+              document.uri,
+              line.range
+            );
           }
         }
         if (scope.isNormalScope(i, line.text.search(computeRegExp))) {
           let lineMatch = line.text.match(computeRegExp);
-          if (lineMatch && lineMatch.length >= 2 && lineMatch[2].length > 0) {
-            symbols.push({
-              name: lineMatch[2],
-              kind: vscode.SymbolKind.Variable,
-              location: new vscode.Location(document.uri, line.range),
-              containerName: lineMatch[1].toLocaleLowerCase(),
-            });
+          if (lineMatch) {
+            spush(
+              vscode.SymbolKind.Variable,
+              lineMatch[1].toLocaleLowerCase(),
+              lineMatch[1],
+              '',
+              '',
+              document.uri,
+              line.range
+            );
           }
         }
         if (scope.isNormalScope(i, line.text.search(macroRegExp))) {
           let lineMatch = line.text.match(macroRegExp);
           if (lineMatch && lineMatch.length >= 1 && lineMatch[1].length > 0) {
-            symbols.push({
-              name: lineMatch[1],
-              kind: vscode.SymbolKind.Function,
-              location: new vscode.Location(document.uri, line.range),
-              containerName: 'macro',
-            });
+            spush(
+              vscode.SymbolKind.Function,
+              'macro',
+              lineMatch[1],
+              '',
+              '',
+              document.uri,
+              line.range
+            );
           }
         }
         if (scope.isNormalScope(i, line.text.search(expandRegExp))) {
           let lineMatch = line.text.match(expandRegExp);
           if (lineMatch && lineMatch.length >= 1 && lineMatch[1].length > 0) {
-            symbols.push({
-              name: lineMatch[1],
-              kind: vscode.SymbolKind.Function,
-              location: new vscode.Location(document.uri, line.range),
-              containerName: 'expand',
-            });
+            spush(
+              vscode.SymbolKind.Function,
+              'expand',
+              lineMatch[1],
+              '',
+              '',
+              document.uri,
+              line.range
+            );
           }
         }
-        if (scope.isNormalScope(i, line.text.search(tableRegExp))) {
-          let lineMatch = line.text.match(tableRegExp);
-          if (lineMatch && lineMatch.length === 4) {
-            let re: RegExp;
-            if (lineMatch[2].search(/"/) > -1) {
-              re = /\s*"\s*/;
-            } else {
-              re = /\s+/;
-            }
-            lineMatch[2].split(re).forEach(function (value) {
-              if (value.search(/[\s"]*&/) !== 0) {
-                symbols.push({
-                  name: value,
-                  kind: vscode.SymbolKind.Variable,
-                  location: new vscode.Location(document.uri, line.range),
-                  containerName: 'head',
-                });
-              }
-            });
-            if (lineMatch[3].search(/"/) > -1) {
-              re = /\s*"\s*/;
-            } else {
-              re = /\s+/;
-            }
-            lineMatch[3].split(re).forEach(function (value) {
-              symbols.push({
-                name: value,
-                kind: vscode.SymbolKind.Variable,
-                location: new vscode.Location(document.uri, line.range),
-                containerName: 'axis',
-              });
-            });
+        if (scope.isNormalScope(i, line.text.search(tableHeadRegExp))) {
+          let lineMatch = line.text.match(tableHeadRegExp);
+          if (lineMatch) {
+            spush(
+              vscode.SymbolKind.Variable,
+              'head',
+              lineMatch[1],
+              '',
+              '',
+              document.uri,
+              line.range
+            );
+          }
+        }
+        if (scope.isNormalScope(i, line.text.search(tableAxisRegExp))) {
+          let lineMatch = line.text.match(tableAxisRegExp);
+          if (lineMatch) {
+            spush(
+              vscode.SymbolKind.Variable,
+              'axis',
+              lineMatch[1],
+              '',
+              '',
+              document.uri,
+              line.range
+            );
           }
         }
       }
@@ -548,6 +691,7 @@ class GesstabsDocumentSymbolProvider implements vscode.DocumentSymbolProvider {
   }
 }
 
+// Allow the user to quickly navigate to symbol definitions anywhere in the folder (workspace) opened in VS
 class GessTabsWorkspaceSymbolProvider
   implements vscode.WorkspaceSymbolProvider {
   public provideWorkspaceSymbols(
@@ -555,36 +699,14 @@ class GessTabsWorkspaceSymbolProvider
     token: vscode.CancellationToken
   ): Thenable<vscode.SymbolInformation[]> {
     let symbols: vscode.SymbolInformation[] = [];
-    var variableRe = new RegExp(
-      '\\b(singleq|variable|varfamily|multiq|familyvar|makefamily|indexvar|invindexvar|combinedvar|vargroup|dichoq|groupvar|makegroup|spssgroup|init|groups|count|simplevar|bcdvar|bitgroup|mean|sum|min|max|stddev|variance)\\b\\s*(["\']?)(' +
-        query +
-        ')\\2\\s*=',
-      'i'
-    );
-    var computeWithRe = new RegExp(
-      '\\b(compute\\s+(?:copy|swap|load|ascend|descend|shuffle|add|eliminate|init))\\b\\s*(' +
-        query +
-        ')\\b\\s*=',
-      'i'
-    );
-    var macroRe = new RegExp('#macro\\s+(#' + query + ')\\b\\s*\\(', 'i');
-    var expandRe = new RegExp('#expand\\s+(#' + query + ')\\b', 'i');
-    var tableRe = new RegExp(
-      '\\b(table)\\b(?:[^=]*)=\\s*[\\w\\.\\s]*\\b(' +
-        query +
-        '[^\\s]*)\\b|\\b(table)\\b(?:[^=]*)=.+by\\s*[\\w\\.\\s]*\\b(' +
-        query +
-        '[^\\s]*)\\b',
-      'i'
-    );
-    let wordRe = new RegExp(
-      '(in)\\s*\\b(' +
-        query +
-        '[^\\s]*)\\b|\\b(' +
-        query +
-        '[^\\s]*)\\s*\\b(eq|ne|le|ge|lt|gt)\\b',
-      'i'
-    );
+
+    const singleVarRegExp: RegExp = singleVarDefRe(query);
+    const multiVarRegExp: RegExp = multiVarDefRe(query);
+    const computeRegExp: RegExp = computeDefRe(query);
+    const macroRegExp: RegExp = macroDefRe(query);
+    const expandRegExp: RegExp = expandDefRe(query);
+    const tableHeadRegExp: RegExp = tableHeadRe(query);
+
     const wsfolder =
       getWorkspaceFolderPath(
         vscode.window.activeTextEditor &&
@@ -607,77 +729,160 @@ class GessTabsWorkspaceSymbolProvider
           .then(function (content) {
             let scope = new sc.Scope(content);
 
+            function spush(
+              kind: vscode.SymbolKind,
+              container: string,
+              m1: string,
+              m2: string,
+              m3: string,
+              uri: vscode.Uri,
+              range: vscode.Range
+            ) {
+              const varName = new RegExp(
+                '(' + constTokenVarName + ')|(' + constStringVarName + ')|.+'
+              );
+              function lpush(teststring: string) {
+                while (teststring && teststring.length > 0) {
+                  teststring = teststring.trim();
+                  let xname = teststring.match(varName);
+                  if (xname) {
+                    let pname = xname[2]
+                      ? xname[2].substring(1, xname[2].length - 1)
+                      : xname[1]
+                      ? xname[1]
+                      : xname[3];
+                    symbols.push({
+                      name: pname,
+                      kind: kind,
+                      location: new vscode.Location(uri, range),
+                      containerName: container,
+                    });
+                    teststring = teststring.replace(xname[0], '');
+                  }
+                }
+              }
+
+              lpush(m1);
+              lpush(m2);
+              lpush(m3);
+            }
+
             for (let i = 0; i < content.lineCount; i++) {
               let line: vscode.TextLine = content.lineAt(i);
-              if (line.text.search(query) > -1) {
-                if (scope.isNormalScope(i, line.text.search(variableRe))) {
-                  let lineMatch = line.text.match(variableRe);
-                  let lineMatch1 = lineMatch != null ? lineMatch[1] : '';
-                  let lineMatch3 = lineMatch != null ? lineMatch[3] : '';
-                  symbols.push({
-                    name: lineMatch3,
-                    kind: vscode.SymbolKind.Function,
-                    location: new vscode.Location(content.uri, line.range),
-                    containerName: lineMatch1,
-                  });
+
+              if (line.text.length === 0) {
+                continue;
+              }
+
+              if (scope.isNotInComment(i, line.text.search(singleVarRegExp))) {
+                let lineMatch = line.text.match(singleVarRegExp);
+                if (lineMatch) {
+                  spush(
+                    vscode.SymbolKind.Variable,
+                    'variables',
+                    lineMatch[1],
+                    '',
+                    '',
+                    content.uri,
+                    line.range
+                  );
                 }
-                if (scope.isNormalScope(i, line.text.search(tableRe))) {
-                  let nameStr: string;
-                  let commandStr: string;
-                  let lineMatch = line.text.match(tableRe);
-                  let lineMatch1 = lineMatch != null ? lineMatch[1] : '';
-                  let lineMatch2 = lineMatch != null ? lineMatch[2] : '';
-                  let lineMatch3 = lineMatch != null ? lineMatch[3] : '';
-                  let lineMatch4 = lineMatch != null ? lineMatch[4] : '';
-                  if (lineMatch3 == null) {
-                    nameStr = lineMatch2;
-                    commandStr = lineMatch1;
-                  } else {
-                    nameStr = lineMatch4;
-                    commandStr = lineMatch3;
-                  }
-                  symbols.push({
-                    name: nameStr,
-                    kind: vscode.SymbolKind.Function,
-                    location: new vscode.Location(content.uri, line.range),
-                    containerName: commandStr,
-                  });
+              }
+              if (scope.isNotInComment(i, line.text.search(multiVarRegExp))) {
+                let lineMatch = line.text.match(multiVarRegExp);
+                if (lineMatch) {
+                  spush(
+                    vscode.SymbolKind.Variable,
+                    'variables',
+                    lineMatch[1],
+                    lineMatch[2],
+                    lineMatch[3],
+                    content.uri,
+                    line.range
+                  );
                 }
-                if (scope.isNormalScope(i, line.text.search(wordRe))) {
-                  let nameStr: string;
-                  let commandStr: string;
-                  let lineMatch = line.text.match(wordRe);
-                  let lineMatch1 = lineMatch != null ? lineMatch[1] : '';
-                  let lineMatch2 = lineMatch != null ? lineMatch[2] : '';
-                  let lineMatch3 = lineMatch != null ? lineMatch[3] : '';
-                  let lineMatch4 = lineMatch != null ? lineMatch[4] : '';
-                  if (lineMatch3 == null) {
-                    nameStr = lineMatch2;
-                    commandStr = lineMatch1;
-                  } else {
-                    nameStr = lineMatch3;
-                    commandStr = lineMatch4;
-                  }
-                  symbols.push({
-                    name: nameStr,
-                    kind: vscode.SymbolKind.Function,
-                    location: new vscode.Location(content.uri, line.range),
-                    containerName: commandStr,
-                  });
+              }
+              if (scope.isNormalScope(i, line.text.search(computeRegExp))) {
+                let lineMatch = line.text.match(computeRegExp);
+                if (lineMatch) {
+                  spush(
+                    vscode.SymbolKind.Variable,
+                    lineMatch[1].toLocaleLowerCase(),
+                    lineMatch[1],
+                    '',
+                    '',
+                    content.uri,
+                    line.range
+                  );
                 }
+              }
+              if (scope.isNormalScope(i, line.text.search(macroRegExp))) {
+                let lineMatch = line.text.match(macroRegExp);
                 if (
-                  scope.isNormalScope(i, line.text.search(computeWithRe)) ||
-                  scope.isNormalScope(i, line.text.search(macroRe)) ||
-                  scope.isNormalScope(i, line.text.search(expandRe))
+                  lineMatch &&
+                  lineMatch.length >= 1 &&
+                  lineMatch[1].length > 0
                 ) {
-                  let lineMatch = line.text.match(computeWithRe);
-                  let lineMatch1 = lineMatch != null ? lineMatch[1] : '';
-                  let lineMatch2 = lineMatch != null ? lineMatch[2] : '';
-                  symbols.push({
-                    name: lineMatch2,
-                    kind: vscode.SymbolKind.Function,
-                    location: new vscode.Location(content.uri, line.range),
-                    containerName: lineMatch1,
+                  spush(
+                    vscode.SymbolKind.Function,
+                    'macro',
+                    lineMatch[1],
+                    '',
+                    '',
+                    content.uri,
+                    line.range
+                  );
+                }
+              }
+              if (scope.isNormalScope(i, line.text.search(expandRegExp))) {
+                let lineMatch = line.text.match(expandRegExp);
+                if (
+                  lineMatch &&
+                  lineMatch.length >= 1 &&
+                  lineMatch[1].length > 0
+                ) {
+                  spush(
+                    vscode.SymbolKind.Function,
+                    'expand',
+                    lineMatch[1],
+                    '',
+                    '',
+                    content.uri,
+                    line.range
+                  );
+                }
+              }
+              if (scope.isNormalScope(i, line.text.search(tableHeadRegExp))) {
+                let lineMatch = line.text.match(tableHeadRegExp);
+                if (lineMatch && lineMatch.length === 4) {
+                  let re: RegExp;
+                  if (lineMatch[2].search(/"/) > -1) {
+                    re = /\s*"\s*/;
+                  } else {
+                    re = /\s+/;
+                  }
+                  lineMatch[2].split(re).forEach(function (value) {
+                    if (value.search(/[\s"]*&/) !== 0) {
+                      symbols.push({
+                        name: value,
+                        kind: vscode.SymbolKind.Variable,
+                        location: new vscode.Location(content.uri, line.range),
+                        containerName: 'head',
+                      });
+                    }
+                  });
+                  if (lineMatch[3].search(/"/) > -1) {
+                    re = /\s*"\s*/;
+                  } else {
+                    re = /\s+/;
+                  }
+                  lineMatch[3].split(re).forEach(function (value) {
+                    symbols.push({
+                      name: value,
+                      kind: vscode.SymbolKind.Variable,
+                      location: new vscode.Location(content.uri, line.range),
+                      containerName: 'axis',
+                    });
                   });
                 }
               }
