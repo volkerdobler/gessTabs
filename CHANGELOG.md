@@ -48,7 +48,7 @@ Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how 
 - Added fix to find also files in subdirectories
 - Changed tmLanguage file
 
-## next release (0.2.0)
+## 0.2.0
 
 - Updated Symbols in tmLanguage file
-- Changed how to identify comments, now the scope will be identified for each char including comments & strings
+- Changed how to identify comments and strings, now the scope will be identified for each char in a text file
