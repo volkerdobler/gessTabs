@@ -152,20 +152,33 @@ const multiVarDefRe = function (word: string): RegExp {
 };
 
 const computeDefRe = function (word: string): RegExp {
-  const varDefWithOptions = '(?:f?compute|weightcells)';
+  const varDefWithOptions = '\\b(?:f?compute|weightcells)\\b';
+  const optionStr =
+    '\\b(?:copy|swap|load|ascend|descend|shuffle|add|eliminate|init|replace|sort|alpha|autoalign)\\b';
 
   if (word && word.length > 0) {
     return new RegExp(
-      '\\b' +
-        varDefWithOptions +
-        '\\s+.*\\b' +
+      varDefWithOptions +
+        '\\s+(?:' +
+        optionStr +
+        '\\s*)?' +
+        '(?:' +
+        constVarList +
+        '*\\s*\\b' +
         getWordDefinition(word) +
-        '\\s*=',
+        '\\b).*=',
       'i'
     );
   } else {
     return new RegExp(
-      '\\b' + varDefWithOptions + '\\s+.*\\b' + constVarName + '\\s*=',
+      varDefWithOptions +
+        '\\s+(?:(?:' +
+        optionStr +
+        '\\s*(' +
+        constVarName +
+        '))|(?:' +
+        constVarList +
+        '))\\s*=',
       'i'
     );
   }
@@ -175,7 +188,7 @@ const macroDefRe = function (word: string): RegExp {
   let tempWord: string =
     word && word.length > 0 ? getWordDefinition(word) : constTokenVarName;
 
-  return new RegExp('#macro\\s+(#' + tempWord + ')\\s*\\(', 'i');
+  return new RegExp('(?:#macro\\s+(#' + tempWord + ')\\s*\\()', 'i');
 };
 
 const macroRe = function (word: string): RegExp {
@@ -188,6 +201,33 @@ const macroRe = function (word: string): RegExp {
   );
 };
 
+const macroOwnDefRe = function (word: string): RegExp {
+  const multiMacros = ['makemulti', 'makemulti2'];
+
+  let tempWord: string =
+    word && word.length > 0 ? getWordDefinition(word) : '\\0';
+
+  let regExpStr = '';
+
+  multiMacros.forEach(function (value, index) {
+    regExpStr += '(?:#' + value + '\\s*\\(\\s*(' + tempWord + '))|';
+  });
+
+  regExpStr +=
+    '(?:#makeskalavar\\s*\\(\\s*(' + tempWord.replace('_skala', '') + '))|';
+  regExpStr +=
+    '(?:#skalatab\\s*\\(\\s*(' + tempWord.replace('_t_b', '') + '))|';
+
+  if (regExpStr.endsWith('|')) {
+    regExpStr = regExpStr.substring(0, regExpStr.length - 1);
+  }
+  if (regExpStr.length === 0) {
+    regExpStr = '\\0';
+  }
+
+  return new RegExp(regExpStr);
+};
+
 const expandDefRe = function (word: string): RegExp {
   let tempWord =
     word && word.length > 0 ? getWordDefinition(word) : constTokenVarName;
@@ -197,7 +237,7 @@ const expandDefRe = function (word: string): RegExp {
 const expandRe = function (word: string): RegExp {
   let tempWord =
     word && word.length > 0 ? getWordDefinition(word) : constTokenVarName;
-  return new RegExp('#' + tempWord + '\\b', 'i');
+  return new RegExp('(#' + tempWord + ')\\b', 'i');
 };
 
 const multiVarRe = function (word: string): RegExp {
@@ -342,6 +382,7 @@ async function getDefLocationInDocument(
   const multiVarRegExp = multiVarDefRe(word);
   const computeRegExp = computeDefRe(word);
   const macroRegExp = macroDefRe(word);
+  const macroOwnRegExp = macroOwnDefRe(word);
   const expandRegExp = expandDefRe(word);
 
   return vscode.workspace.openTextDocument(filename).then((content) => {
@@ -358,6 +399,7 @@ async function getDefLocationInDocument(
         scope.isNotInComment(i, line.text.search(multiVarRegExp)) ||
         scope.isNotInComment(i, line.text.search(computeRegExp)) ||
         scope.isNotInComment(i, line.text.search(macroRegExp)) ||
+        scope.isNotInComment(i, line.text.search(macroOwnRegExp)) ||
         scope.isNotInComment(i, line.text.search(expandRegExp))
       ) {
         locPosition = new vscode.Location(content.uri, line.range);
@@ -379,6 +421,7 @@ async function getAllLocationsInDocument(filename: string, word: string) {
   const computeRegExp = computeDefRe(word);
   const macroDefRegExp = macroDefRe(word);
   const macroRegExp = macroRe(word);
+  const macroOwnRegExp = macroOwnDefRe(word);
   const expandDefRegExp = expandDefRe(word);
   const expandRegExp = expandRe(word);
   const tableHeadRegExp = tableHeadRe(word);
@@ -399,6 +442,7 @@ async function getAllLocationsInDocument(filename: string, word: string) {
         scope.isNotInComment(i, line.text.search(computeRegExp)) ||
         scope.isNotInComment(i, line.text.search(macroDefRegExp)) ||
         scope.isNotInComment(i, line.text.search(macroRegExp)) ||
+        scope.isNotInComment(i, line.text.search(macroOwnRegExp)) ||
         scope.isNotInComment(i, line.text.search(expandDefRegExp)) ||
         scope.isNotInComment(i, line.text.search(expandRegExp)) ||
         scope.isNotInComment(i, line.text.search(tableHeadRegExp)) ||
@@ -619,9 +663,9 @@ class GesstabsDocumentSymbolProvider implements vscode.DocumentSymbolProvider {
           if (lineMatch) {
             spush(
               vscode.SymbolKind.Variable,
-              lineMatch[1].toLocaleLowerCase(),
+              'variable',
               lineMatch[1],
-              '',
+              lineMatch[2],
               '',
               document.uri,
               line.range
@@ -807,9 +851,9 @@ class GessTabsWorkspaceSymbolProvider
                 if (lineMatch) {
                   spush(
                     vscode.SymbolKind.Variable,
-                    lineMatch[1].toLocaleLowerCase(),
+                    'variable',
                     lineMatch[1],
-                    '',
+                    lineMatch[2],
                     '',
                     content.uri,
                     line.range
