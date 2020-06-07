@@ -95,7 +95,7 @@ const constAllVarList: string =
   '(?:' + constVarToList + '|' + constVarList + ')';
 
 function getWordDefinition(word: string): string {
-  return '(?:(?:' + word + ')|(?:"' + word + '")|(?:\'' + word + "'))";
+  return '\\b(?:(?:' + word + ')|(?:"' + word + '")|(?:\'' + word + "'))\\b";
 }
 
 // {
