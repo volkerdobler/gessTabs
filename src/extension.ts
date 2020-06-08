@@ -95,7 +95,7 @@ const constAllVarList: string =
   '(?:' + constVarToList + '|' + constVarList + ')';
 
 function getWordDefinition(word: string): string {
-  return '\\b(?:(?:' + word + ')|(?:"' + word + '")|(?:\'' + word + "'))\\b";
+  return '(?:(?:\\b' + word + '\\b)|(?:"' + word + '")|(?:\'' + word + "'))";
 }
 
 // {
@@ -112,7 +112,7 @@ const wordDefRe = function (word: string): RegExp {
 
 const singleVarDefRe = function (word: string): RegExp {
   const singleVarConst =
-    '(?:singleq|variable|varfamily|multiq|familyvar|makefamily|indexvar|invindexvar|combinedvar|vargroup|dichoq|groupvar|makegroup|spssgroup|init|groups|assocvar|count|simplevar|bcdvar|bitgroup|mean|sum|min|max|stddev|variance|static)';
+    '(singleq|variable|varfamily|multiq|familyvar|makefamily|indexvar|invindexvar|combinedvar|vargroup|dichoq|groupvar|makegroup|spssgroup|init|groups|assocvar|count|simplevar|bcdvar|bitgroup|mean|sum|min|max|stddev|variance|static)';
 
   let retVal: string = '';
   if (word && word.length > 0) {
@@ -125,7 +125,7 @@ const singleVarDefRe = function (word: string): RegExp {
 };
 
 const multiVarDefRe = function (word: string): RegExp {
-  const multiVarConst = '(?:variables)';
+  const multiVarConst = '(variables)';
 
   let retVal: string = '';
   if (word && word.length > 0) {
@@ -152,7 +152,7 @@ const multiVarDefRe = function (word: string): RegExp {
 };
 
 const computeDefRe = function (word: string): RegExp {
-  const varDefWithOptions = '\\b(?:f?compute|weightcells)\\b';
+  const varDefWithOptions = '\\b(f?compute|weightcells)\\b';
   const optionStr =
     '\\b(?:copy|swap|load|ascend|descend|shuffle|add|eliminate|init|replace|sort|alpha|autoalign)\\b';
 
@@ -188,7 +188,7 @@ const macroDefRe = function (word: string): RegExp {
   let tempWord: string =
     word && word.length > 0 ? getWordDefinition(word) : constTokenVarName;
 
-  return new RegExp('(?:#macro\\s+(#' + tempWord + ')\\s*\\()', 'i');
+  return new RegExp('(?:(#macro)\\s+(#' + tempWord + ')\\s*\\()', 'i');
 };
 
 const macroRe = function (word: string): RegExp {
@@ -214,9 +214,9 @@ const macroOwnDefRe = function (word: string): RegExp {
   });
 
   regExpStr +=
-    '(?:#makeskalavar\\s*\\(\\s*(' + tempWord.replace('_skala', '') + '))|';
+    '(?:(#makeskalavar)\\s*\\(\\s*(' + tempWord.replace('_skala', '') + '))|';
   regExpStr +=
-    '(?:#skalatab\\s*\\(\\s*(' + tempWord.replace('_t_b', '') + '))|';
+    '(?:(#skalatab)\\s*\\(\\s*(' + tempWord.replace('_t_b', '') + '))|';
 
   if (regExpStr.endsWith('|')) {
     regExpStr = regExpStr.substring(0, regExpStr.length - 1);
@@ -231,7 +231,7 @@ const macroOwnDefRe = function (word: string): RegExp {
 const expandDefRe = function (word: string): RegExp {
   let tempWord =
     word && word.length > 0 ? getWordDefinition(word) : constTokenVarName;
-  return new RegExp('#expand\\s+(#' + tempWord + ')', 'i');
+  return new RegExp('(?:(#expand)\\s+(#' + tempWord + '))', 'i');
 };
 
 const expandRe = function (word: string): RegExp {
@@ -242,7 +242,7 @@ const expandRe = function (word: string): RegExp {
 
 const multiVarRe = function (word: string): RegExp {
   const multiVarConst =
-    '(?:vartext|vartitle|valuelabels|text|title|labels|copylabels|uselabels|excludevalues|includevalues)';
+    '(vartext|vartitle|valuelabels|text|title|labels|copylabels|uselabels|excludevalues|includevalues)';
 
   let retVal: string = '';
   if (word && word.length > 0) {
@@ -269,7 +269,7 @@ const multiVarRe = function (word: string): RegExp {
 };
 
 const tableHeadRe = function (word: string): RegExp {
-  const tableVarConst = '(?:table)';
+  const tableVarConst = '(table)';
 
   let retVal: string = '';
   if (word && word.length > 0) {
@@ -294,7 +294,7 @@ const tableHeadRe = function (word: string): RegExp {
 };
 
 const tableAxisRe = function (word: string): RegExp {
-  const tableVarConst = '(?:table)';
+  const tableVarConst = '(table)';
 
   let retVal: string = '';
   if (word && word.length > 0) {
@@ -318,6 +318,45 @@ const tableAxisRe = function (word: string): RegExp {
   }
   return new RegExp(retVal, 'i');
 };
+
+function spush(
+  kind: vscode.SymbolKind,
+  container: string,
+  m1: string,
+  m2: string,
+  m3: string,
+  uri: vscode.Uri,
+  range: vscode.Range,
+  symbols: vscode.SymbolInformation[]
+) {
+  const varName = new RegExp(
+    '(' + constTokenVarName + ')|(' + constStringVarName + ')|(.+)'
+  );
+  function lpush(teststring: string) {
+    while (teststring && teststring.length > 0) {
+      teststring = teststring.trim();
+      let xname = teststring.match(varName);
+      if (xname) {
+        let pname = xname[2]
+          ? xname[2].substring(1, xname[2].length - 1)
+          : xname[1]
+          ? xname[1]
+          : xname[3];
+        symbols.push({
+          name: pname,
+          kind: kind,
+          location: new vscode.Location(uri, range),
+          containerName: container,
+        });
+        teststring = teststring.replace(xname[0], '');
+      }
+    }
+  }
+
+  lpush(m1);
+  lpush(m2);
+  lpush(m3);
+}
 
 // sucht das Wort unter dem Cursor, wobei Zahlen, Buchstaben, Punkte sowie # als
 // Wort akzeptiert werden. Gibt dann einen Array zurück, wobei das 1st Element
@@ -560,44 +599,6 @@ class GesstabsDocumentSymbolProvider implements vscode.DocumentSymbolProvider {
     return new Promise((resolve, reject) => {
       let symbols: vscode.SymbolInformation[] = [];
 
-      function spush(
-        kind: vscode.SymbolKind,
-        container: string,
-        m1: string,
-        m2: string,
-        m3: string,
-        uri: vscode.Uri,
-        range: vscode.Range
-      ) {
-        const varName = new RegExp(
-          '(' + constTokenVarName + ')|(' + constStringVarName + ')|(.+)'
-        );
-        function lpush(teststring: string) {
-          while (teststring && teststring.length > 0) {
-            teststring = teststring.trim();
-            let xname = teststring.match(varName);
-            if (xname) {
-              let pname = xname[2]
-                ? xname[2].substring(1, xname[2].length - 1)
-                : xname[1]
-                ? xname[1]
-                : xname[3];
-              symbols.push({
-                name: pname,
-                kind: kind,
-                location: new vscode.Location(uri, range),
-                containerName: container,
-              });
-              teststring = teststring.replace(xname[0], '');
-            }
-          }
-        }
-
-        lpush(m1);
-        lpush(m2);
-        lpush(m3);
-      }
-
       const singleVarRegExp: RegExp = singleVarDefRe('');
       const multiVarRegExp: RegExp = multiVarRe('');
       const multiVarDefRegExp: RegExp = multiVarDefRe('');
@@ -621,12 +622,13 @@ class GesstabsDocumentSymbolProvider implements vscode.DocumentSymbolProvider {
           if (lineMatch) {
             spush(
               vscode.SymbolKind.Variable,
-              'variables',
-              lineMatch[1],
+              lineMatch[1].toLocaleLowerCase(),
+              lineMatch[2],
               '',
               '',
               document.uri,
-              line.range
+              line.range,
+              symbols
             );
           }
         }
@@ -635,12 +637,13 @@ class GesstabsDocumentSymbolProvider implements vscode.DocumentSymbolProvider {
           if (lineMatch) {
             spush(
               vscode.SymbolKind.Variable,
-              'variables',
-              lineMatch[1],
+              lineMatch[1].toLocaleLowerCase(),
               lineMatch[2],
               lineMatch[3],
+              lineMatch[4],
               document.uri,
-              line.range
+              line.range,
+              symbols
             );
           }
         }
@@ -649,12 +652,13 @@ class GesstabsDocumentSymbolProvider implements vscode.DocumentSymbolProvider {
           if (lineMatch) {
             spush(
               vscode.SymbolKind.Variable,
-              'variables',
-              lineMatch[1],
+              lineMatch[1].toLocaleLowerCase(),
               lineMatch[2],
               lineMatch[3],
+              lineMatch[4],
               document.uri,
-              line.range
+              line.range,
+              symbols
             );
           }
         }
@@ -663,40 +667,43 @@ class GesstabsDocumentSymbolProvider implements vscode.DocumentSymbolProvider {
           if (lineMatch) {
             spush(
               vscode.SymbolKind.Variable,
-              'variable',
-              lineMatch[1],
+              lineMatch[1].toLocaleLowerCase(),
               lineMatch[2],
+              lineMatch[3],
               '',
               document.uri,
-              line.range
+              line.range,
+              symbols
             );
           }
         }
         if (scope.isNormalScope(i, line.text.search(macroRegExp))) {
           let lineMatch = line.text.match(macroRegExp);
-          if (lineMatch && lineMatch.length >= 1 && lineMatch[1].length > 0) {
+          if (lineMatch && lineMatch.length >= 2 && lineMatch[2].length > 0) {
             spush(
               vscode.SymbolKind.Function,
               'macro',
-              lineMatch[1],
+              lineMatch[2],
               '',
               '',
               document.uri,
-              line.range
+              line.range,
+              symbols
             );
           }
         }
         if (scope.isNormalScope(i, line.text.search(expandRegExp))) {
           let lineMatch = line.text.match(expandRegExp);
-          if (lineMatch && lineMatch.length >= 1 && lineMatch[1].length > 0) {
+          if (lineMatch && lineMatch.length >= 2 && lineMatch[2].length > 0) {
             spush(
               vscode.SymbolKind.Function,
               'expand',
-              lineMatch[1],
+              lineMatch[2],
               '',
               '',
               document.uri,
-              line.range
+              line.range,
+              symbols
             );
           }
         }
@@ -706,11 +713,12 @@ class GesstabsDocumentSymbolProvider implements vscode.DocumentSymbolProvider {
             spush(
               vscode.SymbolKind.Variable,
               'head',
-              lineMatch[1],
-              '',
-              '',
+              lineMatch[2],
+              lineMatch[3],
+              lineMatch[4],
               document.uri,
-              line.range
+              line.range,
+              symbols
             );
           }
         }
@@ -720,11 +728,12 @@ class GesstabsDocumentSymbolProvider implements vscode.DocumentSymbolProvider {
             spush(
               vscode.SymbolKind.Variable,
               'axis',
-              lineMatch[1],
-              '',
-              '',
+              lineMatch[2],
+              lineMatch[3],
+              lineMatch[4],
               document.uri,
-              line.range
+              line.range,
+              symbols
             );
           }
         }
@@ -773,44 +782,6 @@ class GessTabsWorkspaceSymbolProvider
           .then(function (content) {
             let scope = new sc.Scope(content);
 
-            function spush(
-              kind: vscode.SymbolKind,
-              container: string,
-              m1: string,
-              m2: string,
-              m3: string,
-              uri: vscode.Uri,
-              range: vscode.Range
-            ) {
-              const varName = new RegExp(
-                '(' + constTokenVarName + ')|(' + constStringVarName + ')|.+'
-              );
-              function lpush(teststring: string) {
-                while (teststring && teststring.length > 0) {
-                  teststring = teststring.trim();
-                  let xname = teststring.match(varName);
-                  if (xname) {
-                    let pname = xname[2]
-                      ? xname[2].substring(1, xname[2].length - 1)
-                      : xname[1]
-                      ? xname[1]
-                      : xname[3];
-                    symbols.push({
-                      name: pname,
-                      kind: kind,
-                      location: new vscode.Location(uri, range),
-                      containerName: container,
-                    });
-                    teststring = teststring.replace(xname[0], '');
-                  }
-                }
-              }
-
-              lpush(m1);
-              lpush(m2);
-              lpush(m3);
-            }
-
             for (let i = 0; i < content.lineCount; i++) {
               let line: vscode.TextLine = content.lineAt(i);
 
@@ -823,12 +794,13 @@ class GessTabsWorkspaceSymbolProvider
                 if (lineMatch) {
                   spush(
                     vscode.SymbolKind.Variable,
-                    'variables',
-                    lineMatch[1],
+                    lineMatch[1].toLocaleLowerCase(),
+                    lineMatch[2],
                     '',
                     '',
                     content.uri,
-                    line.range
+                    line.range,
+                    symbols
                   );
                 }
               }
@@ -837,12 +809,13 @@ class GessTabsWorkspaceSymbolProvider
                 if (lineMatch) {
                   spush(
                     vscode.SymbolKind.Variable,
-                    'variables',
-                    lineMatch[1],
+                    lineMatch[1].toLocaleLowerCase(),
                     lineMatch[2],
                     lineMatch[3],
+                    lineMatch[4],
                     content.uri,
-                    line.range
+                    line.range,
+                    symbols
                   );
                 }
               }
@@ -851,12 +824,13 @@ class GessTabsWorkspaceSymbolProvider
                 if (lineMatch) {
                   spush(
                     vscode.SymbolKind.Variable,
-                    'variable',
-                    lineMatch[1],
+                    lineMatch[1].toLocaleLowerCase(),
                     lineMatch[2],
+                    lineMatch[3],
                     '',
                     content.uri,
-                    line.range
+                    line.range,
+                    symbols
                   );
                 }
               }
@@ -864,17 +838,18 @@ class GessTabsWorkspaceSymbolProvider
                 let lineMatch = line.text.match(macroRegExp);
                 if (
                   lineMatch &&
-                  lineMatch.length >= 1 &&
-                  lineMatch[1].length > 0
+                  lineMatch.length >= 2 &&
+                  lineMatch[2].length > 0
                 ) {
                   spush(
                     vscode.SymbolKind.Function,
                     'macro',
-                    lineMatch[1],
+                    lineMatch[2],
                     '',
                     '',
                     content.uri,
-                    line.range
+                    line.range,
+                    symbols
                   );
                 }
               }
@@ -882,30 +857,31 @@ class GessTabsWorkspaceSymbolProvider
                 let lineMatch = line.text.match(expandRegExp);
                 if (
                   lineMatch &&
-                  lineMatch.length >= 1 &&
-                  lineMatch[1].length > 0
+                  lineMatch.length >= 2 &&
+                  lineMatch[2].length > 0
                 ) {
                   spush(
                     vscode.SymbolKind.Function,
                     'expand',
-                    lineMatch[1],
+                    lineMatch[2],
                     '',
                     '',
                     content.uri,
-                    line.range
+                    line.range,
+                    symbols
                   );
                 }
               }
               if (scope.isNormalScope(i, line.text.search(tableHeadRegExp))) {
                 let lineMatch = line.text.match(tableHeadRegExp);
-                if (lineMatch && lineMatch.length === 4) {
+                if (lineMatch && lineMatch.length === 5) {
                   let re: RegExp;
-                  if (lineMatch[2].search(/"/) > -1) {
+                  if (lineMatch[3].search(/"/) > -1) {
                     re = /\s*"\s*/;
                   } else {
                     re = /\s+/;
                   }
-                  lineMatch[2].split(re).forEach(function (value) {
+                  lineMatch[3].split(re).forEach(function (value) {
                     if (value.search(/[\s"]*&/) !== 0) {
                       symbols.push({
                         name: value,
@@ -915,12 +891,12 @@ class GessTabsWorkspaceSymbolProvider
                       });
                     }
                   });
-                  if (lineMatch[3].search(/"/) > -1) {
+                  if (lineMatch[4].search(/"/) > -1) {
                     re = /\s*"\s*/;
                   } else {
                     re = /\s+/;
                   }
-                  lineMatch[3].split(re).forEach(function (value) {
+                  lineMatch[4].split(re).forEach(function (value) {
                     symbols.push({
                       name: value,
                       kind: vscode.SymbolKind.Variable,
