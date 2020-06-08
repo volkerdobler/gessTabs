@@ -2,6 +2,13 @@
 
 All notable changes to the "gesstabs" extension will be documented in this file (last change first).
 
+## 0.2.2
+
+Showing all variables only got container "variables" which was not very
+informative. Now shows type of variable again.
+
+Minor bug fix for word boundaries (did not work with quotations)
+
 ## 0.2.1
 
 Bug fix missing word boundary in getWordDefinition
