@@ -2,6 +2,10 @@
 
 All notable changes to the "gesstabs" extension will be documented in this file (last change first).
 
+## 0.2.3
+
+Bug fix: only variables with a length of 2 or more had been recognized as variable.
+
 ## 0.2.2
 
 Showing all variables only got container "variables" which was not very
