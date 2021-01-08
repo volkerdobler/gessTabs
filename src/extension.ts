@@ -531,7 +531,11 @@ class GesstabsDefintionProvider implements vscode.DefinitionProvider {
       // has to be a Promise as the OpenTextDocument is async and we have to
       // wait until it is fullfilled with all filenames.
       Promise.all(locations).then(function (content) {
-        resolve(content.find((loc) => loc));
+        content.forEach(function (loc) {
+          if (loc != null) {
+            resolve(loc);
+          }
+        });
       });
     });
   }
@@ -583,7 +587,7 @@ class GesstabsReferenceProvider implements vscode.ReferenceProvider {
           resolve(result);
         })
         .catch((e) => {
-          resolve(undefined);
+          resolve([]);
         });
     });
   }
@@ -598,6 +602,35 @@ class GesstabsDocumentSymbolProvider implements vscode.DocumentSymbolProvider {
   ): Thenable<vscode.SymbolInformation[]> {
     return new Promise((resolve, reject) => {
       let symbols: vscode.SymbolInformation[] = [];
+
+      function spush(
+        kind: vscode.SymbolKind,
+        container: string,
+        m1: string,
+        m2: string,
+        m3: string,
+        uri: vscode.Uri,
+        range: vscode.Range
+      ): void {
+        const varName = new RegExp(
+          '(' + constTokenVarName + ')|(' + constStringVarName + ')|(.+)'
+        );
+        function lpush(teststring: string): void {
+          if (teststring && teststring.length > 0) {
+            teststring = teststring.trim();
+            symbols.push({
+              name: teststring,
+              kind: kind,
+              location: new vscode.Location(uri, range),
+              containerName: container,
+            });
+          }
+        }
+
+        lpush(m1);
+        lpush(m2);
+        lpush(m3);
+      }
 
       const singleVarRegExp: RegExp = singleVarDefRe('');
       const multiVarRegExp: RegExp = multiVarRe('');
@@ -622,13 +655,12 @@ class GesstabsDocumentSymbolProvider implements vscode.DocumentSymbolProvider {
           if (lineMatch) {
             spush(
               vscode.SymbolKind.Variable,
-              lineMatch[1].toLocaleLowerCase(),
-              lineMatch[2],
+              'variable',
+              lineMatch[2] + ' [' + lineMatch[1].toLocaleLowerCase() + ']',
               '',
               '',
               document.uri,
-              line.range,
-              symbols
+              line.range
             );
           }
         }
@@ -637,13 +669,17 @@ class GesstabsDocumentSymbolProvider implements vscode.DocumentSymbolProvider {
           if (lineMatch) {
             spush(
               vscode.SymbolKind.Variable,
-              lineMatch[1].toLocaleLowerCase(),
-              lineMatch[2],
-              lineMatch[3],
-              lineMatch[4],
+              'variable',
+              (lineMatch[2] ? lineMatch[2] : '') +
+                (lineMatch[3] ? lineMatch[3] : '') +
+                (lineMatch[4] ? lineMatch[4] : '') +
+                ' [' +
+                lineMatch[1].toLocaleLowerCase() +
+                ']',
+              '',
+              '',
               document.uri,
-              line.range,
-              symbols
+              line.range
             );
           }
         }
@@ -652,13 +688,17 @@ class GesstabsDocumentSymbolProvider implements vscode.DocumentSymbolProvider {
           if (lineMatch) {
             spush(
               vscode.SymbolKind.Variable,
-              lineMatch[1].toLocaleLowerCase(),
-              lineMatch[2],
-              lineMatch[3],
-              lineMatch[4],
+              'variable',
+              (lineMatch[2] ? lineMatch[2] : '') +
+                (lineMatch[3] ? lineMatch[3] : '') +
+                (lineMatch[4] ? lineMatch[4] : '') +
+                ' [' +
+                lineMatch[1].toLocaleLowerCase() +
+                ']',
+              '',
+              '',
               document.uri,
-              line.range,
-              symbols
+              line.range
             );
           }
         }
@@ -667,13 +707,17 @@ class GesstabsDocumentSymbolProvider implements vscode.DocumentSymbolProvider {
           if (lineMatch) {
             spush(
               vscode.SymbolKind.Variable,
-              lineMatch[1].toLocaleLowerCase(),
-              lineMatch[2],
-              lineMatch[3],
+              'definition',
+              (lineMatch[2] ? lineMatch[2] : '') +
+                (lineMatch[3] ? lineMatch[3] : '') +
+                (lineMatch[4] ? lineMatch[4] : '') +
+                ' [' +
+                lineMatch[1].toLocaleLowerCase() +
+                ']',
+              '',
               '',
               document.uri,
-              line.range,
-              symbols
+              line.range
             );
           }
         }
@@ -682,13 +726,12 @@ class GesstabsDocumentSymbolProvider implements vscode.DocumentSymbolProvider {
           if (lineMatch && lineMatch.length >= 2 && lineMatch[2].length > 0) {
             spush(
               vscode.SymbolKind.Function,
-              'macro',
-              lineMatch[2],
+              'definition',
+              lineMatch[2] + ' [macro]',
               '',
               '',
               document.uri,
-              line.range,
-              symbols
+              line.range
             );
           }
         }
@@ -697,13 +740,12 @@ class GesstabsDocumentSymbolProvider implements vscode.DocumentSymbolProvider {
           if (lineMatch && lineMatch.length >= 2 && lineMatch[2].length > 0) {
             spush(
               vscode.SymbolKind.Function,
-              'expand',
-              lineMatch[2],
+              'definition',
+              lineMatch[2] + ' [expand]',
               '',
               '',
               document.uri,
-              line.range,
-              symbols
+              line.range
             );
           }
         }
@@ -712,13 +754,15 @@ class GesstabsDocumentSymbolProvider implements vscode.DocumentSymbolProvider {
           if (lineMatch) {
             spush(
               vscode.SymbolKind.Variable,
-              'head',
-              lineMatch[2],
-              lineMatch[3],
-              lineMatch[4],
+              'table',
+              (lineMatch[2] ? lineMatch[2] : '') +
+                (lineMatch[3] ? lineMatch[3] : '') +
+                (lineMatch[4] ? lineMatch[4] : '') +
+                ' [head]',
+              '',
+              '',
               document.uri,
-              line.range,
-              symbols
+              line.range
             );
           }
         }
@@ -727,13 +771,15 @@ class GesstabsDocumentSymbolProvider implements vscode.DocumentSymbolProvider {
           if (lineMatch) {
             spush(
               vscode.SymbolKind.Variable,
-              'axis',
-              lineMatch[2],
-              lineMatch[3],
-              lineMatch[4],
+              'table',
+              (lineMatch[2] ? lineMatch[2] : '') +
+                (lineMatch[3] ? lineMatch[3] : '') +
+                (lineMatch[4] ? lineMatch[4] : '') +
+                ' [axis]',
+              '',
+              '',
               document.uri,
-              line.range,
-              symbols
+              line.range
             );
           }
         }
