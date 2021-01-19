@@ -703,7 +703,7 @@ class GesstabsDocumentSymbolProvider implements vscode.DocumentSymbolProvider {
           if (lineMatch) {
             spush(
               vscode.SymbolKind.Variable,
-              'definition',
+              'variable',
               (lineMatch[2] ? lineMatch[2] : '') +
                 (lineMatch[3] ? lineMatch[3] : '') +
                 (lineMatch[4] ? lineMatch[4] : '') +
