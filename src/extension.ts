@@ -79,10 +79,14 @@ function getWorkspaceFolderPath(fileUri?: vscode.Uri): string | undefined {
   }
 }
 
+// Variablenname ohne Anführungszeichen - muss mit einem Buchstaben starten, danach auch Zahlen und Punkte
 const constTokenVarName: string =
   '(?:\\b(?:[A-Za-zÄÖÜßäöü][A-Za-zÄÖÜßäöü\\w\\.]*)\\b)';
+
+// Variablennamen in Anführungsstriche dürfen alles enthalten, auch Leerzeichen
 const constStringVarName: string = '(?:"[^"]+")|(?:\'[^\']+\')';
 
+// ein Variablenname ist entweder ein TokenVarName oder ein StringVarName
 const constVarName: string =
   '(?:' + constTokenVarName + '|' + constStringVarName + ')';
 
@@ -98,21 +102,13 @@ function getWordDefinition(word: string): string {
   return '(?:(?:\\b' + word + '\\b)|(?:"' + word + '")|(?:\'' + word + "'))";
 }
 
-// {
-//   let tempWord =
-//     word.length > 0
-//       ? '(?:.*"' + word + '".*)|(?:.*\'' + word + "'.*)"
-//       : ;
-//   return ;
-// }
-
 const wordDefRe = function (word: string): RegExp {
   return new RegExp(getWordDefinition(word), 'i');
 };
 
 const singleVarDefRe = function (word: string): RegExp {
   const singleVarConst =
-    '(singleq|variable|varfamily|multiq|familyvar|makefamily|indexvar|invindexvar|combinedvar|vargroup|dichoq|groupvar|makegroup|spssgroup|init|groups|assocvar|count|simplevar|bcdvar|bitgroup|mean|sum|min|max|stddev|variance|static)';
+    '(alphafamily|assocvar|bcdvar|bitgroup|clonevar|combinedvar|count|dichoq|familyvar|groups|groupvar|indexvar|init|invindexvar|makefamily|makegroup|makesingle|max|mean|min|multiq|simplevar|singleq|spssgroup|static|stddev|sum|varfamily|vargroup|variable|variance)';
 
   let retVal: string = '';
   if (word && word.length > 0) {
@@ -151,10 +147,38 @@ const multiVarDefRe = function (word: string): RegExp {
   return new RegExp(retVal, 'i');
 };
 
+const multiVarRe = function (word: string): RegExp {
+  const multiVarConst =
+    '(copylabels|excludevalues|includevalues|labels|text|title|uselabels|valuelabels|vartext|vartitle)';
+
+  let retVal: string = '';
+  if (word && word.length > 0) {
+    retVal =
+      '\\b' +
+      multiVarConst +
+      '\\b\\s*' +
+      '(?:' +
+      '(?:' +
+      constVarList +
+      '*\\s*' +
+      getWordDefinition(word) +
+      ')|' +
+      '(?:.*\\s*\\bto\\b\\s*' +
+      constVarList +
+      '*\\s*\\b' +
+      getWordDefinition(word) +
+      '\\b)' +
+      ').*=';
+  } else {
+    retVal = '\\b' + multiVarConst + '\\b\\s*(?:' + constAllVarList + ')\\s*=';
+  }
+  return new RegExp(retVal, 'i');
+};
+
 const computeDefRe = function (word: string): RegExp {
   const varDefWithOptions = '\\b(f?compute|weightcells)\\b';
   const optionStr =
-    '\\b(?:copy|swap|load|ascend|descend|shuffle|add|eliminate|init|replace|sort|alpha|autoalign)\\b';
+    '\\b(?:add|alpha|ascend|autoalign|copy|descend|eliminate|init|load|replace|shuffle|sort|swap)\\b';
 
   if (word && word.length > 0) {
     return new RegExp(
@@ -238,34 +262,6 @@ const expandRe = function (word: string): RegExp {
   let tempWord =
     word && word.length > 0 ? getWordDefinition(word) : constTokenVarName;
   return new RegExp('(#' + tempWord + ')\\b', 'i');
-};
-
-const multiVarRe = function (word: string): RegExp {
-  const multiVarConst =
-    '(vartext|vartitle|valuelabels|text|title|labels|copylabels|uselabels|excludevalues|includevalues)';
-
-  let retVal: string = '';
-  if (word && word.length > 0) {
-    retVal =
-      '\\b' +
-      multiVarConst +
-      '\\b\\s*' +
-      '(?:' +
-      '(?:' +
-      constVarList +
-      '*\\s*' +
-      getWordDefinition(word) +
-      ')|' +
-      '(?:.*\\s*\\bto\\b\\s*' +
-      constVarList +
-      '*\\s*\\b' +
-      getWordDefinition(word) +
-      '\\b)' +
-      ').*=';
-  } else {
-    retVal = '\\b' + multiVarConst + '\\b\\s*(?:' + constAllVarList + ')\\s*=';
-  }
-  return new RegExp(retVal, 'i');
 };
 
 const tableHeadRe = function (word: string): RegExp {
