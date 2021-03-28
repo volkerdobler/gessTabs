@@ -1,4 +1,6 @@
 src/test/
 node_modules/
 out/
+testen/
 package-lock.json
+*.code-workspace
