@@ -503,11 +503,8 @@ class GesstabsDefintionProvider implements vscode.DefinitionProvider {
     position: vscode.Position,
     token: vscode.CancellationToken
   ): Thenable<vscode.Location> {
-    const wordAtPosition: [
-      boolean,
-      string,
-      vscode.Position
-    ] = getWordAtPosition(document, position);
+    const wordAtPosition: [boolean, string, vscode.Position] =
+      getWordAtPosition(document, position);
 
     return new Promise((resolve) => {
       if (!wordAtPosition[0]) {
@@ -531,7 +528,11 @@ class GesstabsDefintionProvider implements vscode.DefinitionProvider {
       // has to be a Promise as the OpenTextDocument is async and we have to
       // wait until it is fullfilled with all filenames.
       Promise.all(locations).then(function (content) {
-        resolve(content.find((loc) => loc));
+        content.forEach((loc) => {
+          if (loc != null) {
+            return loc;
+          }
+        });
       });
     });
   }
@@ -581,10 +582,10 @@ class GesstabsReferenceProvider implements vscode.ReferenceProvider {
         })
         .then((result) => {
           resolve(result);
-        })
-        .catch((e) => {
-          resolve(undefined);
         });
+      // .catch((e) => {
+      // resolve(undefined);
+      // });
     });
   }
 }
@@ -746,7 +747,8 @@ class GesstabsDocumentSymbolProvider implements vscode.DocumentSymbolProvider {
 
 // Allow the user to quickly navigate to symbol definitions anywhere in the folder (workspace) opened in VS
 class GessTabsWorkspaceSymbolProvider
-  implements vscode.WorkspaceSymbolProvider {
+  implements vscode.WorkspaceSymbolProvider
+{
   public provideWorkspaceSymbols(
     query: string,
     token: vscode.CancellationToken
