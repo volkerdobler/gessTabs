@@ -528,10 +528,11 @@ class GesstabsDefintionProvider implements vscode.DefinitionProvider {
       // has to be a Promise as the OpenTextDocument is async and we have to
       // wait until it is fullfilled with all filenames.
       Promise.all(locations).then(function (content) {
-        let result = content.find((loc) => loc);
-        if (result) {
-          resolve(result);
-        }
+        content.forEach((loc) => {
+          if (loc != null) {
+            return loc;
+          }
+        });
       });
     });
   }
@@ -582,6 +583,9 @@ class GesstabsReferenceProvider implements vscode.ReferenceProvider {
         .catch((e) => {
           throw 'Error: ' + e;
         });
+      // .catch((e) => {
+      // resolve(undefined);
+      // });
     });
   }
 }
