@@ -52,6 +52,16 @@ export function activate(context: vscode.ExtensionContext) {
       new GessTabsWorkspaceSymbolProvider()
     )
   );
+
+  context.subscriptions.push(
+    vscode.languages.registerFoldingRangeProvider(
+      {
+        language: 'gesstabs',
+        scheme: 'file',
+      },
+      new GessTabsFoldingRangeProvider()
+    )
+  );
 }
 
 // this method is called when your extension is deactivated
@@ -915,6 +925,219 @@ class GessTabsWorkspaceSymbolProvider
             resolve(result);
           });
       });
+    });
+  }
+}
+
+class GessTabsFoldingRangeProvider implements vscode.FoldingRangeProvider {
+  public provideFoldingRanges(
+    document: vscode.TextDocument,
+    context: vscode.FoldingContext,
+    token: vscode.CancellationToken
+  ): Thenable<vscode.FoldingRange[]> {
+    return new Promise((resolve) => {
+      const macroCollection: {
+        start: number;
+        end: number;
+        kind: vscode.FoldingRangeKind;
+      }[] = [];
+      const ifCollection: {
+        start: number;
+        end: number;
+        kind: vscode.FoldingRangeKind;
+      }[] = [];
+      const commentCollection: {
+        start: number;
+        end: number;
+        kind: vscode.FoldingRangeKind;
+      }[] = [];
+
+      let ifCounter: number = 0;
+      let macroCounter: number = 0;
+      let commentCounter: number = 0;
+
+      for (let l = 0; l < document.lineCount; l++) {
+        let curLine = document.lineAt(l).text;
+
+        do {
+          let posCommentComplete = curLine.search(/\B{\B.+?\B}\B/);
+          let posCommentStart = curLine.search(/\B{\B/);
+          let posCommentEnd = curLine.search(/\B}\B/);
+
+          // Block-Kommentar, aber auf einer Zeile, dann einfach ignorieren
+          while (posCommentComplete > -1) {
+            curLine =
+              curLine.slice(0, posCommentStart) +
+              curLine.slice(posCommentEnd + 1);
+            posCommentComplete = curLine.search(/\B{\B.+?\B}\B/);
+            posCommentStart = curLine.search(/\B{\B/);
+            posCommentEnd = curLine.search(/\B}\B/);
+          }
+
+          posCommentStart = curLine.search(/\B{\B/);
+          posCommentEnd = curLine.search(/\B}\B/);
+
+          let posMacroComplete = curLine.search(
+            /\B#macro\b.+?\B(#macroend|#endmacro)\b/
+          );
+          let posMacroStart = curLine.search(/\B#macro\b/);
+          let posMacroEnd = curLine.search(/\B#macroend|#endmacro\b/);
+          let posIfComplete = curLine.search(
+            /\B#ifn?(def|exist|empty)\b.+?\B#end\b/
+          );
+          let posIfStart = curLine.search(/\B#ifn?(def|exist|empty)\b/);
+          let posIfEnd = curLine.search(/\B#end\b/);
+          if (
+            posMacroStart < 0 &&
+            posMacroEnd < 0 &&
+            posIfStart < 0 &&
+            posIfEnd < 0 &&
+            posCommentStart < 0 &&
+            posCommentEnd < 0
+          ) {
+            curLine = '';
+          } else {
+            switch (true) {
+              // #macro, #endmacro, #if.. und #end in einer Zeile
+              case posMacroComplete > -1 && posIfComplete > -1:
+                if (posMacroEnd > posIfEnd) {
+                  curLine = curLine.slice(posMacroEnd + 9);
+                } else {
+                  curLine = curLine.slice(posIfEnd + 4);
+                }
+                break;
+              // #macro, #endmacro aber kein #if.. und #end in einer Zeile
+              case posMacroComplete > -1:
+                curLine = curLine.slice(posMacroEnd + 9);
+                break;
+              // #if.. und #end aber kein #macro, #endmacro in einer Zeile
+              case posIfComplete > -1:
+                curLine = curLine.slice(posIfEnd + 4);
+                break;
+              // #endmacro und dann #macro in einer Zeile
+              case posMacroStart > -1 && posMacroEnd > -1:
+                // #endmacro nicht in einem Kommentar
+                if (
+                  (posCommentStart === -1 || posCommentStart > posMacroEnd) &&
+                  (posCommentEnd === -1 || posCommentEnd < posMacroEnd)
+                ) {
+                  if (macroCounter > 0) {
+                    macroCollection[--macroCounter].end = l;
+                  }
+                }
+                if (
+                  (posCommentStart === -1 || posCommentStart > posMacroStart) &&
+                  (posCommentEnd === -1 || posCommentEnd < posMacroStart)
+                ) {
+                  macroCollection.push({
+                    start: l,
+                    end: -1,
+                    kind: vscode.FoldingRangeKind.Region,
+                  });
+                  macroCounter = macroCollection.length;
+                }
+                curLine = curLine.slice(posMacroStart + 6);
+                break;
+              // nur #macro in einer Zeile
+              case posMacroStart > -1:
+                if (
+                  (posCommentStart === -1 || posCommentStart > posMacroStart) &&
+                  (posCommentEnd === -1 || posCommentEnd < posMacroStart)
+                ) {
+                  macroCollection.push({
+                    start: l,
+                    end: -1,
+                    kind: vscode.FoldingRangeKind.Region,
+                  });
+                  macroCounter = macroCollection.length;
+                }
+                curLine = curLine.slice(posMacroStart + 6);
+                break;
+              // nur #endmacro in einer Zeile
+              case posMacroEnd > -1:
+                if (
+                  (posCommentStart === -1 || posCommentStart > posMacroEnd) &&
+                  (posCommentEnd === -1 || posCommentEnd < posMacroEnd)
+                ) {
+                  if (macroCounter > 0) {
+                    macroCollection[--macroCounter].end = l;
+                  }
+                }
+                curLine = curLine.slice(posMacroStart + 9);
+                break;
+              // zuerst #end und dann #if... in einer Zeile
+              case posIfStart > -1 && posIfEnd > -1:
+                if (
+                  (posCommentStart === -1 || posCommentStart > posIfEnd) &&
+                  (posCommentEnd === -1 || posCommentEnd < posIfEnd)
+                ) {
+                  if (ifCounter > 0) {
+                    ifCollection[--ifCounter].end = l;
+                  }
+                }
+                if (
+                  (posCommentStart === -1 || posCommentStart > posIfStart) &&
+                  (posCommentEnd === -1 || posCommentEnd < posIfStart)
+                ) {
+                  ifCollection.push({
+                    start: l,
+                    end: -1,
+                    kind: vscode.FoldingRangeKind.Region,
+                  });
+                  ifCounter = ifCollection.length;
+                }
+                curLine = curLine.slice(posIfStart + 6);
+                break;
+              // nur #if... in einer Zeile
+              case posIfStart > -1:
+                if (
+                  (posCommentStart === -1 || posCommentStart > posIfStart) &&
+                  (posCommentEnd === -1 || posCommentEnd < posIfStart)
+                ) {
+                  ifCollection.push({
+                    start: l,
+                    end: -1,
+                    kind: vscode.FoldingRangeKind.Region,
+                  });
+                  ifCounter = ifCollection.length;
+                }
+                curLine = curLine.slice(posIfStart + 6);
+                break;
+              // nur #end in einer Zeile
+              case posIfEnd > -1:
+                if (
+                  (posCommentStart === -1 || posCommentStart > posIfEnd) &&
+                  (posCommentEnd === -1 || posCommentEnd < posIfEnd)
+                ) {
+                  if (ifCounter > 0) {
+                    ifCollection[--ifCounter].end = l;
+                  }
+                }
+                curLine = curLine.slice(posIfEnd + 4);
+                break;
+              case posCommentStart > -1:
+                commentCollection.push({
+                  start: l,
+                  end: -1,
+                  kind: vscode.FoldingRangeKind.Comment,
+                });
+                commentCounter = commentCollection.length;
+                curLine = '';
+                break;
+              case posCommentEnd > -1:
+                if (commentCounter > 0) {
+                  commentCollection[--commentCounter].end = l;
+                  curLine = curLine.slice(posCommentEnd + 1);
+                }
+                break;
+              // rest
+              default:
+                curLine = '';
+            }
+          }
+        } while (curLine.length > 0);
+      }
+      resolve(macroCollection.concat(ifCollection).concat(commentCollection));
     });
   }
 }
