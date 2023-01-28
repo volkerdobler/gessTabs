@@ -3,10 +3,13 @@
 // The module 'vscode' contains the VS Code extensibility API
 // Import the module and reference it with the alias vscode in your code below
 import * as vscode from 'vscode';
-import * as path from 'path';
-import * as fs from 'fs';
 
-import * as sc from './scope';
+import * as sc from './tools/scope';
+import {
+  getCurrentFolderPath,
+  getAllFilenamesInDirectory,
+  getWordAtPosition,
+} from './tools/gessHelpers';
 
 // this method is called when your extension is activated
 // your extension is activated the very first time the command is executed
@@ -23,7 +26,7 @@ export function activate(context: vscode.ExtensionContext) {
         language: 'gesstabs',
         scheme: 'file',
       },
-      new GesstabsDefintionProvider()
+      new GesstabsDefinitionProvider()
     )
   );
 
@@ -66,28 +69,6 @@ export function activate(context: vscode.ExtensionContext) {
 
 // this method is called when your extension is deactivated
 export function deactivate() {}
-
-// Workaround for issue in https://github.com/Microsoft/vscode/issues/9448#issuecomment-244804026
-function fixDriveCasingInWindows(pathToFix: string): string {
-  return process.platform === 'win32' && pathToFix
-    ? pathToFix.substr(0, 1).toUpperCase() + pathToFix.substr(1)
-    : pathToFix;
-}
-
-function getWorkspaceFolderPath(fileUri?: vscode.Uri): string | undefined {
-  if (fileUri) {
-    const workspace = vscode.workspace.getWorkspaceFolder(fileUri);
-    if (workspace) {
-      return fixDriveCasingInWindows(workspace.uri.fsPath);
-    }
-  }
-
-  // fall back to the first workspace
-  const folders = vscode.workspace.workspaceFolders;
-  if (folders && folders.length) {
-    return fixDriveCasingInWindows(folders[0].uri.fsPath);
-  }
-}
 
 const constTokenVarName: string =
   '(?:\\b(?:[A-Za-zÄÖÜßäöü][A-Za-zÄÖÜßäöü\\w\\.]*)\\b)';
@@ -368,55 +349,6 @@ function spush(
   lpush(m3);
 }
 
-// sucht das Wort unter dem Cursor, wobei Zahlen, Buchstaben, Punkte sowie # als
-// Wort akzeptiert werden. Gibt dann einen Array zurück, wobei das 1st Element
-// true ist, wenn es ein Wort gefunden hat, sonst false. Das eigentliche Wort
-// steht dann an zweiter Stelle (wenn true)
-function getWordAtPosition(
-  document: vscode.TextDocument,
-  position: vscode.Position
-): [boolean, string, vscode.Position] {
-  const wordLimits: RegExp = new RegExp(constVarName, 'i');
-  const wordRange = document.getWordRangeAtPosition(position, wordLimits);
-  const word = wordRange
-    ? document.getText(wordRange).replace(/"/g, '').replace(/'/g, '')
-    : '';
-  if (!wordRange) {
-    return [false, '', position];
-  }
-  if (position.isEqual(wordRange.end) && position.isAfter(wordRange.start)) {
-    position = position.translate(0, -1);
-  }
-
-  return [true, word, position];
-}
-
-// durchsucht rekursiv das aktuelle Verzeichnis und gibt alle Dateinamen inkl.
-// Pfad als String zurück, die dem regulären Ausdruck in fType entspricht.
-function getAllFilenamesInDirectory(dir: string, fType: string): string[] {
-  let results: string[] = [];
-  let regEXP: RegExp = new RegExp('\\.' + fType + '$', 'i');
-  let list: fs.Dirent[] = fs.readdirSync(dir, {
-    encoding: 'utf8',
-    withFileTypes: true,
-  });
-
-  list.forEach(function (file: fs.Dirent) {
-    let fileInclDir = dir + '\\' + file.name;
-    if (file.isDirectory()) {
-      /* Recursive into a subdirectory */
-      results = results.concat(getAllFilenamesInDirectory(fileInclDir, fType));
-    } else {
-      /* Is a file */
-      // results.push(file);
-      if (file.isFile() && file.name.match(regEXP)) {
-        results.push(fileInclDir);
-      }
-    }
-  });
-  return results;
-}
-
 // sucht alle Stellen, an denen eine Definition von "word" im Dokument "filename" vorkommt
 // wobei hier die Definitionen wichtig sind, also sprachenspezifisch für gesstabs
 // d.h. es wird nur dann "word" gefunden, wenn es ein Variablenname, ein compute,
@@ -507,7 +439,7 @@ async function getAllLocationsInDocument(filename: string, word: string) {
 
 // Allow the user to see the definition of variables/functions/methods
 // right where the variables / functions / methods are being used.
-class GesstabsDefintionProvider implements vscode.DefinitionProvider {
+class GesstabsDefinitionProvider implements vscode.DefinitionProvider {
   public provideDefinition(
     document: vscode.TextDocument,
     position: vscode.Position,
@@ -516,16 +448,14 @@ class GesstabsDefintionProvider implements vscode.DefinitionProvider {
     const wordAtPosition: [boolean, string, vscode.Position] =
       getWordAtPosition(document, position);
 
-    return new Promise((resolve) => {
+    return new Promise((resolve, reject) => {
       if (!wordAtPosition[0]) {
         return Promise.resolve(null);
       }
 
       const word = wordAtPosition[1];
 
-      let wsfolder =
-        getWorkspaceFolderPath(document.uri) ||
-        fixDriveCasingInWindows(path.dirname(document.fileName));
+      let wsfolder = getCurrentFolderPath(document.uri);
 
       let fileNames: string[] = getAllFilenamesInDirectory(
         wsfolder,
@@ -538,11 +468,16 @@ class GesstabsDefintionProvider implements vscode.DefinitionProvider {
       // has to be a Promise as the OpenTextDocument is async and we have to
       // wait until it is fullfilled with all filenames.
       Promise.all(locations).then(function (content) {
+        let found: boolean = false;
         content.forEach((loc) => {
           if (loc != null) {
-            return loc;
+            resolve(loc);
+            found = true;
           }
         });
+        if (!found) {
+          reject('No definition found');
+        }
       });
     });
   }
@@ -567,9 +502,7 @@ class GesstabsReferenceProvider implements vscode.ReferenceProvider {
 
       let loclist: vscode.Location[] = [];
 
-      let wsfolder =
-        getWorkspaceFolderPath(document.uri) ||
-        fixDriveCasingInWindows(path.dirname(document.fileName));
+      let wsfolder = getCurrentFolderPath(document.uri);
 
       let fileNames: string[] = getAllFilenamesInDirectory(
         wsfolder,
@@ -772,21 +705,10 @@ class GessTabsWorkspaceSymbolProvider
     const expandRegExp: RegExp = expandDefRe(query);
     const tableHeadRegExp: RegExp = tableHeadRe(query);
 
-    const wsfolder =
-      getWorkspaceFolderPath(
-        vscode.window.activeTextEditor &&
-          vscode.window.activeTextEditor.document.uri
-      ) ||
-      fixDriveCasingInWindows(
-        path.dirname(
-          vscode &&
-            vscode.window &&
-            vscode.window.activeTextEditor &&
-            vscode.window.activeTextEditor.document
-            ? vscode.window.activeTextEditor.document.fileName
-            : ''
-        )
-      );
+    const wsfolder = getCurrentFolderPath(
+      vscode.window.activeTextEditor &&
+        vscode.window.activeTextEditor.document.uri
+    );
     return new Promise((resolve) => {
       getAllFilenamesInDirectory(wsfolder, '(tab|inc)').forEach((file) => {
         vscode.workspace
