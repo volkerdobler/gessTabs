@@ -936,208 +936,119 @@ class GessTabsFoldingRangeProvider implements vscode.FoldingRangeProvider {
     token: vscode.CancellationToken
   ): Thenable<vscode.FoldingRange[]> {
     return new Promise((resolve) => {
-      const macroCollection: {
-        start: number;
-        end: number;
+      const regions: {
+        start: RegExp;
+        end: RegExp;
         kind: vscode.FoldingRangeKind;
-      }[] = [];
-      const ifCollection: {
-        start: number;
-        end: number;
-        kind: vscode.FoldingRangeKind;
-      }[] = [];
-      const commentCollection: {
+        skip?: RegExp;
+        len: number;
+      }[] = [
+        {
+          start: /\B#macro\b/i,
+          end: /\B#(endmacro|macroend)\b/i,
+          kind: vscode.FoldingRangeKind.Region,
+          len: 6,
+        },
+        {
+          start: /\B#ifn?(def|exist|empty)\b/i,
+          end: /\B#end\b/i,
+          kind: vscode.FoldingRangeKind.Region,
+          skip: /\B#else\b/i,
+          len: 4,
+        },
+        {
+          start: /\{/i,
+          end: /\}/,
+          kind: vscode.FoldingRangeKind.Comment,
+          len: 1,
+        },
+      ];
+
+      const foldingCollection: {
         start: number;
         end: number;
         kind: vscode.FoldingRangeKind;
       }[] = [];
 
-      let ifCounter: number = 0;
-      let macroCounter: number = 0;
-      let commentCounter: number = 0;
+      let foldingCounter: number = 0;
+      let inComment = false;
 
       for (let l = 0; l < document.lineCount; l++) {
         let curLine = document.lineAt(l).text;
 
-        do {
-          let posCommentComplete = curLine.search(/\B{\B.+?\B}\B/);
-          let posCommentStart = curLine.search(/\B{\B/);
-          let posCommentEnd = curLine.search(/\B}\B/);
-
-          // Block-Kommentar, aber auf einer Zeile, dann einfach ignorieren
-          while (posCommentComplete > -1) {
-            curLine =
-              curLine.slice(0, posCommentStart) +
-              curLine.slice(posCommentEnd + 1);
-            posCommentComplete = curLine.search(/\B{\B.+?\B}\B/);
-            posCommentStart = curLine.search(/\B{\B/);
-            posCommentEnd = curLine.search(/\B}\B/);
+        let posLineComment = curLine.search(/\/\//);
+        if (posLineComment > -1) {
+          curLine = curLine.slice(0, posLineComment);
+          if (curLine.length === 0) {
+            continue;
+          }
+        }
+        for (let loop = 0; loop < regions.length; loop++) {
+          if (curLine.length === 0) {
+            break;
           }
 
-          posCommentStart = curLine.search(/\B{\B/);
-          posCommentEnd = curLine.search(/\B}\B/);
-
-          let posMacroComplete = curLine.search(
-            /\B#macro\b.+?\B(#macroend|#endmacro)\b/
-          );
-          let posMacroStart = curLine.search(/\B#macro\b/);
-          let posMacroEnd = curLine.search(/\B#macroend|#endmacro\b/);
-          let posIfComplete = curLine.search(
-            /\B#ifn?(def|exist|empty)\b.+?\B#end\b/
-          );
-          let posIfStart = curLine.search(/\B#ifn?(def|exist|empty)\b/);
-          let posIfEnd = curLine.search(/\B#end\b/);
           if (
-            posMacroStart < 0 &&
-            posMacroEnd < 0 &&
-            posIfStart < 0 &&
-            posIfEnd < 0 &&
-            posCommentStart < 0 &&
-            posCommentEnd < 0
+            regions[loop].skip &&
+            regions[loop].skip instanceof RegExp &&
+            curLine.search(regions[loop].skip!) > -1
           ) {
-            curLine = '';
-          } else {
-            switch (true) {
-              // #macro, #endmacro, #if.. und #end in einer Zeile
-              case posMacroComplete > -1 && posIfComplete > -1:
-                if (posMacroEnd > posIfEnd) {
-                  curLine = curLine.slice(posMacroEnd + 9);
-                } else {
-                  curLine = curLine.slice(posIfEnd + 4);
-                }
-                break;
-              // #macro, #endmacro aber kein #if.. und #end in einer Zeile
-              case posMacroComplete > -1:
-                curLine = curLine.slice(posMacroEnd + 9);
-                break;
-              // #if.. und #end aber kein #macro, #endmacro in einer Zeile
-              case posIfComplete > -1:
-                curLine = curLine.slice(posIfEnd + 4);
-                break;
-              // #endmacro und dann #macro in einer Zeile
-              case posMacroStart > -1 && posMacroEnd > -1:
-                // #endmacro nicht in einem Kommentar
-                if (
-                  (posCommentStart === -1 || posCommentStart > posMacroEnd) &&
-                  (posCommentEnd === -1 || posCommentEnd < posMacroEnd)
-                ) {
-                  if (macroCounter > 0) {
-                    macroCollection[--macroCounter].end = l;
-                  }
-                }
-                if (
-                  (posCommentStart === -1 || posCommentStart > posMacroStart) &&
-                  (posCommentEnd === -1 || posCommentEnd < posMacroStart)
-                ) {
-                  macroCollection.push({
-                    start: l,
-                    end: -1,
-                    kind: vscode.FoldingRangeKind.Region,
-                  });
-                  macroCounter = macroCollection.length;
-                }
-                curLine = curLine.slice(posMacroStart + 6);
-                break;
-              // nur #macro in einer Zeile
-              case posMacroStart > -1:
-                if (
-                  (posCommentStart === -1 || posCommentStart > posMacroStart) &&
-                  (posCommentEnd === -1 || posCommentEnd < posMacroStart)
-                ) {
-                  macroCollection.push({
-                    start: l,
-                    end: -1,
-                    kind: vscode.FoldingRangeKind.Region,
-                  });
-                  macroCounter = macroCollection.length;
-                }
-                curLine = curLine.slice(posMacroStart + 6);
-                break;
-              // nur #endmacro in einer Zeile
-              case posMacroEnd > -1:
-                if (
-                  (posCommentStart === -1 || posCommentStart > posMacroEnd) &&
-                  (posCommentEnd === -1 || posCommentEnd < posMacroEnd)
-                ) {
-                  if (macroCounter > 0) {
-                    macroCollection[--macroCounter].end = l;
-                  }
-                }
-                curLine = curLine.slice(posMacroStart + 9);
-                break;
-              // zuerst #end und dann #if... in einer Zeile
-              case posIfStart > -1 && posIfEnd > -1:
-                if (
-                  (posCommentStart === -1 || posCommentStart > posIfEnd) &&
-                  (posCommentEnd === -1 || posCommentEnd < posIfEnd)
-                ) {
-                  if (ifCounter > 0) {
-                    ifCollection[--ifCounter].end = l;
-                  }
-                }
-                if (
-                  (posCommentStart === -1 || posCommentStart > posIfStart) &&
-                  (posCommentEnd === -1 || posCommentEnd < posIfStart)
-                ) {
-                  ifCollection.push({
-                    start: l,
-                    end: -1,
-                    kind: vscode.FoldingRangeKind.Region,
-                  });
-                  ifCounter = ifCollection.length;
-                }
-                curLine = curLine.slice(posIfStart + 6);
-                break;
-              // nur #if... in einer Zeile
-              case posIfStart > -1:
-                if (
-                  (posCommentStart === -1 || posCommentStart > posIfStart) &&
-                  (posCommentEnd === -1 || posCommentEnd < posIfStart)
-                ) {
-                  ifCollection.push({
-                    start: l,
-                    end: -1,
-                    kind: vscode.FoldingRangeKind.Region,
-                  });
-                  ifCounter = ifCollection.length;
-                }
-                curLine = curLine.slice(posIfStart + 6);
-                break;
-              // nur #end in einer Zeile
-              case posIfEnd > -1:
-                if (
-                  (posCommentStart === -1 || posCommentStart > posIfEnd) &&
-                  (posCommentEnd === -1 || posCommentEnd < posIfEnd)
-                ) {
-                  if (ifCounter > 0) {
-                    ifCollection[--ifCounter].end = l;
-                  }
-                }
-                curLine = curLine.slice(posIfEnd + 4);
-                break;
-              case posCommentStart > -1:
-                commentCollection.push({
-                  start: l,
-                  end: -1,
-                  kind: vscode.FoldingRangeKind.Comment,
-                });
-                commentCounter = commentCollection.length;
-                curLine = '';
-                break;
-              case posCommentEnd > -1:
-                if (commentCounter > 0) {
-                  commentCollection[--commentCounter].end = l;
-                  curLine = curLine.slice(posCommentEnd + 1);
-                }
-                break;
-              // rest
-              default:
-                curLine = '';
-            }
+            break;
           }
-        } while (curLine.length > 0);
+
+          let posRegionComplete = curLine.search(
+            new RegExp(
+              regions[loop].start.source + '.+?' + regions[loop].end.source,
+              'i'
+            )
+          );
+
+          // Wenn Start & End in einer Zeile, dann einfach ignorieren
+          while (posRegionComplete > -1) {
+            curLine =
+              curLine.slice(0, curLine.search(regions[loop].start)) +
+              curLine.slice(
+                curLine.search(regions[loop].end) + regions[loop].len
+              );
+            posRegionComplete = curLine.search(
+              new RegExp(
+                regions[loop].start.source + '.+?' + regions[loop].end.source,
+                'i'
+              )
+            );
+          }
+          let posStart = curLine.search(regions[loop].start);
+          if (posStart > -1 && !inComment) {
+            foldingCollection.push({
+              start: l,
+              end: -1,
+              kind: regions[loop].kind,
+            });
+            foldingCounter = foldingCollection.length;
+            curLine = curLine.slice(posStart + regions[loop].len);
+            inComment = regions[loop].kind === vscode.FoldingRangeKind.Comment;
+          }
+          let posEnd = curLine.search(regions[loop].end);
+          if (
+            posEnd > -1 &&
+            (regions[loop].kind === vscode.FoldingRangeKind.Comment ||
+              !inComment)
+          ) {
+            while (
+              foldingCounter > 0 &&
+              foldingCollection[foldingCounter - 1].end > -1
+            ) {
+              foldingCounter--;
+            }
+            if (foldingCounter > 0) {
+              foldingCollection[--foldingCounter].end = l;
+            }
+            curLine = curLine.slice(posEnd + regions[loop].len + 1);
+            inComment = false;
+          }
+        }
       }
-      resolve(macroCollection.concat(ifCollection).concat(commentCollection));
+      resolve(foldingCollection);
     });
   }
 }
