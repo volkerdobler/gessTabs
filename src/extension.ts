@@ -52,6 +52,16 @@ export function activate(context: vscode.ExtensionContext) {
       new GessTabsWorkspaceSymbolProvider()
     )
   );
+
+  context.subscriptions.push(
+    vscode.languages.registerFoldingRangeProvider(
+      {
+        language: 'gesstabs',
+        scheme: 'file',
+      },
+      new GessTabsFoldingRangeProvider()
+    )
+  );
 }
 
 // this method is called when your extension is deactivated
@@ -580,8 +590,8 @@ class GesstabsReferenceProvider implements vscode.ReferenceProvider {
           });
           return loclist;
         })
-        .then((result) => {
-          resolve(result);
+        .catch((e) => {
+          throw 'Error: ' + e;
         });
       // .catch((e) => {
       // resolve(undefined);
@@ -915,6 +925,132 @@ class GessTabsWorkspaceSymbolProvider
             resolve(result);
           });
       });
+    });
+  }
+}
+
+class GessTabsFoldingRangeProvider implements vscode.FoldingRangeProvider {
+  public provideFoldingRanges(
+    document: vscode.TextDocument,
+    context: vscode.FoldingContext,
+    token: vscode.CancellationToken
+  ): Thenable<vscode.FoldingRange[]> {
+    return new Promise((resolve) => {
+      const regions: {
+        start: RegExp;
+        end: RegExp;
+        kind: vscode.FoldingRangeKind;
+        skip?: RegExp;
+        len: number;
+      }[] = [
+        {
+          start: /\B#macro\b/i,
+          end: /\B#(endmacro|macroend)\b/i,
+          kind: vscode.FoldingRangeKind.Region,
+          len: 6,
+        },
+        {
+          start: /\B#ifn?(def|exist|empty)\b/i,
+          end: /\B#end\b/i,
+          kind: vscode.FoldingRangeKind.Region,
+          skip: /\B#else\b/i,
+          len: 4,
+        },
+        {
+          start: /\{/i,
+          end: /\}/,
+          kind: vscode.FoldingRangeKind.Comment,
+          len: 1,
+        },
+      ];
+
+      const foldingCollection: {
+        start: number;
+        end: number;
+        kind: vscode.FoldingRangeKind;
+      }[] = [];
+
+      let foldingCounter: number = 0;
+      let inComment = false;
+
+      for (let l = 0; l < document.lineCount; l++) {
+        let curLine = document.lineAt(l).text;
+
+        let posLineComment = curLine.search(/\/\//);
+        if (posLineComment > -1) {
+          curLine = curLine.slice(0, posLineComment);
+          if (curLine.length === 0) {
+            continue;
+          }
+        }
+        for (let loop = 0; loop < regions.length; loop++) {
+          if (curLine.length === 0) {
+            break;
+          }
+
+          if (
+            regions[loop].skip &&
+            regions[loop].skip instanceof RegExp &&
+            curLine.search(regions[loop].skip!) > -1
+          ) {
+            break;
+          }
+
+          let posRegionComplete = curLine.search(
+            new RegExp(
+              regions[loop].start.source + '.+?' + regions[loop].end.source,
+              'i'
+            )
+          );
+
+          // Wenn Start & End in einer Zeile, dann einfach ignorieren
+          while (posRegionComplete > -1) {
+            curLine =
+              curLine.slice(0, curLine.search(regions[loop].start)) +
+              curLine.slice(
+                curLine.search(regions[loop].end) + regions[loop].len
+              );
+            posRegionComplete = curLine.search(
+              new RegExp(
+                regions[loop].start.source + '.+?' + regions[loop].end.source,
+                'i'
+              )
+            );
+          }
+          let posStart = curLine.search(regions[loop].start);
+          if (posStart > -1 && !inComment) {
+            foldingCollection.push({
+              start: l,
+              end: -1,
+              kind: regions[loop].kind,
+            });
+            foldingCounter = foldingCollection.length;
+            curLine = curLine.slice(posStart + regions[loop].len);
+            inComment = regions[loop].kind === vscode.FoldingRangeKind.Comment;
+          }
+          let posEnd = curLine.search(regions[loop].end);
+          if (
+            posEnd > -1 &&
+            (regions[loop].kind === vscode.FoldingRangeKind.Comment ||
+              !inComment)
+          ) {
+            while (
+              foldingCounter > 0 &&
+              foldingCollection[foldingCounter - 1].end > -1
+            ) {
+              foldingCounter--;
+            }
+            if (foldingCounter > 0) {
+              let endLine =
+                l - 1 > foldingCollection[foldingCounter - 1].start ? l - 1 : l;
+              foldingCollection[--foldingCounter].end = endLine;
+            }
+            curLine = curLine.slice(posEnd + regions[loop].len + 1);
+            inComment = false;
+          }
+        }
+      }
+      resolve(foldingCollection);
     });
   }
 }

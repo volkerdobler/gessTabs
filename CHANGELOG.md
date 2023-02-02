@@ -2,6 +2,18 @@
 
 All notable changes to the "gesstabs" extension will be documented in this file (last change first).
 
+## 0.2.6
+
+New feature: folding region is now available for Pre-Processor commands and comments
+
+## 0.2.5
+
+Bug fix: Language file optimization
+
+## 0.2.4
+
+Internal release
+
 ## 0.2.3
 
 Bug fix: only variables with a length of 2 or more had been recognized as variable.
