@@ -1,0 +1,66 @@
+
+VARKEY <varname> = <key>;
+VARTEXT [<VarList>] = "text";
+TEXT [<VarList>] = "text";
+COPYTEXT <VarList> = <variable>;
+INCLUDETITLEINTEXT <varlist> = [ YES | NO ];
+VARTITLE [<VarList>] = "text";
+TITLE [<VarList>] = "text";
+COPYTITLE <VarList> = <variable>;
+VALUELABELS <VarList> = {<number> "Text"}*n;
+VALUELABELS  <VarList>  = LABELFROMFILE <filename>;
+LABELS <VarList> = {<number> "Text"}*n;
+[VALUE]LABELS <Varlist> COPY <source-variable>;
+[VALUE]LABELS <Varlist> AS <source-variable>;
+COPYLABELS <Varlist> = <source-variable>;
+USELABELS <Varlist> = <source-variable>;
+SINGLEQ <varname> = [ TITLE "Titelstring" ] OPEN;
+ASALPHA <varlist> = [ YES | NO ];
+OPENASALPHA <varlist> = [ YES | NO ];
+ALPHA <varlist> = YES;
+SINGLEQ <varname> = [ TITLE "Titelstring" ] ALPHA;
+OPENASALPHA <varlist> = [ YES | NO ];
+NOINPUT <varlist> = [ YES | NO ]; 
+STATIC <varlist> = [ YES | NO ]; 
+NOOUTPUT <varlist> = [ YES | NO ]; 
+NOSPSS <varlist> = [ YES | NO ]; 
+STOREALPHA <varlist> = [ YES | NO ]; 
+PRINTALL <varlist> = [ YES | NO ];
+NOEXPANDAT <varlist> = [ YES | NO ];
+SINGLEQ <varname> = ... [ LABELS [ AS <varname > | COPY <varname>]] ...;
+MULTIQ <varname> = ... [ LABELS { AS <varname> } ] ...; 
+MAKESINGLE <newvar> [ = <arithm.expression> ];
+VARIABLES <varname><varnumberstart> TO <varname><varnumberend> = [ start | * ] [width];
+MAKESINGLES <newvarlist> [ = <sourcelist> ] ;
+DICHOQ <varname> = ...;
+AUTONOANSWER [ <varlist> ] = [ YES "noanswertext" | NO ] [ LEVEL < number > ];
+MISSING <Varlist> = { number }*n;
+SETMISSING <Varlist> = { number }*n;
+EXCLUDEVALUES <varlist> = <valuelist>;
+RESTRICTVALUES <varlist> = <valuelist>;
+RECODE <varlist> <valuelist> = <number>  { / <valuelist> = <number> }*n [ ELSE = <number> ] ;
+
+
+
+
+
+
+
+
+Systemvariablen:
+================
+SystemFileNo
+SystemWeight
+SystemCaseNo
+SysMiss
+NIL
+
+
+
+
+
+
+
+
+
+
