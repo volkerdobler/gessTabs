@@ -59,7 +59,7 @@
     "test": "node ./out/test/runTest.js"
   },
   "devDependencies": {
-    "@types/node": "^13.13.52",
+    "@types/node": "^18.11.19",
     "@types/vscode": "^1.74.0",
     "eslint": "^8.32.0",
     "eslint-config-airbnb": "^19.0.4",
