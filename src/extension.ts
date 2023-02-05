@@ -1009,7 +1009,9 @@ class GessTabsFoldingRangeProvider implements vscode.FoldingRangeProvider {
               foldingCounter--;
             }
             if (foldingCounter > 0) {
-              foldingCollection[--foldingCounter].end = l;
+              let endLine =
+                l - 1 > foldingCollection[foldingCounter - 1].start ? l - 1 : l;
+              foldingCollection[--foldingCounter].end = endLine;
             }
             curLine = curLine.slice(posEnd + regions[loop].len + 1);
             inComment = false;
