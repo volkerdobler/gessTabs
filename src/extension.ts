@@ -5,10 +5,13 @@
 import * as vscode from 'vscode';
 
 import * as sc from './tools/scope';
+
 import {
   getCurrentFolderPath,
   getAllFilenamesInDirectory,
   getWordAtPosition,
+  getRegexps,
+  RuleTemplate,
 } from './tools/gessHelpers';
 
 // this method is called when your extension is activated
@@ -17,6 +20,15 @@ export function activate(context: vscode.ExtensionContext) {
   // Use the console to output diagnostic information (console.log) and errors (console.error)
   // This line of code will only be executed once when your extension is activated
   console.log('Congratulations, your extension "gesstabs" is now active!');
+
+  const volker = vscode.commands.registerCommand(
+    'extension.gesstabs.volker',
+    () => {
+      testCommand();
+    }
+  );
+
+  context.subscriptions.push(volker);
 
   // Allow the user to see the definition of variables/functions/methods
   // right where the variables / functions / methods are being used.
@@ -69,6 +81,40 @@ export function activate(context: vscode.ExtensionContext) {
 
 // this method is called when your extension is deactivated
 export function deactivate() {}
+
+function testCommand(): void {
+  console.log('Testcommand');
+
+  let keys = getRegexps();
+
+  const text = vscode.window.activeTextEditor?.document.getText();
+
+  if (!text) {
+    return;
+  }
+
+  const linecomments = new RegExp(keys['linecomment'], 'gi');
+  const blockcomments = new RegExp(keys['blockcomment'], 'gi');
+  const script = text
+    ?.replace(linecomments, '')
+    .replace(/\\r\\n/g, '\\n')
+    .replace(/\\r/g, '\\n')
+    .replace(blockcomments, '');
+
+  for (let key in keys) {
+    const result = new RegExp(keys[key], 'gi');
+  }
+  // const test = '\\b(?:var)?title ([^=]+)\\s+=';
+  const vartitle = new RegExp(keys['vartitle'], 'gi');
+
+  const result = [...script.matchAll(vartitle)];
+
+  for (let i = 0; i < result.length; i++) {
+    console.log(i + 1 + ' : ' + result[i][1]);
+  }
+
+  const volker = 1;
+}
 
 const constTokenVarName: string =
   '(?:\\b(?:[A-Za-zÄÖÜßäöü][A-Za-zÄÖÜßäöü\\w\\.]*)\\b)';

@@ -3,9 +3,11 @@
 import * as vscode from 'vscode';
 
 export enum ScopeEnum {
-  normal, // normaler Scope
-  comment, // in einem Kommentar
-  string, // in einem String
+  unknown, // no special scope
+  comment, // comment
+  string, // string
+  definition, // keyword, which defines something new
+  reference, // keyword, which defines a reference
 }
 
 interface Delimiter {
@@ -97,7 +99,7 @@ export class Scope {
       exports.stringRegExp = strReg;
     }
 
-    let currScope: ScopeEnum = ScopeEnum.normal;
+    let currScope: ScopeEnum = ScopeEnum.unknown;
 
     let comIndex = -1;
     let strIndex = -1;
@@ -121,7 +123,7 @@ export class Scope {
         let strEnde = -1;
 
         switch (currScope) {
-          case ScopeEnum.normal:
+          case ScopeEnum.unknown:
             lineComment =
               lineStr.substring(char).search(exports.lineCommentDelimiter) ===
               0;
@@ -167,7 +169,7 @@ export class Scope {
             this.scopeArr[line][char + loop] = ScopeEnum.comment;
           }
           char += blockCommentDelimiter[comIndex].end.length;
-          currScope = ScopeEnum.normal;
+          currScope = ScopeEnum.unknown;
           comIndex = -1;
         }
         // Start eines Strings
@@ -192,7 +194,7 @@ export class Scope {
             this.scopeArr[line][char + loop] = ScopeEnum.string;
           }
           char += stringDelimiter[strIndex].end.length;
-          currScope = ScopeEnum.normal;
+          currScope = ScopeEnum.unknown;
           strIndex = -1;
         }
         // es hat sich nichts verändert, übernimm den aktuellen Scope
@@ -219,7 +221,7 @@ export class Scope {
   }
 
   public isNormalScope(x: number, y: number): boolean {
-    return this.getScope(x, y) === ScopeEnum.normal;
+    return this.getScope(x, y) === ScopeEnum.unknown;
   }
 
   public isCommentScope(x: number, y: number): boolean {
@@ -310,3 +312,28 @@ function getScope(x: number, y: number, scopeArr: string[]): string {
 }
 
 */
+
+type KeyTypes = 'list' | 'name';
+type Keywords = {
+  reg: string;
+  key: KeyTypes;
+};
+
+const letter = '[A-Za-zÄÖÜßäöü]';
+const alphastr = `${letter}[\\w\\d\\._]*`;
+const token = `(?:${alphastr})`;
+const sstring = `(?:\\B'${token}(?:\\s+${token})*')`;
+const dstring = `(?:\\B"${token}(?:\\s+${token})*")`;
+const string = `(?:${sstring} | ${dstring})`;
+const varname = `(?:${token} | ${string})`;
+const varlist = `(?:${varname})(?:\\s+${varname})*`;
+
+const definitionKeyword: Keywords[] = [
+  { reg: `(?value)labels`, key: 'list' },
+  { reg: '(?var)text', key: 'list' },
+  { reg: '(?var)title', key: 'list' },
+  { reg: 'group', key: 'name' },
+  { reg: 'compute', key: 'name' },
+  { reg: 'singleq', key: 'name' },
+  { reg: 'makefamily', key: 'name' },
+];

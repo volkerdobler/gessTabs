@@ -9,10 +9,12 @@
   },
   "categories": [
     "Programming Languages",
-    "Snippets"
+    "Snippets",
+    "Other"
   ],
   "activationEvents": [
-    "onLanguage:gesstabs"
+    "onLanguage:gesstabs",
+    "onCommand:extension.gesstabs.volker"
   ],
   "repository": {
     "type": "git",
@@ -22,6 +24,12 @@
   "main": "./out/extension",
   "icon": "images/gesstabs_icon.png",
   "contributes": {
+    "commands": [
+      {
+        "command": "extension.gesstabs.volker",
+        "title": "Volker"
+      }
+    ],
     "languages": [
       {
         "id": "gesstabs",

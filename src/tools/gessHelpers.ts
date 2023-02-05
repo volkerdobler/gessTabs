@@ -90,19 +90,38 @@ export function getWordAtPosition(
   return [true, word, position];
 }
 
+export type RuleTemplate = {
+  [key: string]: string;
+};
+
+function hasKey(obj: RuleTemplate, key: string): boolean {
+  return key in obj;
+}
+
 const ruleTemplate: RuleTemplate = {
   integer: '[1-9]\\d* | 0',
   hexdigits: '[1-9a-fA-F][0-9a-fA-F]*',
-  signedint: '[+-]? {integer}',
-  pointfloat: '({integer})? \\. \\d+ | {integer} \\.',
-  exponentfloat: '(?:{integer} | {pointfloat}) [eE] [+-]? \\d+',
-  float: '{pointfloat} | {exponentfloat}',
-  hexNum: '0[xX]{hexdigits}',
-  numeric: '{integer} | {float}',
-  signedNum: '([+-]? {numeric})|{hexNum}',
-  token: '[A-Za-zÄÖÜßäöü][A-Za-zÄÖÜßäöü\\w\\.]*',
-  string: '"{token}(?:\\s+{token})*"|\'{token}(?:\\s+{token})*\'',
-  varname: '{token} | {string}',
+  signedint: '[+-]? {{integer}}',
+  pointfloat: '({{integer}})? \\. \\d+ | {{integer}} \\.',
+  exponentfloat: '{{integer}} | {{pointfloat}} [eE] [+-]? \\d+',
+  float: '{{pointfloat}} | {{exponentfloat}}',
+  hexNum: '0[xX]{{hexdigits}}',
+  numeric: '{{integer}} | {{float}}',
+  signedNum: '([+-]? {{numeric}})|{{hexNum}}',
+  letter: '[A-Za-zÄÖÜßäöü]',
+  alphastr: '{{letter}}[\\w\\d\\._]*',
+  token: '(?:{{alphastr}})',
+  sstring: "(?:\\B'{{token}}(?:\\s+{{token}})*')",
+  dstring: '(?:\\B"{{token}}(?:\\s+{{token}})*")',
+  string: '(?:{{sstring}} | {{dstring}})',
+  varname: '(?:{{token}} | {{string}})',
+  varlist: '(?:{{varname}})(?:\\s+{{varname}})*',
+};
+
+const keyTemplate: RuleTemplate = {
+  vartitle: '\\b(?:(?:var)?title\\s+(?<varlist>({{varlist}}))\\s*=.*;)',
+  linecomment: '//[^\\n\\r]*(\\n|\\r)',
+  blockcomment: '{[^}]*}',
 };
 
 // format:
@@ -120,31 +139,29 @@ const ruleTemplate: RuleTemplate = {
 // insertAlpha:
 //   '^(?<start> {alphastart})(:(?<step> {signedint}))? (\\*(?<frequency> {integer}))? (#(?<repeat> {integer}))? (~(?<format> {alphaformat})(?<wrap> w)?)? (@(?<stopExpr> {stopExpr}))? (?<sort_selections> \\$)? (?<reverse> !)?$',
 
-type RuleTemplate = {
-  [key: string]: string;
-};
-
-function hasKey(obj: RuleTemplate, key: string): boolean {
-  return key in obj;
-}
-
-function getRegexps(): any {
-  const result: RuleTemplate = {
-    varname: '',
-  };
-  for (let [key, value] of Object.entries(ruleTemplate)) {
-    while (value.indexOf('{') > -1) {
-      const start: number = value.indexOf('{');
-      const ende: number = value.indexOf('}', start + 1) + 1;
+export function getRegexps(): RuleTemplate {
+  function substitute(value: string, rules: RuleTemplate): string {
+    while (value.indexOf('{{') > -1) {
+      const start: number = value.indexOf('{{');
+      const ende: number = value.indexOf('}}', start + 2) + 2;
       const replace: string = value.slice(start, ende);
-      const rule: string = replace.slice(1, replace.length - 1);
-      if (hasKey(ruleTemplate, rule)) {
-        value = value.replace(replace, ruleTemplate[rule]); // works fine!
+      const rule: string = replace.slice(2, replace.length - 2);
+      if (hasKey(rules, rule)) {
+        value = value.replace(replace, rules[rule]); // works fine!
       }
     }
-    if (hasKey(result, key)) {
-      result[key] = value.replace(/\s/gi, '');
-    }
+    return value.replace(/\s+/g, '');
   }
-  return result;
+
+  for (let [key, value] of Object.entries(ruleTemplate)) {
+    ruleTemplate[key] = substitute(value, ruleTemplate);
+  }
+
+  for (let [key, value] of Object.entries(keyTemplate)) {
+    keyTemplate[key] = substitute(
+      substitute(value, ruleTemplate),
+      keyTemplate
+    ).replace(/\s+/g, '');
+  }
+  return keyTemplate;
 }
