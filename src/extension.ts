@@ -87,7 +87,60 @@ function testCommand(): void {
 
   let keys = getRegexps();
 
-  const text = vscode.window.activeTextEditor?.document.getText();
+  const document = vscode.window.activeTextEditor?.document;
+
+  if (!document) {
+    return;
+  }
+
+  const word = new RegExp(
+    '(?:#?\\p{L}[\\p{L}\\p{M}\\d_\\.]*)|(?:\\{)|(?:\\/\\/)',
+    'u'
+  );
+
+  const text = document.getText();
+
+  for (let cur = 0; cur < text.length; cur++) {
+    const curPosition = document.positionAt(cur);
+
+    const curRange = document.getWordRangeAtPosition(curPosition, word);
+
+    if (curRange) {
+      const curWord = document.getText(curRange);
+
+      const curLine = document.lineAt(document.positionAt(cur)).text;
+      switch (curWord) {
+        case '{':
+          const commentFinish = text.indexOf('}', cur + 1);
+          if (commentFinish) {
+            cur = commentFinish;
+          }
+          continue;
+          break;
+        case '//':
+          const lineEnd = document.offsetAt(
+            document.lineAt(document.positionAt(cur)).range.end
+          );
+          if (lineEnd) {
+            cur = lineEnd;
+          }
+          continue;
+          break;
+        case '#expand':
+          console.log('expand => ' + curLine);
+          break;
+        case 'table':
+          console.log('table => ' + curLine);
+          break;
+        default:
+          console.log('nix => ' + curLine);
+      }
+      cur += curWord.length;
+    }
+  }
+  const line = vscode.window.activeTextEditor?.document.lineAt(2);
+
+  const text2 = line?.text;
 
   if (!text) {
     return;
