@@ -5,7 +5,7 @@
   "version": "0.2.5",
   "publisher": "volkerdobler",
   "engines": {
-    "vscode": "^1.74.0"
+    "vscode": "^1.75.0"
   },
   "categories": [
     "Programming Languages",
@@ -61,13 +61,10 @@
   "devDependencies": {
     "@types/node": "^18.11.19",
     "@types/vscode": "^1.74.0",
+    "@typescript-eslint/eslint-plugin": "^5.50.0",
     "eslint": "^8.32.0",
     "eslint-config-airbnb": "^19.0.4",
     "eslint-config-prettier": "^8.6.0",
-    "eslint-plugin-import": "^2.27.5",
-    "eslint-plugin-jsx-a11y": "^6.7.1",
-    "eslint-plugin-prettier": "^4.2.1",
-    "eslint-plugin-react": "^7.32.1",
-    "typescript": "^4.9.4"
+    "eslint-plugin-prettier": "^4.2.1"
   }
 }
