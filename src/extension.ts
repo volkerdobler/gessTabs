@@ -85,7 +85,7 @@ const allLocations: AllLocations = {};
 function testCommand(): void {
   console.log('Testcommand');
 
-  let keys = helper.getRegexps();
+  let syntax = helper.getAllCommands();
 
   const document = vscode.window.activeTextEditor?.document;
 
@@ -126,8 +126,8 @@ function testCommand(): void {
           continue;
           break;
         default:
-          if (curWord in keys) {
-            const reg = new RegExp(keys[curWord], 'u');
+          if (curWord in syntax) {
+            const reg = new RegExp(syntax[curWord], 'u');
             const match = text.substring(cur).match(reg);
             cur += helper.splitvarlist(cur, match?.groups, document);
             continue;

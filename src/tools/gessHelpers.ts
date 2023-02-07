@@ -165,7 +165,7 @@ function substituteRegExps(): void {
   }
 }
 
-export function getRegexps(): RuleTemplate {
+export function getAllCommands(): RuleTemplate {
   if (keyTemplate['finish'] === undefined) {
     substituteRegExps();
   }
