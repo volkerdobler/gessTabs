@@ -108,38 +108,32 @@ const ruleTemplate: RuleTemplate = {
   hexNum: '0[xX]{{hexdigits}}',
   numeric: '{{integer}} | {{float}}',
   signedNum: '([+-]? {{numeric}})|{{hexNum}}',
-  letter: '[A-Za-zÄÖÜßäöü]',
-  alphastr: '{{letter}}[\\w\\d\\._]*',
-  token: '(?:{{alphastr}})',
-  sstring: "(?:\\B'{{token}}(?:\\s+{{token}})*')",
-  dstring: '(?:\\B"{{token}}(?:\\s+{{token}})*")',
+  token: '(?:[\\p{L}\\p{M}][\\p{L}\\p{M}\\d\\._]*)',
+  sstring: "(?:\\B'[^(?>\\r\\n|\\n|\\x0b|\\f|\\r|\\x85)]*')",
+  dstring: '(?:\\B"[^(?>\\r\\n|\\n|\\x0b|\\f|\\r|\\x85)]*")',
   string: '(?:{{sstring}} | {{dstring}})',
   varname: '(?:{{token}} | {{string}})',
+  expandMacro: '(?:#{{varname}}',
   varlist: '(?:{{varname}})(?:\\s+{{varname}})*',
 };
 
+const preprocessorTemplate: RuleTemplate = {
+  '#expand': '',
+  '#macro': '',
+};
 const keyTemplate: RuleTemplate = {
-  vartitle: '\\b(?:(?:var)?title\\s+(?<varlist>({{varlist}}))\\s*=.*;)',
-  linecomment: '//[^\\n\\r]*(\\n|\\r)',
-  blockcomment: '{[^}]*}',
+  vartitle: '\\b(?<before>vartitle\\s+)(?<varlist>{{varlist}})\\s*=[^;]*;',
+  title: '\\b(?<before>title\\s+)(?<varlist>{{varlist}})\\s*=[^;]*;',
+  vartext: '\\b(?<before>vartext\\s+)(?<varlist>{{varlist}})\\s*=[^;]*;',
+  text: '\\b(?<before>text\\s+)(?<varlist>{{varlist}})\\s*=[^;]*;',
+  valuelabels:
+    '\\b(?<before>valuelabels\\s+)(?<varlist>{{varlist}})\\s*=[^;]*;',
+  labels: '\\b(?<before>labels\\s+)(?<varlist>{{varlist}})\\s*=[^;]*;',
+  '#expand':
+    '\\B(?<before>#expand\\s+)(?<varlist>{{varname}})\\s[^(?>\\r\\n|\\n|\\x0b|\\f|\\r|\\x85)]*',
 };
 
-// format:
-//   '((?<format_padding> [^}}])? (?<format_align> [<>^=]))? (?<format_sign> [-+ ])? #? (?<format_filled> 0)? (?<format_integer> {integer})? (\\.(?<format_precision> \\d+))? (?<format_type> [bcdeEfFgGnoxX%])?',
-// alphastart: '[a-z]+ | [A-Z]+',
-// alphaformat:
-//   '((?<alphaformat_padding>[^}}])? (?<alphaformat_align>[<>^]))? ((?<alphaformat_integer>{integer}))?',
-// cast: '[ifsb]',
-// expr: '.+?',
-// stopExpr: '.+?',
-// exprMode:
-//   '^(?<cast> {cast})?\\|(~(?<format> {format})::)? (?<expr> {expr}) (@(?<stopExpr> {stopExpr}))? (?<sort_selections> \\$)? (?<reverse> !)?$',
-// insertNum:
-//   '^(?<start> {signedNum})? (:(?<step> {signedNum}))? (r(?<random> \\+?\\d+))? (\\*(?<frequency> {integer}))? (#(?<repeat> {integer}))? (~(?<format> {format}))? (::(?<expr> {expr}))? (@(?<stopExpr> {stopExpr}))? (?<sort_selections> \\$)? (?<reverse> !)?$',
-// insertAlpha:
-//   '^(?<start> {alphastart})(:(?<step> {signedint}))? (\\*(?<frequency> {integer}))? (#(?<repeat> {integer}))? (~(?<format> {alphaformat})(?<wrap> w)?)? (@(?<stopExpr> {stopExpr}))? (?<sort_selections> \\$)? (?<reverse> !)?$',
-
-export function getRegexps(): RuleTemplate {
+function substituteRegExps(): void {
   function substitute(value: string, rules: RuleTemplate): string {
     while (value.indexOf('{{') > -1) {
       const start: number = value.indexOf('{{');
@@ -153,15 +147,63 @@ export function getRegexps(): RuleTemplate {
     return value.replace(/\s+/g, '');
   }
 
-  for (let [key, value] of Object.entries(ruleTemplate)) {
-    ruleTemplate[key] = substitute(value, ruleTemplate);
+  if (ruleTemplate['finish'] === undefined) {
+    for (let [key, value] of Object.entries(ruleTemplate)) {
+      ruleTemplate[key] = substitute(value, ruleTemplate);
+    }
+    ruleTemplate['finish'] = '';
   }
 
-  for (let [key, value] of Object.entries(keyTemplate)) {
-    keyTemplate[key] = substitute(
-      substitute(value, ruleTemplate),
-      keyTemplate
-    ).replace(/\s+/g, '');
+  if (keyTemplate['finish'] === undefined) {
+    for (let [key, value] of Object.entries(keyTemplate)) {
+      keyTemplate[key] = substitute(
+        substitute(value, ruleTemplate),
+        keyTemplate
+      ).replace(/\s+/g, '');
+    }
+    keyTemplate['finish'] = '';
   }
+}
+
+export function getRegexps(): RuleTemplate {
+  if (keyTemplate['finish'] === undefined) {
+    substituteRegExps();
+  }
+
   return keyTemplate;
+}
+
+export const allLocations: { [key: string]: vscode.Location[] } = {};
+
+export function splitvarlist(
+  cur: number,
+  groups: { [keys: string]: string } | undefined,
+  document: vscode.TextDocument
+): number {
+  if (!groups) return 0;
+  if (!groups.varlist) return 0;
+
+  if (ruleTemplate['finish'] === undefined) {
+    substituteRegExps();
+  }
+
+  let addLength = groups.before?.length || 0;
+  const allVars = [
+    ...groups.varlist.matchAll(new RegExp(`${ruleTemplate['varname']}`, 'gu')),
+  ];
+
+  for (let i = 0; i < allVars.length; i++) {
+    const curVar = allVars[i][0];
+    const newRange = document.getWordRangeAtPosition(document.positionAt(cur));
+    if (newRange) {
+      addLength += curVar.length;
+      const newLocation = new vscode.Location(document.uri, newRange);
+      if (allLocations[curVar] === undefined) {
+        allLocations[curVar] = [newLocation];
+      } else {
+        allLocations[curVar].push(newLocation);
+      }
+    }
+  }
+  return addLength;
 }

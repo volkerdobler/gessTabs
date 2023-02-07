@@ -1,5 +1,7 @@
 
-VARKEY <varname> = <key>;
+varlists:
+
+
 VARTEXT [<VarList>] = "text";
 TEXT [<VarList>] = "text";
 COPYTEXT <VarList> = <variable>;
@@ -14,11 +16,9 @@ LABELS <VarList> = {<number> "Text"}*n;
 [VALUE]LABELS <Varlist> AS <source-variable>;
 COPYLABELS <Varlist> = <source-variable>;
 USELABELS <Varlist> = <source-variable>;
-SINGLEQ <varname> = [ TITLE "Titelstring" ] OPEN;
 ASALPHA <varlist> = [ YES | NO ];
 OPENASALPHA <varlist> = [ YES | NO ];
 ALPHA <varlist> = YES;
-SINGLEQ <varname> = [ TITLE "Titelstring" ] ALPHA;
 OPENASALPHA <varlist> = [ YES | NO ];
 NOINPUT <varlist> = [ YES | NO ]; 
 STATIC <varlist> = [ YES | NO ]; 
@@ -27,12 +27,7 @@ NOSPSS <varlist> = [ YES | NO ];
 STOREALPHA <varlist> = [ YES | NO ]; 
 PRINTALL <varlist> = [ YES | NO ];
 NOEXPANDAT <varlist> = [ YES | NO ];
-SINGLEQ <varname> = ... [ LABELS [ AS <varname > | COPY <varname>]] ...;
-MULTIQ <varname> = ... [ LABELS { AS <varname> } ] ...; 
-MAKESINGLE <newvar> [ = <arithm.expression> ];
-VARIABLES <varname><varnumberstart> TO <varname><varnumberend> = [ start | * ] [width];
 MAKESINGLES <newvarlist> [ = <sourcelist> ] ;
-DICHOQ <varname> = ...;
 AUTONOANSWER [ <varlist> ] = [ YES "noanswertext" | NO ] [ LEVEL < number > ];
 MISSING <Varlist> = { number }*n;
 SETMISSING <Varlist> = { number }*n;
@@ -41,6 +36,26 @@ RESTRICTVALUES <varlist> = <valuelist>;
 RECODE <varlist> <valuelist> = <number>  { / <valuelist> = <number> }*n [ ELSE = <number> ] ;
 GROUPERECODE <varlist> <valuelist> = <number>  { / <valuelist> = <number> }*n [ ELSE = <number> ] ;
 RANGES [<VarList>] <ValueList> ;
+GROUPCOUNTS <Varlist> = [ YES | NO ];
+VARFAMILY = <varlist>;
+EVALFAMVALONCE <Varlist> = [ YES | NO ];
+NORMALIZE = <varlist>;
+INDEXVAR <name> = <varlist> BY <variable>;
+INVINDEXVAR <name> = <varlist> BY <variable>;
+COUNT <varlist> = ( <varlist> ) [ <logop> <number> IN [ <number> : number ] ] ;
+
+
+
+varnames:
+
+VARKEY <varname> = <key>;
+SINGLEQ <varname> = [ TITLE "Titelstring" ] OPEN;
+SINGLEQ <varname> = [ TITLE "Titelstring" ] ALPHA;
+SINGLEQ <varname> = ... [ LABELS [ AS <varname > | COPY <varname>]] ...;
+MULTIQ <varname> = ... [ LABELS { AS <varname> } ] ...; 
+MAKESINGLE <newvar> [ = <arithm.expression> ];
+VARIABLES <varname><varnumberstart> TO <varname><varnumberend> = [ start | * ] [width];
+DICHOQ <varname> = ...;
 OVERCODE [<ocname>] { :<label> }*n "text des OVERCODEs"
 OVEROVERCODE  [ SUM ] <oocname> { :<ocname> }*n "text des OVEROVERCODEs"
 VARGROUP <name> = ( <varlist> ) EQ <valuelist>;
@@ -48,19 +63,12 @@ GROUPS <Varname> = ...;
 MAKEGROUP <name> = <value>;
 INTERVALS <newvar> = <sourcevar> ...;
 SPSSGROUP <name> = <familyvarname>;
-GROUPCOUNTS <Varlist> = [ YES | NO ];
-VARFAMILY = <varlist>;
 MAKEFAMILY <name> = <value>;
 GENERATELABELS <varname>;
 ALPHA <varfamilyname> = NO;
 ALPHAFAMILY <neueAlphaFamily> = { <alphavar> }*n ;
 MULTIFROMSTRING [ DELIMITED <delimiter> ] [ DECIMALS <decimalchar> ] <newvar> = <alfavar>;
 CROSSVAR <newvar> = <var1> <var2> ;
-EVALFAMVALONCE <Varlist> = [ YES | NO ];
-NORMALIZE = <varlist>;
-INDEXVAR <name> = <varlist> BY <variable>;
-INVINDEXVAR <name> = <varlist> BY <variable>;
-COUNT <varlist> = ( <varlist> ) [ <logop> <number> IN [ <number> : number ] ] ;
 COMPUT <result> = <arithmetic_expressiom>;
 COMPUTE ADD <zielvar> = <varlist>;
 COMPUTE ALPHA <alphavar> = [ <variable> | <string> ];

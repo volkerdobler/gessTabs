@@ -6,13 +6,7 @@ import * as vscode from 'vscode';
 
 import * as sc from './tools/scope';
 
-import {
-  getCurrentFolderPath,
-  getAllFilenamesInDirectory,
-  getWordAtPosition,
-  getRegexps,
-  RuleTemplate,
-} from './tools/gessHelpers';
+import * as helper from './tools/gessHelpers';
 
 // this method is called when your extension is activated
 // your extension is activated the very first time the command is executed
@@ -82,10 +76,16 @@ export function activate(context: vscode.ExtensionContext) {
 // this method is called when your extension is deactivated
 export function deactivate() {}
 
+type AllLocations = {
+  [key: string]: vscode.Location[];
+};
+
+const allLocations: AllLocations = {};
+
 function testCommand(): void {
   console.log('Testcommand');
 
-  let keys = getRegexps();
+  let keys = helper.getRegexps();
 
   const document = vscode.window.activeTextEditor?.document;
 
@@ -93,20 +93,19 @@ function testCommand(): void {
     return;
   }
 
-  const word = new RegExp(
-    '(?:#?\\p{L}[\\p{L}\\p{M}\\d_\\.]*)|(?:\\{)|(?:\\/\\/)',
-    'u'
-  );
-
   const text = document.getText();
 
   for (let cur = 0; cur < text.length; cur++) {
     const curPosition = document.positionAt(cur);
 
-    const curRange = document.getWordRangeAtPosition(curPosition, word);
+    const curRange = document.getWordRangeAtPosition(
+      curPosition,
+      new RegExp('(?:#?[\\p{L}\\p{M}][\\p{L}\\p{M}\\d\\._]*)|\\{|(?://)', 'gu')
+    );
 
     if (curRange) {
-      const curWord = document.getText(curRange);
+      const curWord: string = document.getText(curRange);
+      console.log(curWord);
 
       const curLine = document.lineAt(document.positionAt(cur)).text;
       switch (curWord) {
@@ -122,51 +121,21 @@ function testCommand(): void {
             document.lineAt(document.positionAt(cur)).range.end
           );
           if (lineEnd) {
-            cur = lineEnd;
+            cur = lineEnd + 2;
           }
           continue;
           break;
-        case '#expand':
-          console.log('expand => ' + curLine);
-          break;
-        case 'table':
-          console.log('table => ' + curLine);
-          break;
         default:
-          console.log('nix => ' + curLine);
+          if (curWord in keys) {
+            const reg = new RegExp(keys[curWord], 'u');
+            const match = text.substring(cur).match(reg);
+            cur += helper.splitvarlist(cur, match?.groups, document);
+            continue;
+          }
       }
       cur += curWord.length;
     }
   }
-  const line = vscode.window.activeTextEditor?.document.lineAt(2);
-
-  const text2 = line?.text;
-
-  if (!text) {
-    return;
-  }
-
-  const linecomments = new RegExp(keys['linecomment'], 'gi');
-  const blockcomments = new RegExp(keys['blockcomment'], 'gi');
-  const script = text
-    ?.replace(linecomments, '')
-    .replace(/\\r\\n/g, '\\n')
-    .replace(/\\r/g, '\\n')
-    .replace(blockcomments, '');
-
-  for (let key in keys) {
-    const result = new RegExp(keys[key], 'gi');
-  }
-  // const test = '\\b(?:var)?title ([^=]+)\\s+=';
-  const vartitle = new RegExp(keys['vartitle'], 'gi');
-
-  const result = [...script.matchAll(vartitle)];
-
-  for (let i = 0; i < result.length; i++) {
-    console.log(i + 1 + ' : ' + result[i][1]);
-  }
-
-  const volker = 1;
 }
 
 const constTokenVarName: string =
@@ -545,7 +514,7 @@ class GesstabsDefinitionProvider implements vscode.DefinitionProvider {
     token: vscode.CancellationToken
   ): Thenable<vscode.Location> {
     const wordAtPosition: [boolean, string, vscode.Position] =
-      getWordAtPosition(document, position);
+      helper.getWordAtPosition(document, position);
 
     return new Promise((resolve, reject) => {
       if (!wordAtPosition[0]) {
@@ -554,9 +523,9 @@ class GesstabsDefinitionProvider implements vscode.DefinitionProvider {
 
       const word = wordAtPosition[1];
 
-      let wsfolder = getCurrentFolderPath(document.uri);
+      let wsfolder = helper.getCurrentFolderPath(document.uri);
 
-      let fileNames: string[] = getAllFilenamesInDirectory(
+      let fileNames: string[] = helper.getAllFilenamesInDirectory(
         wsfolder,
         '(tab|inc)'
       );
@@ -592,7 +561,7 @@ class GesstabsReferenceProvider implements vscode.ReferenceProvider {
     token: vscode.CancellationToken
   ): Thenable<vscode.Location[]> {
     return new Promise((resolve) => {
-      const wordAtPosition = getWordAtPosition(document, position);
+      const wordAtPosition = helper.getWordAtPosition(document, position);
 
       if (!wordAtPosition[0]) {
         return Promise.resolve(null);
@@ -601,9 +570,9 @@ class GesstabsReferenceProvider implements vscode.ReferenceProvider {
 
       let loclist: vscode.Location[] = [];
 
-      let wsfolder = getCurrentFolderPath(document.uri);
+      let wsfolder = helper.getCurrentFolderPath(document.uri);
 
-      let fileNames: string[] = getAllFilenamesInDirectory(
+      let fileNames: string[] = helper.getAllFilenamesInDirectory(
         wsfolder,
         '(tab|inc)'
       );
@@ -804,148 +773,155 @@ class GessTabsWorkspaceSymbolProvider
     const expandRegExp: RegExp = expandDefRe(query);
     const tableHeadRegExp: RegExp = tableHeadRe(query);
 
-    const wsfolder = getCurrentFolderPath(
+    const wsfolder = helper.getCurrentFolderPath(
       vscode.window.activeTextEditor &&
         vscode.window.activeTextEditor.document.uri
     );
     return new Promise((resolve) => {
-      getAllFilenamesInDirectory(wsfolder, '(tab|inc)').forEach((file) => {
-        vscode.workspace
-          .openTextDocument(wsfolder + '\\' + file)
-          .then(function (content) {
-            let scope = new sc.Scope(content);
+      helper
+        .getAllFilenamesInDirectory(wsfolder, '(tab|inc)')
+        .forEach((file) => {
+          vscode.workspace
+            .openTextDocument(wsfolder + '\\' + file)
+            .then(function (content) {
+              let scope = new sc.Scope(content);
 
-            for (let i = 0; i < content.lineCount; i++) {
-              let line: vscode.TextLine = content.lineAt(i);
+              for (let i = 0; i < content.lineCount; i++) {
+                let line: vscode.TextLine = content.lineAt(i);
 
-              if (line.text.length === 0) {
-                continue;
-              }
+                if (line.text.length === 0) {
+                  continue;
+                }
 
-              if (scope.isNotInComment(i, line.text.search(singleVarRegExp))) {
-                let lineMatch = line.text.match(singleVarRegExp);
-                if (lineMatch) {
-                  spush(
-                    vscode.SymbolKind.Variable,
-                    lineMatch[1].toLocaleLowerCase(),
-                    lineMatch[2],
-                    '',
-                    '',
-                    content.uri,
-                    line.range,
-                    symbols
-                  );
-                }
-              }
-              if (scope.isNotInComment(i, line.text.search(multiVarRegExp))) {
-                let lineMatch = line.text.match(multiVarRegExp);
-                if (lineMatch) {
-                  spush(
-                    vscode.SymbolKind.Variable,
-                    lineMatch[1].toLocaleLowerCase(),
-                    lineMatch[2],
-                    lineMatch[3],
-                    lineMatch[4],
-                    content.uri,
-                    line.range,
-                    symbols
-                  );
-                }
-              }
-              if (scope.isNormalScope(i, line.text.search(computeRegExp))) {
-                let lineMatch = line.text.match(computeRegExp);
-                if (lineMatch) {
-                  spush(
-                    vscode.SymbolKind.Variable,
-                    lineMatch[1].toLocaleLowerCase(),
-                    lineMatch[2],
-                    lineMatch[3],
-                    '',
-                    content.uri,
-                    line.range,
-                    symbols
-                  );
-                }
-              }
-              if (scope.isNormalScope(i, line.text.search(macroRegExp))) {
-                let lineMatch = line.text.match(macroRegExp);
                 if (
-                  lineMatch &&
-                  lineMatch.length >= 2 &&
-                  lineMatch[2].length > 0
+                  scope.isNotInComment(i, line.text.search(singleVarRegExp))
                 ) {
-                  spush(
-                    vscode.SymbolKind.Function,
-                    'macro',
-                    lineMatch[2],
-                    '',
-                    '',
-                    content.uri,
-                    line.range,
-                    symbols
-                  );
-                }
-              }
-              if (scope.isNormalScope(i, line.text.search(expandRegExp))) {
-                let lineMatch = line.text.match(expandRegExp);
-                if (
-                  lineMatch &&
-                  lineMatch.length >= 2 &&
-                  lineMatch[2].length > 0
-                ) {
-                  spush(
-                    vscode.SymbolKind.Function,
-                    'expand',
-                    lineMatch[2],
-                    '',
-                    '',
-                    content.uri,
-                    line.range,
-                    symbols
-                  );
-                }
-              }
-              if (scope.isNormalScope(i, line.text.search(tableHeadRegExp))) {
-                let lineMatch = line.text.match(tableHeadRegExp);
-                if (lineMatch && lineMatch.length === 5) {
-                  let re: RegExp;
-                  if (lineMatch[3].search(/"/) > -1) {
-                    re = /\s*"\s*/;
-                  } else {
-                    re = /\s+/;
+                  let lineMatch = line.text.match(singleVarRegExp);
+                  if (lineMatch) {
+                    spush(
+                      vscode.SymbolKind.Variable,
+                      lineMatch[1].toLocaleLowerCase(),
+                      lineMatch[2],
+                      '',
+                      '',
+                      content.uri,
+                      line.range,
+                      symbols
+                    );
                   }
-                  lineMatch[3].split(re).forEach(function (value) {
-                    if (value.search(/[\s"]*&/) !== 0) {
+                }
+                if (scope.isNotInComment(i, line.text.search(multiVarRegExp))) {
+                  let lineMatch = line.text.match(multiVarRegExp);
+                  if (lineMatch) {
+                    spush(
+                      vscode.SymbolKind.Variable,
+                      lineMatch[1].toLocaleLowerCase(),
+                      lineMatch[2],
+                      lineMatch[3],
+                      lineMatch[4],
+                      content.uri,
+                      line.range,
+                      symbols
+                    );
+                  }
+                }
+                if (scope.isNormalScope(i, line.text.search(computeRegExp))) {
+                  let lineMatch = line.text.match(computeRegExp);
+                  if (lineMatch) {
+                    spush(
+                      vscode.SymbolKind.Variable,
+                      lineMatch[1].toLocaleLowerCase(),
+                      lineMatch[2],
+                      lineMatch[3],
+                      '',
+                      content.uri,
+                      line.range,
+                      symbols
+                    );
+                  }
+                }
+                if (scope.isNormalScope(i, line.text.search(macroRegExp))) {
+                  let lineMatch = line.text.match(macroRegExp);
+                  if (
+                    lineMatch &&
+                    lineMatch.length >= 2 &&
+                    lineMatch[2].length > 0
+                  ) {
+                    spush(
+                      vscode.SymbolKind.Function,
+                      'macro',
+                      lineMatch[2],
+                      '',
+                      '',
+                      content.uri,
+                      line.range,
+                      symbols
+                    );
+                  }
+                }
+                if (scope.isNormalScope(i, line.text.search(expandRegExp))) {
+                  let lineMatch = line.text.match(expandRegExp);
+                  if (
+                    lineMatch &&
+                    lineMatch.length >= 2 &&
+                    lineMatch[2].length > 0
+                  ) {
+                    spush(
+                      vscode.SymbolKind.Function,
+                      'expand',
+                      lineMatch[2],
+                      '',
+                      '',
+                      content.uri,
+                      line.range,
+                      symbols
+                    );
+                  }
+                }
+                if (scope.isNormalScope(i, line.text.search(tableHeadRegExp))) {
+                  let lineMatch = line.text.match(tableHeadRegExp);
+                  if (lineMatch && lineMatch.length === 5) {
+                    let re: RegExp;
+                    if (lineMatch[3].search(/"/) > -1) {
+                      re = /\s*"\s*/;
+                    } else {
+                      re = /\s+/;
+                    }
+                    lineMatch[3].split(re).forEach(function (value) {
+                      if (value.search(/[\s"]*&/) !== 0) {
+                        symbols.push({
+                          name: value,
+                          kind: vscode.SymbolKind.Variable,
+                          location: new vscode.Location(
+                            content.uri,
+                            line.range
+                          ),
+                          containerName: 'head',
+                        });
+                      }
+                    });
+                    if (lineMatch[4].search(/"/) > -1) {
+                      re = /\s*"\s*/;
+                    } else {
+                      re = /\s+/;
+                    }
+                    lineMatch[4].split(re).forEach(function (value) {
                       symbols.push({
                         name: value,
                         kind: vscode.SymbolKind.Variable,
                         location: new vscode.Location(content.uri, line.range),
-                        containerName: 'head',
+                        containerName: 'axis',
                       });
-                    }
-                  });
-                  if (lineMatch[4].search(/"/) > -1) {
-                    re = /\s*"\s*/;
-                  } else {
-                    re = /\s+/;
-                  }
-                  lineMatch[4].split(re).forEach(function (value) {
-                    symbols.push({
-                      name: value,
-                      kind: vscode.SymbolKind.Variable,
-                      location: new vscode.Location(content.uri, line.range),
-                      containerName: 'axis',
                     });
-                  });
+                  }
                 }
               }
-            }
-            return symbols;
-          })
-          .then((result) => {
-            resolve(result);
-          });
-      });
+              return symbols;
+            })
+            .then((result) => {
+              resolve(result);
+            });
+        });
     });
   }
 }
