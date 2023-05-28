@@ -2,6 +2,10 @@
 
 All notable changes to the "gesstabs" extension will be documented in this file (last change first).
 
+## 0.2.7
+
+Updated tmLanguage files to show all commands mentioned in https://help.gessgroup.de/gesstabs-help/ (Stand Mai 2023)
+
 ## 0.2.6
 
 New feature: folding region is now available for Pre-Processor commands and comments
