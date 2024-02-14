@@ -80,26 +80,31 @@ function getWorkspaceFolderPath(fileUri?: vscode.Uri): string | undefined {
 }
 
 // Variablenname ohne Anführungszeichen - muss mit einem Buchstaben starten, danach auch Zahlen und Punkte
-const constTokenVarName: string =
-  '(?:\\b(?:[A-Za-zÄÖÜßäöü][A-Za-zÄÖÜßäöü\\w\\.]*)\\b)';
+const constTokenVarName: string = '(?:\\b(?i:[a-zßäöü][a-zßäöü\\w\\.]*)\\b)';
 
 // Variablennamen in Anführungsstriche dürfen alles enthalten, auch Leerzeichen
-const constStringVarName: string = '(?:"[^"]+")|(?:\'[^\']+\')';
+const constStringVarName: string = '(?i:"[^"]+")|(?:\'[^\']+\')';
 
 // ein Variablenname ist entweder ein TokenVarName oder ein StringVarName
 const constVarName: string =
   '(?:' + constTokenVarName + '|' + constStringVarName + ')';
 
-const constVarList: string =
+const constVarListSeq: string =
   '(' + constVarName + '(?:\\s+(?:' + constVarName + '))*)';
-const constVarToList: string =
-  '(?:' + constVarList + '\\s*\\bto\\b\\s*' + constVarList + ')';
+const constVarListTo: string =
+  '(?i:' + constVarListSeq + '\\s*to\\s*' + constVarListSeq + ')';
 
-const constAllVarList: string =
-  '(?:' + constVarToList + '|' + constVarList + ')';
+const constVarList: string =
+  '(?:' + constVarListTo + '|' + constVarListSeq + ')';
 
 function getWordDefinition(word: string): string {
-  return '(?:(?:\\b' + word + '\\b)|(?:"' + word + '")|(?:\'' + word + "'))";
+  if (word.split(/\s+/).length > 1) {
+    return '(?:.*(?:"' + word + '")|(?:\'' + word + "'))";
+  } else {
+    return (
+      '(?:.*(?:\\b' + word + '\\b)|(?:"' + word + '")|(?:\'' + word + "'))"
+    );
+  }
 }
 
 const wordDefRe = function (word: string): RegExp {
@@ -111,11 +116,11 @@ const singleVarDefRe = function (word: string): RegExp {
     '(alphafamily|assocvar|bcdvar|bitgroup|clonevar|combinedvar|count|dichoq|familyvar|groups|groupvar|indexvar|init|invindexvar|makefamily|makegroup|makesingle|max|mean|min|multiq|simplevar|singleq|spssgroup|static|stddev|sum|varfamily|vargroup|variable|variance)';
 
   let retVal: string = '';
-  if (word && word.length > 0) {
+  if (word.length > 0) {
     retVal =
-      '\\b' + singleVarConst + '\\b\\s*' + getWordDefinition(word) + '\\s*=';
+      '\\b' + singleVarConst + '\\s*(' + getWordDefinition(word) + '\\s*=';
   } else {
-    retVal = '\\b' + singleVarConst + '\\b\\s*(' + constVarName + ')\\s*=';
+    retVal = '\\b' + singleVarConst + '\\s+(' + constVarName + ')\\s*=';
   }
   return new RegExp(retVal, 'i');
 };
@@ -124,25 +129,11 @@ const multiVarDefRe = function (word: string): RegExp {
   const multiVarConst = '(variables)';
 
   let retVal: string = '';
-  if (word && word.length > 0) {
+  if (word.length > 0) {
     retVal =
-      '\\b' +
-      multiVarConst +
-      '\\b\\s*' +
-      '(?:' +
-      '(?:' +
-      constVarList +
-      '*\\s*' +
-      getWordDefinition(word) +
-      ')|' +
-      '(?:.*\\bto\\b\\s*' +
-      constVarList +
-      '*\\s*\\b' +
-      getWordDefinition(word) +
-      '\\b)' +
-      ').*=';
+      '\\b' + multiVarConst + '\\s+(' + getWordDefinition(word) + '\\s*).*=';
   } else {
-    retVal = '\\b' + multiVarConst + '\\b\\s*(?:' + constAllVarList + ')\\s*=';
+    retVal = '\\b' + multiVarConst + '\\s+(' + constVarList + ')\\s*=';
   }
   return new RegExp(retVal, 'i');
 };
@@ -152,56 +143,31 @@ const multiVarRe = function (word: string): RegExp {
     '(copylabels|excludevalues|includevalues|labels|text|title|uselabels|valuelabels|vartext|vartitle)';
 
   let retVal: string = '';
-  if (word && word.length > 0) {
+  if (word.length > 0) {
     retVal =
-      '\\b' +
-      multiVarConst +
-      '\\b\\s*' +
-      '(?:' +
-      '(?:' +
-      constVarList +
-      '*\\s*' +
-      getWordDefinition(word) +
-      ')|' +
-      '(?:.*\\s*\\bto\\b\\s*' +
-      constVarList +
-      '*\\s*\\b' +
-      getWordDefinition(word) +
-      '\\b)' +
-      ').*=';
+      '\\b' + multiVarConst + '\\s+(?:' + getWordDefinition(word) + '\\b).*=';
   } else {
-    retVal = '\\b' + multiVarConst + '\\b\\s*(?:' + constAllVarList + ')\\s*=';
+    retVal = '\\b' + multiVarConst + '\\s+(' + constVarList + ')\\s*=';
   }
   return new RegExp(retVal, 'i');
 };
 
 const computeDefRe = function (word: string): RegExp {
-  const varDefWithOptions = '\\b(f?compute|weightcells)\\b';
-  const optionStr =
-    '\\b(?:add|alpha|ascend|autoalign|copy|descend|eliminate|init|load|replace|shuffle|sort|swap)\\b';
+  const defWithOptions =
+    '\\b(f?compute\\s+(?:add|alpha|ascend|copy|descend|eliminate|init|load|replace|shuffle|sort|swap)?|weightcells\\s+(?:autoalign)?)\\b';
 
-  if (word && word.length > 0) {
+  if (word.length > 0) {
     return new RegExp(
-      varDefWithOptions +
-        '\\s+(?:' +
-        optionStr +
-        '\\s*)?' +
-        '(?:' +
-        constVarList +
-        '*\\s*\\b' +
-        getWordDefinition(word) +
-        '\\b).*=',
+      defWithOptions + '\\s+(?:' + getWordDefinition(word) + '\\b).*=',
       'i'
     );
   } else {
     return new RegExp(
-      varDefWithOptions +
-        '\\s+(?:(?:' +
-        optionStr +
-        '\\s*(' +
+      defWithOptions +
+        '(?:\\s+(?:' +
         constVarName +
-        '))|(?:' +
-        constVarList +
+        ')|(?:' +
+        constVarListSeq +
         '))\\s*=',
       'i'
     );
@@ -210,26 +176,15 @@ const computeDefRe = function (word: string): RegExp {
 
 const macroDefRe = function (word: string): RegExp {
   let tempWord: string =
-    word && word.length > 0 ? getWordDefinition(word) : constTokenVarName;
+    word.length > 0 ? getWordDefinition(word) : constTokenVarName;
 
   return new RegExp('(?:(#macro)\\s+(#' + tempWord + ')\\s*\\()', 'i');
-};
-
-const macroRe = function (word: string): RegExp {
-  let tempWord: string =
-    word && word.length > 0 ? getWordDefinition(word) : constTokenVarName;
-
-  return new RegExp(
-    '#' + constTokenVarName + '\\s*\\(.*(' + tempWord + ').*',
-    'i'
-  );
 };
 
 const macroOwnDefRe = function (word: string): RegExp {
   const multiMacros = ['makemulti', 'makemulti2'];
 
-  let tempWord: string =
-    word && word.length > 0 ? getWordDefinition(word) : '\\0';
+  let tempWord: string = word.length > 0 ? getWordDefinition(word) : '\\0';
 
   let regExpStr = '';
 
@@ -253,14 +208,12 @@ const macroOwnDefRe = function (word: string): RegExp {
 };
 
 const expandDefRe = function (word: string): RegExp {
-  let tempWord =
-    word && word.length > 0 ? getWordDefinition(word) : constTokenVarName;
+  let tempWord = word.length > 0 ? getWordDefinition(word) : constTokenVarName;
   return new RegExp('(?:(#expand)\\s+(#' + tempWord + '))', 'i');
 };
 
 const expandRe = function (word: string): RegExp {
-  let tempWord =
-    word && word.length > 0 ? getWordDefinition(word) : constTokenVarName;
+  let tempWord = word.length > 0 ? getWordDefinition(word) : constTokenVarName;
   return new RegExp('(#' + tempWord + ')\\b', 'i');
 };
 
@@ -268,14 +221,12 @@ const tableHeadRe = function (word: string): RegExp {
   const tableVarConst = '(table)';
 
   let retVal: string = '';
-  if (word && word.length > 0) {
+  if (word.length > 0) {
     retVal =
       '\\b' +
       tableVarConst +
       '\\b[^=]*=\\s*' +
       '(?:' +
-      constAllVarList +
-      '*\\s*' +
       getWordDefinition(word) +
       '.*\\bby\\b)';
   } else {
@@ -283,7 +234,7 @@ const tableHeadRe = function (word: string): RegExp {
       '\\b' +
       tableVarConst +
       '\\b[^=]*=\\s*(?:' +
-      constAllVarList +
+      constVarList +
       ')\\s*\\bby\\b';
   }
   return new RegExp(retVal, 'i');
@@ -293,14 +244,12 @@ const tableAxisRe = function (word: string): RegExp {
   const tableVarConst = '(table)';
 
   let retVal: string = '';
-  if (word && word.length > 0) {
+  if (word.length > 0) {
     retVal =
       '\\b' +
       tableVarConst +
       '\\b[^=]*=\\s*' +
       '(?:.*\\s*\\bby\\b\\s*' +
-      constAllVarList +
-      '*\\s*' +
       getWordDefinition(word) +
       ')';
   } else {
@@ -309,7 +258,7 @@ const tableAxisRe = function (word: string): RegExp {
       tableVarConst +
       '\\b[^=]*=\\s*.+\\s*\\bby\\b\\s*' +
       '(?:' +
-      constAllVarList +
+      constVarList +
       ')';
   }
   return new RegExp(retVal, 'i');
@@ -449,13 +398,13 @@ async function getDefLocationInDocument(
 async function getAllLocationsInDocument(filename: string, word: string) {
   let locArray: vscode.Location[] = [];
 
-  //  const wordRegExp: RegExp = wordDefRe(word);
+  const wordRegExp: RegExp = wordDefRe(word);
   const singleVarRegExp = singleVarDefRe(word);
   const multiVarRegExp = multiVarRe(word);
   const multiVarDefRegExp = multiVarDefRe(word);
   const computeRegExp = computeDefRe(word);
   const macroDefRegExp = macroDefRe(word);
-  const macroRegExp = macroRe(word);
+  const macroRegExp = macroDefRe(word);
   const macroOwnRegExp = macroOwnDefRe(word);
   const expandDefRegExp = expandDefRe(word);
   const expandRegExp = expandRe(word);

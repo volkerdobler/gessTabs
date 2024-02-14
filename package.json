@@ -11,9 +11,6 @@
     "Programming Languages",
     "Snippets"
   ],
-  "activationEvents": [
-    "onLanguage:gesstabs"
-  ],
   "repository": {
     "type": "git",
     "url": "https://github.com/volkerdobler/gessTabs.git"
@@ -40,7 +37,7 @@
       {
         "language": "gesstabs",
         "scopeName": "source.gessTabs",
-        "path": "./syntaxes/gessTabs.tmLanguage"
+        "path": "./syntaxes/gessTabs.json"
       }
     ],
     "snippets": [
