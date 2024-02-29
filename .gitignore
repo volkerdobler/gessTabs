@@ -167,3 +167,4 @@ dist
 
 testen/*
 *.code-workspace
+syntaxes/gessTabs_previous.tmLanguage

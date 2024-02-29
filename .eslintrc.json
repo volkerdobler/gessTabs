@@ -1,0 +1,28 @@
+{
+  "root": true,
+  "plugins": ["prettier", "@typescript-eslint"],
+  "extends": [
+    "eslint:recommended",
+    "airbnb-base",
+    "plugin:@typescript-eslint/recommended",
+    "plugin:prettier/recommended"
+  ],
+  "rules": {
+    "no-unused-vars": "off",
+    "prettier/prettier": [
+      "error",
+      {
+        "trailingComma": "es6",
+        "singleQuote": true,
+        "printWidth": 80,
+        "tabWidth": 2
+      }
+    ],
+    "semi": [2, "always"],
+    "@typescript-eslint/no-unused-vars": 0,
+    "@typescript-eslint/no-explicit-any": 0,
+    "@typescript-eslint/explicit-module-boundary-types": 0,
+    "@typescript-eslint/no-non-null-assertion": 0,
+    "no-constant-condition": 0
+  }
+}

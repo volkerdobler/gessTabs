@@ -1,0 +1,169 @@
+
+VARKEY <varname> = <key>;
+VARTEXT [<VarList>] = "text";
+TEXT [<VarList>] = "text";
+COPYTEXT <VarList> = <variable>;
+INCLUDETITLEINTEXT <varlist> = [ YES | NO ];
+VARTITLE [<VarList>] = "text";
+TITLE [<VarList>] = "text";
+COPYTITLE <VarList> = <variable>;
+VALUELABELS <VarList> = {<number> "Text"}*n;
+VALUELABELS  <VarList>  = LABELFROMFILE <filename>;
+LABELS <VarList> = {<number> "Text"}*n;
+[VALUE]LABELS <Varlist> COPY <source-variable>;
+[VALUE]LABELS <Varlist> AS <source-variable>;
+COPYLABELS <Varlist> = <source-variable>;
+USELABELS <Varlist> = <source-variable>;
+SINGLEQ <varname> = [ TITLE "Titelstring" ] OPEN;
+ASALPHA <varlist> = [ YES | NO ];
+OPENASALPHA <varlist> = [ YES | NO ];
+ALPHA <varlist> = YES;
+SINGLEQ <varname> = [ TITLE "Titelstring" ] ALPHA;
+OPENASALPHA <varlist> = [ YES | NO ];
+NOINPUT <varlist> = [ YES | NO ]; 
+STATIC <varlist> = [ YES | NO ]; 
+NOOUTPUT <varlist> = [ YES | NO ]; 
+NOSPSS <varlist> = [ YES | NO ]; 
+STOREALPHA <varlist> = [ YES | NO ]; 
+PRINTALL <varlist> = [ YES | NO ];
+NOEXPANDAT <varlist> = [ YES | NO ];
+SINGLEQ <varname> = ... [ LABELS [ AS <varname > | COPY <varname>]] ...;
+MULTIQ <varname> = ... [ LABELS { AS <varname> } ] ...; 
+MAKESINGLE <newvar> [ = <arithm.expression> ];
+VARIABLES <varname><varnumberstart> TO <varname><varnumberend> = [ start | * ] [width];
+MAKESINGLES <newvarlist> [ = <sourcelist> ] ;
+DICHOQ <varname> = ...;
+AUTONOANSWER [ <varlist> ] = [ YES "noanswertext" | NO ] [ LEVEL < number > ];
+MISSING <Varlist> = { number }*n;
+SETMISSING <Varlist> = { number }*n;
+EXCLUDEVALUES <varlist> = <valuelist>;
+RESTRICTVALUES <varlist> = <valuelist>;
+RECODE <varlist> <valuelist> = <number>  { / <valuelist> = <number> }*n [ ELSE = <number> ] ;
+GROUPERECODE <varlist> <valuelist> = <number>  { / <valuelist> = <number> }*n [ ELSE = <number> ] ;
+RANGES [<VarList>] <ValueList> ;
+OVERCODE [<ocname>] { :<label> }*n "text des OVERCODEs"
+OVEROVERCODE  [ SUM ] <oocname> { :<ocname> }*n "text des OVEROVERCODEs"
+VARGROUP <name> = ( <varlist> ) EQ <valuelist>;
+GROUPS <Varname> = ...;
+MAKEGROUP <name> = <value>;
+INTERVALS <newvar> = <sourcevar> ...;
+SPSSGROUP <name> = <familyvarname>;
+GROUPCOUNTS <Varlist> = [ YES | NO ];
+VARFAMILY = <varlist>;
+MAKEFAMILY <name> = <value>;
+GENERATELABELS <varname>;
+ALPHA <varfamilyname> = NO;
+ALPHAFAMILY <neueAlphaFamily> = { <alphavar> }*n ;
+MULTIFROMSTRING [ DELIMITED <delimiter> ] [ DECIMALS <decimalchar> ] <newvar> = <alfavar>;
+CROSSVAR <newvar> = <var1> <var2> ;
+EVALFAMVALONCE <Varlist> = [ YES | NO ];
+NORMALIZE = <varlist>;
+INDEXVAR <name> = <varlist> BY <variable>;
+INVINDEXVAR <name> = <varlist> BY <variable>;
+COUNT <varlist> = ( <varlist> ) [ <logop> <number> IN [ <number> : number ] ] ;
+COMPUT <result> = <arithmetic_expressiom>;
+COMPUTE ADD <zielvar> = <varlist>;
+COMPUTE ALPHA <alphavar> = [ <variable> | <string> ];
+COMPUTE [ ASCEND | DESCEND ] <varlist> = <varlist>;
+COMPUTE CONCAT [ <lettercase> ] <alphavar> = { <elem> }*n;
+CONCATNUMTOSTR <varlist> = [ YES | NO ];
+COMPUTE COPY <varlist> = <varlist>;
+COMPUTE ELIMINATE <zielvar> = { <number> }*n;
+COMPUTE INIT <zielvar> = { <number> }*n;
+COMPUTE LOAD <zielvar> = <varlist> ;
+COMPUTE REPLACE <value to replace> <zielvar> = <sourcevar>;
+COMPUTE SHUFFLE <varlist> = <varlist>;
+COMPUTE SORT ( n1 n2 ... nm ) <zielvar> = <quellvar>;
+COMPUTE SUBSTR [ <lettercase> ] <zielvariable> = <quellvariable> <start> <len> ;
+COMPUTE SWAP <varlist> = <varlist>;
+IF <bedingung> THEN <anweisung> [ ELSE <anweisung> ] ;
+IF <alpha> IN <alphavar> THEN ...
+IFBLOCK <bedingung> THEN
+  //hier können mehrere computes/ifs etc stehen
+ELSEBLOCK
+  //hier können mehrere computes/ifs etc stehen
+ENDBLOCK;
+WHILEBLOCK <bedingung> DO
+  // hier können mehrere computes/ifs etc stehen
+  // oder auch z.b. IFBLOCK-konstrukte
+ENDBLOCK;
+MEAN <varname> = <Varlist>;
+SUM <varname> = <Varlist>;
+MIN <varname> = <Varlist>;
+MAX <varname> = <Varlist>;
+MAXINDEX <resultvar> = <varlist>;
+MININDEX <resultvar> = <varlist>;
+STDDEV <varname> = <varlist>;
+VARIANCE <varname> = <varlist>;
+DATA [ USEWEIGHT <weightvar> ] <method> <newvar> = <basevar> [ BY <groupvar> ] ;
+SELECT <Bedingung>;
+TABSELECT [TEXT <"Selektionsbeschreibung">] <Bedingung>;
+TABSELECTBYCODE [ <options> ] <VARIABLE> ( <CODE> );
+FILTER <varlist> [ = <Bedingung> | AS <varname> ] ;
+TABLEFILTER <number> = TEXT "<text>" <Bedingung>;
+TABLEFILTERBYCODE <NUMBER> = [ <options> ] <VARIABLE> ( <CODE> ) ;
+SETFILTER [ <filtername> ] [ TEXT "filtertext" ] = < log. Bedingung > ;
+ENDFILTER [ <filtername> ] ;
+COPYFILTER <varname> = <varname>;
+CODEBOOK [ EXCEPT ][ <VarList> ] ;
+TABLE = <var1> BY <var2>;
+TABLE [ taboptions ] = <parts> BY <parts>;
+    taboptions ::=
+    [ 
+    ADD
+    NAME <tablename>
+    TITLE <tabletitle>
+    CELLELEMENTS ( <cellelements> )
+    FRAMEELEMENTS ( <frameelements> )
+    TABLEFORMATS ( <tableformats> )
+    CONTENTKEY <contentkey>
+    ]
+    parts ::= part { part }*n
+    part ::= content [ filter ] [ option ]
+    content ::=
+    [
+    <varname> |
+    <cellelement> ( <varname> [ <varname> ] ) |
+    <cellelement> ( <varname> [ <varname> ] BY <varname> )
+    ] 
+    filter ::= FILTER <bedingung> |
+REPRINT TABLE = <tablename>;
+TABULATE [ INVERSE ] = <tablepart> { / <tablepart> }*n;
+HEADERS = <tablepart> { / <tablepart> }*n;
+DUMMYHEAD = <varname> LABELS [ OVERCODE 1 2 "labeltext".... ] 1 "labeltext" ...;
+TABLE STRUCTURE = <varlist> BY <varlist>;
+TABLE ADD = <varlist> BY <varlist>;
+[X]OVERVIEW <tableoptions> = <kopf> BY <cellelementlist> ( <varlist> ) ...
+    [ FILTER <log.bedingung> | ]
+    [ USEFONT <font> ]
+    [ USEWEIGHT <variable> ]
+    [ DESCRIPTION <string> ]
+    [ SORT AS <tablename> ]
+    ;
+SORTCLASS <varname> LABELS <number> [ <number> ... ] = <number> ;
+SORTCLASS <varname> OVERCODE <name> = <number>;
+WEIGHT = <variablenname>;
+WEIGHTCELLS [ AUTOALIGN ] <varname> = ...;
+USEWEIGHT = [ YES | NO | <varname> ] ;
+CITEVARTEXT [ TOPTEXT | BOTTOMTEXT ] = <Varlist> ;s
+
+
+
+
+Systemvariablen:
+================
+SystemFileNo
+SystemWeight
+SystemCaseNo
+SysMiss
+NIL
+
+
+
+
+
+
+
+
+
+
