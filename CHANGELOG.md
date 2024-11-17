@@ -2,6 +2,10 @@
 
 All notable changes to the "gesstabs" extension will be documented in this file (last change first).
 
+## 0.2.9
+
+Update language file: optimize number definition
+
 ## 0.2.8
 
 Updated tmLanguage file to json format

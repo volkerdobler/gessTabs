@@ -3,8 +3,8 @@
 import vscode = require('vscode');
 import fs = require('fs');
 import path = require('path');
-import vsctm = require('vscode-textmate');
-import oniguruma = require('vscode-oniguruma');
+// import vsctm = require('vscode-textmate');
+// import oniguruma = require('vscode-oniguruma');
 
 import * as sc from './scope';
 
@@ -405,7 +405,8 @@ function getAllFilenamesInDirectory(dir: string, fType: string): string[] {
     let fileInclDir = dir + '\\' + file.name;
     if (file.isDirectory()) {
       /* Recursive into a subdirectory */
-      results = results.concat(getAllFilenamesInDirectory(fileInclDir, fType));
+      // no subdirectory search - Feb 24
+      // results = results.concat(getAllFilenamesInDirectory(fileInclDir, fType));
     } else {
       /* Is a file */
       // results.push(file);
@@ -516,7 +517,11 @@ class GesstabsDefintionProvider implements vscode.DefinitionProvider {
     const wordAtPosition: [boolean, string, vscode.Position] =
       getWordAtPosition(document, position);
 
+    
     return new Promise((resolve) => {
+// temporäres abschalten, da es sich aufhängt, muss neu geschrieben werden.
+      return Promise.resolve(null);
+
       if (!wordAtPosition[0]) {
         return Promise.resolve(null);
       }
@@ -535,6 +540,7 @@ class GesstabsDefintionProvider implements vscode.DefinitionProvider {
       let locations = fileNames.map((file) =>
         getDefLocationInDocument(file, word)
       );
+      
       // has to be a Promise as the OpenTextDocument is async and we have to
       // wait until it is fullfilled with all filenames.
       Promise.all(locations).then(function (content) {
@@ -557,7 +563,13 @@ class GesstabsReferenceProvider implements vscode.ReferenceProvider {
     options: { includeDeclaration: boolean },
     token: vscode.CancellationToken
   ): Thenable<vscode.Location[]> {
+
+    
     return new Promise((resolve) => {
+// temporäres abschalten, da es sich aufhängt, muss neu geschrieben werden.
+      return Promise.resolve(null);
+      
+
       const wordAtPosition = getWordAtPosition(document, position);
 
       if (!wordAtPosition[0]) {
