@@ -6,3 +6,4 @@ src/**
 .gitignore
 tsconfig.json
 vsc-extension-quickstart.md
+syntax/gessTabs_previous.tmLanguage

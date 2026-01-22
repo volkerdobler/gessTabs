@@ -45,7 +45,18 @@
         "language": "gesstabs",
         "path": "./snippets/snippets.json"
       }
-    ]
+    ],
+	"configuration": {
+		"type": "object",
+		"title": "gessTabs Configuration",
+		"properties": {
+			"gesstabs.debugMode": {
+				"type": "boolean",
+				"default": false,
+				"description": "Enable debug messages in the console."
+			}
+		}
+	}
   },
   "scripts": {
     "vscode:prepublish": "npm run compile",
