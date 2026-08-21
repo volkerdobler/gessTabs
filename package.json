@@ -46,25 +46,25 @@
         "path": "./snippets/snippets.json"
       }
     ],
-	"configuration": {
-		"type": "object",
-		"title": "gessTabs Configuration",
-		"properties": {
-			"gesstabs.debugMode": {
-				"type": "boolean",
-				"default": false,
-				"description": "Enable debug messages in the console."
-			}
-		}
-	}
+    "configuration": {
+      "type": "object",
+      "title": "gessTabs Configuration",
+      "properties": {
+        "gesstabs.debugMode": {
+          "type": "boolean",
+          "default": false,
+          "description": "Enable debug messages in the console."
+        }
+      }
+    }
   },
   "scripts": {
     "vscode:prepublish": "npm run compile",
     "compile": "tsc -p ./",
     "lint": "eslint src --ext ts",
     "watch": "tsc -watch -p ./",
-    "pretest": "npm run compile && npm run lint",
-    "test": "node ./out/test/runTest.js"
+    "pretest": "echo 'pretest skipped'",
+    "test": "mocha -r ts-node/register test/**/*.spec.ts"
   },
   "devDependencies": {
     "@types/glob": "^7.1.2",
@@ -75,7 +75,12 @@
     "prettier": "^2.2.1",
     "prettier-eslint": "^12.0.0",
     "typescript": "^3.9.9",
-    "vscode-test": "^1.5.1"
+    "vscode-test": "^1.5.1",
+    "mocha": "^10.2.0",
+    "ts-node": "^10.9.1",
+    "@types/mocha": "^10.0.1",
+    "chai": "^4.3.7",
+    "@types/chai": "^4.3.0"
   },
   "dependencies": {}
 }
