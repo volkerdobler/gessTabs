@@ -2,6 +2,10 @@
 
 All notable changes to the "gesstabs" extension will be documented in this file (last change first).
 
+## 0.3.0
+
+Update language file: optimize number definition again
+
 ## 0.2.9
 
 Update language file: optimize number definition

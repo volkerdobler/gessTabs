@@ -66,9 +66,13 @@
         }
       ]
     },
+   {
+        "name": "constant.numeric.version",
+        "match": "(?<!\\w)\\d+(?:\\.\\d+)+(?!\\w)"
+    },
     {
-      "match": "(?<=[^\\w\\d\\.])(\\d+(?:[\\.]\\d+)?)",
-      "name": "constant.numeric.decimal"
+        "name": "constant.numeric",
+        "match": "(?<!\\w)[+-]?\\d+(?:\\.\\d+)?(?!\\w)"
     }
   ]
 }
