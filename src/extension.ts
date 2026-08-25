@@ -35,7 +35,7 @@ export function activate(context: vscode.ExtensionContext) {
   // Use the console to output diagnostic information (console.log) and errors (console.error)
   // This line of code will only be executed once when your extension is activated
   printDebugMessage(
-    'Congratulations, your extension "gesstabs" is now active!',
+    'Congratulations, your extension "gesstabs" is now active!'
   );
 
   context.subscriptions.push(
@@ -44,8 +44,8 @@ export function activate(context: vscode.ExtensionContext) {
         language: 'gesstabs',
         scheme: 'file',
       },
-      new GesstabsDefintionProvider(),
-    ),
+      new GesstabsDefintionProvider()
+    )
   );
 
   context.subscriptions.push(
@@ -54,8 +54,8 @@ export function activate(context: vscode.ExtensionContext) {
         language: 'gesstabs',
         scheme: 'file',
       },
-      new GesstabsDocumentSymbolProvider(),
-    ),
+      new GesstabsDocumentSymbolProvider()
+    )
   );
 
   context.subscriptions.push(
@@ -64,14 +64,14 @@ export function activate(context: vscode.ExtensionContext) {
         language: 'gesstabs',
         scheme: 'file',
       },
-      new GesstabsReferenceProvider(),
-    ),
+      new GesstabsReferenceProvider()
+    )
   );
 
   context.subscriptions.push(
     vscode.languages.registerWorkspaceSymbolProvider(
-      new GessTabsWorkspaceSymbolProvider(),
-    ),
+      new GessTabsWorkspaceSymbolProvider()
+    )
   );
 }
 
@@ -110,11 +110,11 @@ function spush(
   m3: string,
   uri: vscode.Uri,
   range: vscode.Range,
-  symbols: vscode.SymbolInformation[],
+  symbols: vscode.SymbolInformation[]
 ) {
   const varName = new RegExp(
     '(' + constTokenVarName + ')|(' + constStringVarName + ')|(.+)',
-    'i',
+    'i'
   );
   function lpush(teststring: string) {
     while (teststring && teststring.length > 0) {
@@ -124,8 +124,8 @@ function spush(
         let pname = xname[2]
           ? xname[2].substring(1, xname[2].length - 1)
           : xname[1]
-            ? xname[1]
-            : xname[3];
+          ? xname[1]
+          : xname[3];
         symbols.push({
           name: pname,
           kind: kind,
@@ -148,7 +148,7 @@ function spush(
 // steht dann an zweiter Stelle (wenn true)
 function getWordAtPosition(
   document: vscode.TextDocument,
-  position: vscode.Position,
+  position: vscode.Position
 ): [boolean, string, vscode.Position] {
   const wordLimits: RegExp = new RegExp(constVarName, 'i');
   const wordRange = document.getWordRangeAtPosition(position, wordLimits);
@@ -174,7 +174,7 @@ function getWordAtPosition(
 // ein #macro oder eine #expand Definition ist.
 async function getDefLocationInDocument(
   filename: string,
-  word: string,
+  word: string
 ): Promise<vscode.Location | undefined> {
   let locPosition: vscode.Location | undefined;
 
@@ -189,7 +189,7 @@ async function getDefLocationInDocument(
 
       if (
         lineMatchesDefinition(line.text, word, (searchIndex) =>
-          scope.isNotInComment(i, searchIndex),
+          scope.isNotInComment(i, searchIndex)
         )
       ) {
         locPosition = new vscode.Location(content.uri, line.range);
@@ -215,7 +215,7 @@ async function getAllLocationsInDocument(filename: string, word: string) {
 
       if (
         lineMatchesUsage(line.text, word, (searchIndex) =>
-          scope.isNotInComment(i, searchIndex),
+          scope.isNotInComment(i, searchIndex)
         )
       ) {
         locArray.push(new vscode.Location(content.uri, line.range));
@@ -231,7 +231,7 @@ class GesstabsDefintionProvider implements vscode.DefinitionProvider {
   public provideDefinition(
     document: vscode.TextDocument,
     position: vscode.Position,
-    token: vscode.CancellationToken,
+    token: vscode.CancellationToken
   ): Promise<vscode.Location | null> {
     const wordAtPosition: [boolean, string, vscode.Position] =
       getWordAtPosition(document, position);
@@ -255,7 +255,7 @@ class GesstabsDefintionProvider implements vscode.DefinitionProvider {
             return [] as any;
           }
           const locations = fileNames.map((file) =>
-            getDefLocationInDocument(file, word),
+            getDefLocationInDocument(file, word)
           );
           return Promise.all(locations);
         })
@@ -284,9 +284,12 @@ class GesstabsReferenceProvider implements vscode.ReferenceProvider {
     document: vscode.TextDocument,
     position: vscode.Position,
     options: { includeDeclaration: boolean },
-    token: vscode.CancellationToken,
+    token: vscode.CancellationToken
   ): Promise<vscode.Location[] | null> {
     return new Promise((resolve) => {
+      // temporäres abschalten, da es sich aufhängt, muss neu geschrieben werden.
+      return Promise.resolve(null);
+
       const wordAtPosition = getWordAtPosition(document, position);
 
       if (!wordAtPosition[0]) {
@@ -304,7 +307,7 @@ class GesstabsReferenceProvider implements vscode.ReferenceProvider {
         .then((fileNames) => {
           if (token && token.isCancellationRequested) return [] as any;
           const locations = fileNames.map((file) =>
-            getAllLocationsInDocument(file, word),
+            getAllLocationsInDocument(file, word)
           );
           return Promise.all(locations);
         })
@@ -340,7 +343,7 @@ class GesstabsReferenceProvider implements vscode.ReferenceProvider {
 class GesstabsDocumentSymbolProvider implements vscode.DocumentSymbolProvider {
   public provideDocumentSymbols(
     document: vscode.TextDocument,
-    token: vscode.CancellationToken,
+    token: vscode.CancellationToken
   ): Promise<vscode.SymbolInformation[]> {
     return new Promise((resolve, reject) => {
       if (token && token.isCancellationRequested) {
@@ -356,10 +359,10 @@ class GesstabsDocumentSymbolProvider implements vscode.DocumentSymbolProvider {
         m2: string,
         m3: string,
         uri: vscode.Uri,
-        range: vscode.Range,
+        range: vscode.Range
       ): void {
         const varName = new RegExp(
-          '(' + constTokenVarName + ')|(' + constStringVarName + ')|(.+)',
+          '(' + constTokenVarName + ')|(' + constStringVarName + ')|(.+)'
         );
         function lpush(teststring: string): void {
           if (teststring && teststring.length > 0) {
@@ -411,7 +414,7 @@ class GesstabsDocumentSymbolProvider implements vscode.DocumentSymbolProvider {
               '',
               '',
               document.uri,
-              line.range,
+              line.range
             );
           }
         }
@@ -430,7 +433,7 @@ class GesstabsDocumentSymbolProvider implements vscode.DocumentSymbolProvider {
               '',
               '',
               document.uri,
-              line.range,
+              line.range
             );
           }
         }
@@ -449,7 +452,7 @@ class GesstabsDocumentSymbolProvider implements vscode.DocumentSymbolProvider {
               '',
               '',
               document.uri,
-              line.range,
+              line.range
             );
           }
         }
@@ -468,7 +471,7 @@ class GesstabsDocumentSymbolProvider implements vscode.DocumentSymbolProvider {
               '',
               '',
               document.uri,
-              line.range,
+              line.range
             );
           }
         }
@@ -482,7 +485,7 @@ class GesstabsDocumentSymbolProvider implements vscode.DocumentSymbolProvider {
               '',
               '',
               document.uri,
-              line.range,
+              line.range
             );
           }
         }
@@ -496,7 +499,7 @@ class GesstabsDocumentSymbolProvider implements vscode.DocumentSymbolProvider {
               '',
               '',
               document.uri,
-              line.range,
+              line.range
             );
           }
         }
@@ -513,7 +516,7 @@ class GesstabsDocumentSymbolProvider implements vscode.DocumentSymbolProvider {
               '',
               '',
               document.uri,
-              line.range,
+              line.range
             );
           }
         }
@@ -530,7 +533,7 @@ class GesstabsDocumentSymbolProvider implements vscode.DocumentSymbolProvider {
               '',
               '',
               document.uri,
-              line.range,
+              line.range
             );
           }
         }
@@ -547,7 +550,7 @@ class GessTabsWorkspaceSymbolProvider
 {
   public provideWorkspaceSymbols(
     query: string,
-    token: vscode.CancellationToken,
+    token: vscode.CancellationToken
   ): Promise<vscode.SymbolInformation[]> {
     let symbols: vscode.SymbolInformation[] = [];
 
@@ -561,7 +564,7 @@ class GessTabsWorkspaceSymbolProvider
     const wsfolder =
       getWorkspaceFolderPath(
         vscode.window.activeTextEditor &&
-          vscode.window.activeTextEditor.document.uri,
+          vscode.window.activeTextEditor.document.uri
       ) ||
       fixDriveCasingInWindows(
         path.dirname(
@@ -570,15 +573,15 @@ class GessTabsWorkspaceSymbolProvider
             vscode.window.activeTextEditor &&
             vscode.window.activeTextEditor.document
             ? vscode.window.activeTextEditor.document.fileName
-            : '',
-        ),
+            : ''
+        )
       );
     return new Promise((resolve) => {
       getAllFilenamesInDirectory(wsfolder, '(tab|inc)')
         .then((files) => {
           if (token && token.isCancellationRequested) return [] as any;
           return Promise.all(
-            files.map((file) => vscode.workspace.openTextDocument(file)),
+            files.map((file) => vscode.workspace.openTextDocument(file))
           );
         })
         .then((docs) => {
@@ -604,7 +607,7 @@ class GessTabsWorkspaceSymbolProvider
                     '',
                     content.uri,
                     line.range,
-                    symbols,
+                    symbols
                   );
                 }
               }
@@ -619,7 +622,7 @@ class GessTabsWorkspaceSymbolProvider
                     lineMatch[4],
                     content.uri,
                     line.range,
-                    symbols,
+                    symbols
                   );
                 }
               }
@@ -634,7 +637,7 @@ class GessTabsWorkspaceSymbolProvider
                     '',
                     content.uri,
                     line.range,
-                    symbols,
+                    symbols
                   );
                 }
               }
@@ -653,7 +656,7 @@ class GessTabsWorkspaceSymbolProvider
                     '',
                     content.uri,
                     line.range,
-                    symbols,
+                    symbols
                   );
                 }
               }
@@ -672,7 +675,7 @@ class GessTabsWorkspaceSymbolProvider
                     '',
                     content.uri,
                     line.range,
-                    symbols,
+                    symbols
                   );
                 }
               }

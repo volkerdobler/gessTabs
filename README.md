@@ -19,6 +19,6 @@ nothing
 
 ## Release Notes
 
-0.0.3
+see CHANGELOG.md
 
 
