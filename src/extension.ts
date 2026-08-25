@@ -4,7 +4,6 @@
 // Import the module and reference it with the alias vscode in your code below
 import * as vscode from 'vscode';
 import * as path from 'path';
-import * as fs from 'fs';
 
 import * as sc from './scope';
 import {
@@ -12,67 +11,62 @@ import {
   constStringVarName,
   constVarName,
   constVarList,
-  wordDefRe,
   singleVarDefRe,
   multiVarDefRe,
   multiVarRe,
   computeDefRe,
   macroDefRe,
-  macroOwnDefRe,
   expandDefRe,
-  expandRe,
   tableHeadRe,
   tableAxisRe,
 } from './regex';
 import { getAllFilenamesInDirectory } from './fsutils';
+import { lineMatchesDefinition, lineMatchesUsage } from './matching';
 
-// Simple LRU cache for file lists
-class LRUCache<K, V> {
-  private maxSize: number;
-  private map = new Map<K, V>();
-  constructor(maxSize: number) {
-    this.maxSize = maxSize;
-  }
-  get(key: K): V | undefined {
-    const v = this.map.get(key);
-    if (v !== undefined) {
-      this.map.delete(key);
-      this.map.set(key, v);
-    }
-    return v;
-  }
-  set(key: K, value: V) {
-    if (this.map.has(key)) this.map.delete(key);
-    this.map.set(key, value);
-    while (this.map.size > this.maxSize) {
-      const first = this.map.keys().next().value;
-      if (first !== undefined) this.map.delete(first);
-    }
-  }
-  has(key: K): boolean {
-    return this.map.has(key);
-  }
-  clear(): void {
-    this.map.clear();
-  }
-  get size(): number {
-    return this.map.size;
+function printDebugMessage(message: string) {
+  if (vscode.workspace.getConfiguration('gesstabs').get('debugMode')) {
+    console.log(message);
   }
 }
 
-const fileListCache = new LRUCache<string, Promise<string[]>>(100);
+// this method is called when your extension is activated
+// your extension is activated the very first time the command is executed
+export function activate(context: vscode.ExtensionContext) {
+  // Use the console to output diagnostic information (console.log) and errors (console.error)
+  // This line of code will only be executed once when your extension is activated
+  printDebugMessage(
+    'Congratulations, your extension "gesstabs" is now active!',
+  );
 
-// Simple semaphore to limit concurrent readdir operations
-class Semaphore {
-  private tasks: (() => void)[] = [];
-  private counter: number;
-  constructor(private max: number) {
-    this.counter = max;
-  }
-  async acquire(): Promise<() => void> {
-    if (this.counter > 0) {
-      this.counter--;
-      // use cached file discovery from src/fsutils
+  context.subscriptions.push(
+    vscode.languages.registerDefinitionProvider(
+      {
+        language: 'gesstabs',
+        scheme: 'file',
+      },
+      new GesstabsDefintionProvider(),
+    ),
+  );
+
+  context.subscriptions.push(
+    vscode.languages.registerDocumentSymbolProvider(
+      {
+        language: 'gesstabs',
+        scheme: 'file',
+      },
+      new GesstabsDocumentSymbolProvider(),
+    ),
+  );
+
+  context.subscriptions.push(
+    vscode.languages.registerReferenceProvider(
+      {
+        language: 'gesstabs',
+        scheme: 'file',
+      },
+      new GesstabsReferenceProvider(),
+    ),
+  );
 
   context.subscriptions.push(
     vscode.languages.registerWorkspaceSymbolProvider(
@@ -171,48 +165,8 @@ function getWordAtPosition(
   return [true, word, position];
 }
 
-// durchsucht rekursiv das aktuelle Verzeichnis und gibt alle Dateinamen inkl.
-// Pfad als String zurück, die dem regulären Ausdruck in fType entspricht.
-export async function getAllFilenamesInDirectory(
-  dir: string,
-  fType: string,
-): Promise<string[]> {
-  const cacheKey = dir + '|' + fType;
-  const cached = fileListCache.get(cacheKey);
-  if (cached) return cached;
-
-  const promise = (async (): Promise<string[]> => {
-    const results: string[] = [];
-    const regEXP: RegExp = new RegExp('\\.' + fType + '$', 'i');
-    try {
-      const release = await fsSemaphore.acquire();
-      let list: fs.Dirent[] = [];
-      try {
-        list = await fs.promises.readdir(dir, { withFileTypes: true });
-      } finally {
-        release();
-      }
-
-      for (const file of list) {
-        const fileInclDir = path.join(dir, file.name);
-        if (file.isDirectory()) {
-          const sub = await getAllFilenamesInDirectory(fileInclDir, fType);
-          results.push(...sub);
-        } else {
-          if (file.isFile() && file.name.match(regEXP)) {
-            results.push(fileInclDir);
-          }
-        }
-      }
-    } catch (e) {
-      return [];
-    }
-    return results;
-  })();
-
-  fileListCache.set(cacheKey, promise);
-  return promise;
-}
+// Rekursive, gecachte Dateisuche lebt in src/fsutils.ts (getAllFilenamesInDirectory,
+// oben importiert) und nutzt den geteilten TTL-LRU-Cache aus src/lru.ts.
 
 // sucht alle Stellen, an denen eine Definition von "word" im Dokument "filename" vorkommt
 // wobei hier die Definitionen wichtig sind, also sprachenspezifisch für gesstabs
@@ -224,13 +178,6 @@ async function getDefLocationInDocument(
 ): Promise<vscode.Location | undefined> {
   let locPosition: vscode.Location | undefined;
 
-  const singleVarRegExp = singleVarDefRe(word);
-  const multiVarRegExp = multiVarDefRe(word);
-  const computeRegExp = computeDefRe(word);
-  const macroRegExp = macroDefRe(word);
-  const macroOwnRegExp = macroOwnDefRe(word);
-  const expandRegExp = expandDefRe(word);
-
   return vscode.workspace.openTextDocument(filename).then((content) => {
     let scope = new sc.Scope(content);
 
@@ -241,12 +188,9 @@ async function getDefLocationInDocument(
       }
 
       if (
-        scope.isNotInComment(i, line.text.search(singleVarRegExp)) ||
-        scope.isNotInComment(i, line.text.search(multiVarRegExp)) ||
-        scope.isNotInComment(i, line.text.search(computeRegExp)) ||
-        scope.isNotInComment(i, line.text.search(macroRegExp)) ||
-        scope.isNotInComment(i, line.text.search(macroOwnRegExp)) ||
-        scope.isNotInComment(i, line.text.search(expandRegExp))
+        lineMatchesDefinition(line.text, word, (searchIndex) =>
+          scope.isNotInComment(i, searchIndex),
+        )
       ) {
         locPosition = new vscode.Location(content.uri, line.range);
       }
@@ -260,19 +204,6 @@ async function getDefLocationInDocument(
 async function getAllLocationsInDocument(filename: string, word: string) {
   let locArray: vscode.Location[] = [];
 
-  const wordRegExp: RegExp = wordDefRe(word);
-  const singleVarRegExp = singleVarDefRe(word);
-  const multiVarRegExp = multiVarRe(word);
-  const multiVarDefRegExp = multiVarDefRe(word);
-  const computeRegExp = computeDefRe(word);
-  const macroDefRegExp = macroDefRe(word);
-  const macroRegExp = macroDefRe(word);
-  const macroOwnRegExp = macroOwnDefRe(word);
-  const expandDefRegExp = expandDefRe(word);
-  const expandRegExp = expandRe(word);
-  const tableHeadRegExp = tableHeadRe(word);
-  const tableAxisRegExp = tableAxisRe(word);
-
   return vscode.workspace.openTextDocument(filename).then((content) => {
     let scope = new sc.Scope(content);
 
@@ -283,17 +214,9 @@ async function getAllLocationsInDocument(filename: string, word: string) {
       }
 
       if (
-        scope.isNotInComment(i, line.text.search(singleVarRegExp)) ||
-        scope.isNotInComment(i, line.text.search(multiVarRegExp)) ||
-        scope.isNotInComment(i, line.text.search(computeRegExp)) ||
-        scope.isNotInComment(i, line.text.search(macroDefRegExp)) ||
-        scope.isNotInComment(i, line.text.search(macroRegExp)) ||
-        scope.isNotInComment(i, line.text.search(macroOwnRegExp)) ||
-        scope.isNotInComment(i, line.text.search(expandDefRegExp)) ||
-        scope.isNotInComment(i, line.text.search(expandRegExp)) ||
-        scope.isNotInComment(i, line.text.search(tableHeadRegExp)) ||
-        scope.isNotInComment(i, line.text.search(tableAxisRegExp)) ||
-        scope.isNotInComment(i, line.text.search(multiVarDefRegExp))
+        lineMatchesUsage(line.text, word, (searchIndex) =>
+          scope.isNotInComment(i, searchIndex),
+        )
       ) {
         locArray.push(new vscode.Location(content.uri, line.range));
       }

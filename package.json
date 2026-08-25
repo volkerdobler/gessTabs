@@ -63,24 +63,27 @@
     "compile": "tsc -p ./",
     "lint": "eslint src --ext ts",
     "watch": "tsc -watch -p ./",
-    "pretest": "echo 'pretest skipped'",
+    "pretest": "tsc --noEmit -p .",
     "test": "mocha -r ts-node/register test/**/*.spec.ts"
   },
   "devDependencies": {
+    "@types/chai": "^4.3.0",
     "@types/glob": "^7.1.2",
+    "@types/mocha": "^10.0.1",
     "@types/vscode": "^1.54.0",
-    "@typescript-eslint/eslint-plugin": "^2.33.0",
-    "@typescript-eslint/parser": "^2.33.0",
-    "eslint": "^6.8.0",
+    "@typescript-eslint/eslint-plugin": "^8.68.0",
+    "@typescript-eslint/parser": "^8.68.0",
+    "chai": "^4.3.7",
+    "eslint": "^8.57.1",
+    "eslint-config-airbnb-base": "^15.0.0",
+    "eslint-config-prettier": "^8.10.2",
+    "eslint-plugin-import": "^2.32.0",
+    "eslint-plugin-prettier": "^4.2.5",
+    "mocha": "^10.2.0",
     "prettier": "^2.2.1",
     "prettier-eslint": "^12.0.0",
-    "typescript": "^3.9.9",
-    "vscode-test": "^1.5.1",
-    "mocha": "^10.2.0",
     "ts-node": "^10.9.1",
-    "@types/mocha": "^10.0.1",
-    "chai": "^4.3.7",
-    "@types/chai": "^4.3.0"
-  },
-  "dependencies": {}
+    "typescript": "^5.9.3",
+    "vscode-test": "^1.5.1"
+  }
 }

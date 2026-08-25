@@ -1,0 +1,36 @@
+# TODO — Prioritized source improvements
+
+Generated from a code exploration of the gessTabs VS Code extension. Priorities reflect severity/blast radius: P0 must be fixed before anything else ships, P3 is polish.
+
+## P0 — Critical: extension is currently broken ✅ Done (2026-08-25)
+
+- [x] **Fix `src/extension.ts` so it compiles and the extension activates again.** `activate()` restored with all four provider registrations (`GesstabsDefintionProvider`, `GesstabsDocumentSymbolProvider`, `GesstabsReferenceProvider`, `GessTabsWorkspaceSymbolProvider`) plus `printDebugMessage`/`gesstabs.debugMode` wiring.
+- [x] **Remove the duplicate, dead `getAllFilenamesInDirectory`.** The local re-declaration is gone; `extension.ts` now uses only the `fsutils.ts` version (shared TTL `LRUCache` from `src/lru.ts`).
+- [x] **Remove the local duplicate `LRUCache` class** and the unused `fileListCache` instance — deleted, superseded by `src/lru.ts`'s `fileListCache` singleton.
+- [x] **Finish or delete the `Semaphore` class.** Removed entirely (unused, `fsutils.ts` doesn't need it).
+- [x] **Add a compile-check step to `npm test`.** `pretest` now runs `tsc --noEmit -p .`. This required bumping `typescript` from `^3.9.9` to `^5.9.3` in `package.json` (verified compatible with `ts-node@^10.9.1`; `typescript@7` was tried first but breaks `ts-node`) so the check isn't drowned in unrelated `@types/node` parse errors. `npm test` and `npm run compile` both verified green.
+
+## P1 — High: safety net & toolchain health ✅ Done (2026-08-25)
+
+- [x] ~~Bump `typescript`~~ — done as part of P0 (`^3.9.9` → `^5.9.3`).
+- [x] **Bump the lint toolchain.** `eslint` → `^8.57.1`, `@typescript-eslint/eslint-plugin`/`parser` → `^8.68.0` (last eslint 8.x line, to avoid an eslint 9+ flat-config migration). Also installed the previously-missing peer packages `.eslintrc.json` referenced but `package.json` never declared (`eslint-config-airbnb-base`, `eslint-plugin-import`, `eslint-plugin-prettier`, `eslint-config-prettier`) — `npm run lint` was crashing outright before this (`airbnb-base` config not found), independent of the toolchain age. Also fixed an invalid `trailingComma: "es6"` prettier option in `.eslintrc.json` (→ `"es5"`, the only value that was ever valid) that newer prettier now validates strictly. `npm run lint` **executes** cleanly now, but surfaces ~1585 pre-existing findings (mostly CRLF line endings + a few real rule violations like `max-classes-per-file`) — fixing those is deliberately deferred, see the new P2 item below.
+- [x] **Extract testable logic out of `extension.ts`.** New `src/matching.ts` holds `lineMatchesDefinition`/`lineMatchesUsage` — the per-line regex-OR logic from `getDefLocationInDocument`/`getAllLocationsInDocument`, decoupled from `vscode.TextDocument`/`Scope` (takes a plain `isNotInComment(searchIndex)` callback instead). `extension.ts` now just wires document lines + `Scope` into these pure functions. Covered by `test/matching.spec.ts` (10 tests). `getWordAtPosition` was left as-is — its only non-trivial logic is delegating to `vscode.TextDocument.getWordRangeAtPosition`, which can't be exercised without a live document anyway.
+- [x] **Add dedicated tests for `src/lru.ts`.** `test/lru.spec.ts` added: size-based eviction + `onEvict('size')`, TTL expiry + `onEvict('expired')`, `delete()` + `onEvict('deleted')`, and `clear()`.
+
+Verified: `npm test` (pretest compile-check + mocha) passes with 18 tests total, `npm run compile` still produces a clean `out/`.
+
+## P2 — Medium: cleanup & coverage gaps
+
+- [ ] **Fix the ~1585 findings `npm run lint` now surfaces** now that the toolchain actually runs (see P1). Most are CRLF line endings clashing with Prettier's LF expectation (`git config core.autocrlf` / a `.gitattributes` rule plus `eslint --fix` should clear the bulk of these). The remainder are real rule violations needing manual fixes/overrides, e.g. `import/no-unresolved` on `'vscode'` (needs an eslint override, it's a virtual host-provided module, not an npm package), `max-classes-per-file` on `extension.ts` (4 provider classes in one file — either raise the limit or split into `src/providers/*.ts`, see the P3 item below), and `'use strict' is unnecessary inside of modules`.
+- [ ] **Delete the ~75 lines of dead, commented-out legacy code** at the bottom of [src/scope.ts](src/scope.ts) (old `readScopes`/`getScope`, ~lines 292-366) — git history already preserves it.
+- [ ] **Remove stray compiled artifacts checked into git**: `test/scope.spec.js` and `test/scope.spec.js.map` are tracked alongside their `.ts` source. Delete them and add a `.gitignore` rule to prevent recurrence (currently only `out/` is ignored).
+- [ ] **Expand `test/regex.spec.ts` coverage.** Only `wordDefRe` and `singleVarDefRe` are tested; `multiVarDefRe`, `multiVarRe`, `computeDefRe`, `macroDefRe`, `macroOwnDefRe`, `expandDefRe`, `expandRe`, `tableHeadRe`, `tableAxisRe` have no tests.
+- [ ] **Expand `test/scope.spec.ts` coverage** for block-comment nesting, multi-line strings, and `isNormalScope` boundary behavior — currently only one happy-path case is covered.
+- [ ] **Reduce duplication across `regex.ts` factories.** Each of `singleVarDefRe`, `multiVarDefRe`, `multiVarRe`, `computeDefRe`, `macroDefRe`, `expandDefRe`, `tableHeadRe`, `tableAxisRe` repeats the same cache-key-building + `getCachedRegex` boilerplate; factor into a shared helper to reduce copy-paste drift risk.
+
+## P3 — Low: polish & documentation
+
+- [ ] **Sync `package.json` version with `CHANGELOG.md`.** `package.json` says `0.2.1`; `CHANGELOG.md` documents up to `0.2.3`.
+- [ ] **Update `README.md`** — still says "More to come..." and "Release Notes 0.0.3", doesn't mention go-to-definition, find-references, document/workspace symbols, or the `gesstabs.debugMode` setting.
+- [ ] **Refactor the near-identical match/push loops** in `GesstabsDocumentSymbolProvider.provideDocumentSymbols` ([src/extension.ts:417-619](src/extension.ts#L417-L619)) and `GessTabsWorkspaceSymbolProvider.provideWorkspaceSymbols` ([src/extension.ts:622-800](src/extension.ts#L622-L800)) into one parametrized loop over `{regex, kind, container}` descriptors — currently the same ~8-branch pattern is repeated twice with only minor variation, and it's hard to unit test in its current shape.
+- [ ] **Revisit silently swallowed errors and loose typing** — empty `catch` blocks (e.g. `GesstabsReferenceProvider.provideReferences` around [src/extension.ts:405-407](src/extension.ts#L405-L407), the `readdir` catch in `getAllFilenamesInDirectory`) and the `resolve(null as any)` / `[] as any` casts throughout `extension.ts`. `@typescript-eslint/no-explicit-any` and `no-non-null-assertion` are currently disabled in `.eslintrc.json`, which is why lint doesn't flag these.
