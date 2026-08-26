@@ -33,6 +33,7 @@ import {
   makeWorkspaceReader,
   resolvedLineRange,
   findWorkspaceFiles,
+  printDebugMessage,
 } from './workspaceFiles';
 import {
   GesstabsMacroHoverProvider,
@@ -44,12 +45,6 @@ import {
   findParamReferenceAt,
   MacroSourceLine,
 } from './macroExpansion';
-
-function printDebugMessage(message: string) {
-  if (vscode.workspace.getConfiguration('gesstabs').get('debugMode')) {
-    console.log(message);
-  }
-}
 
 // this method is called when your extension is activated
 // your extension is activated the very first time the command is executed

@@ -18,6 +18,7 @@ import {
   makeWorkspaceReader,
   findWorkspaceFiles,
   normalizePath,
+  printDebugMessage,
 } from './workspaceFiles';
 
 async function buildMacroContext(document: vscode.TextDocument) {
@@ -42,32 +43,43 @@ export class GesstabsMacroHoverProvider implements vscode.HoverProvider {
     position: vscode.Position,
     token: vscode.CancellationToken
   ): Promise<vscode.Hover | null> {
-    const lineText = document.lineAt(position.line).text;
-    const call = callAtPosition(lineText, position.character);
-    if (!call) return null;
-
-    let macroIndex: Map<string, MacroDefinition>;
     try {
-      ({ macroIndex } = await buildMacroContext(document));
+      const lineText = document.lineAt(position.line).text;
+      const call = callAtPosition(lineText, position.character);
+      if (!call) {
+        printDebugMessage(
+          `gesstabs: hover - no "#name(...)" call found at ${position.line}:${position.character} on line "${lineText}"`
+        );
+        return null;
+      }
+
+      const { macroIndex } = await buildMacroContext(document);
+      if (token && token.isCancellationRequested) return null;
+
+      const target = macroIndex.get(call.name.toLowerCase());
+      if (!target) {
+        const known = Array.from(macroIndex.keys()).join(', ') || '(none)';
+        printDebugMessage(
+          `gesstabs: hover - call to "#${call.name}" found, but no #MACRO named "${call.name}" is defined in the resolved workspace. Known macros: ${known}`
+        );
+        return null;
+      }
+
+      const expanded = expandMacro(target, call.args, macroIndex);
+      const range = new vscode.Range(
+        new vscode.Position(position.line, call.index),
+        new vscode.Position(position.line, call.index + call.raw.length)
+      );
+      const md = new vscode.MarkdownString();
+      md.appendMarkdown(
+        `Expanded \`#${target.name}(${call.args.join(' ')})\`:\n`
+      );
+      md.appendCodeblock(expanded.join('\n'), 'gesstabs');
+      return new vscode.Hover(md, range);
     } catch (e) {
+      printDebugMessage(`gesstabs: hover failed: ${e}`);
       return null;
     }
-    if (token && token.isCancellationRequested) return null;
-
-    const target = macroIndex.get(call.name.toLowerCase());
-    if (!target) return null;
-
-    const expanded = expandMacro(target, call.args, macroIndex);
-    const range = new vscode.Range(
-      new vscode.Position(position.line, call.index),
-      new vscode.Position(position.line, call.index + call.raw.length)
-    );
-    const md = new vscode.MarkdownString();
-    md.appendMarkdown(
-      `Expanded \`#${target.name}(${call.args.join(' ')})\`:\n`
-    );
-    md.appendCodeblock(expanded.join('\n'), 'gesstabs');
-    return new vscode.Hover(md, range);
   }
 }
 
@@ -81,41 +93,48 @@ export class GesstabsMacroSignatureHelpProvider
     position: vscode.Position,
     token: vscode.CancellationToken
   ): Promise<vscode.SignatureHelp | null> {
-    const textBeforeCursor = document
-      .lineAt(position.line)
-      .text.slice(0, position.character);
-    const match = textBeforeCursor.match(/#([A-Za-z_]\w*)\s*\(([^)]*)$/);
-    if (!match) return null;
-
-    let macroIndex: Map<string, MacroDefinition>;
     try {
-      ({ macroIndex } = await buildMacroContext(document));
+      const textBeforeCursor = document
+        .lineAt(position.line)
+        .text.slice(0, position.character);
+      const match = textBeforeCursor.match(/#([A-Za-z_]\w*)\s*\(([^)]*)$/);
+      if (!match) return null;
+
+      const { macroIndex } = await buildMacroContext(document);
+      if (token && token.isCancellationRequested) return null;
+
+      const target = macroIndex.get(match[1].toLowerCase());
+      if (!target) {
+        const known = Array.from(macroIndex.keys()).join(', ') || '(none)';
+        printDebugMessage(
+          `gesstabs: signature help - "#${match[1]}" is not a known macro. Known macros: ${known}`
+        );
+        return null;
+      }
+
+      const signature = new vscode.SignatureInformation(
+        `#${target.name}(${target.params.map((p) => `&${p}`).join(' ')})`
+      );
+      signature.parameters = target.params.map(
+        (p) => new vscode.ParameterInformation(`&${p}`)
+      );
+
+      const help = new vscode.SignatureHelp();
+      help.signatures = [signature];
+      help.activeSignature = 0;
+
+      const typedArgs = match[2].trim();
+      const typedCount =
+        typedArgs.length > 0 ? typedArgs.split(/\s+/).length : 0;
+      help.activeParameter = Math.min(
+        typedCount,
+        Math.max(target.params.length - 1, 0)
+      );
+      return help;
     } catch (e) {
+      printDebugMessage(`gesstabs: signature help failed: ${e}`);
       return null;
     }
-    if (token && token.isCancellationRequested) return null;
-
-    const target = macroIndex.get(match[1].toLowerCase());
-    if (!target) return null;
-
-    const signature = new vscode.SignatureInformation(
-      `#${target.name}(${target.params.map((p) => `&${p}`).join(' ')})`
-    );
-    signature.parameters = target.params.map(
-      (p) => new vscode.ParameterInformation(`&${p}`)
-    );
-
-    const help = new vscode.SignatureHelp();
-    help.signatures = [signature];
-    help.activeSignature = 0;
-
-    const typedArgs = match[2].trim();
-    const typedCount = typedArgs.length > 0 ? typedArgs.split(/\s+/).length : 0;
-    help.activeParameter = Math.min(
-      typedCount,
-      Math.max(target.params.length - 1, 0)
-    );
-    return help;
   }
 }
 
@@ -131,6 +150,7 @@ export class GesstabsMacroCodeLensProvider implements vscode.CodeLensProvider {
     try {
       context = await buildMacroContext(document);
     } catch (e) {
+      printDebugMessage(`gesstabs: macro CodeLens failed: ${e}`);
       return [];
     }
     if (token && token.isCancellationRequested) return [];

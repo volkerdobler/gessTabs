@@ -10,6 +10,16 @@ import * as fs from 'fs';
 import { getAllFilenamesInDirectory } from './fsutils';
 import { FileReader, ResolvedLine } from './includeGraph';
 
+// Shared debug channel, gated behind the gesstabs.debugMode setting —
+// used by extension.ts's own providers and by macroProviders.ts so a
+// failure that would otherwise silently resolve to null/undefined (no
+// hover, no signature help, ...) can actually be diagnosed.
+export function printDebugMessage(message: string): void {
+  if (vscode.workspace.getConfiguration('gesstabs').get('debugMode')) {
+    console.log(message);
+  }
+}
+
 // Workaround for issue in https://github.com/Microsoft/vscode/issues/9448#issuecomment-244804026
 export function fixDriveCasingInWindows(pathToFix: string): string {
   return process.platform === 'win32' && pathToFix
