@@ -75,6 +75,37 @@ describe('findMacroDefinitions', () => {
     const defs = findMacroDefinitions(lines);
     expect(defs.map((d) => d.name)).to.deep.equal(['a', 'b']);
   });
+
+  it('does not let an unclosed #MACRO in one file swallow a later, real definition in a different file', () => {
+    const brokenFile = src(
+      '#macro #broken( &x )\ncompute &x = 1;\n// missing #endmacro',
+      '/a.inc'
+    );
+    const goodFile = src(
+      '#macro #scorecard( &chapter )\ncompute x = 1;\n#endmacro',
+      '/b.inc'
+    );
+    const defs = findMacroDefinitions([...brokenFile, ...goodFile]);
+    expect(defs.map((d) => d.name)).to.deep.equal(['scorecard']);
+  });
+
+  it('does not let an implausibly long unclosed #MACRO swallow later definitions in the same file', () => {
+    const brokenBody = Array.from(
+      { length: 305 },
+      (_, i) => `compute x${i} = 1;`
+    );
+    const lines = src(
+      [
+        '#macro #broken( &x )',
+        ...brokenBody,
+        '#macro #scorecard( &chapter )',
+        'compute x = 1;',
+        '#endmacro',
+      ].join('\n')
+    );
+    const defs = findMacroDefinitions(lines);
+    expect(defs.map((d) => d.name)).to.deep.equal(['scorecard']);
+  });
 });
 
 describe('findMacroCalls', () => {

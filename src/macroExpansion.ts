@@ -113,6 +113,15 @@ function parseTokenList(raw: string): string[] {
   return tokens.map((s) => s.replace(/^&/, '')).filter((s) => s.length > 0);
 }
 
+// A single unclosed #MACRO (missing #ENDMACRO — a real authoring mistake,
+// or content this parser doesn't recognize as a valid closer) must not be
+// allowed to silently swallow every macro that follows it for the rest of
+// the workspace. Two guards against that: a macro can never legitimately
+// span multiple files, so crossing a file boundary always ends it; and a
+// macro body growing implausibly long (no legitimate gessTabs macro is
+// this long) is treated as abandoned rather than tracked forever.
+const MAX_MACRO_BODY_LINES = 300;
+
 export function findMacroDefinitions(
   lines: MacroSourceLine[]
 ): MacroDefinition[] {
@@ -126,6 +135,13 @@ export function findMacroDefinitions(
   } | null = null;
 
   lines.forEach((l) => {
+    if (current && current.file !== l.file) {
+      current = null;
+    }
+    if (current && current.body.length >= MAX_MACRO_BODY_LINES) {
+      current = null;
+    }
+
     if (!current) {
       const m = l.text.match(macroStartRe);
       if (m) {
