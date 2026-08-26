@@ -5,6 +5,8 @@ import {
   buildMacroIndex,
   expandMacro,
   findParamReferenceAt,
+  findExpandDefinitions,
+  findHashNameAt,
   MacroSourceLine,
 } from '../src/macroExpansion';
 
@@ -120,9 +122,16 @@ describe('findMacroCalls', () => {
     expect(findMacroCalls('#macro #example( &parameter )')).to.deep.equal([]);
   });
 
-  it('finds multiple calls on one line', () => {
+  it('only recognizes a call starting in column 1 (leading whitespace allowed)', () => {
+    expect(findMacroCalls('  #example( frage1 )')).to.have.length(1);
+    expect(findMacroCalls('x = 1; #example( frage1 )')).to.deep.equal([]);
+  });
+
+  it('finds at most one call per line — anything after it is not a second call', () => {
+    // "#b(2)" here is an #EXPAND reference per gessTabs' own rule (a
+    // macro call must start in column 1), not a second macro call.
     const calls = findMacroCalls('#a(1) #b(2)');
-    expect(calls.map((c) => c.name)).to.deep.equal(['a', 'b']);
+    expect(calls.map((c) => c.name)).to.deep.equal(['a']);
   });
 
   it('finds the real closing paren when a quoted argument contains its own parentheses', () => {
@@ -131,16 +140,18 @@ describe('findMacroCalls', () => {
     expect(calls).to.have.length(1);
     expect(calls[0].name).to.equal('scorecard');
     expect(calls[0].raw).to.equal(line);
-    expect(calls[0].args).to.deep.equal(['"Total"', '""', '"(1 eq 1)"']);
+    // quotes are a grouping device only — not part of the token value
+    expect(calls[0].args).to.deep.equal(['Total', '', '(1 eq 1)']);
   });
 
-  it('keeps a quoted argument as one token even though it contains a space', () => {
+  it('keeps a quoted argument as one token (without its quotes) even though it contains a space', () => {
     const calls = findMacroCalls('#f( "weiblich" "Weiblich" "(1 in s1)")');
-    expect(calls[0].args).to.deep.equal([
-      '"weiblich"',
-      '"Weiblich"',
-      '"(1 in s1)"',
-    ]);
+    expect(calls[0].args).to.deep.equal(['weiblich', 'Weiblich', '(1 in s1)']);
+  });
+
+  it('accepts an unquoted token exactly as typed', () => {
+    const calls = findMacroCalls('#f( Kinder weiblich 2 )');
+    expect(calls[0].args).to.deep.equal(['Kinder', 'weiblich', '2']);
   });
 
   it('handles nested unquoted parentheses in an argument', () => {
@@ -150,7 +161,7 @@ describe('findMacroCalls', () => {
 });
 
 describe('expandMacro', () => {
-  it('expands a call whose quoted filter argument contains parentheses', () => {
+  it('expands a call whose quoted filter argument contains parentheses, without the quotes', () => {
     const defs = findMacroDefinitions(
       src(
         [
@@ -163,7 +174,10 @@ describe('expandMacro', () => {
     const index = buildMacroIndex(defs);
     const call = findMacroCalls('#scorecard ( "Total" "" "(1 eq 1)")')[0];
     const expanded = expandMacro(defs[0], call.args, index);
-    expect(expanded).to.deep.equal(['compute x = 1; // "Total" "" "(1 eq 1)"']);
+    // "" (an intentional empty &subtitle) contributes nothing, leaving
+    // the template's own separating spaces around it — that's correct,
+    // matching plain positional token substitution.
+    expect(expanded).to.deep.equal(['compute x = 1; // Total  (1 eq 1)']);
   });
 
   it('substitutes a single parameter (handbook #example)', () => {
@@ -271,5 +285,44 @@ describe('findParamReferenceAt', () => {
 
   it('returns undefined when the cursor is not on a &token at all', () => {
     expect(findParamReferenceAt('compute x = 1;', 3, defs, 1)).to.be.undefined;
+  });
+});
+
+describe('findExpandDefinitions', () => {
+  it('parses "#expand #name value" and captures the rest of the line as the value', () => {
+    const defs = findExpandDefinitions(
+      src('#expand #land germany\nvariable a = 1;')
+    );
+    expect(defs.get('land')).to.equal('germany');
+  });
+
+  it('captures a multi-word value up to end of line', () => {
+    const defs = findExpandDefinitions(src('#expand #greeting hello world'));
+    expect(defs.get('greeting')).to.equal('hello world');
+  });
+
+  it('is case-sensitive on the name, unlike macro names', () => {
+    const defs = findExpandDefinitions(src('#expand #Land germany'));
+    expect(defs.get('Land')).to.equal('germany');
+    expect(defs.get('land')).to.be.undefined;
+  });
+
+  it('does not match #expandinc/#expandintoken as a plain #expand definition', () => {
+    const defs = findExpandDefinitions(
+      src('#expandinc #counter 1\n#expandintoken #x foo')
+    );
+    expect(defs.size).to.equal(0);
+  });
+});
+
+describe('findHashNameAt', () => {
+  it('finds a bare "#name" token at the given position', () => {
+    expect(findHashNameAt('DATAFILE = study_xyz#land.dat;', 22)).to.equal(
+      'land'
+    );
+  });
+
+  it('returns undefined when the cursor is not on a #token', () => {
+    expect(findHashNameAt('variable a = 1;', 3)).to.be.undefined;
   });
 });

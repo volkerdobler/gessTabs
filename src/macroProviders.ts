@@ -12,6 +12,8 @@ import {
   findMacroCalls,
   buildMacroIndex,
   expandMacro,
+  findExpandDefinitions,
+  findHashNameAt,
   MacroDefinition,
 } from './macroExpansion';
 import {
@@ -25,7 +27,12 @@ async function buildMacroContext(document: vscode.TextDocument) {
   const fileNames = await findWorkspaceFiles(document);
   const index = buildWorkspaceIndex(fileNames, makeWorkspaceReader(document));
   const defs = findMacroDefinitions(index.order);
-  return { index, defs, macroIndex: buildMacroIndex(defs) };
+  return {
+    index,
+    defs,
+    macroIndex: buildMacroIndex(defs),
+    expandDefs: findExpandDefinitions(index.order),
+  };
 }
 
 function callAtPosition(lineText: string, character: number) {
@@ -97,11 +104,36 @@ export class GesstabsMacroHoverProvider implements vscode.HoverProvider {
     try {
       const lineText = document.lineAt(position.line).text;
       const call = callAtPosition(lineText, position.character);
+
+      // Not a column-1 macro call — the cursor might still be on a bare
+      // "#name" #EXPAND reference (gessTabs treats every "#name" that
+      // isn't a column-1 macro call as an #EXPAND reference).
       if (!call) {
-        printDebugMessage(
-          `gesstabs: hover - no "#name(...)" call found at ${position.line}:${position.character} on line "${lineText}"`
-        );
-        return null;
+        const hashName = findHashNameAt(lineText, position.character);
+        if (!hashName) {
+          printDebugMessage(
+            `gesstabs: hover - no "#name(...)" call or "#name" reference found at ${position.line}:${position.character} on line "${lineText}"`
+          );
+          return null;
+        }
+
+        const { expandDefs } = await buildMacroContext(document);
+        if (token && token.isCancellationRequested) return null;
+
+        const value = expandDefs.get(hashName);
+        if (value === undefined) {
+          printDebugMessage(
+            `gesstabs: hover - "#${hashName}" is not a column-1 macro call, and no "#expand #${hashName} ..." definition was found (names are case-sensitive). Known #expand names: ${
+              Array.from(expandDefs.keys()).join(', ') || '(none)'
+            }`
+          );
+          return null;
+        }
+
+        const md = new vscode.MarkdownString();
+        md.appendMarkdown(`\`#${hashName}\` expands to:\n`);
+        md.appendCodeblock(value, 'gesstabs');
+        return new vscode.Hover(md);
       }
 
       const { index, macroIndex } = await buildMacroContext(document);
@@ -119,9 +151,7 @@ export class GesstabsMacroHoverProvider implements vscode.HoverProvider {
         new vscode.Position(position.line, call.index + call.raw.length)
       );
       const md = new vscode.MarkdownString();
-      md.appendMarkdown(
-        `Expanded \`#${target.name}(${call.args.join(' ')})\`:\n`
-      );
+      md.appendMarkdown(`Expanded \`${call.raw}\`:\n`);
       md.appendCodeblock(expanded.join('\n'), 'gesstabs');
       return new vscode.Hover(md, range);
     } catch (e) {

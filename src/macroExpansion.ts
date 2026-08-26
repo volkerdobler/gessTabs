@@ -4,10 +4,23 @@
 // manual concedes this is otherwise hard enough to need its own compiler
 // feature (MACROPROTOCOL).
 //
+// A macro call is only recognized starting in column 1 of a line (after
+// optional leading whitespace) — confirmed directly by a gessTabs
+// developer: any other "#name" occurrence is an #EXPAND reference, not a
+// macro call (see findExpandDefinitions/findHashNameAt below), and at
+// most one macro call can start a line.
+//
+// Call/parameter tokens are plain gessTabs tokens: quoting is purely a
+// grouping device for a token that contains whitespace (so
+// `#f( Kinder weiblich 2 )` and `#f( "keine kinder" kinder )` both pass
+// exactly the tokens they look like) — the quote characters themselves
+// are not part of the substituted value and must not appear in the
+// expanded body text, also confirmed directly.
+//
 // Macro names are matched case-insensitively (consistent with
 // src/regex.ts's existing macroDefRe, and with the language's general
-// case-insensitivity — unlike #define/#ifdef names, which the compiler
-// documents as case-sensitive; see src/includeGraph.ts).
+// case-insensitivity — unlike #define/#ifdef/#expand names, which the
+// compiler documents as case-sensitive; see src/includeGraph.ts).
 //
 // Deliberately out of scope, same spirit as the rest of this codebase's
 // documented simplifications:
@@ -50,8 +63,10 @@ export interface ParamReference {
 
 const macroStartRe = /#macro\s+#(\S+?)\s*\(([^)]*)\)/i;
 const macroEndRe = /^\s*#(?:endmacro|macroend)\b/i;
-const callStartRe = /#([A-Za-z_][\w.]*)\s*\(/g;
+const callStartRe = /^\s*#([A-Za-z_][\w.]*)\s*\(/;
 const paramRefRe = /&([A-Za-z_]\w*)/g;
+const hashNameRe = /#([A-Za-z_]\w*)/g;
+const expandDefinitionRe = /^\s*#expand\s+#(\S+)\s+(.*)$/i;
 
 // Scans forward from `openIndex` (the position of an already-matched "(")
 // for its matching ")", tracking nesting depth and skipping over anything
@@ -82,35 +97,45 @@ function findMatchingParen(
   return undefined;
 }
 
-// Splits a parameter/argument list on whitespace, except that a whole
-// quoted string counts as one token even if it contains spaces itself —
-// call arguments are routinely quoted filter expressions like
-// "(1 eq 1)" that must stay intact rather than being split apart.
+// Splits a parameter/argument list on whitespace into plain gessTabs
+// tokens. Quoting is purely a grouping device for a token that contains
+// whitespace itself (a filter expression like "(1 eq 1)", or a phrase
+// like "keine kinder") — the quote characters are consumed as delimiters
+// and are NOT part of the resulting token value, matching what the
+// compiler actually substitutes into a macro body. An empty quoted token
+// ("") is a real, deliberate empty argument and must still be kept —
+// `hasToken` (rather than `current.length > 0`) tracks that distinction.
 function parseTokenList(raw: string): string[] {
   const tokens: string[] = [];
   let current = '';
   let quote: string | null = null;
+  let hasToken = false;
 
   for (let i = 0; i < raw.length; i++) {
     const ch = raw[i];
     if (quote) {
-      current += ch;
-      if (ch === quote) quote = null;
+      if (ch === quote) {
+        quote = null;
+      } else {
+        current += ch;
+      }
     } else if (ch === '"' || ch === "'") {
       quote = ch;
-      current += ch;
+      hasToken = true;
     } else if (/\s/.test(ch)) {
-      if (current.length > 0) {
+      if (hasToken) {
         tokens.push(current);
         current = '';
+        hasToken = false;
       }
     } else {
       current += ch;
+      hasToken = true;
     }
   }
-  if (current.length > 0) tokens.push(current);
+  if (hasToken) tokens.push(current);
 
-  return tokens.map((s) => s.replace(/^&/, '')).filter((s) => s.length > 0);
+  return tokens.map((s) => s.replace(/^&/, ''));
 }
 
 // A single unclosed #MACRO (missing #ENDMACRO — a real authoring mistake,
@@ -174,32 +199,30 @@ export function buildMacroIndex(
   return index;
 }
 
-// Finds every "#name(args)" occurrence in a line, correctly matching the
-// closing paren even when the arguments contain quoted strings with their
-// own parentheses. Callers should check membership in a MacroDefinition
-// index before treating a match as a real macro call, since the same
-// textual shape is used generically.
+// A macro call must start in column 1 of the line (only leading
+// whitespace before it is allowed) — anything else shaped like
+// "#name(...)" or bare "#name" elsewhere on the line is an #EXPAND
+// reference, not a call, and there can be at most one macro call per
+// line as a result. Returns an array (0 or 1 elements) for API
+// consistency with call sites that .find()/.filter() the result.
+// Correctly matches the closing paren even when the arguments contain
+// quoted strings with their own parentheses.
 export function findMacroCalls(text: string): MacroCall[] {
-  const calls: MacroCall[] = [];
-  callStartRe.lastIndex = 0;
-  let match = callStartRe.exec(text);
-  while (match !== null) {
-    const openIndex = match.index + match[0].length - 1;
-    const closeIndex = findMatchingParen(text, openIndex);
-    const before = text.slice(0, match.index);
-    // Skip the macro's own definition line ("#macro #name(...)"), which
-    // has the same "#name(...)" shape as a call.
-    if (closeIndex !== undefined && !/#macro\s*$/i.test(before)) {
-      calls.push({
-        name: match[1],
-        args: parseTokenList(text.slice(openIndex + 1, closeIndex)),
-        raw: text.slice(match.index, closeIndex + 1),
-        index: match.index,
-      });
-    }
-    match = callStartRe.exec(text);
-  }
-  return calls;
+  const match = text.match(callStartRe);
+  if (!match || match.index === undefined) return [];
+
+  const openIndex = match.index + match[0].length - 1;
+  const closeIndex = findMatchingParen(text, openIndex);
+  if (closeIndex === undefined) return [];
+
+  return [
+    {
+      name: match[1],
+      args: parseTokenList(text.slice(openIndex + 1, closeIndex)),
+      raw: text.slice(match.index, closeIndex + 1),
+      index: match.index,
+    },
+  ];
 }
 
 function substituteParams(
@@ -308,4 +331,40 @@ export function findParamReferenceAt(
   if (!paramName) return undefined;
 
   return { def: enclosing, paramName };
+}
+
+// #EXPAND #name value  — defines a plain text substitution: later, a bare
+// "#name" anywhere (never with parens/args — that shape is a macro call,
+// see the module doc comment) is replaced by `value`. Names are matched
+// case-sensitively, per the language's own preprocessor-name convention
+// (unlike macro names — see the module doc comment).
+export function findExpandDefinitions(
+  lines: MacroSourceLine[]
+): Map<string, string> {
+  const defs = new Map<string, string>();
+  lines.forEach((l) => {
+    const m = l.text.match(expandDefinitionRe);
+    if (m) defs.set(m[1], m[2].trim());
+  });
+  return defs;
+}
+
+// Finds a "#name" token at a given character offset, for resolving an
+// #EXPAND reference under the cursor. Does not require/consume any
+// following "(...)" — a macro call's own "#name(" is recognized
+// separately and takes precedence (see findMacroCalls); by the time a
+// caller reaches this, it has already ruled that out for this position.
+export function findHashNameAt(
+  lineText: string,
+  charIndex: number
+): string | undefined {
+  hashNameRe.lastIndex = 0;
+  let m = hashNameRe.exec(lineText);
+  while (m !== null) {
+    if (charIndex >= m.index && charIndex <= m.index + m[0].length) {
+      return m[1];
+    }
+    m = hashNameRe.exec(lineText);
+  }
+  return undefined;
 }
