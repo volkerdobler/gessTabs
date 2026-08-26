@@ -1,6 +1,7 @@
 import { expect } from 'chai';
 import * as path from 'path';
 import { resolveIncludeGraph, FileReader } from '../src/includeGraph';
+import { findMacroDefinitions } from '../src/macroExpansion';
 
 // Paths are derived through path.resolve/path.join (not hardcoded literal
 // strings) so they match what the module's own path.resolve/path.dirname
@@ -232,6 +233,58 @@ describe('resolveIncludeGraph', () => {
       'variable b = 1;',
     ]);
     expect(result.files).to.deep.equal([p('main.tab')]);
+  });
+
+  it('blanks out a trailing line-comment on an otherwise-real line, rather than including it verbatim', () => {
+    const line =
+      'variable a = 1; // old version used #macro #foo( &x ) #endmacro here';
+    const reader = makeReader({ [p('main.tab')]: line });
+    const result = resolveIncludeGraph(p('main.tab'), reader);
+    expect(result.order).to.have.length(1);
+    // the comment is blanked (spaces), not removed, so offsets/length
+    // within the line stay aligned with the real document
+    expect(result.order[0].text.trimEnd()).to.equal('variable a = 1;');
+    expect(result.order[0].text.length).to.equal(line.length);
+  });
+
+  it('blanks out a multi-line block comment that starts mid-line, without excluding the real code before it', () => {
+    const lines = [
+      'variable a = 1; { old:',
+      '#macro #foo( &x )',
+      '#endmacro',
+      '}',
+      'variable b = 2;',
+    ];
+    const reader = makeReader({ [p('main.tab')]: lines.join('\n') });
+    const result = resolveIncludeGraph(p('main.tab'), reader);
+    expect(texts(result).map((t) => t.trimEnd())).to.deep.equal([
+      'variable a = 1;',
+      'variable b = 2;',
+    ]);
+    expect(result.order[0].text.length).to.equal(lines[0].length);
+  });
+
+  it('an old macro version commented out with an unbalanced #MACRO/#ENDMACRO count does not break a later real macro (end-to-end with findMacroDefinitions)', () => {
+    const reader = makeReader({
+      [p('main.tab')]: [
+        '{ old approach, kept for reference:',
+        '#macro #scorecard( &oldparam )',
+        'compute x = 1;',
+        '}',
+        '#macro #scorecard( &chapter &text &filter &complet )',
+        'chaptertitle = "&chapter";',
+        '#endmacro',
+      ].join('\n'),
+    });
+    const result = resolveIncludeGraph(p('main.tab'), reader);
+    const defs = findMacroDefinitions(result.order);
+    expect(defs).to.have.length(1);
+    expect(defs[0].params).to.deep.equal([
+      'chapter',
+      'text',
+      'filter',
+      'complet',
+    ]);
   });
 
   it('does not exclude content inside #ifempty/#ifexist branches (unevaluated, conservatively active)', () => {

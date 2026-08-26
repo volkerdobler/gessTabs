@@ -77,6 +77,27 @@ function parseNameList(raw: string): string[] {
   return body.split(/\s+/).filter((s) => s.length > 0);
 }
 
+// A line that's entirely inside a comment is already skipped above (its
+// first non-whitespace char is in comment scope), but a *mixed* line —
+// real code followed by a trailing `// ...` comment, or one that opens a
+// multi-line `{ ... }` comment mid-line (e.g. old code commented out
+// after a real statement) — still has its comment portion included
+// verbatim in what gets pushed to `order`. Blank those characters out
+// (replaced with spaces, so offsets/length stay aligned with the real
+// document) so a stray "#macro"/"#endmacro"/etc. mentioned only in a
+// comment can't be mistaken for a real one by downstream consumers like
+// macroExpansion.ts's line-scanning regexes, which — unlike this
+// module's own directive regexes — aren't anchored to the start of the
+// line and so can't tell a keyword in a trailing comment apart from a
+// real one on their own.
+function blankComments(scope: Scope, lineIndex: number, text: string): string {
+  let result = '';
+  for (let i = 0; i < text.length; i++) {
+    result += scope.isNotInComment(lineIndex, i) ? text[i] : ' ';
+  }
+  return result;
+}
+
 function makeScopeDoc(lines: string[]) {
   return {
     lineCount: lines.length,
@@ -254,7 +275,7 @@ export function resolveIncludeGraph(
         continue;
       }
 
-      order.push({ file, line: i, text });
+      order.push({ file, line: i, text: blankComments(scope, i, text) });
     }
 
     ancestors.delete(file);
