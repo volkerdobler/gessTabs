@@ -39,6 +39,11 @@ import {
   GesstabsMacroSignatureHelpProvider,
   GesstabsMacroCodeLensProvider,
 } from './macroProviders';
+import {
+  findMacroDefinitions,
+  findParamReferenceAt,
+  MacroSourceLine,
+} from './macroExpansion';
 
 function printDebugMessage(message: string) {
   if (vscode.workspace.getConfiguration('gesstabs').get('debugMode')) {
