@@ -93,9 +93,48 @@ describe('findMacroCalls', () => {
     const calls = findMacroCalls('#a(1) #b(2)');
     expect(calls.map((c) => c.name)).to.deep.equal(['a', 'b']);
   });
+
+  it('finds the real closing paren when a quoted argument contains its own parentheses', () => {
+    const line = '#scorecard ( "Total" "" "(1 eq 1)")';
+    const calls = findMacroCalls(line);
+    expect(calls).to.have.length(1);
+    expect(calls[0].name).to.equal('scorecard');
+    expect(calls[0].raw).to.equal(line);
+    expect(calls[0].args).to.deep.equal(['"Total"', '""', '"(1 eq 1)"']);
+  });
+
+  it('keeps a quoted argument as one token even though it contains a space', () => {
+    const calls = findMacroCalls('#f( "weiblich" "Weiblich" "(1 in s1)")');
+    expect(calls[0].args).to.deep.equal([
+      '"weiblich"',
+      '"Weiblich"',
+      '"(1 in s1)"',
+    ]);
+  });
+
+  it('handles nested unquoted parentheses in an argument', () => {
+    const calls = findMacroCalls('#f( ((1 eq 1) or (2 eq 2)) )');
+    expect(calls[0].raw).to.equal('#f( ((1 eq 1) or (2 eq 2)) )');
+  });
 });
 
 describe('expandMacro', () => {
+  it('expands a call whose quoted filter argument contains parentheses', () => {
+    const defs = findMacroDefinitions(
+      src(
+        [
+          '#macro #scorecard( &title &subtitle &filter )',
+          'compute x = 1; // &title &subtitle &filter',
+          '#endmacro',
+        ].join('\n')
+      )
+    );
+    const index = buildMacroIndex(defs);
+    const call = findMacroCalls('#scorecard ( "Total" "" "(1 eq 1)")')[0];
+    const expanded = expandMacro(defs[0], call.args, index);
+    expect(expanded).to.deep.equal(['compute x = 1; // "Total" "" "(1 eq 1)"']);
+  });
+
   it('substitutes a single parameter (handbook #example)', () => {
     const defs = findMacroDefinitions(
       src('#macro #example( &parameter )\ncompute  &parameter = 1;\n#endmacro')

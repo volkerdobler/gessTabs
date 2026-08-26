@@ -50,15 +50,67 @@ export interface ParamReference {
 
 const macroStartRe = /#macro\s+#(\S+?)\s*\(([^)]*)\)/i;
 const macroEndRe = /^\s*#(?:endmacro|macroend)\b/i;
-const callRe = /#([A-Za-z_][\w.]*)\s*\(([^)]*)\)/g;
+const callStartRe = /#([A-Za-z_][\w.]*)\s*\(/g;
 const paramRefRe = /&([A-Za-z_]\w*)/g;
 
+// Scans forward from `openIndex` (the position of an already-matched "(")
+// for its matching ")", tracking nesting depth and skipping over anything
+// inside a '...'/"..." string — gessTabs call arguments are routinely
+// quoted filter expressions that contain their own parentheses (e.g.
+// `#scorecard("Total" "" "(1 eq 1)")`), which a plain `[^)]*` regex
+// cannot handle since it can't tell a string's own ")" apart from the
+// call's real closing one.
+function findMatchingParen(
+  text: string,
+  openIndex: number
+): number | undefined {
+  let depth = 1;
+  let quote: string | null = null;
+  for (let i = openIndex + 1; i < text.length; i++) {
+    const ch = text[i];
+    if (quote) {
+      if (ch === quote) quote = null;
+    } else if (ch === '"' || ch === "'") {
+      quote = ch;
+    } else if (ch === '(') {
+      depth++;
+    } else if (ch === ')') {
+      depth--;
+      if (depth === 0) return i;
+    }
+  }
+  return undefined;
+}
+
+// Splits a parameter/argument list on whitespace, except that a whole
+// quoted string counts as one token even if it contains spaces itself —
+// call arguments are routinely quoted filter expressions like
+// "(1 eq 1)" that must stay intact rather than being split apart.
 function parseTokenList(raw: string): string[] {
-  return raw
-    .trim()
-    .split(/\s+/)
-    .map((s) => s.replace(/^&/, ''))
-    .filter((s) => s.length > 0);
+  const tokens: string[] = [];
+  let current = '';
+  let quote: string | null = null;
+
+  for (let i = 0; i < raw.length; i++) {
+    const ch = raw[i];
+    if (quote) {
+      current += ch;
+      if (ch === quote) quote = null;
+    } else if (ch === '"' || ch === "'") {
+      quote = ch;
+      current += ch;
+    } else if (/\s/.test(ch)) {
+      if (current.length > 0) {
+        tokens.push(current);
+        current = '';
+      }
+    } else {
+      current += ch;
+    }
+  }
+  if (current.length > 0) tokens.push(current);
+
+  return tokens.map((s) => s.replace(/^&/, '')).filter((s) => s.length > 0);
 }
 
 export function findMacroDefinitions(
@@ -106,26 +158,30 @@ export function buildMacroIndex(
   return index;
 }
 
-// Finds every "#name(args)" occurrence in a line. Callers should check
-// membership in a MacroDefinition index before treating a match as a real
-// macro call, since the same textual shape is used generically.
+// Finds every "#name(args)" occurrence in a line, correctly matching the
+// closing paren even when the arguments contain quoted strings with their
+// own parentheses. Callers should check membership in a MacroDefinition
+// index before treating a match as a real macro call, since the same
+// textual shape is used generically.
 export function findMacroCalls(text: string): MacroCall[] {
   const calls: MacroCall[] = [];
-  callRe.lastIndex = 0;
-  let match = callRe.exec(text);
+  callStartRe.lastIndex = 0;
+  let match = callStartRe.exec(text);
   while (match !== null) {
+    const openIndex = match.index + match[0].length - 1;
+    const closeIndex = findMatchingParen(text, openIndex);
     const before = text.slice(0, match.index);
     // Skip the macro's own definition line ("#macro #name(...)"), which
     // has the same "#name(...)" shape as a call.
-    if (!/#macro\s*$/i.test(before)) {
+    if (closeIndex !== undefined && !/#macro\s*$/i.test(before)) {
       calls.push({
         name: match[1],
-        args: parseTokenList(match[2]),
-        raw: match[0],
+        args: parseTokenList(text.slice(openIndex + 1, closeIndex)),
+        raw: text.slice(match.index, closeIndex + 1),
         index: match.index,
       });
     }
-    match = callRe.exec(text);
+    match = callStartRe.exec(text);
   }
   return calls;
 }
