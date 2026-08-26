@@ -45,7 +45,14 @@
     {
       "files": ["src/extension.ts"],
       "rules": {
-        "max-classes-per-file": ["error", 4],
+        "max-classes-per-file": ["error", 5],
+        "class-methods-use-this": "off"
+      }
+    },
+    {
+      "files": ["src/macroProviders.ts"],
+      "rules": {
+        "max-classes-per-file": ["error", 3],
         "class-methods-use-this": "off"
       }
     },

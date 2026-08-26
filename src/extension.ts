@@ -18,12 +18,27 @@ import {
   tableHeadRe,
   tableAxisRe,
 } from './regex';
+import { matchInScope } from './matching';
 import { getAllFilenamesInDirectory } from './fsutils';
 import {
-  lineMatchesDefinition,
-  lineMatchesUsage,
-  matchInScope,
-} from './matching';
+  buildWorkspaceIndex,
+  findDefinitionLine,
+  findAllUsages,
+  findWordRangeInLine,
+} from './symbolIndex';
+import {
+  fixDriveCasingInWindows,
+  getWorkspaceFolderPath,
+  normalizePath,
+  makeWorkspaceReader,
+  resolvedLineRange,
+  findWorkspaceFiles,
+} from './workspaceFiles';
+import {
+  GesstabsMacroHoverProvider,
+  GesstabsMacroSignatureHelpProvider,
+  GesstabsMacroCodeLensProvider,
+} from './macroProviders';
 
 function printDebugMessage(message: string) {
   if (vscode.workspace.getConfiguration('gesstabs').get('debugMode')) {
@@ -75,34 +90,48 @@ export function activate(context: vscode.ExtensionContext) {
       new GessTabsWorkspaceSymbolProvider()
     )
   );
+
+  context.subscriptions.push(
+    vscode.languages.registerRenameProvider(
+      {
+        language: 'gesstabs',
+        scheme: 'file',
+      },
+      new GesstabsRenameProvider()
+    )
+  );
+
+  context.subscriptions.push(
+    vscode.languages.registerHoverProvider(
+      { language: 'gesstabs', scheme: 'file' },
+      new GesstabsMacroHoverProvider()
+    )
+  );
+
+  context.subscriptions.push(
+    vscode.languages.registerSignatureHelpProvider(
+      { language: 'gesstabs', scheme: 'file' },
+      new GesstabsMacroSignatureHelpProvider(),
+      '(',
+      ' '
+    )
+  );
+
+  context.subscriptions.push(
+    vscode.languages.registerCodeLensProvider(
+      { language: 'gesstabs', scheme: 'file' },
+      new GesstabsMacroCodeLensProvider()
+    )
+  );
 }
 
 // this method is called when your extension is deactivated
 // eslint-disable-next-line no-empty-function
 export function deactivate() {}
 
-// Workaround for issue in https://github.com/Microsoft/vscode/issues/9448#issuecomment-244804026
-function fixDriveCasingInWindows(pathToFix: string): string {
-  return process.platform === 'win32' && pathToFix
-    ? pathToFix.substr(0, 1).toUpperCase() + pathToFix.substr(1)
-    : pathToFix;
-}
-
-function getWorkspaceFolderPath(fileUri?: vscode.Uri): string | undefined {
-  if (fileUri) {
-    const workspace = vscode.workspace.getWorkspaceFolder(fileUri);
-    if (workspace) {
-      return fixDriveCasingInWindows(workspace.uri.fsPath);
-    }
-  }
-
-  // fall back to the first workspace
-  const folders = vscode.workspace.workspaceFolders;
-  if (folders && folders.length) {
-    return fixDriveCasingInWindows(folders[0].uri.fsPath);
-  }
-  return undefined;
-}
+// fixDriveCasingInWindows/getWorkspaceFolderPath/normalizePath/
+// makeWorkspaceReader/resolvedLineRange/findWorkspaceFiles live in
+// src/workspaceFiles.ts (shared with src/macroProviders.ts).
 
 // regex factories have been moved to src/regex.ts
 
@@ -172,123 +201,152 @@ function getWordAtPosition(
   return [true, word, resultPosition];
 }
 
-// Rekursive, gecachte Dateisuche lebt in src/fsutils.ts (getAllFilenamesInDirectory,
-// oben importiert) und nutzt den geteilten TTL-LRU-Cache aus src/lru.ts.
-
-// sucht alle Stellen, an denen eine Definition von "word" im Dokument "filename" vorkommt
-// wobei hier die Definitionen wichtig sind, also sprachenspezifisch für gesstabs
-// d.h. es wird nur dann "word" gefunden, wenn es ein Variablenname, ein compute,
-// ein #macro oder eine #expand Definition ist.
-async function getDefLocationInDocument(
-  filename: string,
-  word: string
-): Promise<vscode.Location | undefined> {
-  let locPosition: vscode.Location | undefined;
-
-  return vscode.workspace.openTextDocument(filename).then((content) => {
-    const scope = new sc.Scope(content);
-
-    for (let i = 0; i < content.lineCount; i++) {
-      const line = content.lineAt(i);
-      if (line.text.length === 0) {
-        continue;
-      }
-
-      if (
-        lineMatchesDefinition(line.text, word, (searchIndex) =>
-          scope.isNotInComment(i, searchIndex)
-        )
-      ) {
-        locPosition = new vscode.Location(content.uri, line.range);
-      }
-    }
-    return locPosition;
-  });
-}
-
-// sucht alle Stellen, an denen die Variable genutzt wird, also nicht nur, wo
-// sie definiert wird, sondern auch in tables.
-async function getAllLocationsInDocument(filename: string, word: string) {
-  const locArray: vscode.Location[] = [];
-
-  return vscode.workspace.openTextDocument(filename).then((content) => {
-    const scope = new sc.Scope(content);
-
-    for (let i = 0; i < content.lineCount; i++) {
-      const line = content.lineAt(i);
-      if (line.text.length === 0) {
-        continue;
-      }
-
-      if (
-        lineMatchesUsage(line.text, word, (searchIndex) =>
-          scope.isNotInComment(i, searchIndex)
-        )
-      ) {
-        locArray.push(new vscode.Location(content.uri, line.range));
-      }
-    }
-    return locArray;
-  });
-}
-
 // Allow the user to see the definition of variables/functions/methods
 // right where the variables / functions / methods are being used.
 class GesstabsDefintionProvider implements vscode.DefinitionProvider {
-  public provideDefinition(
+  public async provideDefinition(
     document: vscode.TextDocument,
     position: vscode.Position,
     token: vscode.CancellationToken
   ): Promise<vscode.Location | null> {
-    const wordAtPosition: [boolean, string, vscode.Position] =
-      getWordAtPosition(document, position);
+    const paramRef = this.findParamReference(document, position);
+    if (paramRef) return paramRef;
 
-    return new Promise<vscode.Location | null>((resolve) => {
-      if (!wordAtPosition[0]) {
-        resolve(null);
-        return;
-      }
+    const wordAtPosition = getWordAtPosition(document, position);
+    if (!wordAtPosition[0]) return null;
+    const word = wordAtPosition[1];
 
-      const word = wordAtPosition[1];
+    let fileNames: string[];
+    try {
+      fileNames = await findWorkspaceFiles(document);
+    } catch (e) {
+      printDebugMessage(`gesstabs: provideDefinition failed: ${e}`);
+      return null;
+    }
+    if (token && token.isCancellationRequested) return null;
 
-      const wsfolder =
-        getWorkspaceFolderPath(document.uri) ||
-        fixDriveCasingInWindows(path.dirname(document.fileName));
+    const index = buildWorkspaceIndex(fileNames, makeWorkspaceReader(document));
+    const currentFile = normalizePath(document.uri.fsPath);
+    const def = findDefinitionLine(index, currentFile, position.line, word);
+    if (!def) return null;
 
-      getAllFilenamesInDirectory(wsfolder, '(tab|inc)')
-        .then((fileNames): Promise<Array<vscode.Location | undefined>> => {
-          if (token && token.isCancellationRequested) {
-            resolve(null);
-            return Promise.resolve([]);
-          }
-          const locations = fileNames.map((file) =>
-            getDefLocationInDocument(file, word)
-          );
-          return Promise.all(locations);
-        })
-        .then((contents) => {
-          if (token && token.isCancellationRequested) {
-            resolve(null);
-            return;
-          }
-          resolve(contents.find((loc) => loc) || null);
-        })
-        .catch((e) => {
-          printDebugMessage(`gesstabs: provideDefinition failed: ${e}`);
-          resolve(null);
-        });
-    });
+    return new vscode.Location(
+      vscode.Uri.file(def.file),
+      resolvedLineRange(def)
+    );
+  }
+
+  // Resolves a "&paramname" reference inside a macro body back to its
+  // position in the enclosing #MACRO's own parameter list.
+  private findParamReference(
+    document: vscode.TextDocument,
+    position: vscode.Position
+  ): vscode.Location | null {
+    const file = normalizePath(document.uri.fsPath);
+    const lines: MacroSourceLine[] = [];
+    for (let i = 0; i < document.lineCount; i++) {
+      lines.push({ file, line: i, text: document.lineAt(i).text });
+    }
+    const defs = findMacroDefinitions(lines);
+    const lineText = document.lineAt(position.line).text;
+    const ref = findParamReferenceAt(
+      lineText,
+      position.character,
+      defs,
+      position.line
+    );
+    if (!ref) return null;
+
+    const defLineText = document.lineAt(ref.def.defLine).text;
+    const token = `&${ref.paramName}`;
+    const idx = defLineText.toLowerCase().indexOf(token.toLowerCase());
+    if (idx === -1) return null;
+
+    return new vscode.Location(
+      document.uri,
+      new vscode.Range(
+        new vscode.Position(ref.def.defLine, idx),
+        new vscode.Position(ref.def.defLine, idx + token.length)
+      )
+    );
   }
 }
 
 // Allow the user to see all the source code locations where a certain
 // variable / function/ method / symbol is being used.
 class GesstabsReferenceProvider implements vscode.ReferenceProvider {
-  // Temporarily disabled: the previous implementation could hang indefinitely
-  // (it never called `resolve()` on some paths). Needs a rewrite before
-  // re-enabling — see git history for the earlier logic.
-  public provideReferences(): Promise<vscode.Location[] | null> {
-    return Promise.resolve(null);
+  public async provideReferences(
+    document: vscode.TextDocument,
+    position: vscode.Position,
+    context: vscode.ReferenceContext,
+    token: vscode.CancellationToken
+  ): Promise<vscode.Location[] | null> {
+    const wordAtPosition = getWordAtPosition(document, position);
+    if (!wordAtPosition[0]) return null;
+    const word = wordAtPosition[1];
+
+    let fileNames: string[];
+    try {
+      fileNames = await findWorkspaceFiles(document);
+    } catch (e) {
+      printDebugMessage(`gesstabs: provideReferences failed: ${e}`);
+      return null;
+    }
+    if (token && token.isCancellationRequested) return null;
+
+    const index = buildWorkspaceIndex(fileNames, makeWorkspaceReader(document));
+    const usages = findAllUsages(index, word);
+    return usages.map(
+      (usage) =>
+        new vscode.Location(
+          vscode.Uri.file(usage.file),
+          resolvedLineRange(usage)
+        )
+    );
+  }
+}
+
+// Allow the user to rename a variable everywhere it's used across the
+// workspace's resolved INCLUDE graph.
+class GesstabsRenameProvider implements vscode.RenameProvider {
+  public async provideRenameEdits(
+    document: vscode.TextDocument,
+    position: vscode.Position,
+    newName: string,
+    token: vscode.CancellationToken
+  ): Promise<vscode.WorkspaceEdit | null> {
+    const wordAtPosition = getWordAtPosition(document, position);
+    if (!wordAtPosition[0]) return null;
+    const word = wordAtPosition[1];
+
+    let fileNames: string[];
+    try {
+      fileNames = await findWorkspaceFiles(document);
+    } catch (e) {
+      printDebugMessage(`gesstabs: provideRenameEdits failed: ${e}`);
+      return null;
+    }
+    if (token && token.isCancellationRequested) return null;
+
+    const index = buildWorkspaceIndex(fileNames, makeWorkspaceReader(document));
+    const usages = findAllUsages(index, word);
+    if (usages.length === 0) return null;
+
+    const edit = new vscode.WorkspaceEdit();
+    usages.forEach((usage) => {
+      const wordRange = findWordRangeInLine(usage.text, word);
+      if (!wordRange) return;
+      const [start, end] = wordRange;
+      edit.replace(
+        vscode.Uri.file(usage.file),
+        new vscode.Range(
+          new vscode.Position(usage.line, start),
+          new vscode.Position(usage.line, end)
+        ),
+        newName
+      );
+    });
+    return edit;
   }
 }
 

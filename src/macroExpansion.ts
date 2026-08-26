@@ -1,0 +1,239 @@
+// Parses #MACRO definitions and #name(...) call sites, and performs the
+// same textual parameter substitution the gessTabs compiler does, so the
+// editor can show "what this macro call actually expands to" — the
+// manual concedes this is otherwise hard enough to need its own compiler
+// feature (MACROPROTOCOL).
+//
+// Macro names are matched case-insensitively (consistent with
+// src/regex.ts's existing macroDefRe, and with the language's general
+// case-insensitivity — unlike #define/#ifdef names, which the compiler
+// documents as case-sensitive; see src/includeGraph.ts).
+//
+// Deliberately out of scope, same spirit as the rest of this codebase's
+// documented simplifications:
+// - #DOMACRO/#DOMACRO2/#DOMACRO3/#DOMACRO4 looping expansion (repeats a
+//   call over a range/list/CSV file) — only plain #name(args) direct
+//   calls are handled.
+// - A macro whose own name is itself a parameter (e.g. the handbook's
+//   `#call(&index &namepart &macroname)` expanding to
+//   `#&macroname(&namepart&index)`) — the callee name doesn't appear
+//   literally in the source, so it can't be resolved without a full
+//   expansion engine tracking argument bindings across calls. Calls like
+//   this are simply not recognized as calls to a *known* macro.
+
+export interface MacroDefinition {
+  name: string;
+  params: string[];
+  body: string[];
+  file: string;
+  defLine: number;
+  endLine: number;
+}
+
+export interface MacroCall {
+  name: string;
+  args: string[];
+  raw: string;
+  index: number;
+}
+
+export interface MacroSourceLine {
+  file: string;
+  line: number;
+  text: string;
+}
+
+export interface ParamReference {
+  def: MacroDefinition;
+  paramName: string;
+}
+
+const macroStartRe = /#macro\s+#(\S+?)\s*\(([^)]*)\)/i;
+const macroEndRe = /^\s*#(?:endmacro|macroend)\b/i;
+const callRe = /#([A-Za-z_][\w.]*)\s*\(([^)]*)\)/g;
+const paramRefRe = /&([A-Za-z_]\w*)/g;
+
+function parseTokenList(raw: string): string[] {
+  return raw
+    .trim()
+    .split(/\s+/)
+    .map((s) => s.replace(/^&/, ''))
+    .filter((s) => s.length > 0);
+}
+
+export function findMacroDefinitions(
+  lines: MacroSourceLine[]
+): MacroDefinition[] {
+  const defs: MacroDefinition[] = [];
+  let current: {
+    name: string;
+    params: string[];
+    body: string[];
+    file: string;
+    defLine: number;
+  } | null = null;
+
+  lines.forEach((l) => {
+    if (!current) {
+      const m = l.text.match(macroStartRe);
+      if (m) {
+        current = {
+          name: m[1],
+          params: parseTokenList(m[2]),
+          body: [],
+          file: l.file,
+          defLine: l.line,
+        };
+      }
+      return;
+    }
+    if (macroEndRe.test(l.text)) {
+      defs.push({ ...current, endLine: l.line });
+      current = null;
+      return;
+    }
+    current.body.push(l.text);
+  });
+
+  return defs;
+}
+
+export function buildMacroIndex(
+  defs: MacroDefinition[]
+): Map<string, MacroDefinition> {
+  const index = new Map<string, MacroDefinition>();
+  defs.forEach((d) => index.set(d.name.toLowerCase(), d));
+  return index;
+}
+
+// Finds every "#name(args)" occurrence in a line. Callers should check
+// membership in a MacroDefinition index before treating a match as a real
+// macro call, since the same textual shape is used generically.
+export function findMacroCalls(text: string): MacroCall[] {
+  const calls: MacroCall[] = [];
+  callRe.lastIndex = 0;
+  let match = callRe.exec(text);
+  while (match !== null) {
+    const before = text.slice(0, match.index);
+    // Skip the macro's own definition line ("#macro #name(...)"), which
+    // has the same "#name(...)" shape as a call.
+    if (!/#macro\s*$/i.test(before)) {
+      calls.push({
+        name: match[1],
+        args: parseTokenList(match[2]),
+        raw: match[0],
+        index: match.index,
+      });
+    }
+    match = callRe.exec(text);
+  }
+  return calls;
+}
+
+function substituteParams(
+  line: string,
+  params: string[],
+  args: string[]
+): string {
+  const pairs = params
+    .map((p, i) => ({ token: `&${p}`, value: args[i] ?? '' }))
+    .sort((a, b) => b.token.length - a.token.length);
+  return pairs.reduce(
+    (acc, { token, value }) => acc.split(token).join(value),
+    line
+  );
+}
+
+// Expands `macro` called with `args` into its substituted body lines,
+// recursively expanding any nested calls to other *known* macros within
+// that body (matching real compiler behavior — macros can call macros).
+export function expandMacro(
+  macro: MacroDefinition,
+  args: string[],
+  allMacros: Map<string, MacroDefinition>,
+  maxDepth = 20
+): string[] {
+  // eslint-disable-next-line no-use-before-define -- mutual recursion with expandNestedCalls
+  return expandMacroAtDepth(macro, args, allMacros, 0, maxDepth);
+}
+
+function expandMacroAtDepth(
+  macro: MacroDefinition,
+  args: string[],
+  allMacros: Map<string, MacroDefinition>,
+  depth: number,
+  maxDepth: number
+): string[] {
+  const substituted = macro.body.map((line) =>
+    substituteParams(line, macro.params, args)
+  );
+  if (depth >= maxDepth) return substituted;
+
+  return substituted.map((line) =>
+    // eslint-disable-next-line no-use-before-define -- mutual recursion with expandMacroAtDepth
+    expandNestedCalls(line, allMacros, depth, maxDepth)
+  );
+}
+
+function expandNestedCalls(
+  line: string,
+  allMacros: Map<string, MacroDefinition>,
+  depth: number,
+  maxDepth: number
+): string {
+  const calls = findMacroCalls(line);
+  return calls.reduce((result, call) => {
+    const target = allMacros.get(call.name.toLowerCase());
+    if (!target) return result;
+    const expandedLines = expandMacroAtDepth(
+      target,
+      call.args,
+      allMacros,
+      depth + 1,
+      maxDepth
+    );
+    return result.split(call.raw).join(expandedLines.join(' '));
+  }, line);
+}
+
+// Resolves a "&paramname" reference at a given character offset back to
+// the enclosing #MACRO definition's matching parameter, for go-to-
+// definition/hover inside a macro body. `enclosingDefs` only needs to be
+// the macro definitions found in the *same file* as the reference — a
+// parameter can only ever be resolved within its own macro's body.
+export function findParamReferenceAt(
+  lineText: string,
+  charIndex: number,
+  enclosingDefs: MacroDefinition[],
+  cursorLine: number
+): ParamReference | undefined {
+  paramRefRe.lastIndex = 0;
+  let found: RegExpExecArray | undefined;
+  let m = paramRefRe.exec(lineText);
+  while (m !== null) {
+    if (charIndex >= m.index && charIndex <= m.index + m[0].length) {
+      found = m;
+      break;
+    }
+    m = paramRefRe.exec(lineText);
+  }
+  if (!found) return undefined;
+
+  const enclosing = enclosingDefs.find(
+    (d) => cursorLine > d.defLine && cursorLine < d.endLine
+  );
+  if (!enclosing) return undefined;
+
+  // Substitution matches &paramname as a literal substring (so
+  // "&varname_OC" expands via the "varname" param, see the handbook's
+  // own &varname_OC-style examples) — mirror that here with a
+  // longest-prefix match against the identifier actually under the
+  // cursor, rather than requiring an exact token match.
+  const identifier = found[1].toLowerCase();
+  const paramName = enclosing.params
+    .filter((p) => identifier.startsWith(p.toLowerCase()))
+    .sort((a, b) => b.length - a.length)[0];
+  if (!paramName) return undefined;
+
+  return { def: enclosing, paramName };
+}

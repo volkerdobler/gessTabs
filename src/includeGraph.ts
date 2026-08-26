@@ -41,6 +41,12 @@ export interface IncludeGraphResult {
   // Every file touched, in first-visited order (entry file first).
   files: string[];
   errors: IncludeGraphError[];
+  // Per-file comment/string Scope, for callers that need to re-check
+  // isNotInComment at a specific character offset within one of the
+  // returned lines (line-start comment/string state is already applied
+  // when building `order`, but a caller matching a sub-string within a
+  // line — e.g. a regex hit — needs the finer-grained check).
+  scopes: Map<string, Scope>;
 }
 
 export interface IncludeGraphOptions {
@@ -136,6 +142,7 @@ export function resolveIncludeGraph(
   const order: ResolvedLine[] = [];
   const files: string[] = [];
   const errors: IncludeGraphError[] = [];
+  const scopes = new Map<string, Scope>();
   const ancestors = new Set<string>();
 
   function visit(file: string, depth: number): void {
@@ -163,6 +170,7 @@ export function resolveIncludeGraph(
     files.push(file);
     ancestors.add(file);
     const scope = new Scope(makeScopeDoc(lines) as any);
+    scopes.set(file, scope);
     const stack: ConditionalFrame[] = [];
 
     for (let i = 0; i < lines.length; i++) {
@@ -254,5 +262,5 @@ export function resolveIncludeGraph(
 
   visit(entryFile, 0);
 
-  return { order, files, errors };
+  return { order, files, errors, scopes };
 }
