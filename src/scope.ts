@@ -1,5 +1,3 @@
-'use strict';
-
 import type * as vscode from 'vscode';
 
 export enum ScopeEnum {
@@ -23,59 +21,7 @@ export const stringDelimiter: Array<Delimiter> = [
 ];
 
 function escapeRegex(str: string): string {
-  return str.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
-}
-
-function findBlockCommentStart(str: string): [number, number] {
-  let result = -1;
-  let cType = -1;
-
-  blockCommentDelimiter.forEach(function (value, index) {
-    if (str.search(escapeRegex(value.start)) === 0) {
-      result = value.start.length;
-      cType = index;
-    }
-  });
-
-  return [result, cType];
-}
-
-function findBlockCommentEnd(str: string, comIndex: number): number {
-  let result = -1;
-
-  blockCommentDelimiter.forEach(function (value, index) {
-    if (str.search(escapeRegex(value.end)) === 0 && index === comIndex) {
-      result = value.end.length;
-    }
-  });
-
-  return result;
-}
-
-function findStringStart(str: string): [number, number] {
-  let result = -1;
-  let sIndex = -1;
-
-  stringDelimiter.forEach(function (value, index) {
-    if (str.search(escapeRegex(value.start)) === 0) {
-      result = value.start.length;
-      sIndex = index;
-    }
-  });
-
-  return [result, sIndex];
-}
-
-function findStringEnd(str: string, sIndex: number): number {
-  let result = -1;
-
-  stringDelimiter.forEach(function (value, index) {
-    if (str.search(escapeRegex(value.end)) === 0 && index === sIndex) {
-      result = value.end.length;
-    }
-  });
-
-  return result;
+  return str.replace(/[-/\\^$*+?.()|[\]{}]/g, '\\$&');
 }
 
 export class Scope {
@@ -86,7 +32,7 @@ export class Scope {
     document: vscode.TextDocument,
     lineComDel?: RegExp,
     BlCoDel?: Array<Delimiter>,
-    strReg?: Array<Delimiter>,
+    strReg?: Array<Delimiter>
   ) {
     const localLineCommentDelimiter = lineComDel || lineCommentDelimiter;
     const localBlockCommentDelimiter = BlCoDel || blockCommentDelimiter;
@@ -101,7 +47,7 @@ export class Scope {
     function findBlockCommentStartLocal(str: string): [number, number] {
       let result = -1;
       let cType = -1;
-      localBlockCommentDelimiter.forEach(function (value, index) {
+      localBlockCommentDelimiter.forEach((value, index) => {
         if (str.search(escapeRegex(value.start)) === 0) {
           result = value.start.length;
           cType = index;
@@ -110,10 +56,16 @@ export class Scope {
       return [result, cType];
     }
 
-    function findBlockCommentEndLocal(str: string, comIndex: number): number {
+    function findBlockCommentEndLocal(
+      str: string,
+      activeComIndex: number
+    ): number {
       let result = -1;
-      localBlockCommentDelimiter.forEach(function (value, index) {
-        if (str.search(escapeRegex(value.end)) === 0 && index === comIndex) {
+      localBlockCommentDelimiter.forEach((value, index) => {
+        if (
+          str.search(escapeRegex(value.end)) === 0 &&
+          index === activeComIndex
+        ) {
           result = value.end.length;
         }
       });
@@ -123,7 +75,7 @@ export class Scope {
     function findStringStartLocal(str: string): [number, number] {
       let result = -1;
       let sIndex = -1;
-      localStringDelimiter.forEach(function (value, index) {
+      localStringDelimiter.forEach((value, index) => {
         if (str.search(escapeRegex(value.start)) === 0) {
           result = value.start.length;
           sIndex = index;
@@ -134,7 +86,7 @@ export class Scope {
 
     function findStringEndLocal(str: string, sIndex: number): number {
       let result = -1;
-      localStringDelimiter.forEach(function (value, index) {
+      localStringDelimiter.forEach((value, index) => {
         if (str.search(escapeRegex(value.end)) === 0 && index === sIndex) {
           result = value.end.length;
         }
@@ -169,7 +121,7 @@ export class Scope {
               lineStr.substring(i).search(localLineCommentDelimiter) === 0;
             [strStart, strIndex] = findStringStartLocal(lineStr.substring(i));
             [comStart, comIndex] = findBlockCommentStartLocal(
-              lineStr.substring(i),
+              lineStr.substring(i)
             );
             break;
           case ScopeEnum.string:
@@ -177,6 +129,8 @@ export class Scope {
             break;
           case ScopeEnum.comment:
             comEnde = findBlockCommentEndLocal(lineStr.substring(i), comIndex);
+            break;
+          default:
             break;
         }
 

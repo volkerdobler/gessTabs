@@ -10,7 +10,7 @@ export class LRUCache<K, V> {
 
   constructor(
     private maxSize: number,
-    private options: LRUOptions<K, V> = {},
+    private options: LRUOptions<K, V> = {}
   ) {}
 
   get(key: K): V | undefined {

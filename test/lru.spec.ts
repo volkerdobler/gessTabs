@@ -29,7 +29,9 @@ describe('LRUCache', () => {
     cache.set('a', 1);
     expect(cache.get('a')).to.equal(1);
 
-    await new Promise((resolve) => setTimeout(resolve, 20));
+    await new Promise((resolve) => {
+      setTimeout(resolve, 20);
+    });
 
     expect(cache.get('a')).to.equal(undefined);
     expect(evicted).to.deep.equal([{ key: 'a', reason: 'expired' }]);

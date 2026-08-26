@@ -49,4 +49,8 @@ out/
 testen/
 package-lock.json
 *.code-workspace
+
+# Compiled test output (source is .ts, these are build artifacts)
+test/*.js
+test/*.js.map
 dokumentation/*.md

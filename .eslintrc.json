@@ -7,6 +7,14 @@
     "plugin:@typescript-eslint/recommended",
     "plugin:prettier/recommended"
   ],
+  "settings": {
+    "import/core-modules": ["vscode"],
+    "import/resolver": {
+      "node": {
+        "extensions": [".js", ".ts"]
+      }
+    }
+  },
   "rules": {
     "no-unused-vars": "off",
     "prettier/prettier": [
@@ -23,6 +31,30 @@
     "@typescript-eslint/no-explicit-any": 0,
     "@typescript-eslint/explicit-module-boundary-types": 0,
     "@typescript-eslint/no-non-null-assertion": 0,
-    "no-constant-condition": 0
-  }
+    "no-constant-condition": 0,
+    "import/extensions": ["error", "ignorePackages", { "ts": "never" }],
+    "no-use-before-define": ["error", { "classes": false }],
+    "no-useless-constructor": "off",
+    "@typescript-eslint/no-useless-constructor": "error",
+    "no-empty-function": ["error", { "allow": ["constructors"] }],
+    "import/prefer-default-export": "off",
+    "no-continue": "off",
+    "no-plusplus": "off"
+  },
+  "overrides": [
+    {
+      "files": ["src/extension.ts"],
+      "rules": {
+        "max-classes-per-file": ["error", 4],
+        "class-methods-use-this": "off"
+      }
+    },
+    {
+      "files": ["test/**/*.ts"],
+      "rules": {
+        "@typescript-eslint/no-unused-expressions": "off",
+        "max-classes-per-file": ["error", 2]
+      }
+    }
+  ]
 }

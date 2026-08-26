@@ -23,7 +23,7 @@ export type IsNotInComment = (searchIndex: number) => boolean;
 export function lineMatchesDefinition(
   lineText: string,
   word: string,
-  isNotInComment: IsNotInComment,
+  isNotInComment: IsNotInComment
 ): boolean {
   const singleVarRegExp = singleVarDefRe(word);
   const multiVarRegExp = multiVarDefRe(word);
@@ -47,7 +47,7 @@ export function lineMatchesDefinition(
 export function lineMatchesUsage(
   lineText: string,
   word: string,
-  isNotInComment: IsNotInComment,
+  isNotInComment: IsNotInComment
 ): boolean {
   const singleVarRegExp = singleVarDefRe(word);
   const multiVarRegExp = multiVarRe(word);

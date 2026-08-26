@@ -8,42 +8,38 @@ const alwaysVisible = (searchIndex: number) => searchIndex > -1;
 describe('lineMatchesDefinition', () => {
   it('matches a single variable definition', () => {
     expect(
-      lineMatchesDefinition('variable myVar = 1', 'myVar', alwaysVisible),
+      lineMatchesDefinition('variable myVar = 1', 'myVar', alwaysVisible)
     ).to.equal(true);
   });
 
   it('matches a #macro definition', () => {
     expect(
-      lineMatchesDefinition('#macro #myMacro(', 'myMacro', alwaysVisible),
+      lineMatchesDefinition('#macro #myMacro(', 'myMacro', alwaysVisible)
     ).to.equal(true);
   });
 
   it('matches an #expand definition', () => {
     expect(
-      lineMatchesDefinition('#expand #myMacro', 'myMacro', alwaysVisible),
+      lineMatchesDefinition('#expand #myMacro', 'myMacro', alwaysVisible)
     ).to.equal(true);
   });
 
   it('does not match table usage (head/axis are not definitions)', () => {
     expect(
-      lineMatchesDefinition(
-        'table t = myVar by other',
-        'myVar',
-        alwaysVisible,
-      ),
+      lineMatchesDefinition('table t = myVar by other', 'myVar', alwaysVisible)
     ).to.equal(false);
   });
 
   it('does not match an unrelated line', () => {
     expect(
-      lineMatchesDefinition('variable other = 1', 'myVar', alwaysVisible),
+      lineMatchesDefinition('variable other = 1', 'myVar', alwaysVisible)
     ).to.equal(false);
   });
 
   it('respects the isNotInComment callback (comment suppresses the match)', () => {
     const alwaysInComment = () => false;
     expect(
-      lineMatchesDefinition('variable myVar = 1', 'myVar', alwaysInComment),
+      lineMatchesDefinition('variable myVar = 1', 'myVar', alwaysInComment)
     ).to.equal(false);
   });
 });
@@ -51,25 +47,25 @@ describe('lineMatchesDefinition', () => {
 describe('lineMatchesUsage', () => {
   it('matches everything a definition match does', () => {
     expect(
-      lineMatchesUsage('variable myVar = 1', 'myVar', alwaysVisible),
+      lineMatchesUsage('variable myVar = 1', 'myVar', alwaysVisible)
     ).to.equal(true);
   });
 
   it('also matches table head usage', () => {
     expect(
-      lineMatchesUsage('table t = myVar by other', 'myVar', alwaysVisible),
+      lineMatchesUsage('table t = myVar by other', 'myVar', alwaysVisible)
     ).to.equal(true);
   });
 
   it('also matches table axis usage', () => {
     expect(
-      lineMatchesUsage('table t = other by myVar', 'myVar', alwaysVisible),
+      lineMatchesUsage('table t = other by myVar', 'myVar', alwaysVisible)
     ).to.equal(true);
   });
 
   it('does not match an unrelated line', () => {
     expect(
-      lineMatchesUsage('table t = other by another', 'myVar', alwaysVisible),
+      lineMatchesUsage('table t = other by another', 'myVar', alwaysVisible)
     ).to.equal(false);
   });
 });
