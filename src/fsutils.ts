@@ -28,6 +28,7 @@ export async function getAllFilenamesInDirectory(
       );
       return found.flat();
     } catch (e) {
+      console.error(`gesstabs: failed to scan directory "${dir}":`, e);
       return [];
     }
   })();

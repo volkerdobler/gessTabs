@@ -18,6 +18,19 @@ import {
 
 export type IsNotInComment = (searchIndex: number) => boolean;
 
+// Shared "does this regex match on this line, within the given scope?"
+// check used by the symbol-provider loops in extension.ts: searches once,
+// and only re-runs match() if the search hit falls inside the allowed
+// scope. Kept here (rather than inline in extension.ts) so it can be
+// unit-tested without a live vscode.TextDocument/Scope.
+export function matchInScope(
+  lineText: string,
+  regExp: RegExp,
+  isInScope: (searchIndex: number) => boolean
+): RegExpMatchArray | null {
+  return isInScope(lineText.search(regExp)) ? lineText.match(regExp) : null;
+}
+
 // mirrors the definition-only matching used by getDefLocationInDocument:
 // a variable, compute, #macro or #expand definition of "word".
 export function lineMatchesDefinition(

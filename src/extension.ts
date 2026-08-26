@@ -19,7 +19,11 @@ import {
   tableAxisRe,
 } from './regex';
 import { getAllFilenamesInDirectory } from './fsutils';
-import { lineMatchesDefinition, lineMatchesUsage } from './matching';
+import {
+  lineMatchesDefinition,
+  lineMatchesUsage,
+  matchInScope,
+} from './matching';
 
 function printDebugMessage(message: string) {
   if (vscode.workspace.getConfiguration('gesstabs').get('debugMode')) {
@@ -239,9 +243,9 @@ class GesstabsDefintionProvider implements vscode.DefinitionProvider {
     const wordAtPosition: [boolean, string, vscode.Position] =
       getWordAtPosition(document, position);
 
-    return new Promise((resolve) => {
+    return new Promise<vscode.Location | null>((resolve) => {
       if (!wordAtPosition[0]) {
-        resolve(null as any);
+        resolve(null);
         return;
       }
 
@@ -252,10 +256,10 @@ class GesstabsDefintionProvider implements vscode.DefinitionProvider {
         fixDriveCasingInWindows(path.dirname(document.fileName));
 
       getAllFilenamesInDirectory(wsfolder, '(tab|inc)')
-        .then((fileNames) => {
+        .then((fileNames): Promise<Array<vscode.Location | undefined>> => {
           if (token && token.isCancellationRequested) {
-            resolve(null as any);
-            return [] as any;
+            resolve(null);
+            return Promise.resolve([]);
           }
           const locations = fileNames.map((file) =>
             getDefLocationInDocument(file, word)
@@ -264,15 +268,15 @@ class GesstabsDefintionProvider implements vscode.DefinitionProvider {
         })
         .then((contents) => {
           if (token && token.isCancellationRequested) {
-            resolve(null as any);
+            resolve(null);
             return;
           }
-          resolve(
-            contents.find((loc: vscode.Location | undefined) => loc) ||
-              (null as any)
-          );
+          resolve(contents.find((loc) => loc) || null);
         })
-        .catch(() => resolve(null as any));
+        .catch((e) => {
+          printDebugMessage(`gesstabs: provideDefinition failed: ${e}`);
+          resolve(null);
+        });
     });
   }
 }
@@ -295,7 +299,7 @@ class GesstabsDocumentSymbolProvider implements vscode.DocumentSymbolProvider {
     document: vscode.TextDocument,
     token: vscode.CancellationToken
   ): Promise<vscode.SymbolInformation[]> {
-    return new Promise((resolve, reject) => {
+    return new Promise<vscode.SymbolInformation[]>((resolve) => {
       if (token && token.isCancellationRequested) {
         resolve([]);
         return;
@@ -353,137 +357,115 @@ class GesstabsDocumentSymbolProvider implements vscode.DocumentSymbolProvider {
           continue;
         }
 
-        if (scope.isNotInComment(i, line.text.search(singleVarRegExp))) {
-          const lineMatch = line.text.match(singleVarRegExp);
-          if (lineMatch) {
-            pushDocSymbol(
-              vscode.SymbolKind.Variable,
-              'variable',
-              `${lineMatch[2]} [${lineMatch[1].toLocaleLowerCase()}]`,
-              '',
-              '',
-              document.uri,
-              line.range
-            );
-          }
+        const notInComment = (searchIndex: number) =>
+          scope.isNotInComment(i, searchIndex);
+        const normalScope = (searchIndex: number) =>
+          scope.isNormalScope(i, searchIndex);
+        const groups234 = (lineMatch: RegExpMatchArray) =>
+          (lineMatch[2] || '') + (lineMatch[3] || '') + (lineMatch[4] || '');
+
+        let lineMatch = matchInScope(line.text, singleVarRegExp, notInComment);
+        if (lineMatch) {
+          pushDocSymbol(
+            vscode.SymbolKind.Variable,
+            'variable',
+            `${lineMatch[2]} [${lineMatch[1].toLocaleLowerCase()}]`,
+            '',
+            '',
+            document.uri,
+            line.range
+          );
         }
-        if (scope.isNotInComment(i, line.text.search(multiVarRegExp))) {
-          const lineMatch = line.text.match(multiVarRegExp);
-          if (lineMatch) {
-            pushDocSymbol(
-              vscode.SymbolKind.Variable,
-              'variable',
-              `${
-                (lineMatch[2] ? lineMatch[2] : '') +
-                (lineMatch[3] ? lineMatch[3] : '') +
-                (lineMatch[4] ? lineMatch[4] : '')
-              } [${lineMatch[1].toLocaleLowerCase()}]`,
-              '',
-              '',
-              document.uri,
-              line.range
-            );
-          }
+
+        lineMatch = matchInScope(line.text, multiVarRegExp, notInComment);
+        if (lineMatch) {
+          pushDocSymbol(
+            vscode.SymbolKind.Variable,
+            'variable',
+            `${groups234(lineMatch)} [${lineMatch[1].toLocaleLowerCase()}]`,
+            '',
+            '',
+            document.uri,
+            line.range
+          );
         }
-        if (scope.isNotInComment(i, line.text.search(multiVarDefRegExp))) {
-          const lineMatch = line.text.match(multiVarDefRegExp);
-          if (lineMatch) {
-            pushDocSymbol(
-              vscode.SymbolKind.Variable,
-              'variable',
-              `${
-                (lineMatch[2] ? lineMatch[2] : '') +
-                (lineMatch[3] ? lineMatch[3] : '') +
-                (lineMatch[4] ? lineMatch[4] : '')
-              } [${lineMatch[1].toLocaleLowerCase()}]`,
-              '',
-              '',
-              document.uri,
-              line.range
-            );
-          }
+
+        lineMatch = matchInScope(line.text, multiVarDefRegExp, notInComment);
+        if (lineMatch) {
+          pushDocSymbol(
+            vscode.SymbolKind.Variable,
+            'variable',
+            `${groups234(lineMatch)} [${lineMatch[1].toLocaleLowerCase()}]`,
+            '',
+            '',
+            document.uri,
+            line.range
+          );
         }
-        if (scope.isNormalScope(i, line.text.search(computeRegExp))) {
-          const lineMatch = line.text.match(computeRegExp);
-          if (lineMatch) {
-            pushDocSymbol(
-              vscode.SymbolKind.Variable,
-              'variable',
-              `${
-                (lineMatch[2] ? lineMatch[2] : '') +
-                (lineMatch[3] ? lineMatch[3] : '') +
-                (lineMatch[4] ? lineMatch[4] : '')
-              } [${lineMatch[1].toLocaleLowerCase()}]`,
-              '',
-              '',
-              document.uri,
-              line.range
-            );
-          }
+
+        lineMatch = matchInScope(line.text, computeRegExp, normalScope);
+        if (lineMatch) {
+          pushDocSymbol(
+            vscode.SymbolKind.Variable,
+            'variable',
+            `${groups234(lineMatch)} [${lineMatch[1].toLocaleLowerCase()}]`,
+            '',
+            '',
+            document.uri,
+            line.range
+          );
         }
-        if (scope.isNormalScope(i, line.text.search(macroRegExp))) {
-          const lineMatch = line.text.match(macroRegExp);
-          if (lineMatch && lineMatch.length >= 2 && lineMatch[2].length > 0) {
-            pushDocSymbol(
-              vscode.SymbolKind.Function,
-              'definition',
-              `${lineMatch[2]} [macro]`,
-              '',
-              '',
-              document.uri,
-              line.range
-            );
-          }
+
+        lineMatch = matchInScope(line.text, macroRegExp, normalScope);
+        if (lineMatch && lineMatch.length >= 2 && lineMatch[2].length > 0) {
+          pushDocSymbol(
+            vscode.SymbolKind.Function,
+            'definition',
+            `${lineMatch[2]} [macro]`,
+            '',
+            '',
+            document.uri,
+            line.range
+          );
         }
-        if (scope.isNormalScope(i, line.text.search(expandRegExp))) {
-          const lineMatch = line.text.match(expandRegExp);
-          if (lineMatch && lineMatch.length >= 2 && lineMatch[2].length > 0) {
-            pushDocSymbol(
-              vscode.SymbolKind.Function,
-              'definition',
-              `${lineMatch[2]} [expand]`,
-              '',
-              '',
-              document.uri,
-              line.range
-            );
-          }
+
+        lineMatch = matchInScope(line.text, expandRegExp, normalScope);
+        if (lineMatch && lineMatch.length >= 2 && lineMatch[2].length > 0) {
+          pushDocSymbol(
+            vscode.SymbolKind.Function,
+            'definition',
+            `${lineMatch[2]} [expand]`,
+            '',
+            '',
+            document.uri,
+            line.range
+          );
         }
-        if (scope.isNormalScope(i, line.text.search(tableHeadRegExp))) {
-          const lineMatch = line.text.match(tableHeadRegExp);
-          if (lineMatch) {
-            pushDocSymbol(
-              vscode.SymbolKind.Variable,
-              'table',
-              `${
-                (lineMatch[2] ? lineMatch[2] : '') +
-                (lineMatch[3] ? lineMatch[3] : '') +
-                (lineMatch[4] ? lineMatch[4] : '')
-              } [head]`,
-              '',
-              '',
-              document.uri,
-              line.range
-            );
-          }
+
+        lineMatch = matchInScope(line.text, tableHeadRegExp, normalScope);
+        if (lineMatch) {
+          pushDocSymbol(
+            vscode.SymbolKind.Variable,
+            'table',
+            `${groups234(lineMatch)} [head]`,
+            '',
+            '',
+            document.uri,
+            line.range
+          );
         }
-        if (scope.isNormalScope(i, line.text.search(tableAxisRegExp))) {
-          const lineMatch = line.text.match(tableAxisRegExp);
-          if (lineMatch) {
-            pushDocSymbol(
-              vscode.SymbolKind.Variable,
-              'table',
-              `${
-                (lineMatch[2] ? lineMatch[2] : '') +
-                (lineMatch[3] ? lineMatch[3] : '') +
-                (lineMatch[4] ? lineMatch[4] : '')
-              } [axis]`,
-              '',
-              '',
-              document.uri,
-              line.range
-            );
-          }
+
+        lineMatch = matchInScope(line.text, tableAxisRegExp, normalScope);
+        if (lineMatch) {
+          pushDocSymbol(
+            vscode.SymbolKind.Variable,
+            'table',
+            `${groups234(lineMatch)} [axis]`,
+            '',
+            '',
+            document.uri,
+            line.range
+          );
         }
       }
 
@@ -524,10 +506,12 @@ class GessTabsWorkspaceSymbolProvider
             : ''
         )
       );
-    return new Promise((resolve) => {
+    return new Promise<vscode.SymbolInformation[]>((resolve) => {
       getAllFilenamesInDirectory(wsfolder, '(tab|inc)')
-        .then((files) => {
-          if (token && token.isCancellationRequested) return [] as any;
+        .then((files): Promise<vscode.TextDocument[]> => {
+          if (token && token.isCancellationRequested) {
+            return Promise.resolve([]);
+          }
           return Promise.all(
             files.map((file) => vscode.workspace.openTextDocument(file))
           );
@@ -544,122 +528,124 @@ class GessTabsWorkspaceSymbolProvider
                 continue;
               }
 
-              if (scope.isNotInComment(i, line.text.search(singleVarRegExp))) {
-                const lineMatch = line.text.match(singleVarRegExp);
-                if (lineMatch) {
-                  spush(
-                    vscode.SymbolKind.Variable,
-                    lineMatch[1].toLocaleLowerCase(),
-                    lineMatch[2],
-                    '',
-                    '',
-                    content.uri,
-                    line.range,
-                    symbols
-                  );
-                }
+              const notInComment = (searchIndex: number) =>
+                scope.isNotInComment(i, searchIndex);
+              const normalScope = (searchIndex: number) =>
+                scope.isNormalScope(i, searchIndex);
+
+              let lineMatch = matchInScope(
+                line.text,
+                singleVarRegExp,
+                notInComment
+              );
+              if (lineMatch) {
+                spush(
+                  vscode.SymbolKind.Variable,
+                  lineMatch[1].toLocaleLowerCase(),
+                  lineMatch[2],
+                  '',
+                  '',
+                  content.uri,
+                  line.range,
+                  symbols
+                );
               }
-              if (scope.isNotInComment(i, line.text.search(multiVarRegExp))) {
-                const lineMatch = line.text.match(multiVarRegExp);
-                if (lineMatch) {
-                  spush(
-                    vscode.SymbolKind.Variable,
-                    lineMatch[1].toLocaleLowerCase(),
-                    lineMatch[2],
-                    lineMatch[3],
-                    lineMatch[4],
-                    content.uri,
-                    line.range,
-                    symbols
-                  );
-                }
+
+              lineMatch = matchInScope(line.text, multiVarRegExp, notInComment);
+              if (lineMatch) {
+                spush(
+                  vscode.SymbolKind.Variable,
+                  lineMatch[1].toLocaleLowerCase(),
+                  lineMatch[2],
+                  lineMatch[3],
+                  lineMatch[4],
+                  content.uri,
+                  line.range,
+                  symbols
+                );
               }
-              if (scope.isNormalScope(i, line.text.search(computeRegExp))) {
-                const lineMatch = line.text.match(computeRegExp);
-                if (lineMatch) {
-                  spush(
-                    vscode.SymbolKind.Variable,
-                    lineMatch[1].toLocaleLowerCase(),
-                    lineMatch[2],
-                    lineMatch[3],
-                    '',
-                    content.uri,
-                    line.range,
-                    symbols
-                  );
-                }
+
+              lineMatch = matchInScope(line.text, computeRegExp, normalScope);
+              if (lineMatch) {
+                spush(
+                  vscode.SymbolKind.Variable,
+                  lineMatch[1].toLocaleLowerCase(),
+                  lineMatch[2],
+                  lineMatch[3],
+                  '',
+                  content.uri,
+                  line.range,
+                  symbols
+                );
               }
-              if (scope.isNormalScope(i, line.text.search(macroRegExp))) {
-                const lineMatch = line.text.match(macroRegExp);
-                if (
-                  lineMatch &&
-                  lineMatch.length >= 2 &&
-                  lineMatch[2].length > 0
-                ) {
-                  spush(
-                    vscode.SymbolKind.Function,
-                    'macro',
-                    lineMatch[2],
-                    '',
-                    '',
-                    content.uri,
-                    line.range,
-                    symbols
-                  );
-                }
+
+              lineMatch = matchInScope(line.text, macroRegExp, normalScope);
+              if (
+                lineMatch &&
+                lineMatch.length >= 2 &&
+                lineMatch[2].length > 0
+              ) {
+                spush(
+                  vscode.SymbolKind.Function,
+                  'macro',
+                  lineMatch[2],
+                  '',
+                  '',
+                  content.uri,
+                  line.range,
+                  symbols
+                );
               }
-              if (scope.isNormalScope(i, line.text.search(expandRegExp))) {
-                const lineMatch = line.text.match(expandRegExp);
-                if (
-                  lineMatch &&
-                  lineMatch.length >= 2 &&
-                  lineMatch[2].length > 0
-                ) {
-                  spush(
-                    vscode.SymbolKind.Function,
-                    'expand',
-                    lineMatch[2],
-                    '',
-                    '',
-                    content.uri,
-                    line.range,
-                    symbols
-                  );
-                }
+
+              lineMatch = matchInScope(line.text, expandRegExp, normalScope);
+              if (
+                lineMatch &&
+                lineMatch.length >= 2 &&
+                lineMatch[2].length > 0
+              ) {
+                spush(
+                  vscode.SymbolKind.Function,
+                  'expand',
+                  lineMatch[2],
+                  '',
+                  '',
+                  content.uri,
+                  line.range,
+                  symbols
+                );
               }
-              if (scope.isNormalScope(i, line.text.search(tableHeadRegExp))) {
-                const lineMatch = line.text.match(tableHeadRegExp);
-                if (lineMatch && lineMatch.length === 5) {
-                  let re: RegExp;
-                  if (lineMatch[3].search(/"/) > -1) {
-                    re = /\s*"\s*/;
-                  } else {
-                    re = /\s+/;
-                  }
-                  lineMatch[3].split(re).forEach((value) => {
-                    if (value.search(/[\s"]*&/) !== 0) {
-                      symbols.push({
-                        name: value,
-                        kind: vscode.SymbolKind.Variable,
-                        location: new vscode.Location(content.uri, line.range),
-                        containerName: 'head',
-                      });
-                    }
-                  });
-                  if (lineMatch[4].search(/"/) > -1) {
-                    re = /\s*"\s*/;
-                  } else {
-                    re = /\s+/;
-                  }
-                  lineMatch[4].split(re).forEach((value) => {
+
+              lineMatch = matchInScope(line.text, tableHeadRegExp, normalScope);
+              if (lineMatch && lineMatch.length === 5) {
+                let re: RegExp;
+                if (lineMatch[3].search(/"/) > -1) {
+                  re = /\s*"\s*/;
+                } else {
+                  re = /\s+/;
+                }
+                lineMatch[3].split(re).forEach((value) => {
+                  if (value.search(/[\s"]*&/) !== 0) {
                     symbols.push({
                       name: value,
                       kind: vscode.SymbolKind.Variable,
                       location: new vscode.Location(content.uri, line.range),
-                      containerName: 'axis',
+                      containerName: 'head',
                     });
-                  });
+                  }
+                });
+                if (lineMatch[4].search(/"/) > -1) {
+                  re = /\s*"\s*/;
+                } else {
+                  re = /\s+/;
                 }
+                lineMatch[4].split(re).forEach((value) => {
+                  symbols.push({
+                    name: value,
+                    kind: vscode.SymbolKind.Variable,
+                    location: new vscode.Location(content.uri, line.range),
+                    containerName: 'axis',
+                  });
+                });
               }
             }
           });

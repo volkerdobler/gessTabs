@@ -24,6 +24,14 @@ function getCachedRegex(key: string, builder: () => RegExp): RegExp {
   return r;
 }
 
+// Shared cache-key-building + getCachedRegex boilerplate used by every
+// factory below: builds a RegExp from `pattern` (case-insensitive), keyed
+// by factory name + the input word + the built pattern itself.
+function buildRe(name: string, word: string, pattern: string): RegExp {
+  const key = `${name}|${word}|${pattern}`;
+  return getCachedRegex(key, () => new RegExp(pattern, 'i'));
+}
+
 export {
   constTokenVarName,
   constStringVarName,
@@ -32,73 +40,57 @@ export {
   constVarListSeq,
 };
 export function wordDefRe(word: string): RegExp {
-  const key = `wordDefRe|${word}`;
-  return getCachedRegex(key, () => new RegExp(getWordDefinition(word), 'i'));
+  return buildRe('wordDefRe', word, getWordDefinition(word));
 }
 
 export function singleVarDefRe(word: string): RegExp {
   const singleVarConst =
     '(alphafamily|assocvar|bcdvar|bitgroup|clonevar|combinedvar|count|dichoq|familyvar|groups|groupvar|indexvar|init|invindexvar|makefamily|makegroup|makesingle|max|mean|min|multiq|simplevar|singleq|spssgroup|static|stddev|sum|varfamily|vargroup|variable|variance)';
 
-  let retVal: string = '';
-  if (word.length > 0) {
-    retVal = `\\b${singleVarConst}\\s*(${getWordDefinition(word)})\\s*=`;
-  } else {
-    retVal = `\\b${singleVarConst}\\s+(${constVarName})\\s*=`;
-  }
-  const key = `singleVarDefRe|${word}|${retVal}`;
-  return getCachedRegex(key, () => new RegExp(retVal, 'i'));
+  const pattern =
+    word.length > 0
+      ? `\\b${singleVarConst}\\s*(${getWordDefinition(word)})\\s*=`
+      : `\\b${singleVarConst}\\s+(${constVarName})\\s*=`;
+  return buildRe('singleVarDefRe', word, pattern);
 }
 
 export function multiVarDefRe(word: string): RegExp {
   const multiVarConst = '(variables)';
 
-  let retVal: string = '';
-  if (word.length > 0) {
-    retVal = `\\b${multiVarConst}\\s+(${getWordDefinition(word)}\\s*).*=`;
-  } else {
-    retVal = `\\b${multiVarConst}\\s+(${constVarList})\\s*=`;
-  }
-  const key = `multiVarDefRe|${word}|${retVal}`;
-  return getCachedRegex(key, () => new RegExp(retVal, 'i'));
+  const pattern =
+    word.length > 0
+      ? `\\b${multiVarConst}\\s+(${getWordDefinition(word)}\\s*).*=`
+      : `\\b${multiVarConst}\\s+(${constVarList})\\s*=`;
+  return buildRe('multiVarDefRe', word, pattern);
 }
 
 export function multiVarRe(word: string): RegExp {
   const multiVarConst =
     '(copylabels|excludevalues|includevalues|labels|text|title|uselabels|valuelabels|vartext|vartitle)';
 
-  let retVal: string = '';
-  if (word.length > 0) {
-    retVal = `\\b${multiVarConst}\\s+(?:${getWordDefinition(word)}\\b).*=`;
-  } else {
-    retVal = `\\b${multiVarConst}\\s+(${constVarList})\\s*=`;
-  }
-  const key = `multiVarRe|${word}|${retVal}`;
-  return getCachedRegex(key, () => new RegExp(retVal, 'i'));
+  const pattern =
+    word.length > 0
+      ? `\\b${multiVarConst}\\s+(?:${getWordDefinition(word)}\\b).*=`
+      : `\\b${multiVarConst}\\s+(${constVarList})\\s*=`;
+  return buildRe('multiVarRe', word, pattern);
 }
 
 export function computeDefRe(word: string): RegExp {
   const defWithOptions =
     '\\b(f?compute\\s+(?:add|alpha|ascend|copy|descend|eliminate|init|load|replace|shuffle|sort|swap)?|weightcells\\s+(?:autoalign)?)\\b';
 
-  if (word.length > 0) {
-    const ret = `${defWithOptions}\\s+(?:${getWordDefinition(word)}\\b).*=`;
-    const key = `computeDefRe|${word}|${ret}`;
-    return getCachedRegex(key, () => new RegExp(ret, 'i'));
-  }
-  const ret = `${defWithOptions}(?:\\s+(?:${constVarName})|(?:${constVarListSeq}))\\s*=`;
-  const key = `computeDefRe|empty|${ret}`;
-  return getCachedRegex(key, () => new RegExp(ret, 'i'));
+  const pattern =
+    word.length > 0
+      ? `${defWithOptions}\\s+(?:${getWordDefinition(word)}\\b).*=`
+      : `${defWithOptions}(?:\\s+(?:${constVarName})|(?:${constVarListSeq}))\\s*=`;
+  return buildRe('computeDefRe', word, pattern);
 }
 
 export function macroDefRe(word: string): RegExp {
   const tempWord: string =
     word.length > 0 ? getWordDefinition(word) : constTokenVarName;
-  const key = `macroDefRe|${word}|${tempWord}`;
-  return getCachedRegex(
-    key,
-    () => new RegExp(`(?:(#macro)\\s+(#${tempWord})\\s*\\()`, 'i')
-  );
+  const pattern = `(?:(#macro)\\s+(#${tempWord})\\s*\\()`;
+  return buildRe('macroDefRe', word, pattern);
 }
 
 export function macroOwnDefRe(word: string): RegExp {
@@ -125,55 +117,43 @@ export function macroOwnDefRe(word: string): RegExp {
     regExpStr = '\\0';
   }
 
-  const key = `macroOwnDefRe|${word}|${regExpStr}`;
-  return getCachedRegex(key, () => new RegExp(regExpStr, 'i'));
+  return buildRe('macroOwnDefRe', word, regExpStr);
 }
 
 export function expandDefRe(word: string): RegExp {
   const tempWord =
     word.length > 0 ? getWordDefinition(word) : constTokenVarName;
-  const key = `expandDefRe|${word}|${tempWord}`;
-  return getCachedRegex(
-    key,
-    () => new RegExp(`(?:(#expand)\\s+(#${tempWord}))`, 'i')
-  );
+  const pattern = `(?:(#expand)\\s+(#${tempWord}))`;
+  return buildRe('expandDefRe', word, pattern);
 }
 
 export function expandRe(word: string): RegExp {
   const tempWord =
     word.length > 0 ? getWordDefinition(word) : constTokenVarName;
-  const key = `expandRe|${word}|${tempWord}`;
-  return getCachedRegex(key, () => new RegExp(`(#${tempWord})\\b`, 'i'));
+  const pattern = `(#${tempWord})\\b`;
+  return buildRe('expandRe', word, pattern);
 }
 
 export function tableHeadRe(word: string): RegExp {
   const tableVarConst = '(table)';
 
-  let retVal: string = '';
-  if (word.length > 0) {
-    retVal =
-      `\\b${tableVarConst}\\b[^=]*=\\s*` +
-      `(?:${getWordDefinition(word)}.*\\bby\\b)`;
-  } else {
-    retVal = `\\b${tableVarConst}\\b[^=]*=\\s*(?:${constVarList})\\s*\\bby\\b`;
-  }
-  const key = `tableHeadRe|${word}|${retVal}`;
-  return getCachedRegex(key, () => new RegExp(retVal, 'i'));
+  const pattern =
+    word.length > 0
+      ? `\\b${tableVarConst}\\b[^=]*=\\s*(?:${getWordDefinition(
+          word
+        )}.*\\bby\\b)`
+      : `\\b${tableVarConst}\\b[^=]*=\\s*(?:${constVarList})\\s*\\bby\\b`;
+  return buildRe('tableHeadRe', word, pattern);
 }
 
 export function tableAxisRe(word: string): RegExp {
   const tableVarConst = '(table)';
 
-  let retVal: string = '';
-  if (word.length > 0) {
-    retVal =
-      `\\b${tableVarConst}\\b[^=]*=\\s*` +
-      `(?:.*\\s*\\bby\\b\\s*${getWordDefinition(word)})`;
-  } else {
-    retVal =
-      `\\b${tableVarConst}\\b[^=]*=\\s*.+\\s*\\bby\\b\\s*` +
-      `(?:${constVarList})`;
-  }
-  const key = `tableAxisRe|${word}|${retVal}`;
-  return getCachedRegex(key, () => new RegExp(retVal, 'i'));
+  const pattern =
+    word.length > 0
+      ? `\\b${tableVarConst}\\b[^=]*=\\s*(?:.*\\s*\\bby\\b\\s*${getWordDefinition(
+          word
+        )})`
+      : `\\b${tableVarConst}\\b[^=]*=\\s*.+\\s*\\bby\\b\\s*(?:${constVarList})`;
+  return buildRe('tableAxisRe', word, pattern);
 }
