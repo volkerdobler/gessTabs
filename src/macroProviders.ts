@@ -6,7 +6,7 @@
 // split as extension.ts's own providers.
 
 import * as vscode from 'vscode';
-import { buildWorkspaceIndex } from './symbolIndex';
+import { buildWorkspaceIndex, WorkspaceIndex } from './symbolIndex';
 import {
   findMacroDefinitions,
   findMacroCalls,
@@ -34,6 +34,57 @@ function callAtPosition(lineText: string, character: number) {
   );
 }
 
+// A call resolved to no known macro is the confusing case in practice —
+// the macro name looks right, but it silently isn't in the resolved
+// index. Distinguish the two very different ways that happens: (a) the
+// definition's own file/branch never made it into the resolved workspace
+// order at all (an INCLUDE-graph/`#ifdef` reachability problem), vs (b)
+// the file IS present but the definition line itself wasn't recognized as
+// one — most likely an earlier, unclosed #MACRO/#IFDEF block in the same
+// file swallowing everything after it as "still inside" that block.
+function diagnoseMissingMacro(
+  document: vscode.TextDocument,
+  macroName: string,
+  index: WorkspaceIndex
+): string {
+  const known = Array.from(
+    new Set(
+      index.order
+        .map((rl) => rl.text.match(/#macro\s+#(\S+)/i)?.[1])
+        .filter((n): n is string => !!n)
+    )
+  ).join(', ');
+  const currentFile = normalizePath(document.uri.fsPath);
+  const linesFromCurrentFile = index.order.filter(
+    (rl) => rl.file === currentFile
+  ).length;
+  const defPattern = new RegExp(`#macro\\s+#${macroName}\\b`, 'i');
+  const rawTextHasDef = defPattern.test(document.getText());
+  const resolvedHasDef = index.order.some((rl) => defPattern.test(rl.text));
+
+  let diagnosis: string;
+  if (!rawTextHasDef) {
+    diagnosis =
+      '  -> The definition text itself was not found verbatim in this document — check for a typo, extra whitespace variant, or that it truly lives in this file.';
+  } else if (!resolvedHasDef) {
+    diagnosis =
+      '  -> The definition exists in the file but was filtered out while resolving INCLUDEs/#ifdef branches, or an earlier unclosed #MACRO/#IFDEF/#IFNDEF block in the same file is swallowing everything after it.';
+  } else {
+    diagnosis =
+      '  -> The line is present in the resolved index but findMacroDefinitions still did not parse it as a macro start — likely an earlier unclosed #MACRO block in the same file.';
+  }
+
+  return [
+    `gesstabs: no #MACRO named "${macroName}" is defined in the resolved workspace.`,
+    `  Root files: ${index.rootFiles.join(', ') || '(none)'}`,
+    `  Lines from this document present in the resolved index: ${linesFromCurrentFile} of ${document.lineCount} total.`,
+    `  Raw document text contains a "#macro #${macroName}(" line: ${rawTextHasDef}.`,
+    `  That line also appears in the *resolved* (INCLUDE/#ifdef-filtered) index: ${resolvedHasDef}.`,
+    diagnosis,
+    `  Other macros found: ${known || '(none)'}`,
+  ].join('\n');
+}
+
 // "Show expanded macro": hovering a #name(...) call site shows the
 // textually-substituted body, matching what the compiler's own
 // MACROPROTOCOL debug feature would dump.
@@ -53,15 +104,12 @@ export class GesstabsMacroHoverProvider implements vscode.HoverProvider {
         return null;
       }
 
-      const { macroIndex } = await buildMacroContext(document);
+      const { index, macroIndex } = await buildMacroContext(document);
       if (token && token.isCancellationRequested) return null;
 
       const target = macroIndex.get(call.name.toLowerCase());
       if (!target) {
-        const known = Array.from(macroIndex.keys()).join(', ') || '(none)';
-        printDebugMessage(
-          `gesstabs: hover - call to "#${call.name}" found, but no #MACRO named "${call.name}" is defined in the resolved workspace. Known macros: ${known}`
-        );
+        printDebugMessage(diagnoseMissingMacro(document, call.name, index));
         return null;
       }
 
@@ -100,15 +148,12 @@ export class GesstabsMacroSignatureHelpProvider
       const match = textBeforeCursor.match(/#([A-Za-z_]\w*)\s*\(([^)]*)$/);
       if (!match) return null;
 
-      const { macroIndex } = await buildMacroContext(document);
+      const { index, macroIndex } = await buildMacroContext(document);
       if (token && token.isCancellationRequested) return null;
 
       const target = macroIndex.get(match[1].toLowerCase());
       if (!target) {
-        const known = Array.from(macroIndex.keys()).join(', ') || '(none)';
-        printDebugMessage(
-          `gesstabs: signature help - "#${match[1]}" is not a known macro. Known macros: ${known}`
-        );
+        printDebugMessage(diagnoseMissingMacro(document, match[1], index));
         return null;
       }
 
