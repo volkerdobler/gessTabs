@@ -2,6 +2,22 @@
 
 All notable changes to the "GESStabs" extension will be documented in this file (last change first).
 
+## 0.99.0-beta
+
+Internal beta ahead of 1.0.0 — large feature update built on a new INCLUDE/#ifdef-graph model that resolves files in real compile order instead of scanning the workspace unordered.
+
+- Go to Definition, Find All References, and the new Rename Symbol (`F2`) now all respect INCLUDE order and gessTabs' no-forward-reference rule.
+- Macro tooling: hover shows a `#name(...)` call's expanded body (short or full, configurable), signature help while typing a call, and a usage-count CodeLens on each `#MACRO`.
+- Keyword hover and autocomplete: syntax + description for ~650-750 gessTabs keywords, mined from the German and English manuals (auto-picks the language from VS Code's display language, configurable, falls back to the other language if a keyword is only documented there).
+- New diagnostics for documented gessTabs pitfalls: empty-varlist trap on `RECODE`/`VARTITLE`/`VARTEXT`/`VALUELABELS` (with a quick fix), unmatched `#MACRO`/`#IFDEF` blocks, duplicate variable declarations, inverted `RECODE` bounds, `CARD`/`CARDS` ordering, `WEIGHTCELLS` percentages not summing to 100%, invalid `CELLSET` elements, `INVERTOUT`+`UPDATEINVERT` together, and `#define`/`#ifdef` case mismatches.
+- Effective `CELLELEMENTS`/`FRAMEELEMENTS` hover on `TABLE`/`OVERVIEW`/`XOVERVIEW` statements, showing which defaults are actually in effect at that point.
+- Code folding for `#MACRO`/`#ENDMACRO` and `#IFDEF`-family/`#END` blocks.
+- Semantic highlighting distinguishing variable/macro names from keywords.
+- A basic formatter (trailing whitespace, blank-line runs, directive-nesting indentation).
+- Snippet library expanded from 1 to 14 snippets (`recode`, `compute`, `weightcells`, `#macro`, `overview`, `#twobases`, and more).
+- Many new `gesstabs.*` settings to turn individual hovers/diagnostics/autocomplete on or off — see the README.
+- Internal: fixed the packaged extension accidentally including internal/dev-only files; resolved all `npm audit` findings; added the missing LICENSE file.
+
 ## 0.2.9
 
 Update language file: optimize number definition

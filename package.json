@@ -2,10 +2,10 @@
   "name": "gesstabs",
   "displayName": "GESStabs",
   "description": "GESStabs Support",
-  "version": "0.2.9",
+  "version": "0.99.0-beta",
   "publisher": "volkerdobler",
   "engines": {
-    "vscode": "^1.95.0"
+    "vscode": "^1.109.0"
   },
   "categories": [
     "Programming Languages",
@@ -81,7 +81,11 @@
         },
         "gesstabs.hover.language": {
           "type": "string",
-          "enum": ["auto", "de", "en"],
+          "enum": [
+            "auto",
+            "de",
+            "en"
+          ],
           "enumDescriptions": [
             "Use VS Code's own display language (German if it starts with \"de\", English otherwise).",
             "Always show German keyword descriptions.",
@@ -102,7 +106,10 @@
         },
         "gesstabs.hover.macroExpansionStyle": {
           "type": "string",
-          "enum": ["short", "normal"],
+          "enum": [
+            "short",
+            "normal"
+          ],
           "enumDescriptions": [
             "Hide blank lines and comment-only lines from the macro's original source when showing its expanded body.",
             "Show the expanded body exactly as the macro's source is written, including blank lines and comments."
@@ -136,9 +143,13 @@
     "eslint-config-prettier": "^8.10.2",
     "eslint-plugin-import": "^2.32.0",
     "eslint-plugin-prettier": "^4.2.5",
-    "mocha": "^10.8.2",
+    "mocha": "^11.8.0",
     "prettier": "^2.2.1",
     "ts-node": "^10.9.2",
     "typescript": "^5.9.3"
+  },
+  "overrides": {
+    "diff": "^9.0.0",
+    "serialize-javascript": "^7.1.0"
   }
 }
