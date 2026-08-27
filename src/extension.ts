@@ -8,7 +8,6 @@ import {
   constTokenVarName,
   constStringVarName,
   constVarName,
-  constVarList,
   singleVarDefRe,
   multiVarDefRe,
   multiVarRe,
@@ -57,6 +56,10 @@ import {
   GesstabsKeywordCompletionProvider,
 } from './keywordProviders';
 import { GesstabsSymbolCompletionProvider } from './completionProviders';
+import {
+  GesstabsDiagnosticsManager,
+  GesstabsEmptyVarlistCodeActionProvider,
+} from './diagnosticsProvider';
 
 // this method is called when your extension is activated
 // your extension is activated the very first time the command is executed
@@ -183,6 +186,54 @@ export function activate(context: vscode.ExtensionContext) {
     vscode.languages.registerCompletionItemProvider(
       { language: 'gesstabs', scheme: 'file' },
       new GesstabsSymbolCompletionProvider()
+    )
+  );
+
+  const diagnosticsManager = new GesstabsDiagnosticsManager();
+  context.subscriptions.push(diagnosticsManager);
+
+  const diagnosticsTimers = new Map<string, ReturnType<typeof setTimeout>>();
+  const scheduleDiagnostics = (document: vscode.TextDocument): void => {
+    const key = document.uri.toString();
+    const existing = diagnosticsTimers.get(key);
+    if (existing) clearTimeout(existing);
+    diagnosticsTimers.set(
+      key,
+      setTimeout(() => diagnosticsManager.refresh(document), 300)
+    );
+  };
+
+  context.subscriptions.push(
+    vscode.workspace.onDidOpenTextDocument(scheduleDiagnostics)
+  );
+  context.subscriptions.push(
+    vscode.workspace.onDidChangeTextDocument((e) =>
+      scheduleDiagnostics(e.document)
+    )
+  );
+  context.subscriptions.push(
+    vscode.workspace.onDidCloseTextDocument((document) =>
+      diagnosticsManager.clear(document)
+    )
+  );
+  context.subscriptions.push(
+    vscode.workspace.onDidChangeConfiguration((e) => {
+      if (!e.affectsConfiguration('gesstabs.diagnostics.enabled')) return;
+      vscode.workspace.textDocuments.forEach(scheduleDiagnostics);
+    })
+  );
+  vscode.workspace.textDocuments.forEach((document) =>
+    diagnosticsManager.refresh(document)
+  );
+
+  context.subscriptions.push(
+    vscode.languages.registerCodeActionsProvider(
+      { language: 'gesstabs', scheme: 'file' },
+      new GesstabsEmptyVarlistCodeActionProvider(),
+      {
+        providedCodeActionKinds:
+          GesstabsEmptyVarlistCodeActionProvider.providedCodeActionKinds,
+      }
     )
   );
 }
@@ -340,7 +391,7 @@ class GesstabsReferenceProvider implements vscode.ReferenceProvider {
   public async provideReferences(
     document: vscode.TextDocument,
     position: vscode.Position,
-    context: vscode.ReferenceContext,
+    _context: vscode.ReferenceContext,
     token: vscode.CancellationToken
   ): Promise<vscode.Location[] | null> {
     const wordAtPosition = getWordAtPosition(document, position);
@@ -435,9 +486,6 @@ class GesstabsDocumentSymbolProvider implements vscode.DocumentSymbolProvider {
         uri: vscode.Uri,
         range: vscode.Range
       ): void {
-        const varName = new RegExp(
-          `(${constTokenVarName})|(${constStringVarName})|(.+)`
-        );
         function lpush(input: string): void {
           if (input && input.length > 0) {
             symbols.push({

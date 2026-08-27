@@ -1,6 +1,6 @@
 # Change Log
 
-All notable changes to the "gesstabs" extension will be documented in this file (last change first).
+All notable changes to the "GESStabs" extension will be documented in this file (last change first).
 
 ## 0.2.9
 
@@ -54,7 +54,7 @@ Changed CHANGELOG.md to have last fix on top
 
 ## 0.1.0
 
-- Changed variable definition. Now, dots are part of a gesstabs variable name. Follows definition from manual,
+- Changed variable definition. Now, dots are part of a GESStabs variable name. Follows definition from manual,
   beside the fact, that variables names with quotes (and spaces) are not recognized.
 - updated to minor new version, as go to definition and find all references work more stable and is usable.
 

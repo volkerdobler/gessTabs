@@ -1,5 +1,5 @@
 import { expect } from 'chai';
-import { Scope, ScopeEnum } from '../src/scope';
+import { Scope } from '../src/scope';
 
 // Minimal runtime mocks for VS Code types used in Scope
 class Position {

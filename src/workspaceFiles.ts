@@ -68,7 +68,7 @@ export function makeWorkspaceReader(document: vscode.TextDocument): FileReader {
     }
     try {
       return fs.readFileSync(filePath, 'utf8').split(/\r\n|\r|\n/);
-    } catch (e) {
+    } catch (_e) {
       return undefined;
     }
   };

@@ -4,8 +4,8 @@
 // scan of every .tab/.inc file in a workspace.
 //
 // Deliberately out of scope here (left as plain content lines, unexpanded):
-// #MACRO/#DOMACRO expansion and #EXPAND substitution — see the F3 roadmap
-// item in TODO.md, which builds on this module rather than folding into it.
+// #MACRO/#DOMACRO expansion and #EXPAND substitution — see the F3 entry in
+// docs/HISTORY.md, which builds on this module rather than folding into it.
 // Also out of scope: evaluating #IFEMPTY/#IFNEMPTY (depends on #EXPAND
 // values) and #IFEXIST/#IFNEXIST (depends on variable-definition tracking,
 // itself a consumer of this module) — those branches are conservatively

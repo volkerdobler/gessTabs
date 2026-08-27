@@ -26,7 +26,7 @@ async function scanDirectory(
   let realDir: string;
   try {
     realDir = await fs.promises.realpath(dir);
-  } catch (e) {
+  } catch (_e) {
     return [];
   }
   if (visitedRealPaths.has(realDir)) return [];

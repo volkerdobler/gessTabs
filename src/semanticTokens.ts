@@ -6,7 +6,8 @@
 // definitions, and src/macroExpansion.ts for macro calls and the
 // bare-#name/reserved-keyword rules F3 already established.
 //
-// Known, deliberate scope limits (documented in TODO.md's F5 entry too):
+// Known, deliberate scope limits (documented in docs/HISTORY.md's F5 entry
+// and TODO.md's "possible future improvements" too):
 // - A multi-name list (`VARIABLES a b c = ...;`, a RECODE/VALUELABELS
 //   list, a TABLE head/axis with more than one variable) only gets its
 //   LAST name highlighted. The shared regex factories capture the whole
@@ -126,6 +127,29 @@ function pushHashToken(
   });
 }
 
+// The subset of "variable"-shaped statements that actually *declare* a
+// new name (VARIABLE-family/COMPUTE-family/VARIABLES), as opposed to
+// multiVarRe's family (VARTITLE/VARTEXT/VALUELABELS/...) which only
+// *annotates* an already-existing variable. Exported separately (rather
+// than folded silently into collectLineTokens below) because F2's
+// duplicate-declaration diagnostic needs exactly this narrower set —
+// reusing multiVarRe's matches there would misreport an ordinary
+// `VARTITLE x = "...";` re-mentioning an existing `x` as a duplicate
+// declaration, which it isn't.
+export function collectDeclarationTokens(
+  lineText: string,
+  lineIndex: number,
+  isNotInComment: IsNotInComment
+): SemanticToken[] {
+  if (lineText.length === 0) return [];
+  const tokens: SemanticToken[] = [];
+  [singleVarRegExp, computeRegExp, multiVarDefRegExp].forEach((re) => {
+    const match = lineText.match(re);
+    if (match) pushVariableToken(tokens, lineIndex, match, isNotInComment);
+  });
+  return tokens;
+}
+
 function collectLineTokens(
   lineText: string,
   lineIndex: number,
@@ -188,12 +212,12 @@ function collectLineTokens(
     m = hashNameGlobalRe.exec(lineText);
   }
 
-  [singleVarRegExp, computeRegExp, multiVarDefRegExp, multiVarRegExp].forEach(
-    (re) => {
-      const match = lineText.match(re);
-      if (match) pushVariableToken(tokens, lineIndex, match, isNotInComment);
-    }
-  );
+  tokens.push(...collectDeclarationTokens(lineText, lineIndex, isNotInComment));
+
+  const multiVarMatch = lineText.match(multiVarRegExp);
+  if (multiVarMatch) {
+    pushVariableToken(tokens, lineIndex, multiVarMatch, isNotInComment);
+  }
 
   const headMatch = lineText.match(tableHeadRegExp);
   if (headMatch) {

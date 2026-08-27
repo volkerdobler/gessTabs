@@ -18,6 +18,10 @@
   },
   "rules": {
     "no-unused-vars": "off",
+    "@typescript-eslint/no-unused-vars": [
+      "error",
+      { "argsIgnorePattern": "^_", "varsIgnorePattern": "^_", "caughtErrorsIgnorePattern": "^_" }
+    ],
     "prettier/prettier": [
       "error",
       {
@@ -29,7 +33,6 @@
       }
     ],
     "semi": [2, "always"],
-    "@typescript-eslint/no-unused-vars": 0,
     "@typescript-eslint/no-explicit-any": 0,
     "@typescript-eslint/explicit-module-boundary-types": 0,
     "@typescript-eslint/no-non-null-assertion": 0,
@@ -71,7 +74,7 @@
       }
     },
     {
-      "files": ["src/keywordProviders.ts"],
+      "files": ["src/keywordProviders.ts", "src/diagnosticsProvider.ts"],
       "rules": {
         "max-classes-per-file": ["error", 2],
         "class-methods-use-this": "off"

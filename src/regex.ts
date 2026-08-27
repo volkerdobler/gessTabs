@@ -100,7 +100,7 @@ export function macroOwnDefRe(word: string): RegExp {
 
   let regExpStr = '';
 
-  multiMacros.forEach((value, index) => {
+  multiMacros.forEach((value) => {
     regExpStr += `(?:#${value}\\s*\\(\\s*(${tempWord}))|`;
   });
 

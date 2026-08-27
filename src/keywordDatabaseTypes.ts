@@ -93,7 +93,7 @@ export interface KeywordOverride {
 // whose name doesn't match any existing entry adds a brand new one
 // (source is set to say so), covering a keyword the extraction missed
 // entirely (e.g. #MACRO, #EXPAND — real, important keywords that never
-// got a clean mechanically-extracted entry; see the F1 TODO.md notes).
+// got a clean mechanically-extracted entry; see the F1 docs/HISTORY.md notes).
 export function applyKeywordOverrides(
   base: KeywordEntry[],
   overrides: KeywordOverride[]

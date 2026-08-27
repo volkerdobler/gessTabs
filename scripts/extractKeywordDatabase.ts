@@ -1,11 +1,11 @@
 // Offline, run-once extraction script for the F1 keyword database (see
-// TODO.md's F1 section). NOT part of npm run compile/test/lint — it reads
-// dokumentation/*.md, which are the real GESStabs manuals and deliberately
-// git-ignored (.gitignore: "dokumentation/*.md"), so this script only
-// works with a local checkout that actually has them. Its OUTPUT,
-// src/keywordDatabase.<lang>.ts, is committed as ordinary source — see
-// the F1 TODO.md entry for why that's fine even though the raw manuals
-// aren't tracked.
+// docs/HISTORY.md's F1 section). NOT part of npm run compile/test/lint —
+// it reads dokumentation/*.md, which are the real GESStabs manuals and
+// deliberately git-ignored (.gitignore: "dokumentation/*.md"), so this
+// script only works with a local checkout that actually has them. Its
+// OUTPUT, src/keywordDatabase.<lang>.ts, is committed as ordinary source
+// — see the F1 docs/HISTORY.md entry for why that's fine even though the
+// raw manuals aren't tracked.
 //
 // Run with: npm run extract-keywords (regenerates every language below)
 //

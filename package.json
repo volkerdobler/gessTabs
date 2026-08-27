@@ -1,7 +1,7 @@
 {
   "name": "gesstabs",
-  "displayName": "gessTabs",
-  "description": "gess.Tabs Support",
+  "displayName": "GESStabs",
+  "description": "GESStabs Support",
   "version": "0.2.9",
   "publisher": "volkerdobler",
   "engines": {
@@ -23,8 +23,7 @@
       {
         "id": "gesstabs",
         "aliases": [
-          "gessTabs",
-          "gess.Tabs"
+          "GESStabs"
         ],
         "extensions": [
           ".tab",
@@ -48,8 +47,13 @@
     ],
     "configuration": {
       "type": "object",
-      "title": "gessTabs Configuration",
+      "title": "GESStabs Configuration",
       "properties": {
+        "gesstabs.diagnostics.enabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Flag documented GESStabs pitfalls (empty varlist, unmatched #MACRO/#IFDEF blocks, duplicate declarations, inverted RECODE bounds, CARD/CARDS ordering, WEIGHTCELLS percentages, CELLSET element allow-list, INVERTOUT+UPDATEINVERT, #define/#ifdef case mismatches)."
+        },
         "gesstabs.debugMode": {
           "type": "boolean",
           "default": false,
@@ -58,7 +62,7 @@
         "gesstabs.hover.enabled": {
           "type": "boolean",
           "default": true,
-          "description": "Master switch for all gessTabs hovers (macro-call expansion and #EXPAND value hovers). Disable to turn off hovers entirely regardless of the per-kind settings below."
+          "description": "Master switch for all GESStabs hovers (macro-call expansion and #EXPAND value hovers). Disable to turn off hovers entirely regardless of the per-kind settings below."
         },
         "gesstabs.hover.macros": {
           "type": "boolean",
@@ -73,7 +77,7 @@
         "gesstabs.hover.keywords": {
           "type": "boolean",
           "default": true,
-          "description": "Show syntax + description for the gessTabs keyword under the cursor. Has no effect if gesstabs.hover.enabled is false."
+          "description": "Show syntax + description for the GESStabs keyword under the cursor. Has no effect if gesstabs.hover.enabled is false."
         },
         "gesstabs.hover.language": {
           "type": "string",
@@ -84,12 +88,12 @@
             "Always show English keyword descriptions."
           ],
           "default": "auto",
-          "description": "Which manual's descriptions to show for gessTabs keyword hover/autocomplete. If a keyword is only documented in the other language, that one is shown instead of nothing."
+          "description": "Which manual's descriptions to show for GESStabs keyword hover/autocomplete. If a keyword is only documented in the other language, that one is shown instead of nothing."
         },
         "gesstabs.autocomplete.enabled": {
           "type": "boolean",
           "default": true,
-          "description": "Suggest gessTabs keywords, previously-defined variable/table names, and macro names while typing."
+          "description": "Suggest GESStabs keywords, previously-defined variable/table names, and macro names while typing."
         },
         "gesstabs.hover.effectiveElements": {
           "type": "boolean",
