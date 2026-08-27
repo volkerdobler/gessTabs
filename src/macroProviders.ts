@@ -6,14 +6,17 @@
 // split as extension.ts's own providers.
 
 import * as vscode from 'vscode';
+import { Scope } from './scope';
 import { buildWorkspaceIndex, WorkspaceIndex } from './symbolIndex';
 import {
   findMacroDefinitions,
   findMacroCalls,
   buildMacroIndex,
   expandMacro,
+  expandLines,
   findExpandDefinitions,
   findHashNameAt,
+  isReservedDirectiveKeyword,
   MacroDefinition,
 } from './macroExpansion';
 import {
@@ -22,17 +25,48 @@ import {
   normalizePath,
   printDebugMessage,
 } from './workspaceFiles';
+import { FileReader } from './includeGraph';
 
 async function buildMacroContext(document: vscode.TextDocument) {
   const fileNames = await findWorkspaceFiles(document);
-  const index = buildWorkspaceIndex(fileNames, makeWorkspaceReader(document));
+  const reader = makeWorkspaceReader(document);
+  const index = buildWorkspaceIndex(fileNames, reader);
   const defs = findMacroDefinitions(index.order);
   return {
     index,
     defs,
     macroIndex: buildMacroIndex(defs),
     expandDefs: findExpandDefinitions(index.order),
+    reader,
   };
+}
+
+// "short" (the default) shows the macro's already-filtered `body` — blank
+// lines and comment-only lines never made it in, because resolveIncludeGraph
+// dropped them while building the resolved workspace order that
+// findMacroDefinitions parsed. "normal" instead re-reads the macro's own
+// line range straight from its source file (its own live editor buffer if
+// it's the current document, last-saved disk content otherwise, exactly
+// like the rest of this module's file access), preserving blank lines and
+// comments as they actually appear in the source. A macro body containing
+// its own nested #ifdef/#end block is a known, accepted edge case here —
+// the raw slice can't distinguish an active branch from an inactive one
+// the way resolveIncludeGraph's filtered order does.
+function macroPreviewBody(
+  macro: MacroDefinition,
+  reader: FileReader
+): string[] {
+  const lines = reader(macro.file);
+  if (!lines) return macro.body;
+  return lines.slice(macro.defLine + 1, macro.endLine);
+}
+
+function macroExpansionStyleIsNormal(): boolean {
+  return (
+    vscode.workspace
+      .getConfiguration('gesstabs')
+      .get<string>('hover.macroExpansionStyle', 'short') === 'normal'
+  );
 }
 
 function callAtPosition(lineText: string, character: number) {
@@ -92,6 +126,14 @@ function diagnoseMissingMacro(
   ].join('\n');
 }
 
+// Master on/off switch plus independent per-kind toggles, mirroring how
+// printDebugMessage already reads gesstabs.debugMode.
+function hoverSettingEnabled(kind: 'macros' | 'expands'): boolean {
+  const config = vscode.workspace.getConfiguration('gesstabs');
+  if (config.get<boolean>('hover.enabled', true) === false) return false;
+  return config.get<boolean>(`hover.${kind}`, true) !== false;
+}
+
 // "Show expanded macro": hovering a #name(...) call site shows the
 // textually-substituted body, matching what the compiler's own
 // MACROPROTOCOL debug feature would dump.
@@ -102,15 +144,41 @@ export class GesstabsMacroHoverProvider implements vscode.HoverProvider {
     token: vscode.CancellationToken
   ): Promise<vscode.Hover | null> {
     try {
+      const config = vscode.workspace.getConfiguration('gesstabs');
+      if (config.get<boolean>('hover.enabled', true) === false) return null;
+
+      // Something that merely *looks* like a macro call or #expand
+      // reference inside a comment/string isn't one — check the scope at
+      // the cursor position itself before treating the text as real code.
+      const scope = new Scope(document);
+      if (!scope.isNotInComment(position.line, position.character)) {
+        printDebugMessage(
+          `gesstabs: hover - ${position.line}:${position.character} is inside a comment, skipping`
+        );
+        return null;
+      }
+
       const lineText = document.lineAt(position.line).text;
       const call = callAtPosition(lineText, position.character);
+
+      // A directive keyword (#DEFINE, #MACRO, #ENDMACRO, ...) syntactically
+      // looks exactly like a macro call or #EXPAND reference, but is
+      // neither — it's the preprocessor's own vocabulary.
+      if (call && isReservedDirectiveKeyword(call.name)) {
+        printDebugMessage(
+          `gesstabs: hover - "#${call.name}" is a gessTabs directive keyword, not a macro call, skipping`
+        );
+        return null;
+      }
 
       // Not a column-1 macro call — the cursor might still be on a bare
       // "#name" #EXPAND reference (gessTabs treats every "#name" that
       // isn't a column-1 macro call as an #EXPAND reference).
       if (!call) {
+        if (!hoverSettingEnabled('expands')) return null;
+
         const hashName = findHashNameAt(lineText, position.character);
-        if (!hashName) {
+        if (!hashName || isReservedDirectiveKeyword(hashName)) {
           printDebugMessage(
             `gesstabs: hover - no "#name(...)" call or "#name" reference found at ${position.line}:${position.character} on line "${lineText}"`
           );
@@ -136,7 +204,9 @@ export class GesstabsMacroHoverProvider implements vscode.HoverProvider {
         return new vscode.Hover(md);
       }
 
-      const { index, macroIndex } = await buildMacroContext(document);
+      if (!hoverSettingEnabled('macros')) return null;
+
+      const { index, macroIndex, reader } = await buildMacroContext(document);
       if (token && token.isCancellationRequested) return null;
 
       const target = macroIndex.get(call.name.toLowerCase());
@@ -145,7 +215,14 @@ export class GesstabsMacroHoverProvider implements vscode.HoverProvider {
         return null;
       }
 
-      const expanded = expandMacro(target, call.args, macroIndex);
+      const expanded = macroExpansionStyleIsNormal()
+        ? expandLines(
+            macroPreviewBody(target, reader),
+            target.params,
+            call.args,
+            macroIndex
+          )
+        : expandMacro(target, call.args, macroIndex);
       const range = new vscode.Range(
         new vscode.Position(position.line, call.index),
         new vscode.Position(position.line, call.index + call.raw.length)
@@ -177,6 +254,14 @@ export class GesstabsMacroSignatureHelpProvider
         .text.slice(0, position.character);
       const match = textBeforeCursor.match(/#([A-Za-z_]\w*)\s*\(([^)]*)$/);
       if (!match) return null;
+
+      const scope = new Scope(document);
+      if (!scope.isNotInComment(position.line, position.character)) {
+        printDebugMessage(
+          `gesstabs: signature help - ${position.line}:${position.character} is inside a comment, skipping`
+        );
+        return null;
+      }
 
       const { index, macroIndex } = await buildMacroContext(document);
       if (token && token.isCancellationRequested) return null;

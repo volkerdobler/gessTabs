@@ -239,33 +239,37 @@ function substituteParams(
   );
 }
 
-// Expands `macro` called with `args` into its substituted body lines,
-// recursively expanding any nested calls to other *known* macros within
-// that body (matching real compiler behavior — macros can call macros).
-export function expandMacro(
-  macro: MacroDefinition,
+// Same substitution + nested-call-expansion engine used by expandMacro
+// below, but operating on an arbitrary line array rather than a
+// MacroDefinition's own (already filtered) `body` — lets a caller feed in
+// e.g. the raw, unfiltered source lines for a macro's line range (blank
+// lines and comments included) for a "full" expansion preview, while still
+// sharing the exact same substitution/recursion logic as the normal
+// "compiled body" expansion.
+export function expandLines(
+  body: string[],
+  params: string[],
   args: string[],
   allMacros: Map<string, MacroDefinition>,
   maxDepth = 20
 ): string[] {
   // eslint-disable-next-line no-use-before-define -- mutual recursion with expandNestedCalls
-  return expandMacroAtDepth(macro, args, allMacros, 0, maxDepth);
+  return expandLinesAtDepth(body, params, args, allMacros, 0, maxDepth);
 }
 
-function expandMacroAtDepth(
-  macro: MacroDefinition,
+function expandLinesAtDepth(
+  body: string[],
+  params: string[],
   args: string[],
   allMacros: Map<string, MacroDefinition>,
   depth: number,
   maxDepth: number
 ): string[] {
-  const substituted = macro.body.map((line) =>
-    substituteParams(line, macro.params, args)
-  );
+  const substituted = body.map((line) => substituteParams(line, params, args));
   if (depth >= maxDepth) return substituted;
 
   return substituted.map((line) =>
-    // eslint-disable-next-line no-use-before-define -- mutual recursion with expandMacroAtDepth
+    // eslint-disable-next-line no-use-before-define -- mutual recursion with expandLinesAtDepth
     expandNestedCalls(line, allMacros, depth, maxDepth)
   );
 }
@@ -280,8 +284,9 @@ function expandNestedCalls(
   return calls.reduce((result, call) => {
     const target = allMacros.get(call.name.toLowerCase());
     if (!target) return result;
-    const expandedLines = expandMacroAtDepth(
-      target,
+    const expandedLines = expandLinesAtDepth(
+      target.body,
+      target.params,
       call.args,
       allMacros,
       depth + 1,
@@ -289,6 +294,18 @@ function expandNestedCalls(
     );
     return result.split(call.raw).join(expandedLines.join(' '));
   }, line);
+}
+
+// Expands `macro` called with `args` into its substituted body lines,
+// recursively expanding any nested calls to other *known* macros within
+// that body (matching real compiler behavior — macros can call macros).
+export function expandMacro(
+  macro: MacroDefinition,
+  args: string[],
+  allMacros: Map<string, MacroDefinition>,
+  maxDepth = 20
+): string[] {
+  return expandLines(macro.body, macro.params, args, allMacros, maxDepth);
 }
 
 // Resolves a "&paramname" reference at a given character offset back to
@@ -367,4 +384,42 @@ export function findHashNameAt(
     m = hashNameRe.exec(lineText);
   }
   return undefined;
+}
+
+// The preprocessor/macro-engine's own directive keywords — #DEFINE,
+// #MACRO, #IFDEF, #ENDMACRO, etc. — syntactically look exactly like a
+// macro call ("#name(") or a bare #EXPAND reference ("#name"), but are
+// neither: they're the engine's own vocabulary, not a user-defined name.
+// Confirmed directly by a gessTabs developer as the reserved set to treat
+// this way. Matched case-insensitively — this is about recognizing the
+// keyword itself, not a user-defined #define/#ifdef *name* (which the
+// compiler does document as case-sensitive; see the module doc comment).
+const reservedDirectiveKeywords = new Set([
+  'define',
+  'domacro',
+  'domacro2',
+  'domacro3',
+  'domacro4',
+  'else',
+  'end',
+  'endmacro',
+  'expand',
+  'expandinc',
+  'expandindomacro',
+  'expandintoken',
+  'ifdef',
+  'ifempty',
+  'ifexist',
+  'ifndef',
+  'ifnempty',
+  'ifnexist',
+  'ifnexists',
+  'ignorecase',
+  'macro',
+  'macroend',
+  'undefine',
+]);
+
+export function isReservedDirectiveKeyword(name: string): boolean {
+  return reservedDirectiveKeywords.has(name.toLowerCase());
 }

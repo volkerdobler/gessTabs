@@ -4,9 +4,11 @@ import {
   findMacroCalls,
   buildMacroIndex,
   expandMacro,
+  expandLines,
   findParamReferenceAt,
   findExpandDefinitions,
   findHashNameAt,
+  isReservedDirectiveKeyword,
   MacroSourceLine,
 } from '../src/macroExpansion';
 
@@ -246,6 +248,81 @@ describe('expandMacro', () => {
     );
     const index = buildMacroIndex(defs);
     expect(index.get('example')).to.exist;
+  });
+});
+
+describe('expandLines', () => {
+  it('preserves blank lines and comment-only lines verbatim, substituting params in both', () => {
+    const index = buildMacroIndex([]);
+    const rawBody = [
+      '',
+      '// uses &varname below',
+      'compute &varname = 1;',
+      '',
+    ];
+    const expanded = expandLines(rawBody, ['varname'], ['F1'], index);
+    expect(expanded).to.deep.equal([
+      '',
+      '// uses F1 below',
+      'compute F1 = 1;',
+      '',
+    ]);
+  });
+
+  it('is what expandMacro uses under the hood for a filtered body', () => {
+    const defs = findMacroDefinitions(
+      src('#macro #example( &parameter )\ncompute  &parameter = 1;\n#endmacro')
+    );
+    const index = buildMacroIndex(defs);
+    const viaExpandMacro = expandMacro(defs[0], ['frage1'], index);
+    const viaExpandLines = expandLines(
+      defs[0].body,
+      defs[0].params,
+      ['frage1'],
+      index
+    );
+    expect(viaExpandLines).to.deep.equal(viaExpandMacro);
+  });
+});
+
+describe('isReservedDirectiveKeyword', () => {
+  it('recognizes every documented preprocessor/macro-engine keyword', () => {
+    [
+      'define',
+      'domacro',
+      'domacro2',
+      'domacro3',
+      'domacro4',
+      'else',
+      'end',
+      'endmacro',
+      'expand',
+      'expandinc',
+      'expandindomacro',
+      'expandintoken',
+      'ifdef',
+      'ifempty',
+      'ifexist',
+      'ifndef',
+      'ifnempty',
+      'ifnexists',
+      'ignorecase',
+      'macro',
+      'macroend',
+      'undefine',
+    ].forEach((name) => {
+      expect(isReservedDirectiveKeyword(name), name).to.be.true;
+    });
+  });
+
+  it('is case-insensitive', () => {
+    expect(isReservedDirectiveKeyword('ENDMACRO')).to.be.true;
+    expect(isReservedDirectiveKeyword('EndMacro')).to.be.true;
+  });
+
+  it('does not flag an ordinary macro/expand name', () => {
+    expect(isReservedDirectiveKeyword('scorecard')).to.be.false;
+    expect(isReservedDirectiveKeyword('mitOC')).to.be.false;
   });
 });
 

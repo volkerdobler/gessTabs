@@ -50,7 +50,9 @@ testen/
 package-lock.json
 *.code-workspace
 
-# Compiled test output (source is .ts, these are build artifacts)
+# Compiled test/script output (source is .ts, these are build artifacts)
 test/*.js
 test/*.js.map
+scripts/*.js
+scripts/*.js.map
 dokumentation/*.md

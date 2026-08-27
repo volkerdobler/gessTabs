@@ -45,6 +45,18 @@ import {
   findParamReferenceAt,
   MacroSourceLine,
 } from './macroExpansion';
+import { GesstabsEffectiveElementsHoverProvider } from './tableElementsProvider';
+import { GesstabsFoldingRangeProvider } from './foldingProvider';
+import {
+  GesstabsSemanticTokensProvider,
+  gesstabsSemanticTokensLegend,
+} from './semanticTokensProvider';
+import { GesstabsFormattingProvider } from './formatterProvider';
+import {
+  GesstabsKeywordHoverProvider,
+  GesstabsKeywordCompletionProvider,
+} from './keywordProviders';
+import { GesstabsSymbolCompletionProvider } from './completionProviders';
 
 // this method is called when your extension is activated
 // your extension is activated the very first time the command is executed
@@ -121,6 +133,56 @@ export function activate(context: vscode.ExtensionContext) {
     vscode.languages.registerCodeLensProvider(
       { language: 'gesstabs', scheme: 'file' },
       new GesstabsMacroCodeLensProvider()
+    )
+  );
+
+  context.subscriptions.push(
+    vscode.languages.registerHoverProvider(
+      { language: 'gesstabs', scheme: 'file' },
+      new GesstabsEffectiveElementsHoverProvider()
+    )
+  );
+
+  context.subscriptions.push(
+    vscode.languages.registerFoldingRangeProvider(
+      { language: 'gesstabs', scheme: 'file' },
+      new GesstabsFoldingRangeProvider()
+    )
+  );
+
+  context.subscriptions.push(
+    vscode.languages.registerDocumentSemanticTokensProvider(
+      { language: 'gesstabs', scheme: 'file' },
+      new GesstabsSemanticTokensProvider(),
+      gesstabsSemanticTokensLegend
+    )
+  );
+
+  context.subscriptions.push(
+    vscode.languages.registerDocumentFormattingEditProvider(
+      { language: 'gesstabs', scheme: 'file' },
+      new GesstabsFormattingProvider()
+    )
+  );
+
+  context.subscriptions.push(
+    vscode.languages.registerHoverProvider(
+      { language: 'gesstabs', scheme: 'file' },
+      new GesstabsKeywordHoverProvider()
+    )
+  );
+
+  context.subscriptions.push(
+    vscode.languages.registerCompletionItemProvider(
+      { language: 'gesstabs', scheme: 'file' },
+      new GesstabsKeywordCompletionProvider()
+    )
+  );
+
+  context.subscriptions.push(
+    vscode.languages.registerCompletionItemProvider(
+      { language: 'gesstabs', scheme: 'file' },
+      new GesstabsSymbolCompletionProvider()
     )
   );
 }

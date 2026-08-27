@@ -54,6 +54,57 @@
           "type": "boolean",
           "default": false,
           "description": "Enable debug messages in the console."
+        },
+        "gesstabs.hover.enabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Master switch for all gessTabs hovers (macro-call expansion and #EXPAND value hovers). Disable to turn off hovers entirely regardless of the per-kind settings below."
+        },
+        "gesstabs.hover.macros": {
+          "type": "boolean",
+          "default": true,
+          "description": "Show the expanded macro body when hovering a #name(...) macro call. Has no effect if gesstabs.hover.enabled is false."
+        },
+        "gesstabs.hover.expands": {
+          "type": "boolean",
+          "default": true,
+          "description": "Show the defined value when hovering a bare #name that refers to a \"#EXPAND #name value\" definition. Has no effect if gesstabs.hover.enabled is false."
+        },
+        "gesstabs.hover.keywords": {
+          "type": "boolean",
+          "default": true,
+          "description": "Show syntax + description for the gessTabs keyword under the cursor. Has no effect if gesstabs.hover.enabled is false."
+        },
+        "gesstabs.hover.language": {
+          "type": "string",
+          "enum": ["auto", "de", "en"],
+          "enumDescriptions": [
+            "Use VS Code's own display language (German if it starts with \"de\", English otherwise).",
+            "Always show German keyword descriptions.",
+            "Always show English keyword descriptions."
+          ],
+          "default": "auto",
+          "description": "Which manual's descriptions to show for gessTabs keyword hover/autocomplete. If a keyword is only documented in the other language, that one is shown instead of nothing."
+        },
+        "gesstabs.autocomplete.enabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Suggest gessTabs keywords, previously-defined variable/table names, and macro names while typing."
+        },
+        "gesstabs.hover.effectiveElements": {
+          "type": "boolean",
+          "default": true,
+          "description": "Show the effective CELLELEMENTS/FRAMEELEMENTS defaults when hovering a TABLE/OVERVIEW/XOVERVIEW statement. Has no effect if gesstabs.hover.enabled is false."
+        },
+        "gesstabs.hover.macroExpansionStyle": {
+          "type": "string",
+          "enum": ["short", "normal"],
+          "enumDescriptions": [
+            "Hide blank lines and comment-only lines from the macro's original source when showing its expanded body.",
+            "Show the expanded body exactly as the macro's source is written, including blank lines and comments."
+          ],
+          "default": "short",
+          "description": "How much of the macro's original formatting to preserve in the \"Expanded #name(...)\" hover."
         }
       }
     }
@@ -64,7 +115,8 @@
     "lint": "eslint src --ext ts",
     "watch": "tsc -watch -p ./",
     "pretest": "tsc --noEmit -p .",
-    "test": "mocha -r ts-node/register test/**/*.spec.ts"
+    "test": "mocha -r ts-node/register test/**/*.spec.ts",
+    "extract-keywords": "ts-node scripts/extractKeywordDatabase.ts"
   },
   "devDependencies": {
     "@types/chai": "^4.3.20",

@@ -1,5 +1,6 @@
 {
   "root": true,
+  "ignorePatterns": ["src/keywordDatabase.*.ts"],
   "plugins": ["prettier", "@typescript-eslint"],
   "extends": [
     "eslint:recommended",
@@ -23,6 +24,7 @@
         "trailingComma": "es5",
         "singleQuote": true,
         "printWidth": 80,
+        "useTabs": false,
         "tabWidth": 2
       }
     ],
@@ -53,6 +55,25 @@
       "files": ["src/macroProviders.ts"],
       "rules": {
         "max-classes-per-file": ["error", 3],
+        "class-methods-use-this": "off"
+      }
+    },
+    {
+      "files": [
+        "src/tableElementsProvider.ts",
+        "src/foldingProvider.ts",
+        "src/semanticTokensProvider.ts",
+        "src/formatterProvider.ts",
+        "src/completionProviders.ts"
+      ],
+      "rules": {
+        "class-methods-use-this": "off"
+      }
+    },
+    {
+      "files": ["src/keywordProviders.ts"],
+      "rules": {
+        "max-classes-per-file": ["error", 2],
         "class-methods-use-this": "off"
       }
     },
