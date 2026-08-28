@@ -21,7 +21,16 @@ import { KeywordEntry } from './keywordDatabaseTypes';
 export const keywordData: KeywordEntry[] = [
   {
     name: '#DEFINE',
-    de: { description: '', syntax: '#DEFINE <string>' },
+    de: {
+      description:
+        'Mithilfe von Funktionen, die zur Gruppe der Defines gehören, können über Mechanismen des "Conditional Compiling" mehrere Varianten eines Tabellenprogramms in einer Quelle verwaltet und ausgeführt werden:\nMit #DEFINE können beliebige Namen vereinbart werden, die dann als Abkürzungen für den DEFINE-Inhalt geführt werden können.\n\n#DEFINEs kann man nicht nur in der Quelle definieren, sondern einen #DEFINE-String auch über die Kommandozeile mit der Option "-D" als Parameter übergeben.\n\nZum Beispiel: "GTC xyz.TAB -Dascii" übergibt den String »ascii« zur Definition.',
+      syntax: '#DEFINE <string>',
+    },
+    en: {
+      description:
+        'Using functions from the group of defines, several variants of a table program can be maintained and run from a single source through "conditional compiling" mechanisms:\nWith #DEFINE, arbitrary names can be declared that can then be used as abbreviations for the DEFINE content.\n\n#DEFINEs can be defined not only in the source but also passed as a #DEFINE string on the command line with the "-D" option as a parameter.\n\nFor example: "GTC xyz.TAB -Dascii" passes the string »ascii« as a definition.',
+      syntax: '#DEFINE <string>',
+    },
   },
   {
     name: '#DOMACRO',
@@ -31,8 +40,8 @@ export const keywordData: KeywordEntry[] = [
       syntax: '#DOMACRO( <Macroname> <Schleifenliste> )',
     },
     en: {
-      description:
-        'and so on is also possible. This is not restricted to numerical uses as list constructs can also be used. Example:',
+      description: 'Example: #tab( 1 ) #tab( 2 ) #tab( 3 ) can be written as',
+      syntax: '#DOMACRO( <macroname> <looplist> )',
     },
   },
   {
@@ -55,6 +64,11 @@ export const keywordData: KeywordEntry[] = [
         'Wie #DOMACRO und #DOMACRO2 dient das #DOMACRO3-Statement der wiederholten Abarbeitung von Macros. Die Macro-Parameter werden hierbei aus einer CSV-Datei entnommen, die am einfachsten mit einem Tabellenverarbeitungsprogramm erzeugt werden kann. Dadurch bietet es eine Schnittstelle zu MitarbeiterInnen, die nicht im Scripting versiert sind.…',
       syntax: '#DOMACRO3 ( <macroname> <filename> )',
     },
+    en: {
+      description:
+        'Like #DOMACRO and #DOMACRO2, the #DOMACRO3 statement serves the repeated processing of macros. The macro parameters are taken from a CSV file, which is most easily created with a spreadsheet program. This provides an interface for staff who are not experienced in scripting.…',
+      syntax: '#DOMACRO3 ( <macroname> <filename> )',
+    },
   },
   {
     name: '#DOMACRO4',
@@ -62,6 +76,11 @@ export const keywordData: KeywordEntry[] = [
     de: {
       description:
         'Einen ähnlichen Hintergrund hat auch das #DOMACRO4-Statement. Der Unterschied ist, dass der Name des Macros nicht im Script festgelegt wird, sondern als erstes Feld in der CSV-Datei benannt wird. Der Aufruf',
+      syntax: '#DOMACRO4 ( <filename> )',
+    },
+    en: {
+      description:
+        'The #DOMACRO4 statement has a similar background. The difference is that the name of the macro is not fixed in the script but is given as the first field in the CSV file. The call',
       syntax: '#DOMACRO4 ( <filename> )',
     },
   },
@@ -111,6 +130,11 @@ export const keywordData: KeywordEntry[] = [
       syntax:
         '#EXPANDINC #<Name des Expands> <Wert>\nIm Kern ist dies ein #EXPAND. Das Argument <value> muss aber eine ganze Zahl sein, aus',
     },
+    en: {
+      description: '',
+      syntax:
+        '#EXPANDINC #<name of the expand> <value>\nAt its core this is an #EXPAND. The argument <value> must, however, be a whole number, from',
+    },
   },
   {
     name: '#EXPANDINTOKEN',
@@ -119,12 +143,21 @@ export const keywordData: KeywordEntry[] = [
       syntax:
         '#EXPANDINTOKEN &<search>& <replace>\n<search> ::= zu ersetzender text\n<replace> ::= einzufügender text',
     },
+    en: {
+      description: '',
+      syntax:
+        '#EXPANDINTOKEN &<search>& <replace>\n<search> ::= text to be replaced\n<replace> ::= text to be inserted',
+    },
   },
   {
     name: '#IFDEF',
     de: {
       description: '',
       syntax: '#IFDEF <Define-Name>\n<Syntax-Statement 1>',
+    },
+    en: {
+      description: '',
+      syntax: '#IFDEF <define name>\n<syntax statement 1>',
     },
   },
   {
@@ -155,6 +188,7 @@ export const keywordData: KeywordEntry[] = [
   {
     name: '#IGNORECASE',
     de: { description: '', syntax: '#IGNORECASE = [ YES | NO ] ;' },
+    en: { description: '', syntax: '#IGNORECASE = [ YES | NO ] ;' },
   },
   {
     name: '#MACRO',
@@ -185,6 +219,11 @@ export const keywordData: KeywordEntry[] = [
       description:
         'GESSCHART INVERSE CELLELEMENT PHYSCOLDELTA CHARTTITLE "Effekte von Gewichtung auf Parteianteile"',
     },
+    en: {
+      description:
+        'GESSCHART INVERSE CELLELEMENT PHYSCOLDELTA CHARTTITLE "Effects of weighting on party shares"',
+      syntax: '',
+    },
   },
   {
     name: '#TEST',
@@ -201,6 +240,7 @@ export const keywordData: KeywordEntry[] = [
   {
     name: '#UNDEFINE',
     de: { description: '', syntax: '#UNDEFINE <string>' },
+    en: { description: '', syntax: '#UNDEFINE <string>' },
   },
   {
     name: '#WEIGHT',
@@ -250,6 +290,11 @@ export const keywordData: KeywordEntry[] = [
       description:
         'PHYSICALCOLUMN. Im Standardfall einer Tabelle mit absoluten Häufigkeiten ist von den sechs Rahmenelementen nur eines vorhanden: die Zeile mit den absoluten Häufigkeiten, ABSROW. In unserem Fall sollen in den Zellen Spaltenprozente abgebildet werden, das heißt als CELLELEMENTS wählen wir COLUMNPERCENT. Dazu passen eine Totalspalte und eine Absolutzeile.…',
     },
+    en: {
+      description:
+        'PHYSICALCOLUMN. In the default case of a table with absolute frequencies, only one of the six frame elements is present: the row with the absolute frequencies, ABSROW. In our case column percentages are to be shown in the cells, i.e. we choose COLUMNPERCENT as CELLELEMENTS. A total column and an absolute row fit with that.…',
+      syntax: '',
+    },
   },
   {
     name: 'ABSINLABEL',
@@ -280,10 +325,15 @@ export const keywordData: KeywordEntry[] = [
   {
     name: 'ABSOLUTE',
     de: { description: 'Zahl der Fälle (Summe der Gewichte)' },
+    en: { description: 'Number of cases (sum of weights)', syntax: '' },
   },
   {
     name: 'ABSROW',
     de: { description: 'Absolute Zahl der Nennungen/ Fälle in der Zeile' },
+    en: {
+      description: 'Absolute number of responses / cases in the row',
+      syntax: '',
+    },
   },
   {
     name: 'ABSROWINHG',
@@ -317,6 +367,11 @@ export const keywordData: KeywordEntry[] = [
       description:
         'Die atomaren Elemente von zusammengesetzten CELLELEMENTS werden in PS/PDF-Ausgabe nicht untereinander, sondern nebeneinander dargestellt.',
     },
+    en: {
+      description:
+        'The atomic elements of composite CELLELEMENTS are shown side by side in PS/PDF output rather than one below the other.',
+      syntax: '',
+    },
   },
   {
     name: 'ADD',
@@ -324,10 +379,16 @@ export const keywordData: KeywordEntry[] = [
       description:
         "Editierung bestehender Labellisten, siehe ADD 212 Wird ein LABEL/OVERCODE an eine Position eingefügt, die so nicht 'exsitiert' (z.B. an POSTIION 5 in einer liste mit nur drei VALUELABELS, wird dieses Label einfach ans Listenende angehängt - so, als ob keine POSITION angegeben wäre.",
     },
+    en: {
+      description:
+        "Editing of existing label lists, see ADD 212. If a LABEL/OVERCODE is inserted at a position that does not 'exist' this way (e.g. at POSITION 5 in a list with only three VALUELABELS), this label is simply appended to the end of the list — as if no POSITION had been given.",
+      syntax: '',
+    },
   },
   {
     name: 'ADDNAMETOVARTITLE',
     de: { description: '', syntax: 'ADDNAMETOVARTITLE = [ YES | NO ];' },
+    en: { description: '', syntax: 'ADDNAMETOVARTITLE = [ YES | NO ];' },
   },
   {
     name: 'ADDOVERCODE',
@@ -388,6 +449,8 @@ export const keywordData: KeywordEntry[] = [
     en: {
       description:
         '(PS): is ignored by line printers. The text in each box can be positioned vertically as well as horizontally. The following terms are required: TOP - VCENTER - BOTTOM and LEFT - HCENTER - RIGHT. Example: ALIGN LABELS X = HCENTER VCENTER; The terms LEFT and RIGHT can also contain a command for the distance to the edge of the box:…',
+      syntax:
+        'ALIGN <boxname> = { <hpos> | <vpos> }*n ;\n<hpos> = [ LEFT | RIGHT | HCENTER ] [ <number> ] [ TABULATOR <number> ]\n<vpos> = [ TOP | BOTTOM | VCENTER ] [ <number> ] [ TABULATOR <number> ]',
     },
   },
   {
@@ -420,6 +483,11 @@ export const keywordData: KeywordEntry[] = [
     de: {
       description:
         'asymmetrische Ausgabe der Skala bei RISING/FALLING Analog zum TABLEFORMAT kann man die einzelnen Optionen ein- und ausschalten. Der 534 Zustand von GESSCHARTFORMAT gilt für alle danach stehenden Charts, bis ein weiteres GESSCHARTFORMAT dieses wieder ändert. Mit GESSCHARTFORMAT kann man immer nur alle entsprechenden Elemente beeinflussen.…',
+    },
+    en: {
+      description:
+        'asymmetric output of the scale with RISING/FALLING. As with TABLEFORMAT, the individual options can be switched on and off. The 534 state of GESSCHARTFORMAT applies to all charts that follow, until another GESSCHARTFORMAT changes it again. With GESSCHARTFORMAT you can only ever affect all corresponding elements at once.…',
+      syntax: '',
     },
   },
   {
@@ -458,11 +526,16 @@ export const keywordData: KeywordEntry[] = [
     en: {
       description:
         '1 100 20 ; In this case the names of politicians are punched in the fields 1-20, 21-40, etc. which makes coding by hand superfluous. If using input from a COLBIN file then the key word ALPHA can obviously not be used. Generally the use of an asterisk instead of the initial column is processed the same as in a SINGLEQ. MULTIQs can also be defined as relocatable.…',
+      syntax: 'ALPHA <varlist> = YES;',
     },
   },
   {
     name: 'ALPHACASESENSITIVE',
     de: {
+      description: '',
+      syntax: 'ALPHACASESENSITIVE = [ YES | NO | LOWERCASE | UPPERCASE ];',
+    },
+    en: {
       description: '',
       syntax: 'ALPHACASESENSITIVE = [ YES | NO | LOWERCASE | UPPERCASE ];',
     },
@@ -472,6 +545,10 @@ export const keywordData: KeywordEntry[] = [
     de: {
       description: '',
       syntax: 'ALPHAFAMILY <neueAlphaFamily> = { <alphavar> }*n ;',
+    },
+    en: {
+      description: '',
+      syntax: 'ALPHAFAMILY <newAlphaFamily> = { <alphavar> }*n ;',
     },
   },
   {
@@ -587,6 +664,7 @@ export const keywordData: KeywordEntry[] = [
   {
     name: 'ASCIIOUTDECIMALCHAR',
     de: { description: '', syntax: 'ASCIIOUTDECIMALCHAR = [ . | , ];' },
+    en: { description: '', syntax: 'ASCIIOUTDECIMALCHAR = [ . | , ];' },
   },
   {
     name: 'ASCIIOUTFILE',
@@ -617,6 +695,7 @@ export const keywordData: KeywordEntry[] = [
   {
     name: 'ASSERTFILTERINASCII',
     de: { description: '', syntax: 'ASSERTFILTERINASCII = [ YES | NO ];' },
+    en: { description: '', syntax: 'ASSERTFILTERINASCII = [ YES | NO ];' },
   },
   {
     name: 'ASSERTFILTERVARS',
@@ -647,6 +726,11 @@ export const keywordData: KeywordEntry[] = [
       syntax:
         'ASSOCTOINVERT = [ CSV | SPSS | DBASE | ASCIIN }*n = [ YES | NO ];\nVoreinstellung: ASSOCTOINVERT = CSV SPSS DBASE ASCIIN;',
     },
+    en: {
+      description: '',
+      syntax:
+        'ASSOCTOINVERT = [ CSV | SPSS | DBASE | ASCIIN }*n = [ YES | NO ];\nDefault: ASSOCTOINVERT = CSV SPSS DBASE ASCIIN;',
+    },
   },
   {
     name: 'ASSOCVAR',
@@ -664,6 +748,7 @@ export const keywordData: KeywordEntry[] = [
   {
     name: 'AUTO',
     de: { description: '', syntax: 'AUTO : [YES | NO]' },
+    en: { description: '', syntax: 'AUTO : [YES | NO]' },
   },
   {
     name: 'AUTOALIGN',
@@ -731,6 +816,7 @@ export const keywordData: KeywordEntry[] = [
   {
     name: 'AUTOREPLACEOPEN',
     de: { description: '', syntax: 'AUTOREPLACEOPEN = [ YES | NO ];' },
+    en: { description: '', syntax: 'AUTOREPLACEOPEN = [ YES | NO ];' },
   },
   {
     name: 'AUTOSIGNCHAR',
@@ -761,7 +847,11 @@ export const keywordData: KeywordEntry[] = [
         '5.Protokollierung der Signifikanzberechnung 460: STATTESTDUMP Gegenstand des Signifikanztests TestColumns Gibt man keine TESTCOLUMNS an, werden je Variable alle Spalten gegeneinander getestet.',
       syntax: 'AUTOSIGNFORMAT = "<formatstring>";',
     },
-    en: { description: '', syntax: 'AUTOSIGNFORMAT = "<formatstring>";' },
+    en: {
+      description:
+        '5. Logging of the significance calculation 460: STATTESTDUMP. Subject of the significance test: TestColumns. If you do not specify any TESTCOLUMNS, all columns are tested against each other per variable.',
+      syntax: 'AUTOSIGNFORMAT = "<formatstring>";',
+    },
   },
   {
     name: 'AUTOSIGNIFTEXT',
@@ -787,7 +877,8 @@ export const keywordData: KeywordEntry[] = [
       syntax: 'BACKGROUND <boxtype> : <color>\nFOREGROUND <boxtype> : <color>',
     },
     en: {
-      description: '',
+      description:
+        'FORMAT "#,#" = <1 4> / <1 1> ; The result value 2 could not be assigned unambiguously without the rule above. Thus the cell is coloured with $d0d0ff and not with $e0e0ff. The last line could also be described in two separate BACKGROUND rules; equivalent would be: BACKGROUND ( ge 2 le 3 : $e0e0ff ) BACKGROUND ( ge 0 le 2 :…',
       syntax: 'BACKGROUND <boxname> = <hue> <saturation> <brightness>;',
     },
   },
@@ -893,6 +984,7 @@ export const keywordData: KeywordEntry[] = [
   {
     name: 'BINOMIALPERCENTRANGE',
     de: { description: '', syntax: 'BINOMIALPERCENTRANGE = [ YES | NO ];' },
+    en: { description: '', syntax: 'BINOMIALPERCENTRANGE = [ YES | NO ];' },
   },
   {
     name: 'BIPOL',
@@ -932,6 +1024,7 @@ export const keywordData: KeywordEntry[] = [
     en: {
       description:
         'Normally an input field which only contains blanks is internally set to zero. If these values are however required then the BLANKVALUE command can define a value. Example: BLANKVALUE = -1; Preset: BLANKVALUE = 0.0;',
+      syntax: 'BLANKVALUE = <number>;\nExample: BLANKVALUE = -1;',
     },
   },
   {
@@ -955,6 +1048,11 @@ export const keywordData: KeywordEntry[] = [
       description:
         'Label wird innerhalb einer Sortierklasse immer ans Ende sortiert, siehe',
     },
+    en: {
+      description:
+        'The label is always sorted to the end within a sort class, see',
+      syntax: '',
+    },
   },
   {
     name: 'BOTTOMCUT',
@@ -970,11 +1068,17 @@ export const keywordData: KeywordEntry[] = [
     en: {
       description:
         'This is an alternative method for defining text at the end of a table. BOTTOMTEXT has in contrast to the CITEVARTEXT command which refers to variables, the text to be printed as its argument. If a BOTTOMTEXT is defined any additional CITEVARTEXT or CITEALLVARS commands for the BOTTOMTEXT are ignored. Maximum text length: 1500 characters.',
+      syntax: 'BOTTOMTEXT = "<text>";',
     },
   },
   {
     name: 'BOXFONT',
     de: {
+      description: '',
+      syntax:
+        'BOXFONT <boxtype> : <fontname> SIZE <number>\n[OPTION [BOLD|ITALIC|UNDERLINE]]',
+    },
+    en: {
       description: '',
       syntax:
         'BOXFONT <boxtype> : <fontname> SIZE <number>\n[OPTION [BOLD|ITALIC|UNDERLINE]]',
@@ -1021,11 +1125,15 @@ export const keywordData: KeywordEntry[] = [
       description: 'Trennt den Kopf von der Achse',
       syntax: '<kop> BY <achse>{*n}',
     },
-    en: { description: '', syntax: '' },
+    en: {
+      description: 'Separates the header from the axis',
+      syntax: '<header> BY <axis>{*n}',
+    },
   },
   {
     name: 'CALCCOLLOWACCURACY',
     de: { description: '', syntax: 'CALCCOLLOWACCURACY = [ YES | NO ] ;' },
+    en: { description: '', syntax: 'CALCCOLLOWACCURACY = [ YES | NO ] ;' },
   },
   {
     name: 'CALCULATECOLUMN',
@@ -1100,6 +1208,8 @@ export const keywordData: KeywordEntry[] = [
     en: {
       description:
         'Defines the text which refers to the percentaging for multi-responses CODEBOOK tables. Preset: CASEBASESTRING = "Prozentuiert auf die Zahl der Fälle"; This is valid for all tables until changed.',
+      syntax:
+        'CASEBASESTRING = "<text>";\nDefault text: \'Percentaged on the number of cases\';',
     },
   },
   {
@@ -1133,6 +1243,11 @@ export const keywordData: KeywordEntry[] = [
         'Bezeichnung der CASES-Spalte/-zeile (wenn TABLEBASE = CASES; 388 gesetzt)',
       syntax: 'CASETITLE [ X | Y ] = "<text>";',
     },
+    en: {
+      description:
+        'Label of the CASES column/row (when TABLEBASE = CASES; 388 is set)',
+      syntax: 'CASETITLE [ X | Y ] = "<text>";',
+    },
   },
   {
     name: 'CATI',
@@ -1147,6 +1262,7 @@ export const keywordData: KeywordEntry[] = [
   {
     name: 'CBEXCLUDEMISSING',
     de: { description: '', syntax: 'CBEXCLUDEMISSING = [ YES | NO ];' },
+    en: { description: '', syntax: 'CBEXCLUDEMISSING = [ YES | NO ];' },
   },
   {
     name: 'CBPERCENTINTOTAL',
@@ -1154,11 +1270,21 @@ export const keywordData: KeywordEntry[] = [
       description:
         'In der Totalzeile von CODEBOOK 346 werden jeweils die Zahl der Fälle oder die Zahl der Nennungen ausgewiesen. Wird das TABLEFORMAT CBPERCENTINTOTAL gesetzt, werden in den Totalspalte stattdessen Prozentwerte ausgegeben.',
     },
+    en: {
+      description:
+        'In the total row of CODEBOOK 346, either the number of cases or the number of responses is shown. If the TABLEFORMAT CBPERCENTINTOTAL is set, percentage values are output in the total column instead.',
+      syntax: '',
+    },
   },
   {
     name: 'CELLELEMENT',
     de: {
       description: '[ MINIMUM <number> ] minimale im PIE abzubildende %-Zahl',
+    },
+    en: {
+      description:
+        '[ MINIMUM <number> ] minimum percentage value to be shown in the PIE',
+      syntax: '',
     },
   },
   {
@@ -1186,6 +1312,7 @@ export const keywordData: KeywordEntry[] = [
     en: {
       description:
         'The option CELLMINIMUM states as of which minimum value a table cell counts as valid and should be included. Example: CELLMINIMUM = 10; In all cells where the minimum value has not been reached there will be "-". Preset at 0.0001; CELLMINIMUM as ROWMINIMUM and COLMINIMUM are TABLE options. Options always refer to the last table requested. They are therefore always written after the TABLE command.…',
+      syntax: 'CELLMINIMUM = <value>;',
     },
   },
   {
@@ -1198,6 +1325,8 @@ export const keywordData: KeywordEntry[] = [
     en: {
       description:
         'If several CELLELEMENTS are required for a table the cell contents are printed underneath each other in a standard order. This standard order can be altered using the CELLSEQUENCE statement. CELLSEQUENCE defines a new order. All CELLELEMENTS which do not appear in CELLSEQUENCE are not printed.',
+      syntax:
+        'CELLSEQUENCE = <cellelements>;\nCLASSICCELLSEQUENCE = <cellelements>;',
     },
   },
   {
@@ -1224,16 +1353,26 @@ export const keywordData: KeywordEntry[] = [
       description: '',
       syntax: 'CHANGESPSSVARNAMES = [ UPPERCASE | LOWERCASE | NO ];',
     },
+    en: {
+      description: '',
+      syntax: 'CHANGESPSSVARNAMES = [ UPPERCASE | LOWERCASE | NO ];',
+    },
   },
   {
     name: 'CHAPTER',
     de: { description: '', syntax: 'CHAPTER <varlist> = [ {<string>}*n ];' },
+    en: { description: '', syntax: 'CHAPTER <varlist> = [ {<string>}*n ];' },
   },
   {
     name: 'CHAPTERPAGE',
     de: {
       description:
         'Gesellschaft für Software in der Sozialforschung mbH Waterloohain 6 - 8',
+    },
+    en: {
+      description:
+        'Gesellschaft für Software in der Sozialforschung mbH Waterloohain 6 - 8',
+      syntax: '',
     },
   },
   {
@@ -1259,6 +1398,11 @@ export const keywordData: KeywordEntry[] = [
   {
     name: 'CHARTHEADER',
     de: {
+      description: '',
+      syntax:
+        'CHARTHEADER = <string> [ TOP | BOTTOM | VCENTER |LEFT\n| RIGHT | HCENTER ] ;\nCHARTFOOTER = <string> [ TOP | BOTTOM | VCENTER |LEFT\n| RIGHT | HCENTER ] ;',
+    },
+    en: {
       description: '',
       syntax:
         'CHARTHEADER = <string> [ TOP | BOTTOM | VCENTER |LEFT\n| RIGHT | HCENTER ] ;\nCHARTFOOTER = <string> [ TOP | BOTTOM | VCENTER |LEFT\n| RIGHT | HCENTER ] ;',
@@ -1296,6 +1440,11 @@ export const keywordData: KeywordEntry[] = [
         '"Top-2-Box horizontal nach Modellen: Bullet mit Zahlenangabe (weiß)" CHARTAREA 105 15 87 180 SAMEPAGE HORIZONTAL INVERSE = | FORM CIRCLE ROWS 1:22 COLUMNS 65002 SYMBOLSIZE 10 ; GESSCHARTFONT CHARTNUMBERS = "HELVETICA" SIZE 8; GESSCHARTFORMAT = NUMEXGRAPH NOFRAME NOSCALE; GESSCHARTCOLORS = $EE6699;',
       syntax: 'CHARTTITLE : <title>',
     },
+    en: {
+      description:
+        '"Top-2 box horizontal by models: bullet with figure (white)" CHARTAREA 105 15 87 180 SAMEPAGE HORIZONTAL INVERSE = | FORM CIRCLE ROWS 1:22 COLUMNS 65002 SYMBOLSIZE 10 ; GESSCHARTFONT CHARTNUMBERS = "HELVETICA" SIZE 8; GESSCHARTFORMAT = NUMEXGRAPH NOFRAME NOSCALE; GESSCHARTCOLORS = $EE6699;',
+      syntax: 'CHARTTITLE : <title>',
+    },
   },
   {
     name: 'CHARTWIDTH',
@@ -1315,10 +1464,12 @@ export const keywordData: KeywordEntry[] = [
   {
     name: 'CHECKMISSINGINMULTI',
     de: { description: '', syntax: 'CHECKMISSINGINMULTI = [ YES | NO ];' },
+    en: { description: '', syntax: 'CHECKMISSINGINMULTI = [ YES | NO ];' },
   },
   {
     name: 'CHECKRECODES',
     de: { description: '', syntax: 'CHECKRECODES = [ YES | NO };' },
+    en: { description: '', syntax: 'CHECKRECODES = [ YES | NO };' },
   },
   {
     name: 'CHIQOCOLMINIMUM',
@@ -1330,6 +1481,11 @@ export const keywordData: KeywordEntry[] = [
     de: {
       description:
         'Ausgabe des Chi-Quadrats zellenweise. Das Chi-Quadrat bewertet die Abweichung der empirischen Verteilung in jeder Zelle vom anhand der Randverteilungen ermittelten Erwartungswert.',
+    },
+    en: {
+      description:
+        'Output of the chi-square per cell. The chi-square evaluates the deviation of the empirical distribution in each cell from the expected value derived from the marginal distributions.',
+      syntax: '',
     },
   },
   {
@@ -1350,12 +1506,18 @@ export const keywordData: KeywordEntry[] = [
   {
     name: 'CIRCLE',
     de: { description: 'Skalenwert mit einem Kreis markieren' },
+    en: { description: 'Mark the scale value with a circle', syntax: '' },
   },
   {
     name: 'CIRCLEO',
     de: {
       description:
         'LineDash LINEDASH ist ein ganzzahliger Wert zwischen 1 und 10. In GESStabs sind zehn Formen gestrichelter Linien vordefiniert, die man zur Gestaltung von LINE oder RECTLINE abrufen kann. Voreinstellung: 0, das entspricht einer durchgezogenen Linie. LineWidth Die Dicke von LINE bzw. RECTLINE. Explode Ist bei anderen Formen als PIE oder PIE100 wirkungslos.…',
+    },
+    en: {
+      description:
+        'LineDash: LINEDASH is an integer value between 1 and 10. GESStabs predefines ten shapes of dashed lines that can be used for designing LINE or RECTLINE. Default: 0, which corresponds to a solid line. LineWidth: the thickness of LINE or RECTLINE. Explode: has no effect on shapes other than PIE or PIE100.…',
+      syntax: '',
     },
   },
   {
@@ -1377,6 +1539,11 @@ export const keywordData: KeywordEntry[] = [
       description: '',
       syntax:
         'CITEFIRSTVAR = [ TOPTEXT | BOTTOMTEXT | NO ] { XVALID | YVALID };\nParallel zu CITEALLVARS gibt es auch ein CITEFIRSTVAR; dann wird nur der Text der die',
+    },
+    en: {
+      description: '',
+      syntax:
+        'CITEFIRSTVAR = [ TOPTEXT | BOTTOMTEXT | NO ] { XVALID | YVALID };\nIn parallel with CITEALLVARS there is also a CITEFIRSTVAR; then only the text of the',
     },
   },
   {
@@ -1417,6 +1584,11 @@ export const keywordData: KeywordEntry[] = [
       syntax:
         'CLONEVAR <destinationvar> = <sourcevar>\n[ DELETELABELS [ MISSING | AUTONOANSWER | OVERCODE | {<number>}*n ] ];',
     },
+    en: {
+      description: '',
+      syntax:
+        'CLONEVAR <destinationvar> = <sourcevar>\n[ DELETELABELS [ MISSING | AUTONOANSWER | OVERCODE | {<number>}*n ] ];',
+    },
   },
   {
     name: 'CLOSED',
@@ -1450,10 +1622,16 @@ export const keywordData: KeywordEntry[] = [
       syntax:
         'CODEBOOKHEADER =\n| CODE "Text"\n| ABSOLUTE "Text"\n| COLUMNPERCENT "Text"\n| NOMPERCENT "Text"\n| CUMPERCENT "Text"',
     },
+    en: {
+      description: '',
+      syntax:
+        'CODEBOOKHEADER =\n| CODE "Text"\n| ABSOLUTE "Text"\n| COLUMNPERCENT "Text"\n| NOMPERCENT "Text"\n| CUMPERCENT "Text"',
+    },
   },
   {
     name: 'CODEBOOKTOTAL',
     de: { description: '', syntax: 'CODEBOOKTOTAL = "text";' },
+    en: { description: '', syntax: 'CODEBOOKTOTAL = "text";' },
   },
   {
     name: 'CODEBOOKVALUES',
@@ -1472,10 +1650,16 @@ export const keywordData: KeywordEntry[] = [
       description:
         'Bewirkt die Ausgabe gelabelter Codes in CODEBOOK 346s, auch wenn die Häufigkeit null ist.',
     },
+    en: {
+      description:
+        'Causes labelled codes to be output in CODEBOOK 346 even when the frequency is zero.',
+      syntax: '',
+    },
   },
   {
     name: 'CODEINLABELS',
     de: { description: '', syntax: 'CODEINLABELS = [ YES | NO ];' },
+    en: { description: '', syntax: 'CODEINLABELS = [ YES | NO ];' },
   },
   {
     name: 'CODISISDN',
@@ -1490,6 +1674,7 @@ export const keywordData: KeywordEntry[] = [
   {
     name: 'COLBINFORMAT',
     de: { description: '', syntax: 'COLBINFORMAT = <Colbinformatname>;' },
+    en: { description: '', syntax: 'COLBINFORMAT = <colbinformatname>;' },
   },
   {
     name: 'COLBINFORNAT',
@@ -1589,6 +1774,11 @@ export const keywordData: KeywordEntry[] = [
       description:
         'Spaltenweise 4-Felder Chi²-Test auf Prozentwertunterschied. Um die Chi²-Prüfgröße und den dazu passenden Signifikanzwert zu ermitteln, wird intern eine 4-Felder-Matrix bei jedem Paarvergleich generiert, bei der in der ersten Zeile die beobachteten, absoluten Fälle des gefragten Zellenpaars stehen und in der zweiten Zeile jeweils die Differenz dieser Werte zu den Totalwerten aus der Totalzeile der…',
     },
+    en: {
+      description:
+        'Column-wise 4-field chi-square test on percentage differences. To determine the chi-square statistic and the corresponding significance value, an internal 4-field matrix is generated for each pairwise comparison, with the observed absolute cases of the cell pair in question in the first row and, in the second row, the difference between these values and the total values from the total row of the…',
+      syntax: '',
+    },
   },
   {
     name: 'COLCOUNTLINES',
@@ -1601,6 +1791,7 @@ export const keywordData: KeywordEntry[] = [
     name: 'COLDEPTTEST',
     argsHint: '(Var)',
     de: { description: 'Abhängiger t-Test auf Mittelwertsunterschiede' },
+    en: { description: 'Dependent t-test on mean differences', syntax: '' },
   },
   {
     name: 'COLLECT',
@@ -1614,6 +1805,11 @@ export const keywordData: KeywordEntry[] = [
       description:
         'Für die Rangplatzberechnungen werden alle Zellen in einer Tabellenspalte miteinander verglichen und es wird ein Rangplatz berechnet, in diesem Fall für den MEAN. Identische MEANs bekommen identische Ränge. Zwei MEAN gelten als identsich, wenn sie dieselbe Druckausgabe ergeben, d.h. es kommt auch auf die verwendeten Formate an.…',
     },
+    en: {
+      description:
+        'For the rank calculations, all cells in a table column are compared with each other and a rank is computed, in this case for the MEAN. Identical MEANs get identical ranks. Two MEANs are considered identical if they produce the same printed output, i.e. the formats used also matter.…',
+      syntax: '',
+    },
   },
   {
     name: 'COLMEANRANK',
@@ -1621,6 +1817,10 @@ export const keywordData: KeywordEntry[] = [
     de: {
       description:
         'siehe COLMEANINVRANK, aber: der niedrigste Mittelwert bekommt hier den Rang 1',
+    },
+    en: {
+      description: 'see COLMEANINVRANK, but here the lowest mean gets rank 1',
+      syntax: '',
     },
   },
   {
@@ -1639,7 +1839,8 @@ export const keywordData: KeywordEntry[] = [
         'COLOR [ FOREGROUND | BACKGROUND ] =\n{ |\n[ DATABOX <number> <number> CODE [ X | Y ] <number > ]\n<cellelement> RANGE <low> <high> = <number> <number> number> }*n\n;',
     },
     en: {
-      description: '',
+      description:
+        'Brightness) or the RGB model (Red-Green-Blue) is used for selection. Symbol number 1 . . . 6',
       syntax:
         'COLOR [ FOREGROUND | BACKGROUND ] =\n{ |\n[ DATABOX <number> <number> CODE [ X | Y ] <number > ]\n<cellelement> RANGE <low> <high> = <number> <number> number> }*n\n;',
     },
@@ -1651,12 +1852,22 @@ export const keywordData: KeywordEntry[] = [
       syntax:
         'COLORIFBASELESS <place> <test> <number> [ <cellelement> ] = <color>;\n<place> ::= [ FRAMECELL X | FRAMECELL X | DATACELL ]\n<test> ::= [ ABSOLUTE PHYSICALRECORDS VALIDN VALIDPHYS ]\n<number> ::= Schwellenwert, bei dessen Unterschreitung die Farbe geändert werden soll\n<cellelement> ::= Das betroffene CELLELEMENT: wird diese Angabe weggelassen,',
     },
+    en: {
+      description: '',
+      syntax:
+        'COLORIFBASELESS <place> <test> <number> [ <cellelement> ] = <color>;\n<place> ::= [ FRAMECELL X | FRAMECELL X | DATACELL ]\n<test> ::= [ ABSOLUTE PHYSICALRECORDS VALIDN VALIDPHYS ]\n<number> ::= threshold below which the colour should be changed\n<cellelement> ::= the CELLELEMENT concerned: if this is omitted,',
+    },
   },
   {
     name: 'COLPCTBENCHMARK',
     de: {
       description:
         'Zum Vergleich von Spaltenprozenten mit extern festgelegten Benchmarkwerten (siehe BENCHMARKVALUES 443)',
+    },
+    en: {
+      description:
+        'For comparing column percentages with externally defined benchmark values (see BENCHMARKVALUES 443)',
+      syntax: '',
     },
   },
   {
@@ -1685,12 +1896,22 @@ export const keywordData: KeywordEntry[] = [
     de: {
       description: 'Deltawerte (in Prozentpunkten) zum Wert in der Totalspalte',
     },
+    en: {
+      description:
+        'Delta values (in percentage points) relative to the value in the total column',
+      syntax: '',
+    },
   },
   {
     name: 'COLPERCENTINDEX',
     de: {
       description:
         'Indexwerte zu den Spaltenprozenten (100 entspricht dem Wert in der Totalspalte)',
+    },
+    en: {
+      description:
+        'Index values for the column percentages (100 corresponds to the value in the total column)',
+      syntax: '',
     },
   },
   {
@@ -1699,12 +1920,22 @@ export const keywordData: KeywordEntry[] = [
       description:
         'Die Rangbildung basiert auf COLPERCENT, Die Regeln zur Identität gelten entsprechend. Der höchste Wert bekommt dem niedrigsten Rang.',
     },
+    en: {
+      description:
+        'The ranking is based on COLPERCENT. The identity rules apply accordingly. The highest value gets the lowest rank.',
+      syntax: '',
+    },
   },
   {
     name: 'COLPERCENTIRANK',
     de: {
       description:
         'siehe COLPERCENTINVRANK, aber der niedrigste Prozentwert bekommt den Rang 1',
+    },
+    en: {
+      description:
+        'see COLPERCENTINVRANK, but the lowest percentage value gets rank 1',
+      syntax: '',
     },
   },
   {
@@ -1732,6 +1963,11 @@ export const keywordData: KeywordEntry[] = [
       description:
         'nach dem Rangplatz des Prozentwerts in der Spalte, kleinster Wert = Rang 1',
     },
+    en: {
+      description:
+        'by the rank of the percentage value in the column, smallest value = rank 1',
+      syntax: '',
+    },
   },
   {
     name: 'COLPERCENTSUM',
@@ -1743,6 +1979,11 @@ export const keywordData: KeywordEntry[] = [
     de: {
       description:
         'Testet alle Spaltenprozente in der Spalte auf Gleichheit; d.h. alle Abweichungen von der Ungleichverteilung werden als signifikant betrachtet. Hier besteht natürlich die Möglichkeit, sehr viele unsinnige Signifikanzen zu produzieren. Bitte mit Bedacht verwenden. COLPERCT* t-Test auf Prozentwertunterschiede: Test auf Basis von ESS 446 und Spaltenüberlappung',
+    },
+    en: {
+      description:
+        'Tests all column percentages in the column for equality; i.e. all deviations from the equal distribution are considered significant. This can of course produce a great many meaningless significances. Please use with care. COLPERCT* t-test on percentage differences: test based on ESS 446 and column overlap',
+      syntax: '',
     },
   },
   {
@@ -1771,6 +2012,7 @@ export const keywordData: KeywordEntry[] = [
     en: {
       description:
         'In the significance calculation using COLPERCT the column overlaps are taken into account. This method can lead to problematical significances if the number of overlaps is so high that there are only a few cases which do NOT occur in both columns which have been tested against each other.…',
+      syntax: 'COLPERCTMINIMUM = <number>;',
     },
   },
   {
@@ -1778,6 +2020,11 @@ export const keywordData: KeywordEntry[] = [
     de: {
       description:
         'Spaltenweiser Test der Unterschiede in den erweiterte Z-Test mit Arcus-Sinus-Korrektur benutzt',
+    },
+    en: {
+      description:
+        'Column-wise test of the differences using the extended Z-test with arcsine correction',
+      syntax: '',
     },
   },
   {
@@ -1796,6 +2043,11 @@ export const keywordData: KeywordEntry[] = [
     de: {
       description:
         'Ausgabe der Spaltenprozentuierung der Summe einer dritten Variablen, z.B. die Summe von Ausgaben für einen bestimmten Zweck in bestimmten Stadtteilen etc.',
+    },
+    en: {
+      description:
+        'Output of the column percentaging of the sum of a third variable, e.g. the sum of expenditures for a particular purpose in particular city districts, etc.',
+      syntax: '',
     },
   },
   {
@@ -1831,6 +2083,11 @@ export const keywordData: KeywordEntry[] = [
       description:
         'Nach Hare-Niemeyer-Modell modifizierte Spaltenprozentwerte (Summe ergibt 100), Achtung: nicht geeignet bspw. für Mehrfachnennungsvariablen und OVERCODEs, Tabellen mit unterdrückten MISSING VALUES und selektiv gebildete Variablen',
     },
+    en: {
+      description:
+        'Column percentages modified by the Hare-Niemeyer method (sum equals 100). Note: not suitable e.g. for multiple-response variables and OVERCODEs, tables with suppressed MISSING VALUES and selectively built variables',
+      syntax: '',
+    },
   },
   {
     name: 'COLUMNPERCENTRANGE',
@@ -1853,6 +2110,11 @@ export const keywordData: KeywordEntry[] = [
       description:
         'Ausgabe einer Tabelle mit den unteren und oberen Rändern des Konfidenzintervalls (5%) von Spaltenprozenten COLUMNPERCENTRANGE* Konfidenzintervall für Spaltenprozente ROWPERCENTRANGE** Konfidenzintervall für Zeilenprozente',
     },
+    en: {
+      description:
+        'Output of a table with the lower and upper bounds of the confidence interval (5%) of column percentages. COLUMNPERCENTRANGE* confidence interval for column percentages. ROWPERCENTRANGE** confidence interval for row percentages',
+      syntax: '',
+    },
   },
   {
     name: 'COLUMNS',
@@ -1871,6 +2133,11 @@ export const keywordData: KeywordEntry[] = [
       description:
         'Ist dieses TABLEFORMAT gesetzt, werden die Spalten von Tabellen farblich hinterlegt, und zwar abwechselnd mit den Farben, die in STRIPECOLORS 559 vereinbart wurden.',
     },
+    en: {
+      description:
+        'If this TABLEFORMAT is set, the columns of tables are shaded, alternately with the colours declared in STRIPECOLORS 559.',
+      syntax: '',
+    },
   },
   {
     name: 'COLUMNSUMMARY',
@@ -1878,6 +2145,11 @@ export const keywordData: KeywordEntry[] = [
       description: '',
       syntax:
         'COLUMNSUMMARY <zielspalte> [ format "#,#..." ]\n= <function> [ <option>( {<quellspalte>}*n );\n<zielspalte> ::= < varno code >\n<quellspalte> ::= < varno code >\n<function> ::= [ MEAN | SUM | MIN | MAX ]\n<option> ::= [ ZEROMISSING | DASHMISSING ]',
+    },
+    en: {
+      description: '',
+      syntax:
+        'COLUMNSUMMARY <targetcolumn> [ format "#,#..." ]\n= <function> [ <option>( {<sourcecolumn>}*n );\n<targetcolumn> ::= < varno code >\n<sourcecolumn> ::= < varno code >\n<function> ::= [ MEAN | SUM | MIN | MAX ]\n<option> ::= [ ZEROMISSING | DASHMISSING ]',
     },
   },
   {
@@ -1925,11 +2197,16 @@ export const keywordData: KeywordEntry[] = [
     en: {
       description:
         'COMPRESSCODEBOOK = [ YES | NO ]; In the ASCII mode a list of CODEBOOKS can also be printed in a compressed form where a number of CODEBOOKS fit on to one page.',
+      syntax: 'COMPRESSCODEBOOK = [ YES | NO ];',
     },
   },
   {
     name: 'COMPUT',
     de: {
+      description: '',
+      syntax: 'COMPUT <result> = <arithmetic_expressiom>;',
+    },
+    en: {
       description: '',
       syntax: 'COMPUT <result> = <arithmetic_expressiom>;',
     },
@@ -2020,14 +2297,17 @@ export const keywordData: KeywordEntry[] = [
   {
     name: 'CONCATCSS',
     de: { description: '', syntax: 'CONCATCSS = [ YES | NO ];' },
+    en: { description: '', syntax: 'CONCATCSS = [ YES | NO ];' },
   },
   {
     name: 'CONCATFILTERTEXTS',
     de: { description: '', syntax: 'CONCATFILTERTEXTS = [ YES | NO ];' },
+    en: { description: '', syntax: 'CONCATFILTERTEXTS = [ YES | NO ];' },
   },
   {
     name: 'CONCATNUMTOSTR',
     de: { description: '', syntax: 'CONCATNUMTOSTR <varlist> = [ YES | NO ];' },
+    en: { description: '', syntax: 'CONCATNUMTOSTR <varlist> = [ YES | NO ];' },
   },
   {
     name: 'CONDENSESPSSGROUP',
@@ -2041,6 +2321,11 @@ export const keywordData: KeywordEntry[] = [
       description:
         'Ausgabe der Konfidenzintervalls einer zusätzlichen Variablen (zwei Werte auf einer Zeile)',
     },
+    en: {
+      description:
+        'Output of the confidence interval of an additional variable (two values on one line)',
+      syntax: '',
+    },
   },
   {
     name: 'CONFIDENCERANGEPVALUE',
@@ -2050,6 +2335,7 @@ export const keywordData: KeywordEntry[] = [
   {
     name: 'CONNECTEXCELCELLS',
     de: { description: '', syntax: 'CONNECTEXCELCELLS <boxtype> : [YES|NO]' },
+    en: { description: '', syntax: 'CONNECTEXCELCELLS <boxtype> : [YES|NO]' },
   },
   {
     name: 'CONTENT',
@@ -2082,6 +2368,7 @@ export const keywordData: KeywordEntry[] = [
   {
     name: 'CONTENTKEYTOPDF',
     de: { description: '', syntax: 'CONTENTKEYTOPDF = [ YES | NO ];' },
+    en: { description: '', syntax: 'CONTENTKEYTOPDF = [ YES | NO ];' },
   },
   {
     name: 'CONTENTPAGE',
@@ -2089,6 +2376,11 @@ export const keywordData: KeywordEntry[] = [
       description: '',
       syntax:
         'CONTENTPAGE = YES\nUSEFONT <font>\n[ TITLE <Überschrift> USEFONT <font> ]\nMARGINS TOP <number> LEFT <number> BOTTOM <number>\nDISTANCE <number>\n;',
+    },
+    en: {
+      description: '',
+      syntax:
+        'CONTENTPAGE = YES\nUSEFONT <font>\n[ TITLE <heading> USEFONT <font> ]\nMARGINS TOP <number> LEFT <number> BOTTOM <number>\nDISTANCE <number>\n;',
     },
   },
   {
@@ -2132,6 +2424,7 @@ export const keywordData: KeywordEntry[] = [
     en: {
       description:
         'The output of processed and perhaps altered data sets to an ASCII file. With exception of RECODEs, COMPUTEs etc. (see below) the content of the COPYFILE is identical to that of the DATAFILE. (for historical reasons the key word OUTFILE is accepted as a synonym.) (see also ASCIIOUT ALL;)',
+      syntax: 'COPYFILE = <path>;',
     },
   },
   {
@@ -2186,6 +2479,7 @@ export const keywordData: KeywordEntry[] = [
   {
     name: 'COUNTVALID',
     de: { description: '', syntax: 'COUNTVALID <resultvars> = <varlist>;' },
+    en: { description: '', syntax: 'COUNTVALID <resultvars> = <varlist>;' },
   },
   {
     name: 'CPI',
@@ -2208,6 +2502,7 @@ export const keywordData: KeywordEntry[] = [
     en: {
       description:
         'Using CROSSVAR special variable families can be produced which contain all the characteristic combinations of all the variables involved. This can be used to present multiple cross tables in TABLE for example. If one were to define:…',
+      syntax: 'CROSSVAR <newvar> = <var1> <var2> ;',
     },
   },
   {
@@ -2220,6 +2515,11 @@ export const keywordData: KeywordEntry[] = [
     de: {
       description:
         'Vergabe einer CSS-Klasse für die HTML-Ausgabe, siehe Formatierung 584',
+    },
+    en: {
+      description:
+        'Assignment of a CSS class for the HTML output, see Formatting 584',
+      syntax: '',
     },
   },
   {
@@ -2248,6 +2548,7 @@ export const keywordData: KeywordEntry[] = [
   {
     name: 'CSVINALPHA',
     de: { description: '', syntax: 'CSVINALPHA = <namelist>;' },
+    en: { description: '', syntax: 'CSVINALPHA = <namelist>;' },
   },
   {
     name: 'CSVINFILE',
@@ -2256,10 +2557,16 @@ export const keywordData: KeywordEntry[] = [
       syntax:
         'CSVINFILE [ FILEKEY <key> ] [ <delimchar> ] [ ALLOWEMPTY ]\n= <filepath>;',
     },
+    en: {
+      description: '',
+      syntax:
+        'CSVINFILE [ FILEKEY <key> ] [ <delimchar> ] [ ALLOWEMPTY ]\n= <filepath>;',
+    },
   },
   {
     name: 'CSVINPROTOCOL',
     de: { description: '', syntax: 'CSVINPROTOCOL = <filename>;' },
+    en: { description: '', syntax: 'CSVINPROTOCOL = <filename>;' },
   },
   {
     name: 'CSVOUTFILE',
@@ -2268,14 +2575,21 @@ export const keywordData: KeywordEntry[] = [
       syntax:
         'CSVOUTFILE = <name>;\n<name> kann ein vollständiger Pfad oder nur ein Dateiname sein. Die Datei-Extension wird',
     },
+    en: {
+      description: '',
+      syntax:
+        'CSVOUTFILE = <name>;\n<name> can be a full path or just a file name. The file extension is',
+    },
   },
   {
     name: 'CSVSPECIAL',
     de: { description: '', syntax: 'CSVSPECIAL = <filepath>;' },
+    en: { description: '', syntax: 'CSVSPECIAL = <filepath>;' },
   },
   {
     name: 'CSVWEIGHT',
     de: { description: '', syntax: 'CSVWEIGHT = <varname>;' },
+    en: { description: '', syntax: 'CSVWEIGHT = <varname>;' },
   },
   {
     name: 'CSVWEIGHTOUT',
@@ -2290,6 +2604,7 @@ export const keywordData: KeywordEntry[] = [
   {
     name: 'CUMULATIVE',
     de: { description: 'Zeilenweise prozentuiert und kumuliert' },
+    en: { description: 'Row-wise percentaged and cumulated', syntax: '' },
   },
   {
     name: 'CURRENTMILLIS',
@@ -2312,10 +2627,19 @@ export const keywordData: KeywordEntry[] = [
       description: '',
       syntax: 'DASHMISSING = <char>;\nZEROMISSING = <char>;',
     },
+    en: {
+      description: '',
+      syntax: 'DASHMISSING = <char>;\nZEROMISSING = <char>;',
+    },
   },
   {
     name: 'DATA',
     de: {
+      description: '',
+      syntax:
+        'DATA [ USEWEIGHT <weightvar> ] <method> <newvar>\n= <basevar> [ BY <groupvar> ] ;',
+    },
+    en: {
       description: '',
       syntax:
         'DATA [ USEWEIGHT <weightvar> ] <method> <newvar>\n= <basevar> [ BY <groupvar> ] ;',
@@ -2327,16 +2651,28 @@ export const keywordData: KeywordEntry[] = [
       description:
         'Kasten um alle DATACELLS, die zur Kreuzung jeweils zweier Variablen gehören.',
     },
+    en: {
+      description:
+        'Box around all DATACELLS that belong to the intersection of any two variables.',
+      syntax: '',
+    },
   },
   {
     name: 'DATACELL',
     de: { description: 'Jede einzelne Datenzelle der Tabelle' },
+    en: { description: 'Each individual data cell of the table', syntax: '' },
   },
   {
     name: 'DATAERRORDOCUMENTATION',
     de: {
       description:
         'ERRORTYPE EXCEPT NUMERIC FILTER VARIABLES EXCEPT numtest y1 to y11 = filename; In diesem Fall würden alle Variablen geprüft, die aus dem Input gelesen werden, bis auf "numtest" und die Variablen y1 bis y11. Es würden alle ERRORTYPE geprüft bis auf NUMERIC und FILTER, d.h. die Prüfung erstreckt sich inhaltlich auf LABELS RANGE und ALIGN.',
+      syntax:
+        'DATAERRORDOCUMENTATION [ VARIABLES <varlist> ]\n[errortype {<errortype>}*n ] = <filename>;\nerrortype ::= LABELS | RANGE | FILTER | NUMERIC | ALIGN',
+    },
+    en: {
+      description:
+        'ERRORTYPE EXCEPT NUMERIC FILTER VARIABLES EXCEPT numtest y1 to y11 = filename; In this case all variables that are read from the input would be checked, except "numtest" and the variables y1 to y11. All ERRORTYPEs would be checked except NUMERIC and FILTER, i.e. the check covers LABELS RANGE and ALIGN in terms of content.',
       syntax:
         'DATAERRORDOCUMENTATION [ VARIABLES <varlist> ]\n[errortype {<errortype>}*n ] = <filename>;\nerrortype ::= LABELS | RANGE | FILTER | NUMERIC | ALIGN',
     },
@@ -2348,16 +2684,27 @@ export const keywordData: KeywordEntry[] = [
       syntax:
         'DATAFILE [ FILEKEY <key> ] [ ALLOWEMPTY ] = <filepath>;\nINFILE [ FILEKEY <key> ] [ ALLOWEMPTY ] = <filepath>;',
     },
+    en: {
+      description: '',
+      syntax:
+        'DATAFILE [ FILEKEY <key> ] [ ALLOWEMPTY ] = <filepath>;\nINFILE [ FILEKEY <key> ] [ ALLOWEMPTY ] = <filepath>;',
+    },
   },
   {
     name: 'DATANOINTERPOL',
     de: { description: '', syntax: 'DATANOINTERPOL = [ YES | NO ];' },
+    en: { description: '', syntax: 'DATANOINTERPOL = [ YES | NO ];' },
   },
   {
     name: 'DATE',
     de: {
       description:
         'aktuelles Datum in der Form YYYYMMDD als Zahl CurrentMillis aktueller Zeitpunkt in Millisekunden',
+    },
+    en: {
+      description:
+        'current date in the form YYYYMMDD as a number. CurrentMillis: current point in time in milliseconds',
+      syntax: '',
     },
   },
   {
@@ -2366,6 +2713,7 @@ export const keywordData: KeywordEntry[] = [
     en: {
       description:
         'DATEFORMAT = <string>; In the string the letters Y, M and D are expanded to year, month and day. All other symbols are taken into the date. Thus: DATEFORMAT = "dd.mm.yyyy"; results in the standard European date: 31.10.2009',
+      syntax: 'DATEFORMAT = <string>;',
     },
   },
   {
@@ -2373,6 +2721,11 @@ export const keywordData: KeywordEntry[] = [
     de: {
       description:
         'Der Wochentag eines Datums in der Form JJJJMMTT: 1=Montag, 2=Dienstag etc., also ist z.B. DAYOFWEEK( 20061030 ) = 1. WeekOfYear(x) Wochennummer (Kalenderwoche)',
+    },
+    en: {
+      description:
+        'The weekday of a date in the form YYYYMMDD: 1=Monday, 2=Tuesday etc., so e.g. DAYOFWEEK( 20061030 ) = 1. WeekOfYear(x) week number (calendar week)',
+      syntax: '',
     },
   },
   {
@@ -2394,6 +2747,7 @@ export const keywordData: KeywordEntry[] = [
     en: {
       description:
         'Defines the number of decimal places for the percentages in cross tables (TABLE) or comparative tables (COMPARE). DECIMALPERCENT settings are valid for all following tables until the next DECIMALPERCENT command. Example: DECIMALPERCENT = 1; Preset: DECIMALPERCENT = 0;',
+      syntax: 'DECIMALPERCENT = <number>;\nDefault: DECIMALPERCENT = 0;',
     },
   },
   {
@@ -2405,6 +2759,7 @@ export const keywordData: KeywordEntry[] = [
     en: {
       description:
         'The number of decimal places can be stipulated for variable output if no VALUELABEL has been allocated and PRINTALL=YES. It is also used for MEAN or SUM output. Example: DECIMALS = 2; The characteristics or rather sums or mean of all variables then defined have two decimal places after the comma. This is valid until the next DECIMALS command (see also:…',
+      syntax: 'DECIMALS = <number>;\nDefault: DECIMALS = 0;',
     },
   },
   {
@@ -2420,6 +2775,7 @@ export const keywordData: KeywordEntry[] = [
   {
     name: 'DEFAULTLEVEL',
     de: { description: '', syntax: 'DEFAULTLEVEL = <number>;' },
+    en: { description: '', syntax: 'DEFAULTLEVEL = <number>;' },
   },
   {
     name: 'DELETELABELS',
@@ -2455,6 +2811,11 @@ export const keywordData: KeywordEntry[] = [
       description:
         'Ausgabe der Differenz zwischen der empirischen Zellenbesetzung und der nach der Randverteilung zu erwartenden Zellenbesetzung',
     },
+    en: {
+      description:
+        'Output of the difference between the empirical cell count and the cell count expected from the marginal distribution',
+      syntax: '',
+    },
   },
   {
     name: 'DELTAPERCENT',
@@ -2462,6 +2823,11 @@ export const keywordData: KeywordEntry[] = [
     de: {
       description:
         "Aus 'Var' und 'BasisVar' werden die Summen berechnet. Die Differenz wird auf die 'BasisVar' prozentuiert.",
+    },
+    en: {
+      description:
+        "The sums are calculated from 'Var' and 'BasisVar'. The difference is percentaged on 'BasisVar'.",
+      syntax: '',
     },
   },
   {
@@ -2471,6 +2837,11 @@ export const keywordData: KeywordEntry[] = [
       description:
         "Aus 'Var' und 'BasisVar' werden die Summen berechnet. Die Differenz wird auf die Zahl der gültigen Fälle prozentuiert Name Beschreibung",
     },
+    en: {
+      description:
+        "The sums are calculated from 'Var' and 'BasisVar'. The difference is percentaged on the number of valid cases. Name Description",
+      syntax: '',
+    },
   },
   {
     name: 'DELTASUMPERCENT',
@@ -2478,6 +2849,11 @@ export const keywordData: KeywordEntry[] = [
     de: {
       description:
         'Die VarFamily 274 muss vier Einzelvariablen enthalten. Diese bezeichnen jeweils Zähler und Nenner eines Bruches. über Zähler und Nennen werden die Summen berechnet, und bei der Ausgabe wird die Differenz der Quotienten als Prozentwert ausgegeben.',
+    },
+    en: {
+      description:
+        'The VarFamily 274 must contain four individual variables. These each denote the numerator and denominator of a fraction. The sums are calculated over numerator and denominator, and on output the difference of the quotients is shown as a percentage value.',
+      syntax: '',
     },
   },
   {
@@ -2495,6 +2871,7 @@ export const keywordData: KeywordEntry[] = [
     en: {
       description:
         'Example: DESCRIPTION MEAN = Mittel; Usually an explanation of the cell content is printed top left when using TABLE and there are standard texts for this in the system. If these texts are to be altered then the DESCRIPTION command is used, otherwise the texts can be switched off using TABLEFORMAT = NODESCRIPTION;',
+      syntax: 'DESCRIPTION [ CELLELEMENT ] = <text>;',
     },
   },
   {
@@ -2511,6 +2888,7 @@ export const keywordData: KeywordEntry[] = [
     en: {
       description:
         'Alternatively a descriptive text can be explicitly set. Example: DESCRIPTIONSTRING = "Mittelwert|Absolut"; Individual rows are separated using a vertical line.',
+      syntax: 'DESCRIPTIONSTRING = "<DESCRIPTION 1>|...|<DESCRIPTION n>";',
     },
   },
   {
@@ -2561,11 +2939,16 @@ export const keywordData: KeywordEntry[] = [
     en: {
       description:
         '(PS): is ignored by line printers. Usually there are no gaps between the different boxes which make up the table. Spaces can however be defined in the X and the Y direction. Example: DISTANCE INTERBOX X = 13; DISTANCE INTERBOX Y = 13; In the standard form (see above) all spaces are set to the stipulated value. DISTANCE INTERBOX can also be differentiated: Valid for X:…',
+      syntax: 'DISTANCE INTERBOX [ X | Y ] <number> = <number>;',
     },
   },
   {
     name: 'DIV',
     de: { description: 'liefert das Ergebnis einer Integer-Division' },
+    en: {
+      description: 'returns the result of an integer division',
+      syntax: '',
+    },
   },
   {
     name: 'DLL',
@@ -2592,6 +2975,7 @@ export const keywordData: KeywordEntry[] = [
     en: {
       description:
         'Specifies a document indicatorwhich appears at the bottom right under the tables. Example: DOCUMENT = "Demo 2009"; The key words DATE and/or TIME produce a date or time. TIME and DATE key words can be mixed with any number of strings. Example: DOCUMENT = "Auszählung vom" DATE " Zwischenstand" TIME; Valid for all tables. PS):…',
+      syntax: 'DOCUMENT = "<text>";',
     },
   },
   {
@@ -2607,6 +2991,7 @@ export const keywordData: KeywordEntry[] = [
   {
     name: 'DOUBLECODEINOVERCODE',
     de: { description: '', syntax: 'DOUBLECODEINOVERCODE = [YES | NO];' },
+    en: { description: '', syntax: 'DOUBLECODEINOVERCODE = [YES | NO];' },
   },
   {
     name: 'DOUGHNUT',
@@ -2658,6 +3043,7 @@ export const keywordData: KeywordEntry[] = [
     en: {
       description:
         'Elasticity is a measurement of how the scaling in the X direction is allowed to differ from the scaling in the Y direction. Preset: ELASTICITY = 0.15; Background: Printing in Postscript offers the possibility to scale tables to fit which are larger than the available area on a page. This adjustment can be made independently in the X or the Y direction.…',
+      syntax: 'ELASTICITY = <number>;',
     },
   },
   {
@@ -2682,6 +3068,11 @@ export const keywordData: KeywordEntry[] = [
       syntax:
         'ELEMENTFONT <cellelement> : <fontname> SIZE <number>\n[STYLE [BOLD|ITALIC|UNDERLINE]]\nELEMENTCOLOR <cellelement> : <color>',
     },
+    en: {
+      description: '',
+      syntax:
+        'ELEMENTFONT <cellelement> : <fontname> SIZE <number>\n[STYLE [BOLD|ITALIC|UNDERLINE]]\nELEMENTCOLOR <cellelement> : <color>',
+    },
   },
   {
     name: 'ELIMINATE',
@@ -2692,6 +3083,10 @@ export const keywordData: KeywordEntry[] = [
     name: 'ELLIPSIS',
     de: {
       description: 'Konfidenzintervall als Ellipse anzeigen (wenn bekannt)',
+    },
+    en: {
+      description: 'Show the confidence interval as an ellipse (when known)',
+      syntax: '',
     },
   },
   {
@@ -2711,6 +3106,11 @@ export const keywordData: KeywordEntry[] = [
       description:
         '//hier können mehrere computes/ifs etc stehen ENDBLOCK; Die Komponente ELSEBLOCK ist optional. Von dieser Logik betroffen sind: alle COMPUTE 286s, alle Formen von IF (IF ... THEN 302, IF ... PRINT 48, IF ... LOAD 306) alle RECODE 254s, COUNT 285 und MEAN 312. Alle übrigen Statements ignorieren die IFBLOCK-Anweisungen. Mehrere IFBLOCKs können ineinander geschachtelt werden.…',
     },
+    en: {
+      description:
+        '//several computes/ifs etc. can appear here ENDBLOCK; The ELSEBLOCK component is optional. Affected by this logic are: all COMPUTE 286, all forms of IF (IF ... THEN 302, IF ... PRINT 48, IF ... LOAD 306), all RECODE 254, COUNT 285 and MEAN 312. All other statements ignore the IFBLOCK directives. Several IFBLOCKs can be nested within each other.…',
+      syntax: '',
+    },
   },
   {
     name: 'EMPTYSIGNDASH',
@@ -2718,10 +3118,16 @@ export const keywordData: KeywordEntry[] = [
       description:
         "Im Normalfall wird in Fällen, wo alle Signifikanztests gegen alle Spalten bzw. Zeilen fehlgeschlagen sind, nichts ausgegeben. Da kann bei einem vertikalen Alignment (ALIGN VCENTER 554) zu unerwünschter Optik führen. Ist dies TABLEFORMAT gesetzt, wird in diesen Fälle ein '-' ausgegeben, damit alle Elemente auf derselben Höhe stehen.",
     },
+    en: {
+      description:
+        "Normally nothing is output in cases where all significance tests against all columns or rows have failed. With vertical alignment (ALIGN VCENTER 554) this can lead to undesirable appearance. If this TABLEFORMAT is set, a '-' is output in these cases so that all elements are at the same height.",
+      syntax: '',
+    },
   },
   {
     name: 'EMPTYTABLETEXT',
     de: { description: '', syntax: 'EMPTYTABLETEXT = "<text>";' },
+    en: { description: '', syntax: 'EMPTYTABLETEXT = "<text>";' },
   },
   {
     name: 'ENCAPSULATED',
@@ -2734,6 +3140,7 @@ export const keywordData: KeywordEntry[] = [
     en: {
       description:
         'As GESS tabs was born as a DOS program and some clients hate nothing more than a change in standard settings, the Char-Set-Encoding from DOS, i.e. IBM850 for North/Middle Europe is set as standard. This can be changed in two ways: the encoding can be explicitly defined using the ENCODING statement presented here.…',
+      syntax: 'ENCODING CSVOUTFILE = [ ANSI | UTF8 ];',
     },
   },
   {
@@ -2749,6 +3156,7 @@ export const keywordData: KeywordEntry[] = [
   {
     name: 'END',
     de: { description: '', syntax: 'END;' },
+    en: { description: '', syntax: 'END;' },
   },
   {
     name: 'ENDBLOCK',
@@ -2776,6 +3184,11 @@ export const keywordData: KeywordEntry[] = [
       description:
         'Dann würde der Aufruf von #tab( var1 ) ebenso funktionieren wie der Aufruf von #tab( var1 var2 var3 var4 ) #IfExist und #IfNExist Mit #IFEXIST und #IFNEXIST kann man abfragen, ob eine Variable dieses Namens bereits existiert. Anwendungsbeispiele Ein Include-File mit dem Namen "SETPAPER.INC" könnte z.B. folgende Anweisungen enthalten: #IFDEF A4 #IFDEF quer PAPER = Height 210 Width 297;',
     },
+    en: {
+      description:
+        'Then the call #tab( var1 ) would work just as well as the call #tab( var1 var2 var3 var4 ). #IfExist and #IfNExist: with #IFEXIST and #IFNEXIST you can check whether a variable of this name already exists. Usage examples: an include file named "SETPAPER.INC" could e.g. contain the following instructions: #IFDEF A4 #IFDEF quer PAPER = Height 210 Width 297;',
+      syntax: '',
+    },
   },
   {
     name: 'ENFORCEUTF8INOPENQ',
@@ -2785,6 +3198,7 @@ export const keywordData: KeywordEntry[] = [
   {
     name: 'ENFORCEUTF8INOPENQFILE',
     de: { description: '', syntax: 'ENFORCEUTF8INOPENQFILE = [ YES | NO ];' },
+    en: { description: '', syntax: 'ENFORCEUTF8INOPENQFILE = [ YES | NO ];' },
   },
   {
     name: 'ENTIER',
@@ -2802,6 +3216,7 @@ export const keywordData: KeywordEntry[] = [
   {
     name: 'EQ',
     de: { description: 'Equal, ist gleich' },
+    en: { description: 'Equal', syntax: '' },
   },
   {
     name: 'ERRORTYPE',
@@ -2819,6 +3234,11 @@ export const keywordData: KeywordEntry[] = [
       description:
         'Spaltenweise 4-Felder Chi²-Test auf Prozentwertunterschied nach Umrechnung aus ESS 446',
     },
+    en: {
+      description:
+        'Column-wise 4-field chi-square test on percentage differences after conversion from ESS 446',
+      syntax: '',
+    },
   },
   {
     name: 'ESSCOLDEPTTEST',
@@ -2826,12 +3246,22 @@ export const keywordData: KeywordEntry[] = [
       description:
         'Abhängiger t-Test auf Mittelwertsunterschiede nach Umrechnung auf ESS 446 Name Beschreibung',
     },
+    en: {
+      description:
+        'Dependent t-test on mean differences after conversion to ESS 446. Name Description',
+      syntax: '',
+    },
   },
   {
     name: 'ESSMCNEMAR',
     de: {
       description:
         'Abhängiger Test auf Prozentwertunterschied nach McNemar 449 nach Umrechnung auf ESS 446',
+    },
+    en: {
+      description:
+        'Dependent test on percentage differences per McNemar 449 after conversion to ESS 446',
+      syntax: '',
     },
   },
   {
@@ -2859,6 +3289,10 @@ export const keywordData: KeywordEntry[] = [
     de: {
       description: 'Zeilenweiser Chi²-Test auf Basis der ESS 446-Umrechnung',
     },
+    en: {
+      description: 'Row-wise chi-square test based on the ESS 446 conversion',
+      syntax: '',
+    },
   },
   {
     name: 'ESSROWMEANTEST',
@@ -2871,6 +3305,11 @@ export const keywordData: KeywordEntry[] = [
       description:
         'Unabhängiger t-Test auf Mittelwertsunterschiede nach Umrechnung auf ESS 446, zeilenweise',
     },
+    en: {
+      description:
+        'Independent t-test on mean differences after conversion to ESS 446, row-wise',
+      syntax: '',
+    },
   },
   {
     name: 'ESSTTEST',
@@ -2879,6 +3318,11 @@ export const keywordData: KeywordEntry[] = [
       description:
         'Unabhängiger t-Test auf Mittelwertsunterschiede nach Umrechnung auf ESS 446',
     },
+    en: {
+      description:
+        'Independent t-test on mean differences after conversion to ESS 446',
+      syntax: '',
+    },
   },
   {
     name: 'ESSWELCHTEST',
@@ -2886,12 +3330,22 @@ export const keywordData: KeywordEntry[] = [
       description:
         'Unabhängiger Welch 450’s t-Test auf Mittelwertsunterschiede nach Umrechnung auf ESS 446',
     },
+    en: {
+      description:
+        'Independent Welch’s t-test on mean differences after conversion to ESS 446',
+      syntax: '',
+    },
   },
   {
     name: 'EST',
     de: {
       description:
         '|                | MEANTEST | PHYSMEANTE |            | ESSMEANTEST |             | | -------------- | -------- | ---------- | ---------- | ----------- | ----------- | | kombiniert mit |          |            | XMEANTEST  |             | HYMEANTEST  |',
+    },
+    en: {
+      description:
+        '|                | MEANTEST | PHYSMEANTE |            | ESSMEANTEST |             | | -------------- | -------- | ---------- | ---------- | ----------- | ----------- | | combined with  |          |            | XMEANTEST  |             | HYMEANTEST  |',
+      syntax: '',
     },
   },
   {
@@ -2977,6 +3431,11 @@ export const keywordData: KeywordEntry[] = [
       description:
         'Kennzeichnung des Tabellenbandes in Excel übertragen. Wenn dies TABLEFORMAT gesetzt ist, werden Zahlen mit Nachkommastellen explizit auf die Zahl der Nachkommastellen',
     },
+    en: {
+      description:
+        'Transfer the labelling of the table volume to Excel. If this TABLEFORMAT is set, numbers with decimal places are explicitly formatted to the number of decimal places',
+      syntax: '',
+    },
   },
   {
     name: 'EXCELFILENAME',
@@ -3008,6 +3467,7 @@ export const keywordData: KeywordEntry[] = [
     en: {
       description:
         'If this option is set to YES the Excel interface is only showed by INSTANTEXCEL=YES if a table is finished. This can reduce the processing time for the transfer to Excel. To control the appearance of tables using INSTANTEXCEL: the following TABLEFORMATs are available:…',
+      syntax: 'EXCELHIDEUPDATE = [ YES | NO ];',
     },
   },
   {
@@ -3026,6 +3486,11 @@ export const keywordData: KeywordEntry[] = [
       description:
         'trägt dies zur Performance bei. dies gilt auch bei OPENOFFICEDEVIATION. Wenn dies TABLEFORMAT gesetzt ist, wird die DOCUMENT-',
     },
+    en: {
+      description:
+        'this contributes to performance. This also applies with OPENOFFICEDEVIATION. If this TABLEFORMAT is set, the DOCUMENT',
+      syntax: '',
+    },
   },
   {
     name: 'EXCELNOWRAPTEXT',
@@ -3037,6 +3502,11 @@ export const keywordData: KeywordEntry[] = [
     de: {
       description:
         'formatiert, und damit die Automatik von Excel umgangen, Nullen als Nachkommastellen zu tilgen. EXCELFRAMES Rahmen um die Excel-Tabelle EXCELCOLOR Übernahme von COLOR FOREGROUND bzw. BACKGROUND EXCELALIGN[H/V] Übernahme horizontales/ vertikales Alignment der Zellen EXCELPAGEBREAK generiert einen Seitenwechsel am Ende der Tabelle EXCELHEADER Übernahme eines HEADER nach Excel Bewirkt, dass…',
+    },
+    en: {
+      description:
+        "formatted, thereby bypassing Excel's automatic removal of zeros as decimal places. EXCELFRAMES box around the Excel table. EXCELCOLOR adoption of COLOR FOREGROUND or BACKGROUND. EXCELALIGN[H/V] adoption of horizontal/vertical alignment of the cells. EXCELPAGEBREAK generates a page break at the end of the table. EXCELHEADER adoption of a HEADER into Excel. Causes…",
+      syntax: '',
     },
   },
   {
@@ -3068,6 +3538,11 @@ export const keywordData: KeywordEntry[] = [
       description:
         'Die atomaren Elemente von zusammengesetzten CELLELEMENTS werden bei EXCELOUT 605 nicht untereinander, sondern nebeneinander dargestellt.',
     },
+    en: {
+      description:
+        'The atomic elements of composite CELLELEMENTS are shown side by side rather than one below the other in EXCELOUT 605.',
+      syntax: '',
+    },
   },
   {
     name: 'EXCELPAGEBREAK',
@@ -3089,6 +3564,7 @@ export const keywordData: KeywordEntry[] = [
   {
     name: 'EXCELSTYLEFILE',
     de: { description: '', syntax: 'EXCELSTYLEFILE = <filename>;' },
+    en: { description: '', syntax: 'EXCELSTYLEFILE = <filename>;' },
   },
   {
     name: 'EXCELTEMPLATEFILE',
@@ -3116,6 +3592,11 @@ export const keywordData: KeywordEntry[] = [
       syntax:
         'EXCLUDEVALUES <varlist> = <valuelist>;\nRESTRICTVALUES <varlist> = <valuelist>;',
     },
+    en: {
+      description: '',
+      syntax:
+        'EXCLUDEVALUES <varlist> = <valuelist>;\nRESTRICTVALUES <varlist> = <valuelist>;',
+    },
   },
   {
     name: 'EXDECIMALCHAR',
@@ -3135,6 +3616,7 @@ export const keywordData: KeywordEntry[] = [
   {
     name: 'EXP',
     de: { description: 'inverse Funktion zu LN' },
+    en: { description: 'inverse function of LN', syntax: '' },
   },
   {
     name: 'EXPAND',
@@ -3163,20 +3645,32 @@ export const keywordData: KeywordEntry[] = [
       description:
         'Zeichnet man mit DRAWBOX 552 einen gemeinsamen Block um die Datenzellen, sieht es häufig besser aus, wenn vor der ersten und nach der letzten Datenzeile ein vertikaler Zwischenraum zum oberen und unteren Rand geschaffen wird. Diesen Rand kann man mit EXPANDHEIGHT anfordern; zu beachten ist, dass dann die DATABOX nicht deckungsgleich ist mit der Summe der DATACELLs.…',
     },
+    en: {
+      description:
+        'If you draw a common block around the data cells with DRAWBOX 552, it often looks better if vertical space is created before the first and after the last data row towards the top and bottom edge. This margin can be requested with EXPANDHEIGHT; note that the DATABOX is then not congruent with the sum of the DATACELLs.…',
+      syntax: '',
+    },
   },
   {
     name: 'EXPANDINDOMACRO',
     de: { description: '', syntax: 'EXPANDINDOMACRO = [ YES | NO ];' },
+    en: { description: '', syntax: 'EXPANDINDOMACRO = [ YES | NO ];' },
   },
   {
     name: 'EXPANDMISSINGTEXT',
     de: { description: '', syntax: 'EXPANDMISSINGTEXT = <string>;' },
+    en: { description: '', syntax: 'EXPANDMISSINGTEXT = <string>;' },
   },
   {
     name: 'EXPECT',
     de: {
       description:
         'Ausgabe der nach der Randverteilung zu erwartenden Zellenbesetzung',
+    },
+    en: {
+      description:
+        'Output of the cell count expected from the marginal distribution',
+      syntax: '',
     },
   },
   {
@@ -3205,12 +3699,22 @@ export const keywordData: KeywordEntry[] = [
       description:
         'der Verteilung (EXTREME) können selektiert werden. Beispiele: TABLE = a MEAN( b ) BY c SORT MEAN PANE 2 EXTREME 20; // jeweils 20 von jedem Ende der Verteilung TABLE = a BY c SORT ABSOLUTE TOP 80; // die obersten 80',
     },
+    en: {
+      description:
+        'of the distribution (EXTREME) can be selected. Examples: TABLE = a MEAN( b ) BY c SORT MEAN PANE 2 EXTREME 20; // 20 from each end of the distribution. TABLE = a BY c SORT ABSOLUTE TOP 80; // the top 80',
+      syntax: '',
+    },
   },
   {
     name: 'FALLING',
     de: {
       description:
         'gegenläufige Skalen | HORIZONTAL | VERTICAL ] ] Kombination HORIZONTAL/VERTICAL XY-Plot [ COLOR <$rrggbb> ] Hexadezimaler RGB-Wert [ LINECOLOR < $rrggbb > ] [ NUMINGRAPH | NUMEXGRAPH | Numerische Beschriftung eines grafischen NUMCENTERGRAPH ] Elements innerhalb bzw, außerhalb der Grafik oder in ihr zentriert [ AXISMINMAX <minval> <maxval> Vorbelegung der Skala mit Extremwerten ]',
+    },
+    en: {
+      description:
+        'opposing scales | HORIZONTAL | VERTICAL ] ] combination HORIZONTAL/VERTICAL XY plot [ COLOR <$rrggbb> ] hexadecimal RGB value [ LINECOLOR < $rrggbb > ] [ NUMINGRAPH | NUMEXGRAPH | numeric labelling of a graphical NUMCENTERGRAPH ] element inside, outside or centred within the graphic [ AXISMINMAX <minval> <maxval> preset the scale with extreme values ]',
+      syntax: '',
     },
   },
   {
@@ -3224,6 +3728,7 @@ export const keywordData: KeywordEntry[] = [
     en: {
       description:
         'Parallel to the COMPUTE statement there is also FCOMPUTE, which tests the filters set with SETFILTER. FCOMPUTE is only used if all the filter conditions are true or if there is no filter.',
+      syntax: 'FCOMPUTE <varname> ....',
     },
   },
   {
@@ -3239,6 +3744,7 @@ export const keywordData: KeywordEntry[] = [
   {
     name: 'FILEPATH',
     de: { description: '', syntax: 'FILEPATH "<filepath>"' },
+    en: { description: '', syntax: 'FILEPATH "<filepath>"' },
   },
   {
     name: 'FILL',
@@ -3253,13 +3759,15 @@ export const keywordData: KeywordEntry[] = [
       syntax: 'FILTER <varlist> [ = <Bedingung> | AS <varname> ] ;',
     },
     en: {
-      description: '',
+      description:
+        'After each table element, local selections 330 can be made with FILTER <condition> |, for example: TABLE = V1 FILTER geschl EQ 1 | V1 FILTER geschl EQ 2 | BY V1 MEANTEST; SORT SORT [ DESCEND ] [ POSITION | ALPHA | CODE | Cellelement ] [ PANE <value> CODE <value> ] :…',
       syntax: 'FILTER <varlist> [ = <bedingung> | AS <varname> ] ;',
     },
   },
   {
     name: 'FIRSTCOLUMN',
     de: { description: '', syntax: 'FIRSTCOLUMN : <number>' },
+    en: { description: '', syntax: 'FIRSTCOLUMN : <number>' },
   },
   {
     name: 'FIXED',
@@ -3274,6 +3782,7 @@ export const keywordData: KeywordEntry[] = [
   {
     name: 'FIXLABELCOLUMN',
     de: { description: '', syntax: 'FIXLABELCOLUMN : [YES|NO]' },
+    en: { description: '', syntax: 'FIXLABELCOLUMN : [YES|NO]' },
   },
   {
     name: 'FIXLABELROWS',
@@ -3282,10 +3791,16 @@ export const keywordData: KeywordEntry[] = [
       syntax:
         'FIXLABELROWS : <number>\nFIXLABELROWS wird den <number> Zeilen-Teil der Tabelle "fix" halten, sodass diese sichtbar',
     },
+    en: {
+      description: '',
+      syntax:
+        'FIXLABELROWS : <number>\nFIXLABELROWS will keep the <number> rows part of the table "fixed", so that it stays visible',
+    },
   },
   {
     name: 'FLOWTEXT',
     de: { description: '', syntax: 'FLOWTEXT <boxname> : [ YES | NO ]' },
+    en: { description: '', syntax: 'FLOWTEXT <boxname> : [ YES | NO ]' },
   },
   {
     name: 'FLT',
@@ -3321,6 +3836,11 @@ export const keywordData: KeywordEntry[] = [
       description:
         'Kasten um den FOOTER 522, außerhalb der Tabelle FRAMEBOX X Kasten um alle FRAMECELL X FRAMEBOX Y Kasten um alle FRAMECELL Y FRAMECELL X Kasten um einzelne Datenelemente der Rahmenspalten (Elemente der X-Achse) FRAMECELL Y Kasten um einzelne Datenelemente der Rahmenzeilen (Elemente der Y-Achse)',
     },
+    en: {
+      description:
+        'Box around the FOOTER 522, outside the table. FRAMEBOX X box around all FRAMECELL X. FRAMEBOX Y box around all FRAMECELL Y. FRAMECELL X box around individual data elements of the frame columns (elements of the X axis). FRAMECELL Y box around individual data elements of the frame rows (elements of the Y axis)',
+      syntax: '',
+    },
   },
   {
     name: 'FORCELABELINPUT',
@@ -3332,6 +3852,12 @@ export const keywordData: KeywordEntry[] = [
     de: {
       description:
         'Variable ist vorrangig zur Häufigkeitsauszählung (Tabellenaufriss) sinnvoll.',
+      syntax:
+        'FORCOUNTS <varname> = [ YES | NO ];\nFORHEADER <varname> = [ YES | NO ];\nFORMEANS <varname> = [ YES | NO ];',
+    },
+    en: {
+      description:
+        'Variable is primarily useful for frequency counts (table breakdown).',
       syntax:
         'FORCOUNTS <varname> = [ YES | NO ];\nFORHEADER <varname> = [ YES | NO ];\nFORMEANS <varname> = [ YES | NO ];',
     },
@@ -3353,6 +3879,10 @@ export const keywordData: KeywordEntry[] = [
       description:
         'Variable soll bevorzugt im Tabellenkopf dargestellt werden.',
     },
+    en: {
+      description: 'Variable should preferably be shown in the table header.',
+      syntax: '',
+    },
   },
   {
     name: 'FORHEADER',
@@ -3366,6 +3896,11 @@ export const keywordData: KeywordEntry[] = [
         'verwendet werden. [ RECTANGLE | LINE | RECTLINE | TRIANGLE1 | TRIANGLE1O | | TRIANGLE2 | TRIANGLE2O | SQUARE1 | SQUARE1O | SQUARE2 | SQUARE2O | CIRCLE | CIRCLEO | ELLIPSIS | GAUSS | GAUSSO ] ] [ PIE | PIE100 ] [ XYPLOT ] }*n [ DIRECTION [ RISING | Kombination RISING/FALLING',
       syntax: 'FORM : [BARS | COLUMNS | LINES | PIE]',
     },
+    en: {
+      description:
+        'can be used. [ RECTANGLE | LINE | RECTLINE | TRIANGLE1 | TRIANGLE1O | | TRIANGLE2 | TRIANGLE2O | SQUARE1 | SQUARE1O | SQUARE2 | SQUARE2O | CIRCLE | CIRCLEO | ELLIPSIS | GAUSS | GAUSSO ] ] [ PIE | PIE100 ] [ XYPLOT ] }*n [ DIRECTION [ RISING | combination RISING/FALLING',
+      syntax: 'FORM : [BARS | COLUMNS | LINES | PIE]',
+    },
   },
   {
     name: 'FORMAT',
@@ -3373,6 +3908,7 @@ export const keywordData: KeywordEntry[] = [
     en: {
       description:
         'Defines a format for the representation of a particular cell content. If for example a mean is to be a scale with an algebraic sign, a comma as decimal separator and two decimal places then the following would be written (formats should always be written in quotation marks (") ): FORMAT MEAN = "+#,##"; FORMAT recognises the following control characters:…',
+      syntax: 'FORMAT = "<formatstring>";',
     },
   },
   {
@@ -3381,6 +3917,11 @@ export const keywordData: KeywordEntry[] = [
       description: '',
       syntax:
         'FORMATIFLESS <cellelement> [ IN <place> ] BY <typ> <number> = <formatstring>;\ntyp ::= < ABSOLUTE | PHYSICALRECORDS | VALIDN | ESS >\nplace ::= < DATACELL | FRAMECELL X | FRAMECELL Y >',
+    },
+    en: {
+      description: '',
+      syntax:
+        'FORMATIFLESS <cellelement> [ IN <place> ] BY <type> <number> = <formatstring>;\ntype ::= < ABSOLUTE | PHYSICALRECORDS | VALIDN | ESS >\nplace ::= < DATACELL | FRAMECELL X | FRAMECELL Y >',
     },
   },
   {
@@ -3393,6 +3934,11 @@ export const keywordData: KeywordEntry[] = [
     de: {
       description:
         'Variable eignet sich für numerische Statistiken. Syntax LiveTabs Für die Weiterverarbeitung von Datensätzen in GESS LiveTabs ist es notwendig, dass die speziellen Variableneigenschaften für GESS LiveTabs auch im SYNTAX-Include-File weitergegeben werden. Hierzu dient das LIVETABS-Argument für das SYNTAX 42 -Statement.',
+    },
+    en: {
+      description:
+        'Variable is suitable for numeric statistics. Syntax LiveTabs: for further processing of data records in GESS LiveTabs it is necessary that the special variable properties for GESS LiveTabs are also passed on in the SYNTAX include file. The LIVETABS argument for the SYNTAX 42 statement serves this purpose.',
+      syntax: '',
     },
   },
   {
@@ -3426,6 +3972,7 @@ export const keywordData: KeywordEntry[] = [
     en: {
       description:
         'The colour of the frames can also be defined using HSB or RGB as above. COLOR FOREGROUND or COLOR BACKGROUND With the COLOR statement DATACELLS and FRAMECELLS can be coloured depending on the value, e.g. all mean above a certain value are printed in red etc.',
+      syntax: 'FRAMECOLOR : <color>',
     },
   },
   {
@@ -3433,6 +3980,11 @@ export const keywordData: KeywordEntry[] = [
     de: {
       description:
         'Der Schnittpunkt von FRAMEBOX X und FRAMEBOX Y FRAMETITLE X Kasten um Bezeichnung von FRAMEELEMENTS der X-Achse (z.B. Insgesamt) FRAMETITLE Y Kasten um Bezeichnung von FRAMEELEMENTS der Y-Achse (z.B. Insgesamt) FRAMETITLEBOX X Kasten um alle FRAMETITLE-Boxes der X-Achse FRAMETITLEBOX Y Kasten um alle FRAMETITLE-Boxes der Y-Achse',
+    },
+    en: {
+      description:
+        'The intersection of FRAMEBOX X and FRAMEBOX Y. FRAMETITLE X box around the label of FRAMEELEMENTS of the X axis (e.g. Total). FRAMETITLE Y box around the label of FRAMEELEMENTS of the Y axis (e.g. Total). FRAMETITLEBOX X box around all FRAMETITLE boxes of the X axis. FRAMETITLEBOX Y box around all FRAMETITLE boxes of the Y axis',
+      syntax: '',
     },
   },
   {
@@ -3445,6 +3997,8 @@ export const keywordData: KeywordEntry[] = [
     en: {
       description:
         'TABLETYPEs are allocated to specific frame elements of a table; thus e.g. a table with row percentages (TABLETYPE = ROWPERCENT;) has by default an absolute column ("No. of Cases") and a total row ("Total"). With the specification FRAMEELEMENTS frame elements can be specifically requested. The key words necessary are:',
+      syntax:
+        'FRAMEELEMENTS = [ ABSCOLUMN | ABSROW | PHYSICALCOLUMN\n| PHYSICALROW | TOTALCOLUMN | TOTALROW ] ;',
     },
   },
   {
@@ -3507,12 +4061,21 @@ export const keywordData: KeywordEntry[] = [
     de: {
       description: 'Konfidenzintervall als stilisierte Gausskurve anzeigen',
     },
+    en: {
+      description: 'Show the confidence interval as a stylised Gauss curve',
+      syntax: '',
+    },
   },
   {
     name: 'GAUSSO',
     de: {
       description:
         'Konfidenzintervall als stilisierte Gausskurve anzeigen (outline)',
+    },
+    en: {
+      description:
+        'Show the confidence interval as a stylised Gauss curve (outline)',
+      syntax: '',
     },
   },
   {
@@ -3537,6 +4100,11 @@ export const keywordData: KeywordEntry[] = [
       description:
         'Das geometrische Mittel ist die n.-Wurzel aus dem Produkt aller Einzelwerte (nur für positive Zahlen definiert)',
     },
+    en: {
+      description:
+        'The geometric mean is the n-th root of the product of all individual values (defined only for positive numbers)',
+      syntax: '',
+    },
   },
   {
     name: 'GEORESTRICT',
@@ -3557,12 +4125,22 @@ export const keywordData: KeywordEntry[] = [
       description:
         'GESStabs Artist ist ab Version 4.3.0.0 integrierter Bestandteil von GESStabs. Das Schlüsselwort zum Aufruf lautet GESSCHART. Syntaktisch ist GESSCHART eine Option zum TABLE-Statement. Mit GESSCHART-Statements kann man im Anschluss an ein TABLE-Statement die Anfertigung von Charts anfordern, die sich inhaltlich aus ausgewählten Werten und Texten der Tabelle zusammensetzen.…',
     },
+    en: {
+      description:
+        'GESStabs Artist has been an integrated part of GESStabs since version 4.3.0.0. The keyword to invoke it is GESSCHART. Syntactically, GESSCHART is an option of the TABLE statement. With GESSCHART statements you can, following a TABLE statement, request the creation of charts whose content is assembled from selected values and texts of the table.…',
+      syntax: '',
+    },
   },
   {
     name: 'GESSCHARTCOLORS',
     de: {
       description:
         'der erste Farbwert der definierten ausgewählt werden. Anstelle eines Grüntons sollen die Säulen blau eingefärbt werden, die erste Position des bestehenden Farbschemas wird | ausgetauscht    | und anschließend |              | das Chart angefordert:…',
+      syntax: 'GESSCHARTCOLORS = { <colorvalue> }*n ;\n<colorvalue> = $rrggbb',
+    },
+    en: {
+      description:
+        'the first colour value of the ones defined is selected. Instead of a green tone the bars are to be coloured blue; the first position of the existing colour scheme is replaced and then the chart is requested:…',
       syntax: 'GESSCHARTCOLORS = { <colorvalue> }*n ;\n<colorvalue> = $rrggbb',
     },
   },
@@ -3579,6 +4157,7 @@ export const keywordData: KeywordEntry[] = [
   {
     name: 'GESSCHARTFORMAT',
     de: { description: '', syntax: 'GESSCHARTFORMAT = { + | - <option> }*n ;' },
+    en: { description: '', syntax: 'GESSCHARTFORMAT = { + | - <option> }*n ;' },
   },
   {
     name: 'GESSCHARTNUMFORMAT',
@@ -3587,10 +4166,19 @@ export const keywordData: KeywordEntry[] = [
       syntax:
         "GESSCHARTNUMFORMAT = <formatstring>;\nDefault: GESSCHARTNUMFORMAT =' (#)';",
     },
+    en: {
+      description: '',
+      syntax:
+        "GESSCHARTNUMFORMAT = <formatstring>;\nDefault: GESSCHARTNUMFORMAT =' (#)';",
+    },
   },
   {
     name: 'GESSCHARTPRINTFILE',
     de: {
+      description: '',
+      syntax: 'GESSCHARTPRINTFILE [ PS | PDF ] = <filename>;',
+    },
+    en: {
       description: '',
       syntax: 'GESSCHARTPRINTFILE [ PS | PDF ] = <filename>;',
     },
@@ -3613,6 +4201,11 @@ export const keywordData: KeywordEntry[] = [
   {
     name: 'GLOBALASALPHA',
     de: {
+      description: '',
+      syntax:
+        'GLOBALASALPHA = [ YES | NO ];\nGLOBALOPENASALPHA = [ YES | NO ];',
+    },
+    en: {
       description: '',
       syntax:
         'GLOBALASALPHA = [ YES | NO ];\nGLOBALOPENASALPHA = [ YES | NO ];',
@@ -3679,12 +4272,18 @@ export const keywordData: KeywordEntry[] = [
   {
     name: 'GRAPHAREA',
     de: { description: '', syntax: 'GRAPHAREA = <x> <y> <width> <height> ;' },
+    en: { description: '', syntax: 'GRAPHAREA = <x> <y> <width> <height> ;' },
   },
   {
     name: 'GRAPHBOX',
     de: {
       description:
         'Kasten mit der Liniengraphik in PROFILE 637-Tabellen | HEADERBOX | Kasten um den HEADER |     |     |     | | --------- | -------------------- | --- | --- | --- | 516, außerhalb der Tabelle | INSTITUTION | Kasten um die INSTITUTION |     | 520-Angabe |     | | ----------- | ------------------------- | --- | ---------- | --- | LABELS X |     | VALUELABELS | 211 auf der X-Achse |     |     | | ---…',
+    },
+    en: {
+      description:
+        'Box with the line graphic in PROFILE 637 tables | HEADERBOX | box around the HEADER 516, outside the table | INSTITUTION | box around the INSTITUTION 520 line | LABELS X | box around VALUELABELS 211 on the X axis |…',
+      syntax: '',
     },
   },
   {
@@ -3761,6 +4360,8 @@ export const keywordData: KeywordEntry[] = [
     en: {
       description:
         'Using GROUPRECODE group variables can also be recoded. Example: GROUPRECODE GRR 3=5; checks in the third variable of the group whether it is relevant and if yes the value of this variable is deleted and the fifth variable is set to TRUE. Instead of the constant RECODE value after the equals sign there can also be a variable name of a nuclear variable (see above).',
+      syntax:
+        'GROUPRECODE <recode> { / <recode> }*n [ ELSE = <number> ] ;\n<recode> ::= <valuelist> = < number >\n< valuelist > ::= [ <number> | <number> : <number> | <valuelist>',
     },
   },
   {
@@ -3785,6 +4386,7 @@ export const keywordData: KeywordEntry[] = [
   {
     name: 'GT',
     de: { description: 'Greater Then, größer als' },
+    en: { description: 'Greater Than', syntax: '' },
   },
   {
     name: 'HARMONICMEAN',
@@ -3792,6 +4394,11 @@ export const keywordData: KeywordEntry[] = [
     de: {
       description:
         'Das harmonische Mittel: Kehrwert aus dem Mittelwert der Kehrwerte (nur für positive Zahlen definiert). Findet in Name Beschreibung speziellen Fällen Anwendung, z.B. als Mittelwert über Geschwindigkeiten etc.',
+    },
+    en: {
+      description:
+        'The harmonic mean: the reciprocal of the mean of the reciprocals (defined only for positive numbers). Used in special cases, e.g. as a mean over speeds, etc.',
+      syntax: '',
     },
   },
   {
@@ -3809,6 +4416,7 @@ export const keywordData: KeywordEntry[] = [
     en: {
       description:
         'VARIABLE a1 : v1 = a2 ; It is the XTAB version of a very simple TABLE statement: TABLE = a1 BY a2; The command looks cumbersome mainly because the variable a2 is passed on using an internal construct (a local table variable v1) which already has been allocated after the ROW key word.…',
+      syntax: 'HEADER = "<text>" [ LEFT | HCENTER | RIGHT ] ;',
     },
   },
   {
@@ -3872,6 +4480,11 @@ export const keywordData: KeywordEntry[] = [
     de: {
       description:
         '] parts ::= part { part }*n part ::= content [ filter ] [ option ] content ::= [ <constant> | <varname> | <cellelement> ( <varname> [ <varname> ] ) | <cellelement> ( <varname> [ <varname> ] BY <varname> ) :DESCRIPTION :USEVARTITLE :FORMAT ] filter ::= FILTER <bedingung> | option ::= SORT sortcontent [ sortpane ] [ cut ] sortcontent ::= [ DESCEND ] sorttype sorttype ::= [ POSITION | ALPHA | CODE |…',
+    },
+    en: {
+      description:
+        '] parts ::= part { part }*n part ::= content [ filter ] [ option ] content ::= [ <constant> | <varname> | <cellelement> ( <varname> [ <varname> ] ) | <cellelement> ( <varname> [ <varname> ] BY <varname> ) :DESCRIPTION :USEVARTITLE :FORMAT ] filter ::= FILTER <condition> | option ::= SORT sortcontent [ sortpane ] [ cut ] sortcontent ::= [ DESCEND ] sorttype sorttype ::= [ POSITION | ALPHA | CODE |…',
+      syntax: '',
     },
   },
   {
@@ -3946,10 +4559,18 @@ export const keywordData: KeywordEntry[] = [
       description: '',
       syntax: "HTML2EXCELDECCHAR = <char>;\n<char> = '.' | ','",
     },
+    en: {
+      description: '',
+      syntax: "HTML2EXCELDECCHAR = <char>;\n<char> = '.' | ','",
+    },
   },
   {
     name: 'HTML2EXCELFLOWTEXT',
     de: {
+      description: '',
+      syntax: 'HTML2EXCELFLOWTEXT <boxtype> = [ YES | NO ];',
+    },
+    en: {
       description: '',
       syntax: 'HTML2EXCELFLOWTEXT <boxtype> = [ YES | NO ];',
     },
@@ -3969,6 +4590,12 @@ export const keywordData: KeywordEntry[] = [
       syntax:
         'HTMLCHART <options> = <cells>;\n<options> ::= [ TITLE <string> | FORM <form> | OPTION STACKED\n| LINETENSION <number> | HTMLCHARTWIDTH = <number>;\n| WIDTH <number> | CELLELEMENT <cellelement>\n| LEGENDPOSITION [ LEFT | RIGHT | TOP | BOTTOM ] ] [ INVERSE ]\n<cells> ::= [ | ROWS <rows> ] [ | COLUMNS <columns> ]',
     },
+    en: {
+      description:
+        'TITLE "all cells without overcodes, absolute" FORM COLUMNS OPTION STACKED CELLELEMENT ABSOLUTE = | COLUMNS 2/1:5 3/1:5 | ROWS POSITION 1:5 ; Technical prerequisite: the charts in the GESStabs HTML output are based on the external library \'Charts.min.js\'. This can be embedded from the internet via the URL https://cdn.jsdelivr.net/npm/chart.js@2.8.0. This has been the standard behaviour so far.…',
+      syntax:
+        'HTMLCHART <options> = <cells>;\n<options> ::= [ TITLE <string> | FORM <form> | OPTION STACKED\n| LINETENSION <number> | HTMLCHARTWIDTH = <number>;\n| WIDTH <number> | CELLELEMENT <cellelement>\n| LEGENDPOSITION [ LEFT | RIGHT | TOP | BOTTOM ] ] [ INVERSE ]\n<cells> ::= [ | ROWS <rows> ] [ | COLUMNS <columns> ]',
+    },
   },
   {
     name: 'HTMLCHARTWIDTH',
@@ -3981,10 +4608,16 @@ export const keywordData: KeywordEntry[] = [
       description:
         'überträgt die Informationen der DOCUMENT 521-Box in die HTML-Ausgabe.',
     },
+    en: {
+      description:
+        'transfers the information of the DOCUMENT 521 box into the HTML output.',
+      syntax: '',
+    },
   },
   {
     name: 'HTMLFLOWTEXT',
     de: { description: '', syntax: 'HTMLFLOWTEXT <boxtype> = [ YES | NO ];' },
+    en: { description: '', syntax: 'HTMLFLOWTEXT <boxtype> = [ YES | NO ];' },
   },
   {
     name: 'HTMLFOOTER',
@@ -4008,16 +4641,30 @@ export const keywordData: KeywordEntry[] = [
       description:
         'überträgt die Informationen der HEADER 516-Box in die HTML- Ausgabe.',
     },
+    en: {
+      description:
+        'transfers the information of the HEADER 516 box into the HTML output.',
+      syntax: '',
+    },
   },
   {
     name: 'HYCOLCHIQU',
     de: { description: 'Hybrider 447 Chi²-Test (gewichtet und ungewichtet)' },
+    en: {
+      description: 'Hybrid 447 chi-square test (weighted and unweighted)',
+      syntax: '',
+    },
   },
   {
     name: 'HYCOLDEPTTEST',
     de: {
       description:
         'Hybrid 447 ausgestalteter t-Test für abhängige Daten. Der t- ( Var ) Wert wird auf der Basis der gewichteten Daten ermittelt, der t- Test erfolgt auf der Basis der ungewichteten Freiheitsgrade',
+    },
+    en: {
+      description:
+        'Hybrid 447 t-test for dependent data. The t-value ( Var ) is determined on the basis of the weighted data; the t-test is carried out on the basis of the unweighted degrees of freedom',
+      syntax: '',
     },
   },
   {
@@ -4030,6 +4677,11 @@ export const keywordData: KeywordEntry[] = [
     de: {
       description:
         'McNemar 449 hybrid: aus den gewichteten Daten wird der Anteil der diskordanten Paare ermittelt. Aus dem gewichtet ermittelten Anteil der diskordanten Paare werden hypothetische ungewichtete Häufigkeiten für diese ermittelt. Diese bilden dann die Grundlage des McNemar-Tests.',
+    },
+    en: {
+      description:
+        'McNemar 449 hybrid: the proportion of discordant pairs is determined from the weighted data. From the weighted proportion of discordant pairs, hypothetical unweighted frequencies are derived for them. These then form the basis of the McNemar test.',
+      syntax: '',
     },
   },
   {
@@ -4050,6 +4702,7 @@ export const keywordData: KeywordEntry[] = [
   {
     name: 'HYPERLINK',
     de: { description: '', syntax: 'HYPERLINK = <URI> <text> ;' },
+    en: { description: '', syntax: 'HYPERLINK = <URI> <text> ;' },
   },
   {
     name: 'HYROWCHIQU',
@@ -4067,6 +4720,11 @@ export const keywordData: KeywordEntry[] = [
       description:
         'Hybrider 447, zeilenweiser t-Test: Die t-Werte werden auf Basis der gewichteten Daten errechnet, die Freiheitsgrade zur Name Beschreibung Berechnung der p-Werte der t-Verteilung ergeben sich aus den ungewichteten Häufigkeiten.',
     },
+    en: {
+      description:
+        'Hybrid 447, row-wise t-test: the t-values are computed on the basis of the weighted data; the degrees of freedom for computing the p-values of the t-distribution are derived from the unweighted frequencies.',
+      syntax: '',
+    },
   },
   {
     name: 'HYROWZ',
@@ -4080,12 +4738,22 @@ export const keywordData: KeywordEntry[] = [
       description:
         'Hybrider 447 t-Test: Die t-Werte werden auf Basis der gewichteten Daten errechnet, die Freiheitsgrade zur Berechnung der p-Werte der t-Verteilung ergeben sich aus den ungewichteten Häufigkeiten.',
     },
+    en: {
+      description:
+        'Hybrid 447 t-test: the t-values are computed on the basis of the weighted data; the degrees of freedom for computing the p-values of the t-distribution are derived from the unweighted frequencies.',
+      syntax: '',
+    },
   },
   {
     name: 'HYWELCHTEST',
     de: {
       description:
         'Hybrider 447 t-Test auf Mittelwerteunterschiede nach Welch 450 auf Basis der gewichteten Daten',
+    },
+    en: {
+      description:
+        'Hybrid 447 t-test on mean differences per Welch 450 on the basis of the weighted data',
+      syntax: '',
     },
   },
   {
@@ -4104,6 +4772,11 @@ export const keywordData: KeywordEntry[] = [
       description:
         'Wenn man eine Variable gegen sich selbst tabelliert, sind die Besetzungen natürlich hochsignifikant, aber aussageleer. Die Ausgabe der Signifikanzkennzeichnung kann hiermit unterdrückt werden.',
     },
+    en: {
+      description:
+        'When a variable is tabulated against itself, the counts are of course highly significant but meaningless. This suppresses the output of the significance marking.',
+      syntax: '',
+    },
   },
   {
     name: 'IF',
@@ -4121,10 +4794,12 @@ export const keywordData: KeywordEntry[] = [
   {
     name: 'IFASFIF',
     de: { description: '', syntax: 'IFASFIF = [ YES | NO ];' },
+    en: { description: '', syntax: 'IFASFIF = [ YES | NO ];' },
   },
   {
     name: 'IFBLOCK',
     de: { description: '', syntax: 'IFBLOCK <bedingung> THEN' },
+    en: { description: '', syntax: 'IFBLOCK <condition> THEN' },
   },
   {
     name: 'IGNOREASCOUTDUPL',
@@ -4134,6 +4809,7 @@ export const keywordData: KeywordEntry[] = [
   {
     name: 'IGNORECASEINCOMPARE',
     de: { description: '', syntax: 'IGNORECASEINCOMPARE = [ YES | NO ];' },
+    en: { description: '', syntax: 'IGNORECASEINCOMPARE = [ YES | NO ];' },
   },
   {
     name: 'IGNOREDOUBLECASENO',
@@ -4174,10 +4850,12 @@ export const keywordData: KeywordEntry[] = [
   {
     name: 'IGNORESPSSMISSINGVALUES',
     de: { description: '', syntax: 'IGNORESPSSMISSINGVALUES = [ YES | NO ];' },
+    en: { description: '', syntax: 'IGNORESPSSMISSINGVALUES = [ YES | NO ];' },
   },
   {
     name: 'IGNORESPSSSYSMISVAL',
     de: { description: '', syntax: 'IGNORESPSSSYSMISVAL = [ YES | NO ];' },
+    en: { description: '', syntax: 'IGNORESPSSSYSMISVAL = [ YES | NO ];' },
   },
   {
     name: 'IGNORETABINTEXT',
@@ -4200,6 +4878,11 @@ export const keywordData: KeywordEntry[] = [
       description:
         'Einschluss von Wertemengen/-bereichen Logische Verknüpfungen sind möglich mit:',
     },
+    en: {
+      description:
+        'Inclusion of value sets / ranges. Logical connectives are possible with:',
+      syntax: '',
+    },
   },
   {
     name: 'INCH',
@@ -4212,6 +4895,7 @@ export const keywordData: KeywordEntry[] = [
     en: {
       description:
         'Defines an INCLUDE file. Commands from the INCLUDE file are interpreted as if they were in place of the INCLUDE commands. Example: INCLUDE = VARNAME.def; INCLUDE = Labels.def; This can be used for example to administrate the variable definitions and the VALUELABELS in different files so that changes in the column positions etc only have to be changed in the definition part. In the',
+      syntax: 'INCLUDE = <filename.inc>;',
     },
   },
   {
@@ -4220,6 +4904,11 @@ export const keywordData: KeywordEntry[] = [
       description: '',
       syntax:
         'INCLUDETITLEINTEXT <varlist> = [ YES | NO ];\nFür alle Variablen, die in <varlist> aufgeführt sind, wird der VARTEXT um den Inhalt von',
+    },
+    en: {
+      description: '',
+      syntax:
+        'INCLUDETITLEINTEXT <varlist> = [ YES | NO ];\nFor all variables listed in <varlist>, the VARTEXT is extended by the content of',
     },
   },
   {
@@ -4230,6 +4919,7 @@ export const keywordData: KeywordEntry[] = [
   {
     name: 'INDENTAUTOOVERSORT',
     de: { description: '', syntax: 'INDENTAUTOOVERSORT = [ YES | NO ];' },
+    en: { description: '', syntax: 'INDENTAUTOOVERSORT = [ YES | NO ];' },
   },
   {
     name: 'INDEPENDENT',
@@ -4242,6 +4932,7 @@ export const keywordData: KeywordEntry[] = [
     en: {
       description:
         'e.g. INDEXCHARS = "GEHT"; allocates a (small or large) G to the first test column, an E to the second, an H to the third and a T to the fourth. The letters A – Z are preset. TESTCOLUMNS are taken into account. The letters A – Z can initially be used as INDEXCHARS to deal with 26 columns.…',
+      syntax: 'INDEXCHARS = "<letters | characters>";',
     },
   },
   {
@@ -4282,6 +4973,11 @@ export const keywordData: KeywordEntry[] = [
       syntax:
         'INHERITBACKGROUND [ X | Y ] = [ YES | NO ];\nINHERITFOREGROUND [ X | Y ] = [ YES | NO ];',
     },
+    en: {
+      description: '',
+      syntax:
+        'INHERITBACKGROUND [ X | Y ] = [ YES | NO ];\nINHERITFOREGROUND [ X | Y ] = [ YES | NO ];',
+    },
   },
   {
     name: 'INHERITFONT',
@@ -4315,6 +5011,7 @@ export const keywordData: KeywordEntry[] = [
   {
     name: 'INSTANTPDF',
     de: { description: '', syntax: 'INSTANTPDF = [ YES | NO ];' },
+    en: { description: '', syntax: 'INSTANTPDF = [ YES | NO ];' },
   },
   {
     name: 'INSTITUTION',
@@ -4326,6 +5023,7 @@ export const keywordData: KeywordEntry[] = [
     en: {
       description:
         'Specifies the printing of the name of the institute added at the bottom left edge. The valid text is expanded to the right. Repeated use of the INSTITUTION statements can lead to meaningless results. (PS): this text can have more than one line in output from Postscript printers with the backslash marking the end of a row.',
+      syntax: 'INSTITUTION = "<text>";',
     },
   },
   {
@@ -4341,6 +5039,11 @@ export const keywordData: KeywordEntry[] = [
   {
     name: 'INTERVALS',
     de: {
+      description: '',
+      syntax:
+        'INTERVALS <newvar> = <sourcevar> { | <labeltext> :\n<comparison> <comparevalue> }*n;\n<comparison> ::= [ LT | GT | LE | GE ]',
+    },
+    en: {
       description: '',
       syntax:
         'INTERVALS <newvar> = <sourcevar> { | <labeltext> :\n<comparison> <comparevalue> }*n;\n<comparison> ::= [ LT | GT | LE | GE ]',
@@ -4368,26 +5071,39 @@ export const keywordData: KeywordEntry[] = [
         'CHARTTITLE "Eine GESStabsArtist Graphik auf der Basis der Mittelwerte aus der OVERVIEW-Tabelle\\CELLELEMENT MEAN" CELLELEMENT MEAN',
       syntax: 'INVERSE : [YES | NO]',
     },
+    en: {
+      description:
+        'CHARTTITLE "A GESStabs Artist graphic based on the means from the OVERVIEW table\\CELLELEMENT MEAN" CELLELEMENT MEAN',
+      syntax: 'INVERSE : [YES | NO]',
+    },
   },
   {
     name: 'INVERTFILEWEIGHTOUT',
     de: { description: '', syntax: 'INVERTFILEWEIGHTOUT = <variable>;' },
+    en: { description: '', syntax: 'INVERTFILEWEIGHTOUT = <variable>;' },
   },
   {
     name: 'INVERTIN',
     de: { description: '', syntax: 'INVERTIN = <path>;' },
+    en: { description: '', syntax: 'INVERTIN = <path>;' },
   },
   {
     name: 'INVERTOUT',
     de: { description: '', syntax: 'INVERTOUT = <path>;' },
+    en: { description: '', syntax: 'INVERTOUT = <path>;' },
   },
   {
     name: 'INVERTOUTMAX',
     de: { description: '', syntax: 'INVERTOUTMAX = <number>;' },
+    en: { description: '', syntax: 'INVERTOUTMAX = <number>;' },
   },
   {
     name: 'INVERTOUTVARS',
     de: {
+      description: '',
+      syntax: 'INVERTOUTVARS [ KEEPVARS | DELETEVARS ] = <varlist>;',
+    },
+    en: {
       description: '',
       syntax: 'INVERTOUTVARS [ KEEPVARS | DELETEVARS ] = <varlist>;',
     },
@@ -4451,6 +5167,11 @@ export const keywordData: KeywordEntry[] = [
       syntax:
         'KEY OPENQFILE = <varname> ;\nIn der Regel wird hierzu die CASENUMBER verwendet; man kann aber beliebige Variablen als\nSchlüssel in OpenQFiles verwenden. Diese Variable muss atomar sein; darf aber auch vom Typ',
     },
+    en: {
+      description: '',
+      syntax:
+        'KEY OPENQFILE = <varname> ;\nAs a rule the CASENUMBER is used for this; but you can use any variable as a\nkey in OpenQFiles. This variable must be atomic; it may, however, also be of type',
+    },
   },
   {
     name: 'KEYDUMP',
@@ -4462,6 +5183,11 @@ export const keywordData: KeywordEntry[] = [
     de: {
       description:
         'Syntaxstrukturen werden so aufgeführt: Dies ist die grundsätzliche Syntaxstruktur einer GESStabs-Funktionalität. Beispielhafte Syntaxausschnitte sehen entsprechend aus: Dies ist ein beispielhafter Syntaxabschnitt Einführung in die Tabellierung',
+    },
+    en: {
+      description:
+        'Syntax structures are presented as follows: this is the basic syntax structure of a GESStabs feature. Example syntax excerpts look accordingly: this is an example syntax section. Introduction to tabulation',
+      syntax: '',
     },
   },
   {
@@ -4490,6 +5216,7 @@ export const keywordData: KeywordEntry[] = [
     en: {
       description:
         '1 "18#24" 2 "25#30" 3 "31#45" 4 "46#60" 5 "61 and älter"; SINGLEQ Bezirk = 43',
+      syntax: 'LABELS : [0 | 1 | 2]',
     },
   },
   {
@@ -4530,10 +5257,15 @@ export const keywordData: KeywordEntry[] = [
   {
     name: 'LABELVALUE',
     de: { description: '', syntax: 'LABELVALUE <numvariable> = <variable>;' },
+    en: { description: '', syntax: 'LABELVALUE <numvariable> = <variable>;' },
   },
   {
     name: 'LABELWIDTH',
     de: {
+      description: '',
+      syntax: 'LABELWIDTH : <number>\nCOLUMNWIDTH : <number>',
+    },
+    en: {
       description: '',
       syntax: 'LABELWIDTH : <number>\nCOLUMNWIDTH : <number>',
     },
@@ -4546,6 +5278,7 @@ export const keywordData: KeywordEntry[] = [
   {
     name: 'LANGUAGES',
     de: { description: '', syntax: 'LANGUAGES = <csv-file-name>;' },
+    en: { description: '', syntax: 'LANGUAGES = <csv-file-name>;' },
   },
   {
     name: 'LASTVERSION',
@@ -4580,6 +5313,10 @@ export const keywordData: KeywordEntry[] = [
   {
     name: 'LEGENDPOSITION',
     de: {
+      description: '',
+      syntax: 'LEGENDPOSITION : [TOP | BOTTOM | LEFT | RIGHT]',
+    },
+    en: {
       description: '',
       syntax: 'LEGENDPOSITION : [TOP | BOTTOM | LEFT | RIGHT]',
     },
@@ -4620,6 +5357,11 @@ export const keywordData: KeywordEntry[] = [
       description:
         'Erzwingt in VALUELABELS 211 oder VARTITLE 210s einen Zeilenumbruch. Voreinstellung: \\',
     },
+    en: {
+      description:
+        'Forces a line break in VALUELABELS 211 or VARTITLE 210. Default: \\',
+      syntax: '',
+    },
   },
   {
     name: 'LINEFEEDFACTOR',
@@ -4651,6 +5393,10 @@ export const keywordData: KeywordEntry[] = [
     de: {
       description: 'Die Dicke des Umrandungsstrichs. 0.0 = keine Umrandung.',
     },
+    en: {
+      description: 'The thickness of the border line. 0.0 = no border.',
+      syntax: '',
+    },
   },
   {
     name: 'LIST',
@@ -4663,6 +5409,7 @@ export const keywordData: KeywordEntry[] = [
     en: {
       description:
         'Normally the interpretation of the commands is logged on the screen. This log or parts of it can be directed into a file which is declared as a LISTFILE. Example: LISTFILE = Tables.Err; If the interpretation is to appear back on the screen as of a certain point this can be achieved using: LISTFILE = con;',
+      syntax: 'LISTFILE = <filename>;',
     },
   },
   {
@@ -4726,6 +5473,11 @@ export const keywordData: KeywordEntry[] = [
       syntax:
         'LOCALTEXTFORMAT <#<char> <option> ;\n<char> ::= frei zu wählender Char (case-sensitive)\n<option> ::= [ FOREGROUND <color> | USEFONT <fontname> SIZE\n<size> ]',
     },
+    en: {
+      description: '',
+      syntax:
+        'LOCALTEXTFORMAT <#<char> <option> ;\n<char> ::= freely chosen char (case-sensitive)\n<option> ::= [ FOREGROUND <color> | USEFONT <fontname> SIZE\n<size> ]',
+    },
   },
   {
     name: 'LOCKMETHOD',
@@ -4772,10 +5524,16 @@ export const keywordData: KeywordEntry[] = [
       description:
         'von Einzeltabellen zerlegen. TABLE = a BY b SORT ABSOLUTE DESCEND SLICE 15; Hiermit wird eine Tabelle mit z.B. 55 Einzelitems in der Variablen b in 4 Seiten zerlegt. Falls eine Zerlegung eine Restseite mit nur einer Nennung ergeben würde, wird diese Nennung mit auf die Vorseite gedruckt. Eine Tabelle mit 61 Items würde also auf 4 und nicht auf 5 Seiten gedruckt.',
     },
+    en: {
+      description:
+        'split into individual tables. TABLE = a BY b SORT ABSOLUTE DESCEND SLICE 15; This splits a table with e.g. 55 individual items in the variable b into 4 pages. If a split would produce a leftover page with only one response, this response is printed on the previous page. A table with 61 items would thus be printed on 4 and not on 5 pages.',
+      syntax: '',
+    },
   },
   {
     name: 'LT',
     de: { description: 'Lower Then, kleiner als' },
+    en: { description: 'Lower Than', syntax: '' },
   },
   {
     name: 'MACRO',
@@ -4838,10 +5596,18 @@ export const keywordData: KeywordEntry[] = [
       description: '',
       syntax: 'MAKESINGLE <newvar> [ = <arithm.expression> ];',
     },
+    en: {
+      description: '',
+      syntax: 'MAKESINGLE <newvar> [ = <arithm.expression> ];',
+    },
   },
   {
     name: 'MAKESINGLES',
     de: {
+      description: '',
+      syntax: 'MAKESINGLES <newvarlist> [ = <sourcelist> ] ;',
+    },
+    en: {
       description: '',
       syntax: 'MAKESINGLES <newvarlist> [ = <sourcelist> ] ;',
     },
@@ -4867,6 +5633,7 @@ export const keywordData: KeywordEntry[] = [
   {
     name: 'MARKCELLEXCELSPECIAL',
     de: { description: '', syntax: 'MARKCELLEXCELSPECIAL = [ YES | NO ];' },
+    en: { description: '', syntax: 'MARKCELLEXCELSPECIAL = [ YES | NO ];' },
   },
   {
     name: 'MARKCELLS',
@@ -4893,6 +5660,11 @@ export const keywordData: KeywordEntry[] = [
       syntax:
         'MARKCELLSMETHOD = [ CLASSIC | COLCHIQU | ROWCHIQU\n| HYCOLCHIQU | HYROWCHIQU ];',
     },
+    en: {
+      description: '',
+      syntax:
+        'MARKCELLSMETHOD = [ CLASSIC | COLCHIQU | ROWCHIQU\n| HYCOLCHIQU | HYROWCHIQU ];',
+    },
   },
   {
     name: 'MARKMEANCOL',
@@ -4910,7 +5682,11 @@ export const keywordData: KeywordEntry[] = [
       description:
         'Max-Wert In der einfachsten Form lautet ein DATA-Statement z.B.: DATA MEAN GlobMeanQ1 = Q1; Die Variable Q1 in dem Beispiel muss existieren. Als Resultat steht dann im Tabellierungsprozess die neue atomare Variable "GlobMeanQ1" zur Verfügung. Ihr Wert ist der globale Mittelwert von Q1 über alle eingelesenen Fälle.…',
     },
-    en: { description: '', syntax: 'MAX <varname> = <Varlist>;' },
+    en: {
+      description:
+        'Max value. In its simplest form a DATA statement reads e.g.: DATA MEAN GlobMeanQ1 = Q1; The variable Q1 in the example must exist. As a result, the new atomic variable "GlobMeanQ1" is then available in the tabulation process. Its value is the global mean of Q1 over all cases read in.…',
+      syntax: 'MAX <varname> = <Varlist>;',
+    },
   },
   {
     name: 'MAXCODEBOOKLINES',
@@ -4922,6 +5698,7 @@ export const keywordData: KeywordEntry[] = [
     en: {
       description:
         'Determines the maximum number of rows per page in a CODEBOOK table. Preset: MAXCODEBOOKLINES = 50; The following TABLEFORMATs are valid for CODEBOOK tables:',
+      syntax: 'MAXCODEBOOKLINES = <number>;\nDefault: MAXCODEBOOKLINES = 50;',
     },
   },
   {
@@ -4931,10 +5708,19 @@ export const keywordData: KeywordEntry[] = [
       syntax:
         'MAXCOLSPERTABLEPAGE = <number>;\nMAXROWSPERTABLEPAGE = <number>;',
     },
+    en: {
+      description: '',
+      syntax:
+        'MAXCOLSPERTABLEPAGE = <number>;\nMAXROWSPERTABLEPAGE = <number>;',
+    },
   },
   {
     name: 'MAXIMUMWEIGHT',
     de: {
+      description: '',
+      syntax: 'MAXIMUMWEIGHT = <number>;\nMINIMUMWEIGHT = <number>;',
+    },
+    en: {
       description: '',
       syntax: 'MAXIMUMWEIGHT = <number>;\nMINIMUMWEIGHT = <number>;',
     },
@@ -4948,11 +5734,17 @@ export const keywordData: KeywordEntry[] = [
     en: {
       description:
         'Preset for the control of weighting. MINIMUMWEIGHT and MAXIMUMWEIGHT set the minimum or maximum weight of a case. MINIMUMWFACT and MAXIMUMWFACT set a limit for the factorial alteration of the weight per iteration cycle. Preset: MAXIMUMWEIGHT = 1E+20; MINIMUMWEIGHT = 0; MAXIMUMWFACT = 1E+20; MINIMUMWFACT = 0; (usually no limitations)',
+      syntax: 'MAXIMUMWFACT = <number>;\nMINIMUMWFACT = <number>;',
     },
   },
   {
     name: 'MAXINDEX',
     de: {
+      description: '',
+      syntax:
+        'MAXINDEX <resultvar> = <varlist>;\nMININDEX <resultvar> = <varlist>;',
+    },
+    en: {
       description: '',
       syntax:
         'MAXINDEX <resultvar> = <varlist>;\nMININDEX <resultvar> = <varlist>;',
@@ -4988,12 +5780,17 @@ export const keywordData: KeywordEntry[] = [
   {
     name: 'MAXWEIGHTITERATIONS',
     de: { description: '', syntax: 'MAXWEIGHTITERATIONS = <number>;' },
+    en: { description: '', syntax: 'MAXWEIGHTITERATIONS = <number>;' },
   },
   {
     name: 'MCNEMAR',
     de: {
       description:
         'Abhängiger Test auf Prozentwertunterschiede nach McNemar 449',
+    },
+    en: {
+      description: 'Dependent test on percentage differences per McNemar 449',
+      syntax: '',
     },
   },
   {
@@ -5029,6 +5826,11 @@ export const keywordData: KeywordEntry[] = [
       description:
         'Spaltenweise Darstellung des Mittelwertes als Index auf der Basis 100, jeweils auf den Mittelwert in der Totalspalte bezogen',
     },
+    en: {
+      description:
+        'Column-wise display of the mean as an index on the base of 100, each relative to the mean in the total column',
+      syntax: '',
+    },
   },
   {
     name: 'MEANCUT',
@@ -5036,6 +5838,11 @@ export const keywordData: KeywordEntry[] = [
     de: {
       description:
         'Spezieller Mittelwerte: MEANCUT schneidet am unteren und oberen Ende der Verteilung die Extremwerte ab, und berechnet den Mittelwert auf der Basis der verbleibenden Verteilung je Zelle. Kann die Extremgruppe nicht aus ganzen Fällen gebildet werden, wird anteilige Gewichtung verwendet. Die Größe Extremabschnitte wird in Prozentpunkten definiert:…',
+    },
+    en: {
+      description:
+        'Special mean: MEANCUT cuts off the extreme values at the lower and upper end of the distribution and computes the mean on the basis of the remaining distribution per cell. If the extreme group cannot be formed from whole cases, proportional weighting is used. The size of the extreme sections is defined in percentage points:…',
+      syntax: '',
     },
   },
   {
@@ -5061,6 +5868,11 @@ export const keywordData: KeywordEntry[] = [
       description:
         "Von der Berechnung her ist MEANP (vorgesehen als: MEAN für Prozentwerte) exakt dasselbe wie MEAN 423. Der zweite Bezeichner dient nur dazu, dass man diesem CELLELEMENT ein abweichendes FORMAT 566 oder DESCRIPTION geben kann. Als Default hat dieses CELLELEMENT die DESCRIPTION 385 'fake%'. Für die Tabellenausgabe wird man dies ggf. besser in '%' ändern.",
     },
+    en: {
+      description:
+        "In terms of calculation, MEANP (intended as: MEAN for percentage values) is exactly the same as MEAN 423. The second identifier only serves to allow this CELLELEMENT to be given a different FORMAT 566 or DESCRIPTION. By default this CELLELEMENT has the DESCRIPTION 385 'fake%'. For table output it is often better to change this to '%'.",
+      syntax: '',
+    },
   },
   {
     name: 'MEANPHYSTTEST',
@@ -5073,12 +5885,22 @@ export const keywordData: KeywordEntry[] = [
       description:
         'Ergänzend zu MEANP (also im Kern: MEAN) gibt noch eine kleine',
     },
+    en: {
+      description:
+        'In addition to MEANP (at its core: MEAN) there is also a small',
+      syntax: '',
+    },
   },
   {
     name: 'MEANQP100',
     de: {
       description:
         'Erweiterung: MEANQP. Parallel zur Summe und zur Basis (Summe der Gewichte) wird eine Summe aller negativen Werte und der dazugehörigen Gewichte geführt. Als Resultat liefert dieses CELLELEMENT den Quotienten der Mittelwerte der positiven und der negativen Werte. MEANQP100 ist von der Berechnung her identisch, der Wert wird lediglich mit 100 multipliziert.',
+    },
+    en: {
+      description:
+        'extension: MEANQP. In parallel with the sum and the base (sum of weights), a sum of all negative values and their weights is kept. As a result, this CELLELEMENT returns the quotient of the means of the positive and the negative values. MEANQP100 is identical in calculation; the value is simply multiplied by 100.',
+      syntax: '',
     },
   },
   {
@@ -5088,12 +5910,22 @@ export const keywordData: KeywordEntry[] = [
       description:
         'Zeilenweise Darstellung des Mittelwertes als Index, jeweils auf den Mittelwert in der Totalzeile bezogen',
     },
+    en: {
+      description:
+        'Row-wise display of the mean as an index, each relative to the mean in the total row',
+      syntax: '',
+    },
   },
   {
     name: 'MEANTEST',
     de: {
       description:
         ': DESCRIPTION "Mittelwert" ( item_5 ); Es entsteht die gewünschte Tabelle: Bestandteile einer Tabelle können durch Filter bestimmt werden Makros Nun kann man natürlich auch den Wunsch haben, die Männer und die Frauen nicht nebeneinander darzustellen, sondern übereinander. Ein Weg dahin ist, für die fünf Items jeweils nach dem Geschlecht gefilterte Variablen zu erstellen.…',
+    },
+    en: {
+      description:
+        ': DESCRIPTION "Mean" ( item_5 ); The desired table results. Parts of a table can be determined by filters. Macros: now you may of course also wish not to show the men and the women side by side but one above the other. One way to do this is to create variables filtered by sex for each of the five items.…',
+      syntax: '',
     },
   },
   {
@@ -5112,6 +5944,11 @@ export const keywordData: KeywordEntry[] = [
     de: {
       description:
         'Der Median einer dritten Variable in allen Zellen. Bei Median wie bei allen Perzentilen wird innerhalb von GESStabs dann interpoliert, wenn es mit dem TABLEFORMAT PERCENTILEINTERPOL verlangt wird. MEDIAN und PCNTL1 bis PCNTL4 424 sind in einer Zelle kombinierbar; dabei wird untereinander erst PCNTL1, dann MEDIAN und zuletzt PCNTL2 ausgegeben.',
+    },
+    en: {
+      description:
+        'The median of a third variable in all cells. As with the median and all percentiles, GESStabs interpolates when this is requested with the TABLEFORMAT PERCENTILEINTERPOL. MEDIAN and PCNTL1 to PCNTL4 424 can be combined in one cell; PCNTL1 is then output first, then MEDIAN and finally PCNTL2.',
+      syntax: '',
     },
   },
   {
@@ -5254,6 +6091,7 @@ export const keywordData: KeywordEntry[] = [
     en: {
       description:
         'defines the character used to mark MISSING values for input and output. Preset: MISSINGCHAR = "M";',
+      syntax: 'MISSINGCHAR = "<char>";\nDefault: MISSINGCHAR = "M";',
     },
   },
   {
@@ -5279,6 +6117,7 @@ export const keywordData: KeywordEntry[] = [
   {
     name: 'MODIFYCSVNAMES',
     de: { description: '', syntax: 'MODIFYCSVNAMES = [ YES | NO ];' },
+    en: { description: '', syntax: 'MODIFYCSVNAMES = [ YES | NO ];' },
   },
   {
     name: 'MODIFYVARNAME',
@@ -5315,6 +6154,11 @@ export const keywordData: KeywordEntry[] = [
       syntax:
         'MULTIFROMSTRING [ DELIMITED <delimiter> ] [ DECIMALS <decimalchar> ] <newvar>\n= <alfavar>;',
     },
+    en: {
+      description: '',
+      syntax:
+        'MULTIFROMSTRING [ DELIMITED <delimiter> ] [ DECIMALS <decimalchar> ] <newvar>\n= <alfavar>;',
+    },
   },
   {
     name: 'MULTIQ',
@@ -5340,6 +6184,7 @@ export const keywordData: KeywordEntry[] = [
     en: {
       description:
         'Defines the text in CODEBOOKs which refers to possible multi-responses. Preset: MULTISTRING= "Mehrfachnennungen möglich"; This is valid for all tables until changed.',
+      syntax: 'MULTISTRING = "<text>";',
     },
   },
   {
@@ -5372,12 +6217,18 @@ export const keywordData: KeywordEntry[] = [
   {
     name: 'NE',
     de: { description: 'Not Equal, ist ungleich' },
+    en: { description: 'Not Equal', syntax: '' },
   },
   {
     name: 'NEG',
     de: {
       description:
         'negativer Wert Beispiel: COMPUTE x = ENTIER( NEG( b / 2 ) ); Arithmetische Operatoren für Ganze Werte Auch wenn GESStabs keine echten Ganzen Werte kennt, kann es interessant sein, den "Rest" einer Division zu kennen. Dazu stehen folgende Operatoren bereit:',
+    },
+    en: {
+      description:
+        'negative value. Example: COMPUTE x = ENTIER( NEG( b / 2 ) ); Arithmetic operators for whole numbers: even though GESStabs has no true whole-number type, it can be useful to know the "remainder" of a division. The following operators are available for this:',
+      syntax: '',
     },
   },
   {
@@ -5388,6 +6239,7 @@ export const keywordData: KeywordEntry[] = [
   {
     name: 'NEWOPENFORMAT',
     de: { description: '', syntax: 'NEWOPENFORMAT = [ YES | NO ];' },
+    en: { description: '', syntax: 'NEWOPENFORMAT = [ YES | NO ];' },
   },
   {
     name: 'NEWOPENQFORMAT',
@@ -5399,6 +6251,11 @@ export const keywordData: KeywordEntry[] = [
     de: {
       description:
         'Seitenumbruch vor dem Label (Synonym: PAGE), siehe auch Layout 543',
+    },
+    en: {
+      description:
+        'Page break before the label (synonym: PAGE), see also Layout 543',
+      syntax: '',
     },
   },
   {
@@ -5416,6 +6273,11 @@ export const keywordData: KeywordEntry[] = [
     de: {
       description:
         'leere Variable (praktisch z.B. bei TABLE ADD 391) Der Versuch, eigene Variablen mit diesen Namen zu generieren, führt zu einem Fehler. Mit HIDDENTOVARLIST kann gesteuert werden, ob Systemvariablen bei der Nennung von Variablenlisten 20 (mittels TO) mit erfasst werden sollen.',
+    },
+    en: {
+      description:
+        'empty variable (useful e.g. with TABLE ADD 391). Attempting to generate your own variables with these names results in an error. HIDDENTOVARLIST controls whether system variables should be included when naming variable lists 20 (via TO).',
+      syntax: '',
     },
   },
   {
@@ -5454,6 +6316,7 @@ export const keywordData: KeywordEntry[] = [
     en: {
       description:
         'Normally ASCII data sets which have been produced by GESS tabs are finished with a right- justified *.Should this not occur it can be achieved with a switch.',
+      syntax: 'NOASCIIEXTENSION = [ YES | NO ];',
     },
   },
   {
@@ -5504,6 +6367,7 @@ export const keywordData: KeywordEntry[] = [
   {
     name: 'NOCSV',
     de: { description: '', syntax: 'NOCSV <varlist> = YES;' },
+    en: { description: '', syntax: 'NOCSV <varlist> = YES;' },
   },
   {
     name: 'NODESCRIPTION',
@@ -5522,10 +6386,16 @@ export const keywordData: KeywordEntry[] = [
       description:
         'Leere CELLELEMENTS 418 (z.B. ein leerer Ergebnistext für einen Signifikanztest) werden durch den ZERODASHCHAR 529 ersetzt.',
     },
+    en: {
+      description:
+        'Empty CELLELEMENTS 418 (e.g. an empty result text for a significance test) are replaced by the ZERODASHCHAR 529.',
+      syntax: '',
+    },
   },
   {
     name: 'NOEXPANDAT',
     de: { description: '', syntax: 'NOEXPANDAT <varlist> = [ YES | NO ];' },
+    en: { description: '', syntax: 'NOEXPANDAT <varlist> = [ YES | NO ];' },
   },
   {
     name: 'NOFRAME',
@@ -5543,12 +6413,22 @@ export const keywordData: KeywordEntry[] = [
       description:
         'Unterdrückt das, ansonsten standardmäßig dargestellte, rechtsstehende Histogramm in CODEBOOK 346s und PROFILE 637 -Tabellen.',
     },
+    en: {
+      description:
+        'Suppresses the otherwise default right-hand histogram in CODEBOOK 346 and PROFILE 637 tables.',
+      syntax: '',
+    },
   },
   {
     name: 'NOGRID',
     de: {
       description:
         'Unterdrückt die, ansonsten standardmäßig dargestellte, Skala für Lineingrafiken in PROFILE 637-Tabellen.',
+    },
+    en: {
+      description:
+        'Suppresses the otherwise default scale for line graphics in PROFILE 637 tables.',
+      syntax: '',
     },
   },
   {
@@ -5575,6 +6455,7 @@ export const keywordData: KeywordEntry[] = [
   {
     name: 'NOINPUT',
     de: { description: '', syntax: 'NOINPUT <varlist> = [ YES | NO ];' },
+    en: { description: '', syntax: 'NOINPUT <varlist> = [ YES | NO ];' },
   },
   {
     name: 'NOINSTITUTIONINCSV',
@@ -5584,6 +6465,7 @@ export const keywordData: KeywordEntry[] = [
   {
     name: 'NOINVERTADDON',
     de: { description: '', syntax: 'NOINVERTADDON = [ YES | NO ];' },
+    en: { description: '', syntax: 'NOINVERTADDON = [ YES | NO ];' },
   },
   {
     name: 'NOIOCHECK',
@@ -5629,6 +6511,7 @@ export const keywordData: KeywordEntry[] = [
     en: {
       description:
         'In TABLEBASE = NOMINATIONS the standard text is "No. of responses abs.". This can be replaced. Example: NOMINATIONTITLE = "Nennungen"; Different texts are possible for the X and Y axes analogue to CASESTITLE (see above). It is valid for all tables until changed.',
+      syntax: 'NOMINATIONTITLE [X|Y] = "<text>";',
     },
   },
   {
@@ -5659,6 +6542,7 @@ export const keywordData: KeywordEntry[] = [
   {
     name: 'NOOUTPUT',
     de: { description: '', syntax: 'NOOUTPUT <varlist> = [ YES | NO ];' },
+    en: { description: '', syntax: 'NOOUTPUT <varlist> = [ YES | NO ];' },
   },
   {
     name: 'NOQOUOTESINCSV',
@@ -5668,6 +6552,7 @@ export const keywordData: KeywordEntry[] = [
   {
     name: 'NOQUOTESINCSV',
     de: { description: '', syntax: 'NOQUOTESINCSV = [ YES | NO ];' },
+    en: { description: '', syntax: 'NOQUOTESINCSV = [ YES | NO ];' },
   },
   {
     name: 'NORANKING',
@@ -5675,10 +6560,16 @@ export const keywordData: KeywordEntry[] = [
       description:
         'Ausschluss aus Ranking, siehe Sortierungen 468 Vergabe eines Zähllevels zur Steuerung der Ausgabe in Tabellen (relevant',
     },
+    en: {
+      description:
+        'Exclusion from ranking, see Sortings 468. Assignment of a count level to control the output in tables (relevant',
+      syntax: '',
+    },
   },
   {
     name: 'NOREPORT',
     de: { description: '', syntax: 'NOREPORT <varlist> = [ YES | NO ];' },
+    en: { description: '', syntax: 'NOREPORT <varlist> = [ YES | NO ];' },
   },
   {
     name: 'NORMAL',
@@ -5708,12 +6599,18 @@ export const keywordData: KeywordEntry[] = [
   {
     name: 'NOSPSS',
     de: { description: '', syntax: 'NOSPSS <varlist> = [ YES | NO ];' },
+    en: { description: '', syntax: 'NOSPSS <varlist> = [ YES | NO ];' },
   },
   {
     name: 'NOT',
     de: {
       description:
         'Nicht Assoziationen müssen explizit durch Klammerung angegeben werden; ungeklammerte Reihungen von OR und AND werden von links nach rechts abgearbeitet. Die verbreitete abkürzende Schreibweise (z.B. "a EQ 1 OR 2" anstelle von "a EQ 1 OR a EQ 2" etc. ist nicht erlaubt. Hierfür gibt es die IN 303-Formulierung. Stringkonstanten sind erlaubt.…',
+    },
+    en: {
+      description:
+        'Not. Associations must be given explicitly by bracketing; unbracketed sequences of OR and AND are processed from left to right. The common abbreviated notation (e.g. "a EQ 1 OR 2" instead of "a EQ 1 OR a EQ 2" etc.) is not allowed. The IN 303 formulation exists for this. String constants are allowed.…',
+      syntax: '',
     },
   },
   {
@@ -5750,6 +6647,7 @@ export const keywordData: KeywordEntry[] = [
   {
     name: 'NOWRAPINTEXT',
     de: { description: '', syntax: 'NOWRAPINTEXT = [ YES | NO ] ;' },
+    en: { description: '', syntax: 'NOWRAPINTEXT = [ YES | NO ] ;' },
   },
   {
     name: 'NOXVARTITLEBOX',
@@ -5773,12 +6671,22 @@ export const keywordData: KeywordEntry[] = [
       description:
         'Unterdrückt die Ergänzung führender Nullen im LABELFORMAT 569-Statement.',
     },
+    en: {
+      description:
+        'Suppresses the addition of leading zeros in the LABELFORMAT 569 statement.',
+      syntax: '',
+    },
   },
   {
     name: 'NUMBERCHAR',
     de: {
       description:
         'Wird in TABLETITLE 516s durch die aktuelle Tabellennummer ersetzt. Voreinstellung: #',
+    },
+    en: {
+      description:
+        'Is replaced by the current table number in TABLETITLE 516. Default: #',
+      syntax: '',
     },
   },
   {
@@ -5792,6 +6700,11 @@ export const keywordData: KeywordEntry[] = [
       description:
         '| FORM RECTANGLE COLUMNS 1 ROWS 2 | FORM RECTANGLE COLUMNS 2 ROWS 1 2 ; Das einfachste Chart erweitert um Optionen für Form und Farbe 2a: Vier Charts auf einer Seite im Querformat Im folgenden Beispiel wurden vier Charts auf Basis derselben Tabelle auf einer Seite im Querformat abgebildet.…',
     },
+    en: {
+      description:
+        '| FORM RECTANGLE COLUMNS 1 ROWS 2 | FORM RECTANGLE COLUMNS 2 ROWS 1 2 ; The simplest chart extended with options for shape and colour. 2a: Four charts on one page in landscape format. In the following example, four charts based on the same table were arranged on one page in landscape format.…',
+      syntax: '',
+    },
   },
   {
     name: 'NUMERIC',
@@ -5803,6 +6716,11 @@ export const keywordData: KeywordEntry[] = [
     de: {
       description:
         'CHARTTITLE "Ehemalige Parteiwähler von CDU, SPD und Grüne/GAL wählen:" = | COLUMNS POSITION 2:4 ROWS POSITION 1:8 ; GESSCHART PIE SAMEPAGE',
+    },
+    en: {
+      description:
+        'CHARTTITLE "Former party voters of CDU, SPD and Greens/GAL vote:" = | COLUMNS POSITION 2:4 ROWS POSITION 1:8 ; GESSCHART PIE SAMEPAGE',
+      syntax: '',
     },
   },
   {
@@ -5837,6 +6755,11 @@ export const keywordData: KeywordEntry[] = [
       syntax:
         'OFFICEEXPORT = <filename>;\n<filename> muss eine der folgenden Extensionen haben : xlsx | xls | ods. über die Extension',
     },
+    en: {
+      description: '',
+      syntax:
+        'OFFICEEXPORT = <filename>;\n<filename> must have one of the following extensions: xlsx | xls | ods. The output type is determined by the extension',
+    },
   },
   {
     name: 'OFFICEEXPORTOPTIONS',
@@ -5850,10 +6773,19 @@ export const keywordData: KeywordEntry[] = [
       syntax:
         'OFFICEFONT <fontname> SIZE <number> [OPTION [BOLD|ITALIC|UNDERLINE]]',
     },
+    en: {
+      description: '',
+      syntax:
+        'OFFICEFONT <fontname> SIZE <number> [OPTION [BOLD|ITALIC|UNDERLINE]]',
+    },
   },
   {
     name: 'OFFICEFORMAT',
     de: {
+      description: '',
+      syntax: 'OFFICEFORMAT <cellelement> : <formatstring>',
+    },
+    en: {
       description: '',
       syntax: 'OFFICEFORMAT <cellelement> : <formatstring>',
     },
@@ -5876,6 +6808,7 @@ export const keywordData: KeywordEntry[] = [
   {
     name: 'OLDGROUPCLEARMETHOD',
     de: { description: '', syntax: 'OLDGROUPCLEARMETHOD = [ YES | NO ];' },
+    en: { description: '', syntax: 'OLDGROUPCLEARMETHOD = [ YES | NO ];' },
   },
   {
     name: 'ONQUESTIONNAIRE',
@@ -5899,6 +6832,8 @@ export const keywordData: KeywordEntry[] = [
     en: {
       description:
         'Usually the results of the coding are taken from the OPENQFILEs but the texts can also be used verbatim which is achieved using: OPENASALPHA <varlist> = [ YES | NO ];',
+      syntax:
+        'OPENASALPHA <varlist> = [ YES | NO ];\nGLOBALOPENASALPHA = [ YES | NO ];',
     },
   },
   {
@@ -5908,10 +6843,16 @@ export const keywordData: KeywordEntry[] = [
       syntax:
         'OPENAUTOGENERATE = [ YES | MULTIQ <number> [ PREFIX <text> ] ]\n| ALPHA [ PREFIX <text> ] ];\nDie einfachste Version lautet: OPENAUTOGENERATE = YES;',
     },
+    en: {
+      description: '',
+      syntax:
+        'OPENAUTOGENERATE = [ YES | MULTIQ <number> [ PREFIX <text> ] ]\n| ALPHA [ PREFIX <text> ] ];\nThe simplest version reads: OPENAUTOGENERATE = YES;',
+    },
   },
   {
     name: 'OPENCSV',
     de: { description: '', syntax: 'OPENCSV = [ YES | NO ];' },
+    en: { description: '', syntax: 'OPENCSV = [ YES | NO ];' },
   },
   {
     name: 'OPENOFFICEDEVIATION',
@@ -5924,6 +6865,7 @@ export const keywordData: KeywordEntry[] = [
     en: {
       description:
         'If open questions are to be used at least one OPENQFILE must be defined. GESS tabs reads all OPENQFILEs and creates a data bank which allocates which values belong to which case numbers. The OPENQFILE statement has the same syntax as the DATAFILE statement.…',
+      syntax: 'OPENQFILE = <name.opn>;',
     },
   },
   {
@@ -5944,6 +6886,10 @@ export const keywordData: KeywordEntry[] = [
   {
     name: 'OPTION',
     de: {
+      description: '',
+      syntax: 'OPTION : [CLUSTERED | STACKED | PERCENTSTACKED]',
+    },
+    en: {
       description: '',
       syntax: 'OPTION : [CLUSTERED | STACKED | PERCENTSTACKED]',
     },
@@ -5982,6 +6928,11 @@ export const keywordData: KeywordEntry[] = [
       syntax:
         'OVERCODE [<ocname>] { :<label> }*n "<text des OVERCODEs"\n<ocname> ::= neuer eindeutiger Name des OVERCODEs',
     },
+    en: {
+      description: 'Formation and naming of an over-code 262',
+      syntax:
+        'OVERCODE [<ocname>] { :<label> }*n "<text of the OVERCODE>"\n<ocname> ::= new unique name of the OVERCODE',
+    },
   },
   {
     name: 'OVERCODE SUM',
@@ -5991,6 +6942,7 @@ export const keywordData: KeywordEntry[] = [
   {
     name: 'OVERLAPPED',
     de: { description: 'Die graphischen Elemente überlappend darstellen' },
+    en: { description: 'Show the graphical elements overlapping', syntax: '' },
   },
   {
     name: 'OVEROVERCODE',
@@ -5998,6 +6950,11 @@ export const keywordData: KeywordEntry[] = [
       description: '',
       syntax:
         'OVEROVERCODE [ SUM ] <oocname> { :<ocname> }*n\n"<text des OVEROVERCODEs"\n<oocname> ::= neuer eindeutiger Name des OVEROVERCODE\n<ocname> ::= gültiger Name eines bestehenden OVERCODE',
+    },
+    en: {
+      description: '',
+      syntax:
+        'OVEROVERCODE [ SUM ] <oocname> { :<ocname> }*n\n"<text of the OVEROVERCODE>"\n<oocname> ::= new unique name of the OVEROVERCODE\n<ocname> ::= valid name of an existing OVERCODE',
     },
   },
   {
@@ -6012,6 +6969,12 @@ export const keywordData: KeywordEntry[] = [
         'TITLE "Tabelle mit vererbter Sortierung, SORT AS „overbase“" SORT AS overbase = #k BY MEAN STDDEV( #domacro2 ( m_name 11:16; a ) ); Sortierung vererben: Basistabelle Tabelle mit vererbter Sortierung Die neue Implementierung von „SORT AS“ erlaubt auch die Vererbung von Reihenfolgen im Kopf von Tabellen. Wir wandeln unser Beispiel kurz ab, und zeigen formal dieselbe Information in einem XOVERVIEW.…',
       syntax:
         'OVERVIEW <tableoptions> = <kopf> BY <cellelementlist> ( <varlist> )\n[ SORT <cellelement> [ DESCEND ] [ PANE <number> CODE <number> ] ] ;\n<varlist> ::= { <variable [ <varoption> ] }*n\n<varoption> ::=\n[ SORTCLASS <number> ]\n[ LEVEL <number> ]',
+    },
+    en: {
+      description:
+        'TITLE "Table with inherited sorting, SORT AS „overbase“" SORT AS overbase = #k BY MEAN STDDEV( #domacro2 ( m_name 11:16; a ) ); Inherit sorting: base table, table with inherited sorting. The new implementation of „SORT AS“ also allows the inheritance of orders in the header of tables. We modify our example briefly and show formally the same information in an XOVERVIEW.…',
+      syntax:
+        'OVERVIEW <tableoptions> = <header> BY <cellelementlist> ( <varlist> )\n[ SORT <cellelement> [ DESCEND ] [ PANE <number> CODE <number> ] ] ;\n<varlist> ::= { <variable [ <varoption> ] }*n\n<varoption> ::=\n[ SORTCLASS <number> ]\n[ LEVEL <number> ]',
     },
   },
   {
@@ -6084,6 +7047,11 @@ export const keywordData: KeywordEntry[] = [
       description:
         'Pattern 1 = gepunktet.) Jede Farbe wird entweder nach dem HSB-Modell (Hue-Saturation-',
     },
+    en: {
+      description:
+        'Pattern 1 = dotted.) Each colour is chosen either by the HSB model (Hue-Saturation-',
+      syntax: '',
+    },
   },
   {
     name: 'PATTERNERROR',
@@ -6097,12 +7065,22 @@ export const keywordData: KeywordEntry[] = [
       description:
         'Frei wählbare Percentil. Voreingestellt sind für PCNTL1 das',
     },
+    en: {
+      description:
+        'Freely selectable percentile. For PCNTL1 the default is the',
+      syntax: '',
+    },
   },
   {
     name: 'PCNTL2',
     argsHint: '( Var )',
     de: {
       description: '1.Quartil und für PCNTL2 das 3. Quartil, d.h. jeweils 25%',
+    },
+    en: {
+      description:
+        '1st quartile and for PCNTL2 the 3rd quartile, i.e. 25% each',
+      syntax: '',
     },
   },
   {
@@ -6111,6 +7089,11 @@ export const keywordData: KeywordEntry[] = [
     de: {
       description:
         'PCNTL4 ( Var ) bzw. 75% der Zellenverteilung. Mit zusätzlichen Statements kann die Grenze und der Text der Percentilauswertung individuell gewählt werden, Beispiel: PCNTL1 = 33.333% "1.Drittel"; PCNTL2 = 66.667% "2.Drittel"; Es wird dann interpoliert, wenn es mit dem TABLEFORMAT PERCENTILEINTERPOL 540 verlangt wird.',
+    },
+    en: {
+      description:
+        'PCNTL4 ( Var ) or 75% of the cell distribution. With additional statements the boundary and the text of the percentile evaluation can be chosen individually, example: PCNTL1 = 33.333% "1st third"; PCNTL2 = 66.667% "2nd third"; Interpolation is done when requested with the TABLEFORMAT PERCENTILEINTERPOL 540.',
+      syntax: '',
     },
   },
   {
@@ -6123,6 +7106,10 @@ export const keywordData: KeywordEntry[] = [
     argsHint: '( Var )',
     de: {
       description: 'Ausgabe des 1. und 2. Perzentils als Spanne in einer Zeile',
+    },
+    en: {
+      description: 'Output of the 1st and 2nd percentile as a span on one line',
+      syntax: '',
     },
   },
   {
@@ -6146,6 +7133,11 @@ export const keywordData: KeywordEntry[] = [
     de: {
       description:
         'Ausgabe der Differenz zwischen dem 1. und 2. Perzentil Name Beschreibung',
+    },
+    en: {
+      description:
+        'Output of the difference between the 1st and 2nd percentile. Name Description',
+      syntax: '',
     },
   },
   {
@@ -6201,12 +7193,22 @@ export const keywordData: KeywordEntry[] = [
       description:
         'Differenz zwischen gewichteten und ungewichteten Spaltenprozenten',
     },
+    en: {
+      description:
+        'Difference between weighted and unweighted column percentages',
+      syntax: '',
+    },
   },
   {
     name: 'PHYSCOLDEPTTEST',
     de: {
       description:
         'Abhängiger, spaltenweiser t-Test auf Basis der gewichteten Daten',
+    },
+    en: {
+      description:
+        'Dependent, column-wise t-test on the basis of the weighted data',
+      syntax: '',
     },
   },
   {
@@ -6217,6 +7219,10 @@ export const keywordData: KeywordEntry[] = [
   {
     name: 'PHYSCOLPERCENT',
     de: { description: 'Spaltenprozente, auf Basis ungewichteter Zahlen' },
+    en: {
+      description: 'Column percentages, based on unweighted figures',
+      syntax: '',
+    },
   },
   {
     name: 'PHYSDEPTTEST',
@@ -6225,12 +7231,22 @@ export const keywordData: KeywordEntry[] = [
       description:
         'Abhängiger t-Test auf Mittelwertsunterschiede auf Basis der ungewichteten Daten',
     },
+    en: {
+      description:
+        'Dependent t-test on mean differences on the basis of the unweighted data',
+      syntax: '',
+    },
   },
   {
     name: 'PHYSICALC',
     de: {
       description:
         'Physikalische Fallzahl (ohne Berücksichtigung von Gewichten) in der Spalte',
+    },
+    en: {
+      description:
+        'Physical case count (without taking weights into account) in the column',
+      syntax: '',
     },
   },
   {
@@ -6248,6 +7264,7 @@ export const keywordData: KeywordEntry[] = [
     en: {
       description:
         'Serves to replace the standard text "unweighted" with the indicator of columns or rows with "unweighted n". (See FRAMEELEMENTS, PHYSICALROW or PHYSICALCOLUMN). Example: PHYSICALNTITLE = "Zahl der Be-frag-ten"; X and Y frame texts can be set differently analogue to TOTALTITLE. This is valid for all tables until changed.',
+      syntax: 'PHYSICALNTITLE = "<text>";',
     },
   },
   {
@@ -6256,20 +7273,35 @@ export const keywordData: KeywordEntry[] = [
       description:
         'Physikalische Fallzahl (ohne Berücksichtigung von Gewichten) in der Zeile',
     },
+    en: {
+      description:
+        'Physical case count (without taking weights into account) in the row',
+      syntax: '',
+    },
   },
   {
     name: 'PHYSICALRECORDS',
     de: { description: 'ungewichtete Zahl der Fälle' },
+    en: { description: 'unweighted number of cases', syntax: '' },
   },
   {
     name: 'PHYSICALROW',
     de: { description: 'und folgende drei Arten von Rahmenspalten:' },
+    en: {
+      description: 'and the following three kinds of frame columns:',
+      syntax: '',
+    },
   },
   {
     name: 'PHYSMCNEMAR',
     de: {
       description:
         'Abhängiger Test auf Prozentwertunterschied auf Basis der ungewichteten Daten nach McNemar 449',
+    },
+    en: {
+      description:
+        'Dependent test on percentage differences on the basis of the unweighted data per McNemar 449',
+      syntax: '',
     },
   },
   {
@@ -6307,12 +7339,22 @@ export const keywordData: KeywordEntry[] = [
     de: {
       description: 'Zeilenweiser Chi²-Test auf Basis der ungewichteten Daten',
     },
+    en: {
+      description:
+        'Row-wise chi-square test on the basis of the unweighted data',
+      syntax: '',
+    },
   },
   {
     name: 'PHYSROWDELTA',
     de: {
       description:
         'Differenz zwischen den gewichteten und ungewichteten Zeilenprozenten.',
+    },
+    en: {
+      description:
+        'Difference between the weighted and unweighted row percentages.',
+      syntax: '',
     },
   },
   {
@@ -6330,12 +7372,21 @@ export const keywordData: KeywordEntry[] = [
     de: {
       description: 'Zeilenprozente, auf Basis einer ungewichteten Zählung',
     },
+    en: {
+      description: 'Row percentages, based on an unweighted count',
+      syntax: '',
+    },
   },
   {
     name: 'PHYSROWTTEST',
     de: {
       description:
         'Unabhängiger, zeilenweiser t-Test auf Mittelwertunterschiede auf Basis der ungewichteten Daten. Name Beschreibung',
+    },
+    en: {
+      description:
+        'Independent, row-wise t-test on mean differences on the basis of the unweighted data. Name Description',
+      syntax: '',
     },
   },
   {
@@ -6345,12 +7396,22 @@ export const keywordData: KeywordEntry[] = [
       description:
         'Unabhängiger t-Test auf Mittelwertsunterschiede auf Basis der ungewichteten Daten',
     },
+    en: {
+      description:
+        'Independent t-test on mean differences on the basis of the unweighted data',
+      syntax: '',
+    },
   },
   {
     name: 'PHYSWELCHTEST',
     de: {
       description:
         'Unabhängiger t-Test auf Mittelwerteunterschiede nach Welch 450 auf Basis der ungewichteten Daten',
+    },
+    en: {
+      description:
+        'Independent t-test on mean differences per Welch 450 on the basis of the unweighted data',
+      syntax: '',
     },
   },
   {
@@ -6400,6 +7461,11 @@ export const keywordData: KeywordEntry[] = [
         'Mit POSITION kann die Position vorgegeben werden, an der das neue Label (oder auch OVERCODE 262) in die Labelliste eingefügt wird. Die Zählung ist 1-basiert. Möchte man z.B. ein Label vor allen bestehenden einfügen, so schreibt man etwa: LABELS testvar = ADD POSITION 1',
       syntax: 'POSITION "<cellrange>"',
     },
+    en: {
+      description:
+        'With POSITION the position can be specified at which the new label (or also OVERCODE 262) is inserted into the label list. Counting is 1-based. If you want e.g. to insert a label before all existing ones, you write something like: LABELS testvar = ADD POSITION 1',
+      syntax: 'POSITION "<cellrange>"',
+    },
   },
   {
     name: 'POSTPONE',
@@ -6413,10 +7479,19 @@ export const keywordData: KeywordEntry[] = [
       syntax:
         'POSTPROCESS <Cellelement> : [ IF-Statement | COMPUTE-Statement ];',
     },
+    en: {
+      description: '',
+      syntax:
+        'POSTPROCESS <Cellelement> : [ IF-Statement | COMPUTE-Statement ];',
+    },
   },
   {
     name: 'POSTREPLACE',
     de: {
+      description: '',
+      syntax: 'POSTREPLACE <cellelement> : <text1> = <text2> [ IF <text3> ] ;',
+    },
+    en: {
       description: '',
       syntax: 'POSTREPLACE <cellelement> : <text1> = <text2> [ IF <text3> ] ;',
     },
@@ -6495,6 +7570,11 @@ export const keywordData: KeywordEntry[] = [
       syntax:
         'PRINTALL <varlist> = [ YES | NO ];\nGLOBALPRINTALL = [ YES | NO ];',
     },
+    en: {
+      description: '',
+      syntax:
+        'PRINTALL <varlist> = [ YES | NO ];\nGLOBALPRINTALL = [ YES | NO ];',
+    },
   },
   {
     name: 'PRINTDICTIONARY',
@@ -6523,10 +7603,12 @@ export const keywordData: KeywordEntry[] = [
   {
     name: 'PRINTSUPPRESSVALUE',
     de: { description: '', syntax: 'PRINTSUPPRESSVALUE = <number>;' },
+    en: { description: '', syntax: 'PRINTSUPPRESSVALUE = <number>;' },
   },
   {
     name: 'PRINTWEIGHTPROTOCOL',
     de: { description: '', syntax: 'PRINTWEIGHTPROTOCOL = [ YES | NO ];' },
+    en: { description: '', syntax: 'PRINTWEIGHTPROTOCOL = [ YES | NO ];' },
   },
   {
     name: 'PROFILE',
@@ -6595,6 +7677,11 @@ export const keywordData: KeywordEntry[] = [
       description:
         'absolute Häufigkeitswerte: Summe der Gewichte, multipliziert mit dem PROJECTIONFACTOR Hiermit kann man eine Stichprobe anhand der gewichteten Verteilung auf die Grundgesamtheit hochrechnen. Der PROJECTIONFACTOR kann mit der Anweisung PROJECTIONFACTOR = <Wert>; gesetzt werden. Voreinstellung: 1.0.',
     },
+    en: {
+      description:
+        'absolute frequency values: sum of weights, multiplied by the PROJECTIONFACTOR. With this you can project a sample onto the population using the weighted distribution. The PROJECTIONFACTOR can be set with the instruction PROJECTIONFACTOR = <value>; Default: 1.0.',
+      syntax: '',
+    },
   },
   {
     name: 'PROJECTIONFACTOR',
@@ -6607,10 +7694,15 @@ export const keywordData: KeywordEntry[] = [
     de: {
       description: "Darstellung der Summe von 'Var', multipliziert mit dem",
     },
+    en: {
+      description: "Display of the sum of 'Var', multiplied by the",
+      syntax: '',
+    },
   },
   {
     name: 'PROTOCOLPAGE',
     de: { description: '', syntax: 'PROTOCOLPAGE = [ YES | NO ];' },
+    en: { description: '', syntax: 'PROTOCOLPAGE = [ YES | NO ];' },
   },
   {
     name: 'PS',
@@ -6633,6 +7725,11 @@ export const keywordData: KeywordEntry[] = [
       description:
         '| kombiniert mit | COLPERCANDCHIQU |     |     |     | COLPERCANDHYCHIQU | | -------------- | --------------- | --- | --- | --- | ----------------- | % | z-Test | COLPERCZ  |     |     |     |     | | ------ | --------- | --- | --- | --- | --- |',
     },
+    en: {
+      description:
+        '| combined with | COLPERCANDCHIQU |     |     |     | COLPERCANDHYCHIQU | | -------------- | --------------- | --- | --- | --- | ----------------- | % | z-test | COLPERCZ  |     |     |     |     | | ------ | --------- | --- | --- | --- | --- |',
+      syntax: '',
+    },
   },
   {
     name: 'QUALITAB',
@@ -6647,6 +7744,7 @@ export const keywordData: KeywordEntry[] = [
   {
     name: 'QUANTUMINCHARS',
     de: { description: '', syntax: 'QUANTUMINCHARS = <filename>;' },
+    en: { description: '', syntax: 'QUANTUMINCHARS = <filename>;' },
   },
   {
     name: 'QUESTION',
@@ -6669,6 +7767,11 @@ export const keywordData: KeywordEntry[] = [
       description:
         'RANDOM von einer negativen Zahl ist undefiniert. Der Aufruf COMPUTE xx = RANDOM( Max) mit einem positiven Argument "Max" liefert eine ganzzahlige Zufallszahl im Range 0 .. Max-1.',
     },
+    en: {
+      description:
+        'RANDOM of a negative number is undefined. The call COMPUTE xx = RANDOM( Max) with a positive argument "Max" returns an integer random number in the range 0 .. Max-1.',
+      syntax: '',
+    },
   },
   {
     name: 'RANDOMGROUP',
@@ -6680,6 +7783,11 @@ export const keywordData: KeywordEntry[] = [
     de: {
       description:
         'Mit dem Schlüsselwort RANGE können beliebige Bereiche angefordert und so eine Tabelle mit sehr vielen Ausprägungen zerlegt werden. Zum Beispiel: TABLE = a BY b SORT ABSOLUTE DESCEND RANGE 1 20;',
+    },
+    en: {
+      description:
+        'With the keyword RANGE, arbitrary ranges can be requested and a table with a great many categories can thus be split. For example: TABLE = a BY b SORT ABSOLUTE DESCEND RANGE 1 20;',
+      syntax: '',
     },
   },
   {
@@ -6703,6 +7811,7 @@ export const keywordData: KeywordEntry[] = [
     en: {
       description:
         'Indicator to differentiate between unweighted and weighted tables. Comes directly before DOCUMENT. Preset: RAWDATASTRING = "*"; This is valid for all tables until changed. Options for Printing and Layout of Tables',
+      syntax: 'RAWDATASTRING = "<symbol>";\nDefault: RAWDATASTRING = "*";',
     },
   },
   {
@@ -6713,6 +7822,7 @@ export const keywordData: KeywordEntry[] = [
   {
     name: 'RECHIPREFIX',
     de: { description: '', syntax: 'RECHIPREFIX = "<Zeichenfolge>";' },
+    en: { description: '', syntax: 'RECHIPREFIX = "<string>";' },
   },
   {
     name: 'RECODE',
@@ -6725,11 +7835,14 @@ export const keywordData: KeywordEntry[] = [
     en: {
       description:
         'allows the reprogramming of of individual variable characteristics of the variable defined last or a list of explicitly named variables. Example: RECODE 1 2 3 = 3; summarises the characteristics 1,2 and 3 of the variable defined last to 3. RECODE item1 item2 item3 1 = 4; recodes the characteristics of item1, item2 and item3 of the variable. also possible:…',
+      syntax:
+        'RECODE <recode> { / <recode> }*n [ ELSE = <number> ] ;\n<recode> ::= <valuelist> = < number >\n< valuelist > ::= [ <number> | <number> : <number> | <valuelist>',
     },
   },
   {
     name: 'RECODELASTWINS',
     de: { description: '', syntax: 'RECODELASTWINS = [ YES | NO ];' },
+    en: { description: '', syntax: 'RECODELASTWINS = [ YES | NO ];' },
   },
   {
     name: 'RECODESMALL',
@@ -6771,6 +7884,10 @@ export const keywordData: KeywordEntry[] = [
       description: '',
       syntax: 'REMOVELINEFEEDSFORCONTENT = [ YES | NO ];',
     },
+    en: {
+      description: '',
+      syntax: 'REMOVELINEFEEDSFORCONTENT = [ YES | NO ];',
+    },
   },
   {
     name: 'REPLACE',
@@ -6785,6 +7902,7 @@ export const keywordData: KeywordEntry[] = [
   {
     name: 'REPRINT',
     de: { description: '', syntax: 'REPRINT TABLE = <tablename>;' },
+    en: { description: '', syntax: 'REPRINT TABLE = <tablename>;' },
   },
   {
     name: 'REPRINT TABLE',
@@ -6810,6 +7928,11 @@ export const keywordData: KeywordEntry[] = [
     de: {
       description:
         'Bezeichnung der RESPONSES-Spalte/-zeile (wenn TABLEBASE = RESPONSES; 388 gesetzt)',
+      syntax: 'RESPONSESTITLE [ X | Y ] = "<text>";',
+    },
+    en: {
+      description:
+        'Label of the RESPONSES column/row (when TABLEBASE = RESPONSES; 388 is set)',
       syntax: 'RESPONSESTITLE [ X | Y ] = "<text>";',
     },
   },
@@ -6887,10 +8010,19 @@ export const keywordData: KeywordEntry[] = [
       description:
         '1alter 1000 1.Frage "1.Frage" alter+1 2000.1 Variablenlisten Viele Anweisungen operieren mit einer Liste von Variablen, kurz Varlist. Dies ist in der Syntaxbeschreibung der jeweiligen Anweisung durch <Varlist> gekennzeichnet. Eine Variablenliste besteht im einfachsten Fall aus einer Auflistung von Variablen, z.b: var1 var2 var3 var4 Oft ist es ökonomischer, mit TO zu arbeiten.…',
     },
+    en: {
+      description:
+        '1 alter 1000 1.Frage "1.Frage" alter+1 2000.1 Variable lists: many instructions operate with a list of variables, Varlist for short. In the syntax description of the respective instruction this is marked by <Varlist>. In the simplest case a variable list consists of an enumeration of variables, e.g.: var1 var2 var3 var4. Often it is more economical to work with TO.…',
+      syntax: '',
+    },
   },
   {
     name: 'ROUNDMODE',
     de: {
+      description: '',
+      syntax: 'ROUNDMODE = [ CLASSIC | BANKERSROUNDMODE | SIMPLE ];',
+    },
+    en: {
       description: '',
       syntax: 'ROUNDMODE = [ CLASSIC | BANKERSROUNDMODE | SIMPLE ];',
     },
@@ -6911,12 +8043,22 @@ export const keywordData: KeywordEntry[] = [
       description:
         'Zeilenweise 4-Felder-Chiquadrattest auf Prozentwertunterschiede. Die Kennzeichnung erfolgt analog zu COLCHIQU 428 mit alphabetischer Zeilenkennzeichnung, A ist die erste Zeile, B die zweite, usw. Man kann mit INDEXCHARS 529 eigene Kennzeichen und Reihenfolgen definieren.',
     },
+    en: {
+      description:
+        'Row-wise 4-field chi-square test on percentage differences. The marking is done analogously to COLCHIQU 428 with alphabetic row marking, A is the first row, B the second, etc. With INDEXCHARS 529 you can define your own markers and orders.',
+      syntax: '',
+    },
   },
   {
     name: 'ROWELEMENTWINS',
     de: {
       description:
         'Dies beeinflusst die Auswahl der CELLELEMENTS an Kreuzungspunkten, an denen sowohl für Zeilen als auch für Spalten explizite CELLELEMENTS definiert sind. a) In einer Tabelle werden zwei Variablen gekreuzt, bei denen jeweils labels mit eigenen CELLELEMENTS versehen sind, z.B.: LABELS A =',
+    },
+    en: {
+      description:
+        'This affects the selection of the CELLELEMENTS at intersection points where explicit CELLELEMENTS are defined for both rows and columns. a) In a table two variables are crossed whose labels are each provided with their own CELLELEMENTS, e.g.: LABELS A =',
+      syntax: '',
     },
   },
   {
@@ -6925,6 +8067,11 @@ export const keywordData: KeywordEntry[] = [
     de: {
       description:
         'Wie MEANTEST 430, nur werden die Werte in den Zeilen gegeneinander getestet',
+    },
+    en: {
+      description:
+        'Like MEANTEST 430, only the values in the rows are tested against each other',
+      syntax: '',
     },
   },
   {
@@ -6945,12 +8092,22 @@ export const keywordData: KeywordEntry[] = [
       description:
         'Nach Hare-Niemeyer-Modell modifizierte Zeilenprozentwerte (Summe ergibt 100), Achtung: nicht geeignet bspw. für Mehrfachnennungsvariablen und OVERCODEs, Tabellen mit unterdrückten MISSING VALUES und selektiv gebildete Variablen',
     },
+    en: {
+      description:
+        'Row percentages modified by the Hare-Niemeyer method (sum equals 100). Note: not suitable e.g. for multiple-response variables and OVERCODEs, tables with suppressed MISSING VALUES and selectively built variables',
+      syntax: '',
+    },
   },
   {
     name: 'ROWPERCENTINDEX',
     de: {
       description:
         'Indexwerte zu den Zeilenprozenten (100 entspricht dem Wert in der Totalzeile)',
+    },
+    en: {
+      description:
+        'Index values for the row percentages (100 corresponds to the value in the total row)',
+      syntax: '',
     },
   },
   {
@@ -6974,6 +8131,11 @@ export const keywordData: KeywordEntry[] = [
       description:
         'Testet alle Zeilenprozente in der Zeile auf Gleichheit; d.h. alle Abweichungen von der Ungleichverteilung werden als signifikant betrachtet. Hier besteht natürlich die Möglichkeit, sehr viele unsinnige Signifikanzen zu produzieren. Bitte mit Bedacht verwenden.',
     },
+    en: {
+      description:
+        'Tests all row percentages in the row for equality; i.e. all deviations from the equal distribution are considered significant. This can of course produce a great many meaningless significances. Please use with care.',
+      syntax: '',
+    },
   },
   {
     name: 'ROWPERCSTDERR',
@@ -6986,10 +8148,20 @@ export const keywordData: KeywordEntry[] = [
       description:
         'Signifikanztest (zeilenweise) für Prozentwertsunterschiede. ROWPERCZ basiert auf dem Z-Test für Prozentwerte. Erweiterter Z-Test mit Arcus-Sinus-Korrektur.',
     },
+    en: {
+      description:
+        'Significance test (row-wise) for percentage differences. ROWPERCZ is based on the Z-test for percentage values. Extended Z-test with arcsine correction.',
+      syntax: '',
+    },
   },
   {
     name: 'ROWS',
     de: {
+      description: '',
+      syntax:
+        'ROWS : [TOTALROW | <startrow>[: <endrow>]]\nCOLUMNS : [TOTALCOLUMN | <startcol>[: <endcol>]]',
+    },
+    en: {
       description: '',
       syntax:
         'ROWS : [TOTALROW | <startrow>[: <endrow>]]\nCOLUMNS : [TOTALCOLUMN | <startcol>[: <endcol>]]',
@@ -7000,6 +8172,11 @@ export const keywordData: KeywordEntry[] = [
     de: {
       description:
         'Ist dieses TABLEFORMAT gesetzt, werden die Zeilen von TABLE- Tabellen farblich hinterlegt, und zwar abwechselnd mit den Farben, die in STRIPECOLORS 559 vereinbart wurde.',
+    },
+    en: {
+      description:
+        'If this TABLEFORMAT is set, the rows of TABLE tables are shaded, alternately with the colours declared in STRIPECOLORS 559.',
+      syntax: '',
     },
   },
   {
@@ -7014,6 +8191,11 @@ export const keywordData: KeywordEntry[] = [
       description:
         'Ausgabe der Zeilenprozentuierung der Summe einer dritten Variablen, z.B. die Summe von Name Beschreibung Ausgaben für einen bestimmten Zweck in bestimmten Stadtteilen etc.',
     },
+    en: {
+      description:
+        'Output of the row percentaging of the sum of a third variable, e.g. the sum of expenditures for a particular purpose in particular city districts, etc. Name Description',
+      syntax: '',
+    },
   },
   {
     name: 'ROWTTEST',
@@ -7021,12 +8203,22 @@ export const keywordData: KeywordEntry[] = [
       description:
         'Unabhängiger t-Test auf Mittelwertunterschiede auf Basis der gewichteten Daten, zeilenweise',
     },
+    en: {
+      description:
+        'Independent t-test on mean differences on the basis of the weighted data, row-wise',
+      syntax: '',
+    },
   },
   {
     name: 'SAMEPAGE',
     de: {
       description:
         '= | COLUMNS 1:5 ROWS 65002 65003 ; GESSCHARTFORMAT = STROKERECT; GESSCHARTCOLORS = $AAFFAA $FFAAAA $AAAAFF $FFFFAA $AAFFFF; GESSCHART CHARTTITLE "Skalenmittelwerte Bewertung nach Modellen (vertikal)" INVERSE CHARTAREA 195 15 87 90 SAMEPAGE VERTICAL = | COLUMNS 1:5 ROWS 2/1 AXISMINMAX 0 4 ; GESSCHART CHARTTITLE "Anteil von \'sehr schlecht\'" INVERSE CHARTAREA 195 107 87 88 SAMEPAGE VERTICAL = |…',
+    },
+    en: {
+      description:
+        '= | COLUMNS 1:5 ROWS 65002 65003 ; GESSCHARTFORMAT = STROKERECT; GESSCHARTCOLORS = $AAFFAA $FFAAAA $AAAAFF $FFFFAA $AAFFFF; GESSCHART CHARTTITLE "Scale means rating by models (vertical)" INVERSE CHARTAREA 195 15 87 90 SAMEPAGE VERTICAL = | COLUMNS 1:5 ROWS 2/1 AXISMINMAX 0 4 ; GESSCHART CHARTTITLE "Share of \'very poor\'" INVERSE CHARTAREA 195 107 87 88 SAMEPAGE VERTICAL = |…',
+      syntax: '',
     },
   },
   {
@@ -7063,6 +8255,7 @@ export const keywordData: KeywordEntry[] = [
     en: {
       description:
         'These can be used to define parts of the script as a "foreign code" to be exported. If the name of a SCRIPTEXPORTFILE is set all parts of the script between #STARTEXPORT and #ENDEXPORT are carried over into this file. These texts are also processed and modified by the Macro Expander which is the appeal of this construction. Thus it is possible to output variable names produced by nested macros.…',
+      syntax: 'SCRIPTEXPORTFILE = [ APPEND ] <filename>;',
     },
   },
   {
@@ -7077,6 +8270,11 @@ export const keywordData: KeywordEntry[] = [
       description:
         'Zweiter Mittelwert. Wenn in einer Zelle die Mittelwerte von zwei verschiedenen Variablen ausgegeben werden sollen, muss die zweite Variable über SECONDMEAN angefordert werden.',
     },
+    en: {
+      description:
+        'Second mean. If the means of two different variables are to be output in one cell, the second variable must be requested via SECONDMEAN.',
+      syntax: '',
+    },
   },
   {
     name: 'SECONDSUM',
@@ -7084,6 +8282,11 @@ export const keywordData: KeywordEntry[] = [
     de: {
       description:
         '2. Summe. Wenn in einer Zelle die Summen von zwei verschiedenen Variablen ausgegeben werden sollen, muss die zweite Variable über SECONDSUM angefordert werden.',
+    },
+    en: {
+      description:
+        '2nd sum. If the sums of two different variables are to be output in one cell, the second variable must be requested via SECONDSUM.',
+      syntax: '',
     },
   },
   {
@@ -7096,6 +8299,8 @@ export const keywordData: KeywordEntry[] = [
     en: {
       description:
         'defines an import filter: only those cases which conform to this filter are processed further, i.e. all tables are produced only on the basis of this data; SELECT is a permanent filter as opposed to TABSELECT (see below). SELECT also acts on the output according to COPYFILE or SYSTEMOUT. An iterative weighting also only refers to the selected cases.…',
+      syntax:
+        'SELECT <condition>;\nAll RECODE, RANGES, COMPUTE or IF instructions are carried out before SELECT;',
     },
   },
   {
@@ -7136,6 +8341,7 @@ export const keywordData: KeywordEntry[] = [
     en: {
       description:
         "A MISSING value is automatically inherited on to variables which emanate from the calculation of other variables. If MISSING values go into a calculation or an 'M' is found in the input then the result is a MISSING value. The variable then receives the characteristic allocated by the user with SETMISSING. Example: SETMISSING = 9999;",
+      syntax: 'SETMISSING <varlist> = { number }*n;',
     },
   },
   {
@@ -7162,10 +8368,16 @@ export const keywordData: KeywordEntry[] = [
       description:
         'die folgende Tabelle erscheint Allen Elementen kann man einen Office-Font und Farben zuordnen. NoAutoTableTitle NOAUTOTABLETITLE nimmt Einfluss auf die Voreinstellung, die jede Tabelle in eine OFFICECONTENTPAGE einträgt. Hierfür wird der CONTENTKEY verwendet, und wenn dieser nicht vorhanden ist, wird als Default der TABLETITLE verwendet.…',
     },
+    en: {
+      description:
+        'the following table appears. All elements can be assigned an Office font and colours. NoAutoTableTitle: NOAUTOTABLETITLE influences the default that enters each table into an OFFICECONTENTPAGE. The CONTENTKEY is used for this, and if it is not present, the TABLETITLE is used as the default.…',
+      syntax: '',
+    },
   },
   {
     name: 'SHEETNUMBERCHAR',
     de: { description: '', syntax: 'SHEETNUMBERCHAR = <char>;' },
+    en: { description: '', syntax: 'SHEETNUMBERCHAR = <char>;' },
   },
   {
     name: 'SHOWHELPINTEXT',
@@ -7202,6 +8414,11 @@ export const keywordData: KeywordEntry[] = [
       description:
         'Die Ausgaben von CELLELEMENTS in Tabellen werden grundsätzlich in einer Zeile dargestellt und nicht umgebrochen. Bei sehr ausgiebigen Signifikanztests mit niedrigem Signifikanzniveau können in Abhängigkeit vo der Größe des eingestellten Fonts Aneinanderreihungen von Buchstaben entstehen, die bei schmalen Spalten den verfügbaren Platz überschreiten.…',
     },
+    en: {
+      description:
+        'The output of CELLELEMENTS in tables is generally shown on one line and not wrapped. With very extensive significance tests at a low significance level, depending on the size of the chosen font, strings of letters can arise that exceed the available space in narrow columns.…',
+      syntax: '',
+    },
   },
   {
     name: 'SHUFFLE',
@@ -7223,6 +8440,11 @@ export const keywordData: KeywordEntry[] = [
     de: {
       description:
         'ABC... für 10%-Niveau, abc.... für 20%-Niveau Beschreibung der Signifikanzen Für alle oben benannten Optionen (Signifikanzniveaus) existieren Standardtexte, die das jeweilige Signifikanznivau beschreiben. SignifText Die SIGNIFTEXT-Anweisung dient dazu, diesen Standardtext anzupassen.…',
+    },
+    en: {
+      description:
+        'ABC... for the 10% level, abc.... for the 20% level. Description of the significances: for all the options named above (significance levels) there are default texts that describe the respective significance level. SignifText: the SIGNIFTEXT instruction serves to adjust this default text.…',
+      syntax: '',
     },
   },
   {
@@ -7276,6 +8498,10 @@ export const keywordData: KeywordEntry[] = [
       description: '',
       syntax: 'SIGNIFMINEFFECTCHIQ = <value>;\nSIGNIFMINEFFECTTTEST = <value>;',
     },
+    en: {
+      description: '',
+      syntax: 'SIGNIFMINEFFECTCHIQ = <value>;\nSIGNIFMINEFFECTTTEST = <value>;',
+    },
   },
   {
     name: 'SIGNIFMINEFFECTTTEST',
@@ -7288,6 +8514,11 @@ export const keywordData: KeywordEntry[] = [
       description:
         'Anpassung des Standardtextes zur Beschreibung der SIGNIFLEVEL 454-',
       syntax: 'SIGNIFTEXT <option> = "Text zur Kennzeichnung";',
+    },
+    en: {
+      description:
+        'Adjustment of the default text describing the SIGNIFLEVEL 454',
+      syntax: 'SIGNIFTEXT <option> = "marking text";',
     },
   },
   {
@@ -7330,6 +8561,10 @@ export const keywordData: KeywordEntry[] = [
       description: '',
       syntax: 'SINGLEFROMSTRING = <newvar> = <alphavar>;',
     },
+    en: {
+      description: '',
+      syntax: 'SINGLEFROMSTRING = <newvar> = <alphavar>;',
+    },
   },
   {
     name: 'SINGLEQ',
@@ -7356,12 +8591,22 @@ export const keywordData: KeywordEntry[] = [
         '; Ist die Option MISSING definiert, werden alle Variablen mit MISSING VALUES ausgegeben. Bei EXCLUDEVALUES und RESTRICTVALUES wird eine Liste der betroffenen Variablen mit den vorgefundenen EXCLUDEVALUES bzw. RESTRICTVALUES ausgegeben. POSTPONE ist ein Spezial-Option im Zusammenhang mit INVERTOUT 94 :…',
       syntax: 'SIZE X/Y <points>',
     },
+    en: {
+      description:
+        '; If the option MISSING is defined, all variables with MISSING VALUES are output. With EXCLUDEVALUES and RESTRICTVALUES a list of the affected variables with the EXCLUDEVALUES or RESTRICTVALUES found is output. POSTPONE is a special option in connection with INVERTOUT 94 :…',
+      syntax: 'SIZE X/Y <points>',
+    },
   },
   {
     name: 'SLICE',
     de: {
       description:
         'Mit SLICE kann man eine Tabelle in der Y-Richtung in die erforderliche Anzahl',
+    },
+    en: {
+      description:
+        'With SLICE you can split a table in the Y direction into the required number',
+      syntax: '',
     },
   },
   {
@@ -7370,6 +8615,11 @@ export const keywordData: KeywordEntry[] = [
       description: '',
       syntax:
         'SLICEHEADERFIRST = [ YES | NO ];\nBei SLICEHEADERFIRST=YES; werden zunächst alle Teile des Kopfes (in der X-Richtung',
+    },
+    en: {
+      description: '',
+      syntax:
+        'SLICEHEADERFIRST = [ YES | NO ];\nWith SLICEHEADERFIRST=YES; first all parts of the header (in the X direction',
     },
   },
   {
@@ -7389,6 +8639,7 @@ export const keywordData: KeywordEntry[] = [
     en: {
       description:
         'Summary tables of the type: TABLE = #k by Mean( v1 ) Mean( v2 ) Mean( v3 ) Mean( v4 ) Mean( v5 ) Mean( v6 ) Mean( v7 ) Mean( v8 ) … Mean( v99 ) ; can be spread across several pages using the key word SLICESTATISTICS. After setting SLICESTATISTICS = 35; all the following tables of this type are always divided after 35 such rows.',
+      syntax: 'SLICESTATISTICS = <number>;',
     },
   },
   {
@@ -7412,6 +8663,7 @@ export const keywordData: KeywordEntry[] = [
     en: {
       description:
         'Normally the variable characteristics are printed in the order they are defined in VALUELABELS statement. The variable characteristics in the X or Y-Axis can however also be sorted according to other criteria. The key word SORT is written after the variable name followed by the sort criterion which are as follows: ABSOLUTE acc. to absolute cell content MEAN acc. to arithmetical mean SUM acc.…',
+      syntax: 'SORT AS = [ XVALID | YVALID ];',
     },
   },
   {
@@ -7464,12 +8716,22 @@ export const keywordData: KeywordEntry[] = [
       description:
         'leere Zelle (wird z.B. benötigt, um leere Zeilen bzw. Spalten in Tabellen für Name Beschreibung PowerPoint 202 zu erzeugen) Inkompatibilitäten unter Zellinhalten Aufgrund der internen Speicherstrukturen gibt es einige Inkompatibilitäten unter Zellinhalten:…',
     },
+    en: {
+      description:
+        'empty cell (needed e.g. to create empty rows or columns in tables for PowerPoint 202). Incompatibilities among cell contents: due to the internal storage structures there are some incompatibilities among cell contents:…',
+      syntax: '',
+    },
   },
   {
     name: 'SPLITCHAR',
     de: {
       description:
         'Erlaubt an der Stelle eine Worttrennung (flexibel). Voreinstellung: -',
+    },
+    en: {
+      description:
+        'Allows a word break at this position (flexible). Default: -',
+      syntax: '',
     },
   },
   {
@@ -7512,10 +8774,12 @@ export const keywordData: KeywordEntry[] = [
   {
     name: 'SPSSALPHALENGTH',
     de: { description: '', syntax: 'SPSSALPHALENGTH = <number>;' },
+    en: { description: '', syntax: 'SPSSALPHALENGTH = <number>;' },
   },
   {
     name: 'SPSSFILTERMISSING',
     de: { description: '', syntax: 'SPSSFILTERMISSING = <number>;' },
+    en: { description: '', syntax: 'SPSSFILTERMISSING = <number>;' },
   },
   {
     name: 'SPSSGLOBALSEQUENCE',
@@ -7567,6 +8831,11 @@ export const keywordData: KeywordEntry[] = [
       description:
         'Dynamic Link Library-Dateien (DLL), die IBM zum Lesen, Verarbeiten und Schreiben von SPSS- Dateien bereitstellt. 3. Laden Sie die Dateien aus dem Ordner „SPSSIO“ in der 32- oder 64-bit-Version aus unserem Download-Center herunter. 4. Speichern Sie die Dateien in Ihrem GESS\\tabs-Verzeichnis. Lizenzierung 5.…',
     },
+    en: {
+      description:
+        'Dynamic Link Library files (DLL) that IBM provides for reading, processing and writing SPSS files. 3. Download the files from the „SPSSIO“ folder in the 32- or 64-bit version from our download centre. 4. Save the files in your GESS\\tabs directory. Licensing 5.…',
+      syntax: '',
+    },
   },
   {
     name: 'SPSSLARGEFILELENGTH',
@@ -7585,14 +8854,21 @@ export const keywordData: KeywordEntry[] = [
   {
     name: 'SPSSNORECODEDLABELS',
     de: { description: '', syntax: 'SPSSNORECODEDLABELS = [ YES | NO ]:' },
+    en: { description: '', syntax: 'SPSSNORECODEDLABELS = [ YES | NO ]:' },
   },
   {
     name: 'SPSSOUTFILE',
     de: { description: '', syntax: 'SPSSOUTFILE = <filename>;' },
+    en: { description: '', syntax: 'SPSSOUTFILE = <filename>;' },
   },
   {
     name: 'SPSSOUTSUBFILE',
     de: {
+      description: '',
+      syntax:
+        'SPSSOUTSUBFILE <internal_name> <varnamelist> = <spss_filename> ;\nSTORESPSSSUBFILE = <internal_name> ;',
+    },
+    en: {
       description: '',
       syntax:
         'SPSSOUTSUBFILE <internal_name> <varnamelist> = <spss_filename> ;\nSTORESPSSSUBFILE = <internal_name> ;',
@@ -7604,10 +8880,15 @@ export const keywordData: KeywordEntry[] = [
       description: '',
       syntax: 'SPSSPRINTFORMAT = <spss-formatcode> <width> <decimals> ;',
     },
+    en: {
+      description: '',
+      syntax: 'SPSSPRINTFORMAT = <spss-formatcode> <width> <decimals> ;',
+    },
   },
   {
     name: 'SPSSREADMULT',
     de: { description: '', syntax: 'SPSSREADMULT = [ YES | NO ];' },
+    en: { description: '', syntax: 'SPSSREADMULT = [ YES | NO ];' },
   },
   {
     name: 'SPSSSOUTFILE',
@@ -7621,10 +8902,12 @@ export const keywordData: KeywordEntry[] = [
   {
     name: 'SPSSWEIGHTOUT',
     de: { description: '', syntax: 'SPSSWEIGHTOUT = <varname>;' },
+    en: { description: '', syntax: 'SPSSWEIGHTOUT = <varname>;' },
   },
   {
     name: 'SPSSWRITEMULT',
     de: { description: '', syntax: 'SPSSWRITEMULT = [ YES | NO ];' },
+    en: { description: '', syntax: 'SPSSWRITEMULT = [ YES | NO ];' },
   },
   {
     name: 'SQRT',
@@ -7634,18 +8917,25 @@ export const keywordData: KeywordEntry[] = [
   {
     name: 'SQUARE1',
     de: { description: 'Quadrat (auf der Basis stehend)' },
+    en: { description: 'Square (standing on its base)', syntax: '' },
   },
   {
     name: 'SQUARE1O',
     de: { description: 'Quadrat (auf der Basis stehend) als Outline' },
+    en: { description: 'Square (standing on its base) as outline', syntax: '' },
   },
   {
     name: 'SQUARE2',
     de: { description: 'Quadrat (auf der Spitze stehend)' },
+    en: { description: 'Square (standing on its point)', syntax: '' },
   },
   {
     name: 'SQUARE2O',
     de: { description: 'Quadrat (auf der Spitze stehend) als Outline' },
+    en: {
+      description: 'Square (standing on its point) as outline',
+      syntax: '',
+    },
   },
   {
     name: 'STACKED',
@@ -7773,6 +9063,7 @@ export const keywordData: KeywordEntry[] = [
   {
     name: 'STATTESTDUMP',
     de: { description: '', syntax: 'STATTESTDUMP = <filename> ;' },
+    en: { description: '', syntax: 'STATTESTDUMP = <filename> ;' },
   },
   {
     name: 'STATUSVARIABLE',
@@ -7784,6 +9075,11 @@ export const keywordData: KeywordEntry[] = [
     de: {
       description:
         'STDDEV errechnet die Standardabweichung einer Variable oder Variablenliste über alle Fälle des Datensatzes.',
+      syntax: 'STDDEV <varname> = <varlist>;',
+    },
+    en: {
+      description:
+        'STDDEV computes the standard deviation of a variable or variable list over all cases of the data set.',
       syntax: 'STDDEV <varname> = <varlist>;',
     },
   },
@@ -7798,6 +9094,11 @@ export const keywordData: KeywordEntry[] = [
       description:
         '454 Steht dieser Schalter auf YES, dann wird immer dann, wenn ein SIGNIFLEVEL 454 gesetzt ist und ein spaltenweiser Signifikanztest vorliegt, im BOTTOMTEXT 520 der entsprechende Signifikanztext ausgegeben. Gibt es keinen BOTTOMTEXT, wird einer erzeugt.…',
     },
+    en: {
+      description:
+        '454 If this switch is set to YES, then whenever a SIGNIFLEVEL 454 is set and a column-wise significance test is present, the corresponding significance text is output in the BOTTOMTEXT 520. If there is no BOTTOMTEXT, one is generated.…',
+      syntax: '',
+    },
   },
   {
     name: 'STOPONFIRSTERROR',
@@ -7809,10 +9110,12 @@ export const keywordData: KeywordEntry[] = [
   {
     name: 'STOREALPHA',
     de: { description: '', syntax: 'STOREALPHA <varlist> = [ YES | NO ];' },
+    en: { description: '', syntax: 'STOREALPHA <varlist> = [ YES | NO ];' },
   },
   {
     name: 'STORELANGUAGE',
     de: { description: '', syntax: 'STORELANGUAGE <sprache> = <filename>;' },
+    en: { description: '', syntax: 'STORELANGUAGE <language> = <filename>;' },
   },
   {
     name: 'STORESPSSSUBFILE',
@@ -7831,14 +9134,21 @@ export const keywordData: KeywordEntry[] = [
       syntax:
         'STORETOCSV = [ ALL | <varlist> ];\nDie als <varlist> deklarierten Variablen werden in der Reihenfolge ihrer Angabe in den',
     },
+    en: {
+      description: '',
+      syntax:
+        'STORETOCSV = [ ALL | <varlist> ];\nThe variables declared as <varlist> are written in the order given into the',
+    },
   },
   {
     name: 'STORETOSPSS',
     de: { description: '', syntax: 'STORETOSPSS = <varlist>;' },
+    en: { description: '', syntax: 'STORETOSPSS = <varlist>;' },
   },
   {
     name: 'STRICTINPUTCHECK',
     de: { description: '', syntax: 'STRICTINPUTCHECK = [ YES | NO ];' },
+    en: { description: '', syntax: 'STRICTINPUTCHECK = [ YES | NO ];' },
   },
   {
     name: 'STRICTINPUTHECK',
@@ -7848,6 +9158,7 @@ export const keywordData: KeywordEntry[] = [
   {
     name: 'STRICTVARLIST',
     de: { description: '', syntax: 'STRICTVARLIST = [ YES | NO ];' },
+    en: { description: '', syntax: 'STRICTVARLIST = [ YES | NO ];' },
   },
   {
     name: 'STRIPECOLORS',
@@ -7856,10 +9167,16 @@ export const keywordData: KeywordEntry[] = [
       syntax:
         "STRIPECOLORS = <color> <color> ;\nMit '<color>' definiert man die Farben, in denen die Zeilen bzw. Spalten in Tabellen vom Typ",
     },
+    en: {
+      description: '',
+      syntax:
+        "STRIPECOLORS = <color> <color> ;\nWith '<color>' you define the colours in which the rows or columns in tables of type",
+    },
   },
   {
     name: 'STROKERECT',
     de: { description: 'Umrandung zu RETANGLES zeichnen' },
+    en: { description: 'Draw a border for RECTANGLES', syntax: '' },
   },
   {
     name: 'STRUCTURE',
@@ -7892,7 +9209,10 @@ export const keywordData: KeywordEntry[] = [
       description: "Darstellung der Summe von 'Var'",
       syntax: 'SUM <varname> = <Varlist>;',
     },
-    en: { description: '', syntax: 'SUM <varname> = <Varlist>;' },
+    en: {
+      description: "Display of the sum of 'Var'",
+      syntax: 'SUM <varname> = <Varlist>;',
+    },
   },
   {
     name: 'SUMMARY',
@@ -7909,6 +9229,11 @@ export const keywordData: KeywordEntry[] = [
         'MIN, MAX 314Minimal-/ Maximalwert + Option zur Angabe der Variable mit Minimal-/Maximalwert mittels MININDEX/ MAXINDEX 314 STDDEV 315 Standardabweichung VARIANCE 315Varianz Mean MEAN erlaubt eine einfache Berechnung des Mittelwerts aus mehreren Variablen innerhalb eines Falles.',
       syntax: 'SUMMISSING = [ YES | NO ];',
     },
+    en: {
+      description:
+        'MIN, MAX 314 minimum/maximum value + option to specify the variable with the minimum/maximum value via MININDEX/ MAXINDEX 314. STDDEV 315 standard deviation. VARIANCE 315 variance. Mean: MEAN allows a simple calculation of the mean from several variables within one case.',
+      syntax: 'SUMMISSING = [ YES | NO ];',
+    },
   },
   {
     name: 'SUMPERCENT',
@@ -7917,6 +9242,11 @@ export const keywordData: KeywordEntry[] = [
       description:
         "Aus 'Var' und 'BasisVar' werden die Summen berechnet. Die Summe von 'Var' wird als prozentualer Anteil an der Summe von 'BasisVar' ausgegeben.",
     },
+    en: {
+      description:
+        "The sums are calculated from 'Var' and 'BasisVar'. The sum of 'Var' is output as a percentage share of the sum of 'BasisVar'.",
+      syntax: '',
+    },
   },
   {
     name: 'SUMQUOTIENT',
@@ -7924,6 +9254,11 @@ export const keywordData: KeywordEntry[] = [
     de: {
       description:
         "Aus 'Var' und 'BasisVar' werden die Summen berechnet. Die Summe von 'Var' wird als Anteil an der Summe von 'BasisVar' ausgegeben.",
+    },
+    en: {
+      description:
+        "The sums are calculated from 'Var' and 'BasisVar'. The sum of 'Var' is output as a share of the sum of 'BasisVar'.",
+      syntax: '',
     },
   },
   {
@@ -7934,6 +9269,7 @@ export const keywordData: KeywordEntry[] = [
   {
     name: 'SUPPRESSEMPTYSHEET',
     de: { description: '', syntax: 'SUPPRESSEMPTYSHEET = [ YES | NO ];' },
+    en: { description: '', syntax: 'SUPPRESSEMPTYSHEET = [ YES | NO ];' },
   },
   {
     name: 'SUPPRESSEMPTYTABLE',
@@ -7944,11 +9280,13 @@ export const keywordData: KeywordEntry[] = [
     en: {
       description:
         'Usually a table where no cases are relevant is printed as an empty table. Using SUPPRESSEMPTYTABLE = YES this page is suppressed.',
+      syntax: 'SUPPRESSEMPTYTABLE = [ NO | YES | STRUCTURE ];',
     },
   },
   {
     name: 'SUPPRESSGRIDLINES',
     de: { description: '', syntax: 'SUPPRESSGRIDLINES : [YES|NO]' },
+    en: { description: '', syntax: 'SUPPRESSGRIDLINES : [YES|NO]' },
   },
   {
     name: 'SUPPRESSIFLESS',
@@ -7956,6 +9294,11 @@ export const keywordData: KeywordEntry[] = [
       description: '',
       syntax:
         'SUPPRESSIFLESS < cellelement> <place> <typ> = <value>;\nplace ::= < DATACELL | FRAMECELL X | FRAMECELL Y >\ntyp ::= < ABSOLUTE | PHYSICALRECORDS | VALIDN | VALIDPHYS | ESS >\nMan kann sich mit "<place>" dabei auf die Tabellenzelle selbst beziehen, oder auf die',
+    },
+    en: {
+      description: '',
+      syntax:
+        'SUPPRESSIFLESS < cellelement> <place> <type> = <value>;\nplace ::= < DATACELL | FRAMECELL X | FRAMECELL Y >\ntype ::= < ABSOLUTE | PHYSICALRECORDS | VALIDN | VALIDPHYS | ESS >\nWith "<place>" you can refer to the table cell itself, or to the',
     },
   },
   {
@@ -7980,6 +9323,10 @@ export const keywordData: KeywordEntry[] = [
       description: '',
       syntax: 'SUPPRESSSPSSWARNINGS = [ ALPHA | VARLABEL | VALUELABELS ] ;',
     },
+    en: {
+      description: '',
+      syntax: 'SUPPRESSSPSSWARNINGS = [ ALPHA | VARLABEL | VALUELABELS ] ;',
+    },
   },
   {
     name: 'SUPRESSEMPTYTABLE',
@@ -7989,6 +9336,10 @@ export const keywordData: KeywordEntry[] = [
   {
     name: 'SWAP',
     de: { description: 'Reihenfolge der graphischen Darstellung invertieren' },
+    en: {
+      description: 'Invert the order of the graphical display',
+      syntax: '',
+    },
   },
   {
     name: 'SWAPLEGEND',
@@ -7996,14 +9347,21 @@ export const keywordData: KeywordEntry[] = [
       description:
         'Reihenfolge der Legendentexte invertieren <alle GESSCHARTFORMAT- Alle Argumente des Argumente> GESSCHARTFORMAT 198-Statements können an dieser Stelle auch als Optionen für das aktuelle Chart angegeben werden. = {',
     },
+    en: {
+      description:
+        'Invert the order of the legend texts. <all GESSCHARTFORMAT arguments> all arguments of the GESSCHARTFORMAT 198 statement can also be given here as options for the current chart. = {',
+      syntax: '',
+    },
   },
   {
     name: 'SWITCHLANGUAGE',
     de: { description: '', syntax: 'SWITCHLANGUAGE = <Sprachbezeichnung>;' },
+    en: { description: '', syntax: 'SWITCHLANGUAGE = <language name>;' },
   },
   {
     name: 'SYMBOL',
     de: { description: 'Die Linie wird nicht gezeigt' },
+    en: { description: 'The line is not shown', syntax: '' },
   },
   {
     name: 'SYMBOLS',
@@ -8016,6 +9374,11 @@ export const keywordData: KeywordEntry[] = [
       description:
         '; GESSCHARTFONT CHARTNUMBERS = "Helvetica-Bold" SIZE 8; GESSCHARTFORMAT = NUMCENTERGRAPH NOFRAME NOSCALE OVERLAPPED WHITENUMBERS; GESSCHARTCOLORS = $229955 AA5577; GESSCHART CHARTTITLE "Gegenläufige Linien: Top-2-Box nach links + grün, Bottom-2-Box nach rechts + rot, Zahlen in weiß zentral in den Kreisen bzw.…',
     },
+    en: {
+      description:
+        '; GESSCHARTFONT CHARTNUMBERS = "Helvetica-Bold" SIZE 8; GESSCHARTFORMAT = NUMCENTERGRAPH NOFRAME NOSCALE OVERLAPPED WHITENUMBERS; GESSCHARTCOLORS = $229955 AA5577; GESSCHART CHARTTITLE "Opposing lines: Top-2 box to the left + green, Bottom-2 box to the right + red, numbers in white centred in the circles or…',
+      syntax: '',
+    },
   },
   {
     name: 'SYMBOLWIDTH',
@@ -8025,10 +9388,16 @@ export const keywordData: KeywordEntry[] = [
   {
     name: 'SYNOPSIS',
     de: { description: '', syntax: 'SYNOPSIS = <filename>;' },
+    en: { description: '', syntax: 'SYNOPSIS = <filename>;' },
   },
   {
     name: 'SYNTAX',
     de: {
+      description: '',
+      syntax:
+        'SYNTAX { [ POSTPONE ] [ VARIABLES | LABELS | VARTITLE\n| VALUELABELS | MISSING | EXCLUDEVALUES | RESTRICTVALUES|\nMULTIDEF | FORMAT ]}*n = <filename>;\nSYNTAXVARNAMENOQUOTES = [ YES | NO ];',
+    },
+    en: {
       description: '',
       syntax:
         'SYNTAX { [ POSTPONE ] [ VARIABLES | LABELS | VARTITLE\n| VALUELABELS | MISSING | EXCLUDEVALUES | RESTRICTVALUES|\nMULTIDEF | FORMAT ]}*n = <filename>;\nSYNTAXVARNAMENOQUOTES = [ YES | NO ];',
@@ -8089,6 +9458,8 @@ export const keywordData: KeywordEntry[] = [
     en: {
       description:
         'The main keyword for cross tables. In its simplest form: TABLE = <var1> BY <var2>; where <var1> is the header variable and <var2> is the variable for the side breakdown.',
+      syntax:
+        'TABLE [ taboptions ] = <parts> BY <parts>;\ntaboptions ::=\n[\nADD\nNAME <tablename>\nTITLE <tabletitle>\nCELLELEMENTS ( <cellelements> )\nFRAMEELEMENTS ( <frameelements> )\nTABLEFORMATS ( <tableformats> )\nCONTENTKEY <contentkey>\nHIDDEN ( <medium> )\n]\n\nparts ::= part { part }*n\npart ::= content [ filter ] [ option ]\n\ncontent ::=\n[\n<constant> |\n<varname> |\n<cellelement> ( <varname> [ <varname> ] ) |\n<cellelement> ( <varname> [ <varname> ] BY <varname> )\n:DESCRIPTION\n:USEVARTITLE\n:FORMAT\n] \n\nfilter ::= FILTER <condition> |\n\noption ::= SORT sortcontent [ sortpane ] [ cut ]\n\nsortcontent ::= sorttype [ DESCEND ]\nsorttype ::= [ POSITION | ALPHA | CODE | Cellelement ]\nsortpane ::= PANE <value> CODE <value>\n\ncut ::=\n[\nTOP <value > [ SLICE <value> ] |\nBOTTOM <value> |\nEXTREME <value> |\nSLICE <value> |\nLSLICE <value> |\nRANGE <value> <value>\n]',
     },
   },
   {
@@ -8112,11 +9483,17 @@ export const keywordData: KeywordEntry[] = [
     en: {
       description:
         'This controls the basis of percentaging in the TABLE printout. The following is preset: TABLEBASE = CASES ; i.e. usually percentaging is on the basis of the number of interviewees. Using TABLEBASE = NOMINATIONS ; the alternative of percentaging on the basis of the number of mentions can be achieved (only relevant for multiple responses).…',
+      syntax: 'TABLEBASE = [ CASES | RESPONSES ];',
     },
   },
   {
     name: 'TABLECOUNTSWITCH',
     de: {
+      description: '',
+      syntax:
+        'TABLECOUNTSWITCH = [ NOADDINFRAMEX | NOADDINFRAMEY | NOADDINFRAMETTL ];',
+    },
+    en: {
       description: '',
       syntax:
         'TABLECOUNTSWITCH = [ NOADDINFRAMEX | NOADDINFRAMEY | NOADDINFRAMETTL ];',
@@ -8136,6 +9513,11 @@ export const keywordData: KeywordEntry[] = [
   {
     name: 'TABLEFILTERBYCODE',
     de: {
+      description: '',
+      syntax:
+        'TABLEFILTERBYCODE <NUMBER> = [ <options> ] <VARIABLE> ( <CODE> ) ;\n<options> ::= [ VARTITLE | NOMISSING | SUPPRESSOVERCODES | USELABELS ] <options>',
+    },
+    en: {
       description: '',
       syntax:
         'TABLEFILTERBYCODE <NUMBER> = [ <options> ] <VARIABLE> ( <CODE> ) ;\n<options> ::= [ VARTITLE | NOMISSING | SUPPRESSOVERCODES | USELABELS ] <options>',
@@ -8176,6 +9558,7 @@ export const keywordData: KeywordEntry[] = [
     en: {
       description:
         'Defines the first number for the tables. Preset: TABLENUMBER = 1; All tables share the same number range. The tables are only counted if there is a hash in the TABLETITLE. This is valid for all tables until changed.',
+      syntax: 'TABLENUMBER = <number>;\nDefault: TABLENUMBER = 1;',
     },
   },
   {
@@ -8194,6 +9577,7 @@ export const keywordData: KeywordEntry[] = [
     en: {
       description:
         'If the standard text "Table #:" is to be replaced it can be done as follows: TABLETITLE = "Summary Table"; If the test is not to appear at all, then: TABLETITLE = ""; If the program finds a hash "#" (more precisely: the NUMBERCHAR) in the string this character is replaced by the current table number. This is valid for all tables until it is changed.',
+      syntax: 'TABLETITLE = "<text>";',
     },
   },
   {
@@ -8212,11 +9596,17 @@ export const keywordData: KeywordEntry[] = [
     en: {
       description:
         'defines a selection of cases for the following tables. TABSELECT remains valid until a new TABSELECT is defined. Should all cases be processed in the following tables then simply: TABSELECT; is written. (This condition is always true.) The syntax equates to SELECT (non permanent filter).…',
+      syntax: 'TABSELECT <condition>;',
     },
   },
   {
     name: 'TABSELECTBYCODE',
     de: {
+      description: '',
+      syntax:
+        'TABSELECTBYCODE [ <options> ] <VARIABLE> ( <CODE> );\n<options> ::= [ VARTITLE | NOMISSING | SUPPRESSOVERCODES\n| USELABELS ] <options>',
+    },
+    en: {
       description: '',
       syntax:
         'TABSELECTBYCODE [ <options> ] <VARIABLE> ( <CODE> );\n<options> ::= [ VARTITLE | NOMISSING | SUPPRESSOVERCODES\n| USELABELS ] <options>',
@@ -8280,6 +9670,11 @@ export const keywordData: KeywordEntry[] = [
       syntax:
         'TESTCOLUMNS = { Testdefinition }*n;\nTestdefinition ::= | VARIABLE <varno> CODE <code>\n: VARIABLE <varno> CODE <code>',
     },
+    en: {
+      description: '',
+      syntax:
+        'TESTCOLUMNS = { test definition }*n;\ntest definition ::= | VARIABLE <varno> CODE <code>\n: VARIABLE <varno> CODE <code>',
+    },
   },
   {
     name: 'TESTCOLUMNSX',
@@ -8302,6 +9697,11 @@ export const keywordData: KeywordEntry[] = [
       description:
         'Dieses TABLEFORMAT schaltet die Funktionen des LOCALTEXTFORMAT 564s ein/aus.',
     },
+    en: {
+      description:
+        'This TABLEFORMAT switches the functions of LOCALTEXTFORMAT 564 on/off.',
+      syntax: '',
+    },
   },
   {
     name: 'TEXTBOXINHG',
@@ -8313,6 +9713,10 @@ export const keywordData: KeywordEntry[] = [
     de: {
       description: '',
       syntax: 'TEXTROWHEIGHT <box> : <pixels>\n<box> ::= eine Box',
+    },
+    en: {
+      description: '',
+      syntax: 'TEXTROWHEIGHT <box> : <pixels>\n<box> ::= a box',
     },
   },
   {
@@ -8326,10 +9730,15 @@ export const keywordData: KeywordEntry[] = [
       description: '',
       syntax: "TEXTTOPDISTANCE = <number>;\n'<number>' = typographische Punkte",
     },
+    en: {
+      description: '',
+      syntax: "TEXTTOPDISTANCE = <number>;\n'<number>' = typographic points",
+    },
   },
   {
     name: 'TEXTTOSPSSVARLAB',
     de: { description: '', syntax: 'TEXTTOSPSSVARLAB = [ YES | NO ];' },
+    en: { description: '', syntax: 'TEXTTOSPSSVARLAB = [ YES | NO ];' },
   },
   {
     name: 'TEXTWRAP',
@@ -8360,6 +9769,7 @@ export const keywordData: KeywordEntry[] = [
   {
     name: 'THOUSANDS',
     de: { description: '', syntax: 'THOUSANDS <cellelement> : [ YES | NO ]' },
+    en: { description: '', syntax: 'THOUSANDS <cellelement> : [ YES | NO ]' },
   },
   {
     name: 'TIME',
@@ -8388,6 +9798,11 @@ export const keywordData: KeywordEntry[] = [
       syntax:
         'TITLEPAGE ::= { | element }*n ;\nCHAPTERPAGE::= { | element }*n ;\nelement ::= { text | line | drawbox | titlebox | eps }\ntext ::= TEXT { textoption }*n x y <text>\ntextoption ::= : [ font | color ]\nfont ::= USEFONT <fontname> SIZE <number>',
     },
+    en: {
+      description: '',
+      syntax:
+        'TITLEPAGE ::= { | element }*n ;\nCHAPTERPAGE::= { | element }*n ;\nelement ::= { text | line | drawbox | titlebox | eps }\ntext ::= TEXT { textoption }*n x y <text>\ntextoption ::= : [ font | color ]\nfont ::= USEFONT <fontname> SIZE <number>',
+    },
   },
   {
     name: 'TO',
@@ -8399,6 +9814,11 @@ export const keywordData: KeywordEntry[] = [
     de: {
       description:
         'Die Tabellenausgabe kann auf bestimmte Teile beschränkt werden: Es können',
+    },
+    en: {
+      description:
+        'The table output can be restricted to certain parts: it is possible to',
+      syntax: '',
     },
   },
   {
@@ -8417,6 +9837,10 @@ export const keywordData: KeywordEntry[] = [
       description: 'Textbox am oberen Rumpf der Tabelle',
       syntax: 'TOPTEXT = "<text>";',
     },
+    en: {
+      description: 'Text box at the top of the table body',
+      syntax: 'TOPTEXT = "<text>";',
+    },
   },
   {
     name: 'TOTALCOLINHG',
@@ -8428,6 +9852,11 @@ export const keywordData: KeywordEntry[] = [
     de: {
       description:
         'Ausgewertete Fälle aller Werte (wie in CELLELELEMENTS 418 definiert) in der',
+    },
+    en: {
+      description:
+        'Evaluated cases of all values (as defined in CELLELEMENTS 418) in the',
+      syntax: '',
     },
   },
   {
@@ -8444,6 +9873,10 @@ export const keywordData: KeywordEntry[] = [
     name: 'TOTALPERCENT',
     de: {
       description: 'Prozentuierung aller Zellen auf das Tabellen- Gesamt-N.',
+    },
+    en: {
+      description: "Percentaging of all cells on the table's total N.",
+      syntax: '',
     },
   },
   {
@@ -8474,6 +9907,11 @@ export const keywordData: KeywordEntry[] = [
       description:
         'Ausgabe der Prozentuierung der Summe einer dritten Variablen auf die Gesamtsumme in der Tabelle',
     },
+    en: {
+      description:
+        'Output of the percentaging of the sum of a third variable on the total sum in the table',
+      syntax: '',
+    },
   },
   {
     name: 'TOTALTITLE',
@@ -8484,11 +9922,16 @@ export const keywordData: KeywordEntry[] = [
     en: {
       description:
         'If the standard text "Insgesamt" is to be replaced then: TOTALTITLE = Total; The TOTALTITLE can be set differently for the X or Y axes: Example: TOTALTITLE X = "Total"; TOTALTITLE Y = "Insgesamt"; This is valid for all tables until changed.',
+      syntax: 'TOTALTITLE [ X | Y ] = "<text>";',
     },
   },
   {
     name: 'TRANSFERSUPPRESSEDCONTENTKEY',
     de: {
+      description: '',
+      syntax: 'TRANSFERSUPPRESSEDCONTENTKEY = [ YES | NO ];',
+    },
+    en: {
       description: '',
       syntax: 'TRANSFERSUPPRESSEDCONTENTKEY = [ YES | NO ];',
     },
@@ -8501,6 +9944,12 @@ export const keywordData: KeywordEntry[] = [
       syntax:
         'TRANSLATE <postcriptfontname> : <excelfontname>\n[OPTION [BOLD|ITALIC|UNDERLINE]]',
     },
+    en: {
+      description:
+        '| TRANSLATE |                          | <postcriptfontname> |     |     | :   | <excelfontname> |     |     |     |     |     |     | | --------- | ------------------------ | ------------------- | --- | --- | --- | --------------- | --- | --- | --- | --- | --- | --- | | [OPTION   | [BOLD|ITALIC|UNDERLINE]] |                     |     |     |     |                 |     |     |     |     |     |…',
+      syntax:
+        'TRANSLATE <postcriptfontname> : <excelfontname>\n[OPTION [BOLD|ITALIC|UNDERLINE]]',
+    },
   },
   {
     name: 'TRIANGLE1',
@@ -8508,10 +9957,19 @@ export const keywordData: KeywordEntry[] = [
       description:
         'Skalenwert mit einem Dreieck markieren (auf der Basis stehend)',
     },
+    en: {
+      description:
+        'Mark the scale value with a triangle (standing on its base)',
+      syntax: '',
+    },
   },
   {
     name: 'TRIANGLE1O',
     de: { description: 'Dreieck (auf der Basis stehend) als Outline' },
+    en: {
+      description: 'Triangle (standing on its base) as outline',
+      syntax: '',
+    },
   },
   {
     name: 'TRIANGLE2',
@@ -8519,14 +9977,24 @@ export const keywordData: KeywordEntry[] = [
       description:
         'Skalenwert mit einem Dreieck markieren (auf der Spitze stehend)',
     },
+    en: {
+      description:
+        'Mark the scale value with a triangle (standing on its point)',
+      syntax: '',
+    },
   },
   {
     name: 'TRIANGLE2O',
     de: { description: 'Dreieck (auf der Spitze stehend) als Outline' },
+    en: {
+      description: 'Triangle (standing on its point) as outline',
+      syntax: '',
+    },
   },
   {
     name: 'TRIMSTRINGS',
     de: { description: '', syntax: 'TRIMSTRINGS = [ YES | NO ];' },
+    en: { description: '', syntax: 'TRIMSTRINGS = [ YES | NO ];' },
   },
   {
     name: 'TROWTEST',
@@ -8539,10 +10007,19 @@ export const keywordData: KeywordEntry[] = [
       description:
         'Vor der Berechnung werden beide Argumente mittels TRUNC in Ganze Werte gewandelt. D.h.',
     },
+    en: {
+      description:
+        'Before the calculation, both arguments are converted to whole numbers via TRUNC. That is,',
+      syntax: '',
+    },
   },
   {
     name: 'TRUNCATEDECIMALS',
     de: {
+      description: '',
+      syntax: 'TRUNCATEDECIMALS <varlist> = <number>;\n<number> ::= -9 .. 9;',
+    },
+    en: {
       description: '',
       syntax: 'TRUNCATEDECIMALS <varlist> = <number>;\n<number> ::= -9 .. 9;',
     },
@@ -8575,6 +10052,10 @@ export const keywordData: KeywordEntry[] = [
       description: '',
       syntax: 'TTESTABSMIN = <number>;\nTTESTPHYSMIN = <number>;',
     },
+    en: {
+      description: '',
+      syntax: 'TTESTABSMIN = <number>;\nTTESTPHYSMIN = <number>;',
+    },
   },
   {
     name: 'TTESTCUT',
@@ -8582,6 +10063,11 @@ export const keywordData: KeywordEntry[] = [
     de: {
       description:
         'Unabhängiger t-Test auf Mittelwertsunterschiede, berechnet auf Basis der Datenreduktion wie bei MEANCUT 423',
+    },
+    en: {
+      description:
+        'Independent t-test on mean differences, computed on the basis of the data reduction as with MEANCUT 423',
+      syntax: '',
     },
   },
   {
@@ -8642,6 +10128,7 @@ export const keywordData: KeywordEntry[] = [
   {
     name: 'UPDATEINVERT',
     de: { description: '', syntax: 'UPDATEINVERT;' },
+    en: { description: '', syntax: 'UPDATEINVERT;' },
   },
   {
     name: 'UPPERCASE',
@@ -8656,6 +10143,7 @@ export const keywordData: KeywordEntry[] = [
   {
     name: 'USE3D',
     de: { description: '', syntax: 'USE3D : [YES | NO]' },
+    en: { description: '', syntax: 'USE3D : [YES | NO]' },
   },
   {
     name: 'USECASES',
@@ -8667,6 +10155,8 @@ export const keywordData: KeywordEntry[] = [
     en: {
       description:
         'USECASES controls the treatment of MISSING values in cross tables. Usually the rows and columns of cross tables are suppressed if either no VALUELABEL has been defined or if the relevant characteristic in a MISSING command has been declared a MISSING value, or if a characteristic is recognised as a MISSING value due to explicit coding (see MISSINGCHAR).…',
+      syntax:
+        'USECASES = [ ANYCASE | XANDYVALID | XORYVALID | XVALID | YVALID ] ;',
     },
   },
   {
@@ -8691,6 +10181,12 @@ export const keywordData: KeywordEntry[] = [
         'Der zu verwendende Font LEFT | RIGHT | HCENTER Horizontale Ausrichtung des Textes TOP | BOTTOM | VCENTER Vertikale Ausrichtung des Textes Jede dieser Optionen hat eine eigene Syntax: Nach einer USEFONT-Option z.B. müssen Name und Größe eines gültigen Fonts stehen, nach dem Schlüsselwort LINEWIDTH muss zwingend eine Zahl stehen usw..…',
       syntax:
         'USEFONT <Zielname> = <Fontname> SIZE <number>; (PS)\nUSEFONT <Zielname> = <Fontname>; (Non-PS)',
+    },
+    en: {
+      description:
+        'The font to be used. LEFT | RIGHT | HCENTER horizontal alignment of the text. TOP | BOTTOM | VCENTER vertical alignment of the text. Each of these options has its own syntax: after a USEFONT option, for example, the name and size of a valid font must follow; after the keyword LINEWIDTH a number must necessarily follow, etc.…',
+      syntax:
+        'USEFONT <targetname> = <fontname> SIZE <number>; (PS)\nUSEFONT <targetname> = <fontname>; (Non-PS)',
     },
   },
   {
@@ -8719,6 +10215,8 @@ export const keywordData: KeywordEntry[] = [
     en: {
       description:
         'steers the evaluation of MISSING characteristics in TABLE and COMPARE. USEMISSING = NO; is the preset; using USEMISSING = YES; the MISSING values can be called up for the evaluation of the following tables.',
+      syntax:
+        'USEMISSING = [ YES | NO ];\nDefault: USEMISSING = NO;\nWith USEMISSING = YES; the evaluation of the missing values as well can be enabled for all following tables',
     },
   },
   {
@@ -8727,6 +10225,11 @@ export const keywordData: KeywordEntry[] = [
       description: '',
       syntax:
         'USEOPENASCODE <varlist> = [ YES | NO ];\nSteht dieser Schalter auf YES, dann wird versucht, die offene Antwort für die in <varlist>',
+    },
+    en: {
+      description: '',
+      syntax:
+        'USEOPENASCODE <varlist> = [ YES | NO ];\nIf this switch is set to YES, an attempt is made to use the open answer for the variables in <varlist>',
     },
   },
   {
@@ -8776,6 +10279,7 @@ export const keywordData: KeywordEntry[] = [
   {
     name: 'USEVISIBLEDIGITSNONLY',
     de: { description: '', syntax: 'USEVISIBLEDIGITSNONLY = [ YES | NO ];' },
+    en: { description: '', syntax: 'USEVISIBLEDIGITSNONLY = [ YES | NO ];' },
   },
   {
     name: 'USEVISIBLEDIGITSONLY',
@@ -8813,6 +10317,11 @@ export const keywordData: KeywordEntry[] = [
       description:
         "Zahl der Fälle, für die ein gültiger Wert der '<bestehende_variable>' gefunden wurde",
     },
+    en: {
+      description:
+        "Number of cases for which a valid value of '<existing_variable>' was found",
+      syntax: '',
+    },
   },
   {
     name: 'VALIDPHYS',
@@ -8838,7 +10347,8 @@ export const keywordData: KeywordEntry[] = [
         'VALUELABELS <VarList> =\n{<number> "Text"}*n\n;\nLABELS <VarList> =\n{<number> "Text"}*n\n;',
     },
     en: {
-      description: '',
+      description:
+        'an error is output if you use syntax variants without an explicit variable name. For example: COMPUTE f222 = Q17_1; VARTITLE = "formerly Q17_1"; The \'=\' after VARTITLE would trigger the error message. Background: instructions such as RECODE 7:88 = 4; often come after a COMPUTE that is meant to create the variable to be recoded.…',
       syntax:
         'VALUELABELS <VarList> = [ ADD ]\n{ LabelEntry }*n ;\nLabelEntry ::=\n[<number> "String" | OVERCODE [ SUM ] [<name>] { <number> [ :<number>\n] }*n "String" ] [ LabelOption ]\nLabelOption ::=',
     },
@@ -8863,6 +10373,8 @@ export const keywordData: KeywordEntry[] = [
     en: {
       description:
         'A family is a group of variables with a shared amount of characteristics, e.g. the first, second and third response to a question. These variables can be made into a VARFAMILY which is evaluated instead of the individual variables. Example: VARFAMILY item = item1 TO item4; TABLE = item BY alter; The VARFAMILY automatically has the same VALUELABELs as the first variable used in it.…',
+      syntax:
+        'VARFAMILY = <varlist>;\n"<varlist>" is a list of atomic variables.',
     },
   },
   {
@@ -8875,6 +10387,8 @@ export const keywordData: KeywordEntry[] = [
     en: {
       description:
         'defines a group of variables which are to be evaluated together. Usually VARGROUP is used to group individual variables which build a 0/1 group of multi-responses together. Example: VARGROUP Items = ( item.1 item.2 item.3 item.4 ) EQ 1; In front of the equals sign there is the name of the variable group.…',
+      syntax:
+        'VARGROUP <name> = ( <varlist> ) EQ <valuelist>;\n<varlist> ::= list of atomic variables\n<valuelist> ::= list of individual values',
     },
   },
   {
@@ -8899,6 +10413,7 @@ export const keywordData: KeywordEntry[] = [
   {
     name: 'VARIANCE',
     de: { description: '', syntax: 'VARIANCE <varname> = <varlist>;' },
+    en: { description: '', syntax: 'VARIANCE <varname> = <varlist>;' },
   },
   {
     name: 'VARIATION',
@@ -8908,6 +10423,7 @@ export const keywordData: KeywordEntry[] = [
   {
     name: 'VARKEY',
     de: { description: '', syntax: 'VARKEY <varname> = <key>;' },
+    en: { description: '', syntax: 'VARKEY <varname> = <key>;' },
   },
   {
     name: 'VARLABELS',
@@ -8917,6 +10433,7 @@ export const keywordData: KeywordEntry[] = [
   {
     name: 'VARLIST',
     de: { description: '', syntax: 'VARLIST = <dateipfad> QST;' },
+    en: { description: '', syntax: 'VARLIST = <filepath> QST;' },
   },
   {
     name: 'VARNAME',
@@ -8947,7 +10464,11 @@ export const keywordData: KeywordEntry[] = [
         'Variablentext 209, typischerweise der Frage- oder Erläuterungstext Wird üblicherweise mit einer CITE[...]-Anweisung im TOPTEXT 516 angefordert (siehe Anzeige von Variablentexten 523).',
       syntax: 'VARTEXT [<VarList>] = "text";\nTEXT [<VarList>] = "text";',
     },
-    en: { description: '', syntax: 'VARTEXT <VarList> = "text text ";' },
+    en: {
+      description:
+        'Variable text 209, typically the question or explanation text. Usually requested with a CITE[...] instruction in the TOPTEXT 516 (see Display of variable texts 523).',
+      syntax: 'VARTEXT <VarList> = "text text ";',
+    },
   },
   {
     name: 'VARTITLE',
@@ -8956,7 +10477,11 @@ export const keywordData: KeywordEntry[] = [
         'schreibt den VARTITLE vor den Labeltext Beispiel: TABSELECTBYCODE VARTITLE buland( 1 ) ; In diesem fall wird in der Selektionsbeschreibung vor dem Labeltext der VARTITLE ausgegeben.',
       syntax: 'VARTITLE [<VarList>] = "text";\nTITLE [<VarList>] = "text";',
     },
-    en: { description: '', syntax: 'VARTITLE <VarList> = "String";' },
+    en: {
+      description:
+        'writes the VARTITLE in front of the label text. Example: TABSELECTBYCODE VARTITLE buland( 1 ) ; In this case the VARTITLE is output in front of the label text in the selection description.',
+      syntax: 'VARTITLE <VarList> = "String";',
+    },
   },
   {
     name: 'VARTITLE X',
@@ -8986,6 +10511,11 @@ export const keywordData: KeywordEntry[] = [
   {
     name: 'VERTICALALIGN',
     de: {
+      description: '',
+      syntax:
+        'VERTICALALIGN <boxtype> : [TOP|VCENTER|BOTTOM]\nHORIZONTALALIGN <boxtype> : [LEFT|HCENTER|RIGHT]',
+    },
+    en: {
       description: '',
       syntax:
         'VERTICALALIGN <boxtype> : [TOP|VCENTER|BOTTOM]\nHORIZONTALALIGN <boxtype> : [LEFT|HCENTER|RIGHT]',
@@ -9030,6 +10560,7 @@ export const keywordData: KeywordEntry[] = [
     en: {
       description:
         'discloses where an externally calculated weight is in the data set: Example: WEIGHT = 62 6; (weight is in column 62, Len=6) Alternatively a known variable can be named: ... COMPUTE gewicht = ( a + c ) * 0.1; WEIGHT = Gewicht; ... Here it should be noted that the command WEIGHT= is carried out in the RunTime-Module directly before the case is fed into the tables i.e.…',
+      syntax: 'WEIGHT = <startcolumn> <width>;\nWEIGHT = <variable name>;',
     },
   },
   {
@@ -9038,6 +10569,7 @@ export const keywordData: KeywordEntry[] = [
     en: {
       description:
         'Defines the accuracy bound up to which iteration should occur. WEIGHTACCURACY is the natural logarithm of the maximum deviance of a weighting cell from the prerequisite as factor. Preset: WEIGHTACCURACY = 0.0001;',
+      syntax: 'WEIGHTACCURACY = <number>;',
     },
   },
   {
@@ -9065,6 +10597,7 @@ export const keywordData: KeywordEntry[] = [
     en: {
       description:
         'defines where a newly calculated weight is to be stored in the outfile. Syntax as above. Example: WEIGHTOUT = 68 6;',
+      syntax: 'WEIGHTOUT = <startcolumn> <width>;',
     },
   },
   {
@@ -9073,6 +10606,7 @@ export const keywordData: KeywordEntry[] = [
     en: {
       description:
         'States the desired sum of the weights to be calculated. Normally weighting occurs to the number of the cases physically read.',
+      syntax: 'WEIGHTSUM = <number>;',
     },
   },
   {
@@ -9081,10 +10615,16 @@ export const keywordData: KeywordEntry[] = [
       description:
         'Unabhängiger t-Test auf Mittelwerteunterschiede nach Welch 450 auf Basis der gewichteten Daten',
     },
+    en: {
+      description:
+        'Independent t-test on mean differences per Welch 450 on the basis of the weighted data',
+      syntax: '',
+    },
   },
   {
     name: 'WHILEBLOCK',
     de: { description: '', syntax: 'WHILEBLOCK <bedingung> DO' },
+    en: { description: '', syntax: 'WHILEBLOCK <condition> DO' },
   },
   {
     name: 'WHILEBLOCK DO',
@@ -9102,10 +10642,16 @@ export const keywordData: KeywordEntry[] = [
       description:
         '= | FORM LINE FORM CIRCLE SYMBOLSIZE 12 ROWS 1:11 COLUMNS 1:5 ; Mit folgendem Output: GESStsabsArtist-Grafik auf Basis der Mittelwerte aus der OVERVIEW-Tabelle [X]Overview Add ähnlich wie TABLE ADD 390 kann man mit OVERVIEW ADD 406 und XOVERVIEW ADD 409 die Daten aus mehreren Vorlagen einfach in eine Tabelle integrieren. Overview Add Ein Beispiel:…',
     },
+    en: {
+      description:
+        '= | FORM LINE FORM CIRCLE SYMBOLSIZE 12 ROWS 1:11 COLUMNS 1:5 ; With the following output: GESStabs Artist graphic based on the means from the OVERVIEW table. [X]Overview Add: similar to TABLE ADD 390, with OVERVIEW ADD 406 and XOVERVIEW ADD 409 you can easily integrate the data from several templates into one table. Overview Add: an example:…',
+      syntax: '',
+    },
   },
   {
     name: 'WIDTH',
     de: { description: 'Die Breite der TITLEBOX' },
+    en: { description: 'The width of the TITLEBOX', syntax: '' },
   },
   {
     name: 'WITH',
@@ -9115,14 +10661,17 @@ export const keywordData: KeywordEntry[] = [
   {
     name: 'WORDSPLITS',
     de: { description: '', syntax: 'WORDSPLITS= [ <filename> | "" ];' },
+    en: { description: '', syntax: 'WORDSPLITS= [ <filename> | "" ];' },
   },
   {
     name: 'WRAPTEXT',
     de: { description: '', syntax: 'WRAPTEXT <boxtype> : [YES|NO]' },
+    en: { description: '', syntax: 'WRAPTEXT <boxtype> : [YES|NO]' },
   },
   {
     name: 'WRITESIGNALFILE',
     de: { description: '', syntax: 'WRITESIGNALFILE = [ YES | NO ];' },
+    en: { description: '', syntax: 'WRITESIGNALFILE = [ YES | NO ];' },
   },
   {
     name: 'X',
@@ -9140,6 +10689,11 @@ export const keywordData: KeywordEntry[] = [
       description:
         'Spaltenweise 4-Felder Chiquadrat-Test auf Prozentwertunterschiede (gewichtet und ungewichtet)',
     },
+    en: {
+      description:
+        'Column-wise 4-field chi-square test on percentage differences (weighted and unweighted)',
+      syntax: '',
+    },
   },
   {
     name: 'XCOLDEPTTEST',
@@ -9147,6 +10701,11 @@ export const keywordData: KeywordEntry[] = [
     de: {
       description:
         'Abhängiger t-Test auf Mittelwertsunterschiede (gewichtet und ungewichtet)',
+    },
+    en: {
+      description:
+        'Dependent t-test on mean differences (weighted and unweighted)',
+      syntax: '',
     },
   },
   {
@@ -9162,12 +10721,18 @@ export const keywordData: KeywordEntry[] = [
   {
     name: 'XLABELSIGNCHARBOX',
     de: { description: '', syntax: 'XLABELSIGNCHARBOX LABELS X : [YES|NO]' },
+    en: { description: '', syntax: 'XLABELSIGNCHARBOX LABELS X : [YES|NO]' },
   },
   {
     name: 'XMCNEMAR',
     de: {
       description:
         'Abhängiger Test auf Prozentwertunterschied (gewichtet und ungewichtet) nach McNemar 449',
+    },
+    en: {
+      description:
+        'Dependent test on percentage differences (weighted and unweighted) per McNemar 449',
+      syntax: '',
     },
   },
   {
@@ -9197,6 +10762,11 @@ export const keywordData: KeywordEntry[] = [
       syntax:
         'XOVERVIEW <tableoptions> =\n<cellelementlist>( <varlist> ) [ SORT <cellelement>\n[ DESCEND ] [ PANE <number> CODE <number> ] ] BY <kopf>;\n<varlist> ::= { <variable [ <varoption> ] }*n\n<varoption> ::=\n[ SORTCLASS <number> ]',
     },
+    en: {
+      description: '',
+      syntax:
+        'XOVERVIEW <tableoptions> =\n<cellelementlist>( <varlist> ) [ SORT <cellelement>\n[ DESCEND ] [ PANE <number> CODE <number> ] ] BY <header>;\n<varlist> ::= { <variable [ <varoption> ] }*n\n<varoption> ::=\n[ SORTCLASS <number> ]',
+    },
   },
   {
     name: 'XOVERVIEW ADD',
@@ -9209,6 +10779,11 @@ export const keywordData: KeywordEntry[] = [
       description:
         'Zeilenweise 4-Felder Chiquadrat-Test auf Prozentwertunterschiede (gewichtet und ungewichtet)',
     },
+    en: {
+      description:
+        'Row-wise 4-field chi-square test on percentage differences (weighted and unweighted)',
+      syntax: '',
+    },
   },
   {
     name: 'XROWMEANTEST',
@@ -9220,6 +10795,11 @@ export const keywordData: KeywordEntry[] = [
     de: {
       description:
         'Zeilenweiser, unabhängiger t-Test auf Mittelwerteunterschiede (gewichtet und ungewichtet)',
+    },
+    en: {
+      description:
+        'Row-wise, independent t-test on mean differences (weighted and unweighted)',
+      syntax: '',
     },
   },
   {
@@ -9236,6 +10816,11 @@ export const keywordData: KeywordEntry[] = [
       description:
         'Unabhängiger t-Test auf Mittelwerteunterschiede (gewichtet und ungewichtet)',
     },
+    en: {
+      description:
+        'Independent t-test on mean differences (weighted and unweighted)',
+      syntax: '',
+    },
   },
   {
     name: 'XVALID',
@@ -9247,6 +10832,11 @@ export const keywordData: KeywordEntry[] = [
     de: {
       description:
         'Unabhängiger t-Test auf Mittelwerteunterschiede (gewichtet und ungewichtet) nach Welch 450 * zu ColPercT: ColPercTMinimum Bei der Signifikanzberechnung nach COLPERCT 428 wird die Spaltenüberlappung (kann bei Mehrfachnennungsvariablen passieren) berücksichtig.…',
+    },
+    en: {
+      description:
+        'Independent t-test on mean differences (weighted and unweighted) per Welch 450. * on ColPercT: ColPercTMinimum. In the significance calculation per COLPERCT 428, column overlap (which can happen with multiple-response variables) is taken into account.…',
+      syntax: '',
     },
   },
   {
@@ -9264,6 +10854,11 @@ export const keywordData: KeywordEntry[] = [
     de: {
       description:
         'YDATABOXES ist eine Box, die alle DATABOXes einer Tabelle senkrecht umfasst. Sie geht auch nach oben über die FRAMECELLS und die LABELCELLS hinaus. Damit kann man über alle Elemente hinweg senkrechte Spalten schaffen, die optisch zusammen hängen DrawBox Zeichnung der Boxes',
+    },
+    en: {
+      description:
+        'YDATABOXES is a box that vertically encloses all DATABOXes of a table. It also extends upwards beyond the FRAMECELLS and the LABELCELLS. With it you can create vertical columns across all elements that visually belong together. DrawBox: drawing of the boxes',
+      syntax: '',
     },
   },
   {
@@ -9289,10 +10884,15 @@ export const keywordData: KeywordEntry[] = [
   {
     name: 'ZEROBASED',
     de: { description: 'Die Skala soll immer den Nullpunkt enthalten' },
+    en: {
+      description: 'The scale should always contain the zero point',
+      syntax: '',
+    },
   },
   {
     name: 'ZERODASHCHAR',
     de: { description: '', syntax: 'ZERODASHCHAR = "<char>";' },
+    en: { description: '', syntax: 'ZERODASHCHAR = "<char>";' },
   },
   {
     name: 'ZEROMISSING',
@@ -9302,6 +10902,7 @@ export const keywordData: KeywordEntry[] = [
   {
     name: 'ZIPINVERTOUT',
     de: { description: '', syntax: 'ZIPINVERTOUT = [ YES | NO ];' },
+    en: { description: '', syntax: 'ZIPINVERTOUT = [ YES | NO ];' },
   },
   {
     name: 'ZONEINPUT',
@@ -9322,6 +10923,11 @@ export const keywordData: KeywordEntry[] = [
     de: {
       description:
         'Ausgabe des zentralen Bereichs einer Variablen, Mittelwert +/- Streuung * ZVALUE. Mit ZVALUE kann man diesen Faktor frei wählen, z.B. ZVALUE = 1.0; Voreinstellung: ZVALUE = 0.967; (2/3-Range um Mittelwert) * und **: Beide CELLELEMENTS reagieren auf den Schalter BINOMIALPERCENTRANGE: Exkurs: BiNomialPercentRange',
+    },
+    en: {
+      description:
+        'Output of the central range of a variable, mean +/- dispersion * ZVALUE. With ZVALUE you can freely choose this factor, e.g. ZVALUE = 1.0; Default: ZVALUE = 0.967; (2/3 range around the mean). * and **: both CELLELEMENTS respond to the switch BINOMIALPERCENTRANGE. Digression: BiNomialPercentRange',
+      syntax: '',
     },
   },
   {
