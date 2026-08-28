@@ -21,10 +21,7 @@ import { KeywordEntry } from './keywordDatabaseTypes';
 export const keywordData: KeywordEntry[] = [
   {
     name: '#DEFINE',
-    de: {
-      description: '',
-      syntax: '#DEFINE <string>\n#UNDEFINE <string>',
-    },
+    de: { description: '', syntax: '#DEFINE <string>' },
   },
   {
     name: '#DOMACRO',
@@ -81,12 +78,8 @@ export const keywordData: KeywordEntry[] = [
   },
   {
     name: '#ENDMACRO',
-    de: {
-      description: 'kann man es anschließend beliebig oft aufrufen:',
-    },
-    en: {
-      description: 'it can be called up as often as required:',
-    },
+    de: { description: 'kann man es anschließend beliebig oft aufrufen:' },
+    en: { description: 'it can be called up as often as required:' },
   },
   {
     name: '#EXPAND',
@@ -126,10 +119,7 @@ export const keywordData: KeywordEntry[] = [
   },
   {
     name: '#IGNORECASE',
-    de: {
-      description: '',
-      syntax: '#IGNORECASE = [ YES | NO ] ;',
-    },
+    de: { description: '', syntax: '#IGNORECASE = [ YES | NO ] ;' },
   },
   {
     name: '#MACRO',
@@ -164,6 +154,25 @@ export const keywordData: KeywordEntry[] = [
     },
   },
   {
+    name: '#UNDEFINE',
+    de: { description: '', syntax: '#UNDEFINE <string>' },
+  },
+  {
+    name: 'ABANDON',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'ABANDONFILE',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'ABANDONOPENFILE',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
     name: 'ABS',
     en: {
       description:
@@ -171,11 +180,26 @@ export const keywordData: KeywordEntry[] = [
     },
   },
   {
+    name: 'ABSCOLINHG',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'ABSCOLPERCENT',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
     name: 'ABSCOLUMN',
     de: {
       description:
         'PHYSICALCOLUMN. Im Standardfall einer Tabelle mit absoluten Häufigkeiten ist von den sechs Rahmenelementen nur eines vorhanden: die Zeile mit den absoluten Häufigkeiten, ABSROW. In unserem Fall sollen in den Zellen Spaltenprozente abgebildet werden, das heißt als CELLELEMENTS wählen wir COLUMNPERCENT. Dazu passen eine Totalspalte und eine Absolutzeile.…',
     },
+  },
+  {
+    name: 'ABSINLABEL',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
   },
   {
     name: 'ABSINLABELBOX',
@@ -189,16 +213,32 @@ export const keywordData: KeywordEntry[] = [
     },
   },
   {
+    name: 'ABSMEAN',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'ABSMEANSUM',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
     name: 'ABSOLUTE',
-    de: {
-      description: 'Zahl der Fälle (Summe der Gewichte)',
-    },
+    de: { description: 'Zahl der Fälle (Summe der Gewichte)' },
   },
   {
     name: 'ABSROW',
-    de: {
-      description: 'Absolute Zahl der Nennungen/ Fälle in der Zeile',
-    },
+    de: { description: 'Absolute Zahl der Nennungen/ Fälle in der Zeile' },
+  },
+  {
+    name: 'ABSROWINHG',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'ABSROWPERCENT',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
   },
   {
     name: 'ABSZERODASH',
@@ -210,6 +250,11 @@ export const keywordData: KeywordEntry[] = [
       description:
         'Usually zero as an absolute value is represented with a "0". ABSZERODASH can be used to represent the zero in a CELLELEMENT ABSOLUTE as a dash (\'-\').',
     },
+  },
+  {
+    name: 'ACCOUNT',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
   },
   {
     name: 'ACROSS',
@@ -227,10 +272,7 @@ export const keywordData: KeywordEntry[] = [
   },
   {
     name: 'ADDNAMETOVARTITLE',
-    de: {
-      description: '',
-      syntax: 'ADDNAMETOVARTITLE = [ YES | NO ];',
-    },
+    de: { description: '', syntax: 'ADDNAMETOVARTITLE = [ YES | NO ];' },
   },
   {
     name: 'ADDOVERCODE',
@@ -244,18 +286,42 @@ export const keywordData: KeywordEntry[] = [
     },
   },
   {
+    name: 'ADDRESSBASE',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'ADDRSERVER',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'ADDSPLITS',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
     name: 'ADOBELATIN1',
-    en: {
-      description: '',
-      syntax: 'ADOBELATIN1;',
-    },
+    en: { description: '', syntax: 'ADOBELATIN1;' },
   },
   {
     name: 'ADOBENAME',
-    en: {
-      description: '',
-      syntax: 'ADOBENAME <char> = <name>;',
-    },
+    en: { description: '', syntax: 'ADOBENAME <char> = <name>;' },
+  },
+  {
+    name: 'AFTER',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'AGGR',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'ALFA',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
   },
   {
     name: 'ALIGN',
@@ -271,14 +337,28 @@ export const keywordData: KeywordEntry[] = [
   },
   {
     name: 'ALIGNALPHA',
-    de: {
-      description: '',
-      syntax: 'ALIGNALPHA = [ LEFT | RIGHT ];',
-    },
-    en: {
-      description: '',
-      syntax: 'ALIGNALPHA = [ LEFT | RIGHT ];',
-    },
+    de: { description: '', syntax: 'ALIGNALPHA = [ LEFT | RIGHT ];' },
+    en: { description: '', syntax: 'ALIGNALPHA = [ LEFT | RIGHT ];' },
+  },
+  {
+    name: 'ALIGNDATA',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'ALIGNLABELLEFT',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'ALL',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'ALLOWALPHATEST',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
   },
   {
     name: 'ALLOWASYMMETRY',
@@ -288,11 +368,38 @@ export const keywordData: KeywordEntry[] = [
     },
   },
   {
+    name: 'ALLOWEMPTY',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'ALLOWEXPANDINTOKEN',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'ALLOWLINEFEED',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'ALLOWNOTEXTINVAR',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'ALLQUESTIONSASKED',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'ALLSIGNIFICANCE',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
     name: 'ALPHA',
-    de: {
-      description: '',
-      syntax: 'ALPHA <varlist> = YES;',
-    },
+    de: { description: '', syntax: 'ALPHA <varlist> = YES;' },
     en: {
       description:
         '1 100 20 ; In this case the names of politicians are punched in the fields 1-20, 21-40, etc. which makes coding by hand superfluous. If using input from a COLBIN file then the key word ALPHA can obviously not be used. Generally the use of an asterisk instead of the initial column is processed the same as in a SINGLEQ. MULTIQs can also be defined as relocatable.…',
@@ -313,16 +420,83 @@ export const keywordData: KeywordEntry[] = [
     },
   },
   {
+    name: 'ALTXCODE',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'ALWAYS',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'AND',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'ANSWER',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'ANYCASE',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'APPEND',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'APPOINTCODE',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'APPOINTMENTWAIT',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'APPOTRY',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'AREAS',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'AREAS3D',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'AS',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
     name: 'ASALPHA',
     de: {
       description: '',
       syntax:
         'ASALPHA <varlist> = [ YES | NO ];\nOPENASALPHA <varlist> = [ YES | NO ];',
     },
-    en: {
-      description: '',
-      syntax: 'ASALPHA <varlist> = [ YES | NO ];',
-    },
+    en: { description: '', syntax: 'ASALPHA <varlist> = [ YES | NO ];' },
+  },
+  {
+    name: 'ASCEND',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'ASCIIIN',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
   },
   {
     name: 'ASCIIOUT',
@@ -344,6 +518,11 @@ export const keywordData: KeywordEntry[] = [
     },
   },
   {
+    name: 'ASCIIOUTCARDS',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
     name: 'ASCIIOUTDECIMALCAR',
     en: {
       description:
@@ -352,10 +531,7 @@ export const keywordData: KeywordEntry[] = [
   },
   {
     name: 'ASCIIOUTDECIMALCHAR',
-    de: {
-      description: '',
-      syntax: 'ASCIIOUTDECIMALCHAR = [ . | , ];',
-    },
+    de: { description: '', syntax: 'ASCIIOUTDECIMALCHAR = [ . | , ];' },
   },
   {
     name: 'ASCIIOUTFILE',
@@ -369,22 +545,33 @@ export const keywordData: KeywordEntry[] = [
     },
   },
   {
+    name: 'ASKMULTIASSINGLES',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
     name: 'ASSCOCEND',
-    de: {
-      description: '',
-      syntax: 'ASSCOCEND <filename> ;',
-    },
-    en: {
-      description: '',
-      syntax: 'ASSCOCEND <filename> ;',
-    },
+    de: { description: '', syntax: 'ASSCOCEND <filename> ;' },
+    en: { description: '', syntax: 'ASSCOCEND <filename> ;' },
+  },
+  {
+    name: 'ASSERT',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
   },
   {
     name: 'ASSERTFILTERINASCII',
-    de: {
-      description: '',
-      syntax: 'ASSERTFILTERINASCII = [ YES | NO ];',
-    },
+    de: { description: '', syntax: 'ASSERTFILTERINASCII = [ YES | NO ];' },
+  },
+  {
+    name: 'ASSERTFILTERVARS',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'ASSOCEND',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
   },
   {
     name: 'ASSOCFILE',
@@ -421,21 +608,27 @@ export const keywordData: KeywordEntry[] = [
   },
   {
     name: 'AUTO',
-    de: {
-      description: '',
-      syntax: 'AUTO : [YES | NO]',
-    },
+    de: { description: '', syntax: 'AUTO : [YES | NO]' },
+  },
+  {
+    name: 'AUTOALIGN',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'AUTOCASENUM',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'AUTOCHARTFORMAT',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
   },
   {
     name: 'AUTOCLEAR',
-    de: {
-      description: '',
-      syntax: 'AUTOCLEAR = [ YES | NO ];',
-    },
-    en: {
-      description: '',
-      syntax: 'AUTOCLEAR = [ YES | NO ];',
-    },
+    de: { description: '', syntax: 'AUTOCLEAR = [ YES | NO ];' },
+    en: { description: '', syntax: 'AUTOCLEAR = [ YES | NO ];' },
   },
   {
     name: 'AUTOCONTENTKEY',
@@ -464,6 +657,16 @@ export const keywordData: KeywordEntry[] = [
     },
   },
   {
+    name: 'AUTONOANSWERCODE',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'AUTOOPEN',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
     name: 'AUTOOVERSORT',
     en: {
       description:
@@ -472,10 +675,7 @@ export const keywordData: KeywordEntry[] = [
   },
   {
     name: 'AUTOREPLACEOPEN',
-    de: {
-      description: '',
-      syntax: 'AUTOREPLACEOPEN = [ YES | NO ];',
-    },
+    de: { description: '', syntax: 'AUTOREPLACEOPEN = [ YES | NO ];' },
   },
   {
     name: 'AUTOSIGNCHAR',
@@ -506,21 +706,22 @@ export const keywordData: KeywordEntry[] = [
         '5.Protokollierung der Signifikanzberechnung 460: STATTESTDUMP Gegenstand des Signifikanztests TestColumns Gibt man keine TESTCOLUMNS an, werden je Variable alle Spalten gegeneinander getestet.',
       syntax: 'AUTOSIGNFORMAT = "<formatstring>";',
     },
-    en: {
-      description: '',
-      syntax: 'AUTOSIGNFORMAT = "<formatstring>";',
-    },
+    en: { description: '', syntax: 'AUTOSIGNFORMAT = "<formatstring>";' },
   },
   {
     name: 'AUTOSIGNIFTEXT',
-    de: {
-      description: '',
-      syntax: 'AUTOSIGNIFTEXT = [ YES | NO ];',
-    },
-    en: {
-      description: '',
-      syntax: 'AUTOSIGNIFTEXT = [ YES | NO ];',
-    },
+    de: { description: '', syntax: 'AUTOSIGNIFTEXT = [ YES | NO ];' },
+    en: { description: '', syntax: 'AUTOSIGNIFTEXT = [ YES | NO ];' },
+  },
+  {
+    name: 'AUTOSORTTREE',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'AXISMINMAX',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
   },
   {
     name: 'BACKGROUND',
@@ -536,11 +737,53 @@ export const keywordData: KeywordEntry[] = [
     },
   },
   {
+    name: 'BACKGROUNDBOX',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'BACKLIMIT',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'BACKTOCONTENT',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'BANKERSROUNDMODE',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'BARS',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'BARS3D',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'BASEIN',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'BASESELECT',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
     name: 'BCDVAR',
-    en: {
-      description: '',
-      syntax: 'BCDVAR <variable> = <vargroup> ;',
-    },
+    en: { description: '', syntax: 'BCDVAR <variable> = <vargroup> ;' },
+  },
+  {
+    name: 'BEEP',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
   },
   {
     name: 'BENCHMARKCOLOR',
@@ -578,18 +821,52 @@ export const keywordData: KeywordEntry[] = [
     },
   },
   {
+    name: 'BIG',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'BIK001',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'BINARY',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
     name: 'BINOMIALPERCENTRANGE',
-    de: {
-      description: '',
-      syntax: 'BINOMIALPERCENTRANGE = [ YES | NO ];',
-    },
+    de: { description: '', syntax: 'BINOMIALPERCENTRANGE = [ YES | NO ];' },
+  },
+  {
+    name: 'BIPOL',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'BIT',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
   },
   {
     name: 'BITGROUP',
-    en: {
-      description: '',
-      syntax: 'BITGROUP <vargroup> = <varname> ;',
-    },
+    en: { description: '', syntax: 'BITGROUP <vargroup> = <varname> ;' },
+  },
+  {
+    name: 'BLACKLIST',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'BLACKLISTCODE',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'BLACKLISTSERVER',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
   },
   {
     name: 'BLANKVALUE',
@@ -603,11 +880,31 @@ export const keywordData: KeywordEntry[] = [
     },
   },
   {
+    name: 'BOLD',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'BORDERS',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'BOTH',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
     name: 'BOTTOM',
     de: {
       description:
         'Label wird innerhalb einer Sortierklasse immer ans Ende sortiert, siehe',
     },
+  },
+  {
+    name: 'BOTTOMCUT',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
   },
   {
     name: 'BOTTOMTEXT',
@@ -630,10 +927,7 @@ export const keywordData: KeywordEntry[] = [
   },
   {
     name: 'BOXLINEFEED',
-    de: {
-      description: '',
-      syntax: 'BOXLINEFEED <boxname> = <number> ;',
-    },
+    de: { description: '', syntax: 'BOXLINEFEED <boxname> = <number> ;' },
     en: {
       description: '(PS): is ignored by line printers.',
       syntax: 'BOXLINEFEED <boxname> = <number> ;',
@@ -652,6 +946,21 @@ export const keywordData: KeywordEntry[] = [
     },
   },
   {
+    name: 'BOXRADIUS',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'BOXTEXT',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'BOXTYPE',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
     name: 'BY',
     de: {
       description:
@@ -660,10 +969,7 @@ export const keywordData: KeywordEntry[] = [
   },
   {
     name: 'CALCCOLLOWACCURACY',
-    de: {
-      description: '',
-      syntax: 'CALCCOLLOWACCURACY = [ YES | NO ] ;',
-    },
+    de: { description: '', syntax: 'CALCCOLLOWACCURACY = [ YES | NO ] ;' },
   },
   {
     name: 'CALCULATECOLUMN',
@@ -679,6 +985,36 @@ export const keywordData: KeywordEntry[] = [
     },
   },
   {
+    name: 'CAMEMBERT',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'CAMEMBERT3D',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'CAMEMBERTANDBAR',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'CAMEMBERTEXPLODE',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'CAMEMBERTEXPLODE3D',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'CAPI',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
     name: 'CARD',
     en: {
       description:
@@ -687,14 +1023,8 @@ export const keywordData: KeywordEntry[] = [
   },
   {
     name: 'CARDNUMBER',
-    de: {
-      description: '',
-      syntax: 'CARDNUMBER = <STARTCOLUMN> <WIDTH>;',
-    },
-    en: {
-      description: '',
-      syntax: 'CARDNUMBER = startcolumn width;',
-    },
+    de: { description: '', syntax: 'CARDNUMBER = <STARTCOLUMN> <WIDTH>;' },
+    en: { description: '', syntax: 'CARDNUMBER = startcolumn width;' },
   },
   {
     name: 'CARDS',
@@ -717,11 +1047,21 @@ export const keywordData: KeywordEntry[] = [
     },
   },
   {
+    name: 'CASELIST',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
     name: 'CASENUMBER',
     en: {
       description:
         'Syntax CASENUMBER = startcolumn width; If the column definition is known for a case number then an identical value is expected at that position for all cards of a case. Divergence leads to an error log which is shown in the lower error window on screen and where necessary in the LISTFILE.',
     },
+  },
+  {
+    name: 'CASES',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
   },
   {
     name: 'CASESTITLE',
@@ -739,11 +1079,18 @@ export const keywordData: KeywordEntry[] = [
     },
   },
   {
+    name: 'CATI',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'CATIDISPLAYLIST',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
     name: 'CBEXCLUDEMISSING',
-    de: {
-      description: '',
-      syntax: 'CBEXCLUDEMISSING = [ YES | NO ];',
-    },
+    de: { description: '', syntax: 'CBEXCLUDEMISSING = [ YES | NO ];' },
   },
   {
     name: 'CBPERCENTINTOTAL',
@@ -773,11 +1120,13 @@ export const keywordData: KeywordEntry[] = [
     },
   },
   {
+    name: 'CELLMINALWAYS',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
     name: 'CELLMINIMUM',
-    de: {
-      description: '',
-      syntax: 'CELLMINIMUM = <value>;',
-    },
+    de: { description: '', syntax: 'CELLMINIMUM = <value>;' },
     en: {
       description:
         'The option CELLMINIMUM states as of which minimum value a table cell counts as valid and should be included. Example: CELLMINIMUM = 10; In all cells where the minimum value has not been reached there will be "-". Preset at 0.0001; CELLMINIMUM as ROWMINIMUM and COLMINIMUM are TABLE options. Options always refer to the last table requested. They are therefore always written after the TABLE command.…',
@@ -797,13 +1146,21 @@ export const keywordData: KeywordEntry[] = [
   },
   {
     name: 'CELLSET',
-    de: {
-      description: 'Statement verwendet werden.',
-    },
+    de: { description: 'Statement verwendet werden.' },
     en: {
       description:
         'The CELLELEMENTS statement can be used to combine several pieces of information in a single table cell in the parts of the table which span across both axes using LABELS. In summary tables additional summarised rows are often required where e.g. means are to be presented. Due to the syntax this is only one CELLELEMENT, if necessary this can be one that includes two values e.g.…',
     },
+  },
+  {
+    name: 'CHANGE',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'CHANGEKEYWORD',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
   },
   {
     name: 'CHANGESPSSVARNAMES',
@@ -814,10 +1171,7 @@ export const keywordData: KeywordEntry[] = [
   },
   {
     name: 'CHAPTER',
-    de: {
-      description: '',
-      syntax: 'CHAPTER <varlist> = [ {<string>}*n ];',
-    },
+    de: { description: '', syntax: 'CHAPTER <varlist> = [ {<string>}*n ];' },
   },
   {
     name: 'CHAPTERPAGE',
@@ -828,14 +1182,23 @@ export const keywordData: KeywordEntry[] = [
   },
   {
     name: 'CHAPTERTITLE',
-    de: {
-      description: '',
-      syntax: 'CHAPTERTITLE = <name>;',
-    },
-    en: {
-      description: '',
-      syntax: 'CHAPTERTITLE = <name>;',
-    },
+    de: { description: '', syntax: 'CHAPTERTITLE = <name>;' },
+    en: { description: '', syntax: 'CHAPTERTITLE = <name>;' },
+  },
+  {
+    name: 'CHARTAREA',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'CHARTCOLORS',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'CHARTFOOTER',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
   },
   {
     name: 'CHARTHEADER',
@@ -846,6 +1209,31 @@ export const keywordData: KeywordEntry[] = [
     },
   },
   {
+    name: 'CHARTHEIGHT',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'CHARTLABELS',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'CHARTLEGEND',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'CHARTNUMBERS',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'CHARTRANGE',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
     name: 'CHARTTITLE',
     de: {
       description:
@@ -854,18 +1242,32 @@ export const keywordData: KeywordEntry[] = [
     },
   },
   {
+    name: 'CHARTWIDTH',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'CHECKALLOW',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'CHECKBLACKSERV',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
     name: 'CHECKMISSINGINMULTI',
-    de: {
-      description: '',
-      syntax: 'CHECKMISSINGINMULTI = [ YES | NO ];',
-    },
+    de: { description: '', syntax: 'CHECKMISSINGINMULTI = [ YES | NO ];' },
   },
   {
     name: 'CHECKRECODES',
-    de: {
-      description: '',
-      syntax: 'CHECKRECODES = [ YES | NO };',
-    },
+    de: { description: '', syntax: 'CHECKRECODES = [ YES | NO };' },
+  },
+  {
+    name: 'CHIQOCOLMINIMUM',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
   },
   {
     name: 'CHIQU',
@@ -875,10 +1277,23 @@ export const keywordData: KeywordEntry[] = [
     },
   },
   {
+    name: 'CHIQUCOLMINIMUM',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'CHIQUMINIMUM',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'CHIQUROWMINIMUM',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
     name: 'CIRCLE',
-    de: {
-      description: 'Skalenwert mit einem Kreis markieren',
-    },
+    de: { description: 'Skalenwert mit einem Kreis markieren' },
   },
   {
     name: 'CIRCLEO',
@@ -920,6 +1335,26 @@ export const keywordData: KeywordEntry[] = [
     },
   },
   {
+    name: 'CKONTO',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'CKONTOKEY',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'CLASSIC',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'CLASSICCELLSEQUENCE',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
     name: 'CLONEVAR',
     de: {
       description: '',
@@ -928,15 +1363,29 @@ export const keywordData: KeywordEntry[] = [
     },
   },
   {
+    name: 'CLOSED',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'CLUSTERED',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'CODE',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'CODEBLOCK',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
     name: 'CODEBOOK',
-    de: {
-      description: '',
-      syntax: 'CODEBOOK [ EXCEPT ][ <VarList> ] ;',
-    },
-    en: {
-      description: '',
-      syntax: 'CODEBOOK [ <VarList> ] ;',
-    },
+    de: { description: '', syntax: 'CODEBOOK [ EXCEPT ][ <VarList> ] ;' },
+    en: { description: '', syntax: 'CODEBOOK [ <VarList> ] ;' },
   },
   {
     name: 'CODEBOOKHEADER',
@@ -948,10 +1397,7 @@ export const keywordData: KeywordEntry[] = [
   },
   {
     name: 'CODEBOOKTOTAL',
-    de: {
-      description: '',
-      syntax: 'CODEBOOKTOTAL = "text";',
-    },
+    de: { description: '', syntax: 'CODEBOOKTOTAL = "text";' },
   },
   {
     name: 'CODEBOOKVALUES',
@@ -973,35 +1419,25 @@ export const keywordData: KeywordEntry[] = [
   },
   {
     name: 'CODEINLABELS',
-    de: {
-      description: '',
-      syntax: 'CODEINLABELS = [ YES | NO ];',
-    },
+    de: { description: '', syntax: 'CODEINLABELS = [ YES | NO ];' },
+  },
+  {
+    name: 'CODISISDN',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
   },
   {
     name: 'COLBINCRLF',
-    de: {
-      description: '',
-      syntax: 'COLBINCRLF = [ YES | NO ];',
-    },
-    en: {
-      description: '',
-      syntax: 'COLBINCRLF = [ YES | NO ];',
-    },
+    de: { description: '', syntax: 'COLBINCRLF = [ YES | NO ];' },
+    en: { description: '', syntax: 'COLBINCRLF = [ YES | NO ];' },
   },
   {
     name: 'COLBINFORMAT',
-    de: {
-      description: '',
-      syntax: 'COLBINFORMAT = <Colbinformatname>;',
-    },
+    de: { description: '', syntax: 'COLBINFORMAT = <Colbinformatname>;' },
   },
   {
     name: 'COLBINFORNAT',
-    en: {
-      description: '',
-      syntax: 'COLBINFORNAT = <Colbinformatname>;',
-    },
+    en: { description: '', syntax: 'COLBINFORNAT = <Colbinformatname>;' },
   },
   {
     name: 'COLBININ',
@@ -1021,37 +1457,24 @@ export const keywordData: KeywordEntry[] = [
     },
   },
   {
+    name: 'COLBININCARDS',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
     name: 'COLBININCOLS',
-    de: {
-      description: '',
-      syntax: 'COLBININCOLS = <value>;',
-    },
-    en: {
-      description: '',
-      syntax: 'COLBININCOLS = <value>;',
-    },
+    de: { description: '', syntax: 'COLBININCOLS = <value>;' },
+    en: { description: '', syntax: 'COLBININCOLS = <value>;' },
   },
   {
     name: 'COLBININFILE',
-    de: {
-      description: '',
-      syntax: 'COLBININFILE = <filename>;',
-    },
-    en: {
-      description: '',
-      syntax: 'COLBININFILE = <filename>;',
-    },
+    de: { description: '', syntax: 'COLBININFILE = <filename>;' },
+    en: { description: '', syntax: 'COLBININFILE = <filename>;' },
   },
   {
     name: 'COLBININSWAPPED',
-    de: {
-      description: '',
-      syntax: 'COLBININSWAPPED = [ YES | NO ];',
-    },
-    en: {
-      description: '',
-      syntax: 'COLBININSWAPPED = [ YES | NO ];',
-    },
+    de: { description: '', syntax: 'COLBININSWAPPED = [ YES | NO ];' },
+    en: { description: '', syntax: 'COLBININSWAPPED = [ YES | NO ];' },
   },
   {
     name: 'COLBINOUT',
@@ -1073,15 +1496,14 @@ export const keywordData: KeywordEntry[] = [
     },
   },
   {
+    name: 'COLBINOUTCARDS',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
     name: 'COLBINOUTCOLS',
-    de: {
-      description: '',
-      syntax: 'COLBINOUTCOLS = <value>;',
-    },
-    en: {
-      description: '',
-      syntax: 'COLBINOUTCOLS = <value>;',
-    },
+    de: { description: '', syntax: 'COLBINOUTCOLS = <value>;' },
+    en: { description: '', syntax: 'COLBINOUTCOLS = <value>;' },
   },
   {
     name: 'COLBINOUTFILE',
@@ -1092,14 +1514,18 @@ export const keywordData: KeywordEntry[] = [
   },
   {
     name: 'COLBINOUTSWAPPED',
-    de: {
-      description: '',
-      syntax: 'COLBINOUTSWAPPED = [ YES | NO ];',
-    },
-    en: {
-      description: '',
-      syntax: 'COLBINOUTSWAPPED = [ YES | NO ];',
-    },
+    de: { description: '', syntax: 'COLBINOUTSWAPPED = [ YES | NO ];' },
+    en: { description: '', syntax: 'COLBINOUTSWAPPED = [ YES | NO ];' },
+  },
+  {
+    name: 'COLCCHIQUABSMIN',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'COLCCHIQUPHYSMIN',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
   },
   {
     name: 'COLCHIQU',
@@ -1118,9 +1544,12 @@ export const keywordData: KeywordEntry[] = [
   {
     name: 'COLDEPTTEST',
     argsHint: '(Var)',
-    de: {
-      description: 'Abhängiger t-Test auf Mittelwertsunterschiede',
-    },
+    de: { description: 'Abhängiger t-Test auf Mittelwertsunterschiede' },
+  },
+  {
+    name: 'COLLECT',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
   },
   {
     name: 'COLMEANINVRANK',
@@ -1175,10 +1604,25 @@ export const keywordData: KeywordEntry[] = [
     },
   },
   {
+    name: 'COLPERCANDCHIQU',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'COLPERCANDHYCHIQU',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
     name: 'COLPERCANDSIGN',
     en: {
       description: 'Column percent and COLPERCT Tests for Mean Differences:',
     },
+  },
+  {
+    name: 'COLPERCENTABS',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
   },
   {
     name: 'COLPERCENTDELTA',
@@ -1209,15 +1653,22 @@ export const keywordData: KeywordEntry[] = [
   },
   {
     name: 'COLPERCENTLINELIMIT',
-    de: {
-      description: '',
-      syntax: 'COLPERCENTLINELIMIT = <number>;',
-    },
+    de: { description: '', syntax: 'COLPERCENTLINELIMIT = <number>;' },
     en: {
       description: '',
       syntax:
         'COLPERCENTLINELIMIT = <number>;\nParallel to the option above, a row is suppressed if a cell has a column percent value of <number>.',
     },
+  },
+  {
+    name: 'COLPERCENTMEAN',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'COLPERCENTPROJ',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
   },
   {
     name: 'COLPERCENTRANK',
@@ -1227,6 +1678,11 @@ export const keywordData: KeywordEntry[] = [
     },
   },
   {
+    name: 'COLPERCENTSUM',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
     name: 'COLPERCEQUAL',
     de: {
       description:
@@ -1234,11 +1690,28 @@ export const keywordData: KeywordEntry[] = [
     },
   },
   {
+    name: 'COLPERCHYMCNEMAR',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'COLPERCMCNEMAR',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'COLPERCSTDERR',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'COLPERCT',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
     name: 'COLPERCTMINIMUM',
-    de: {
-      description: '',
-      syntax: 'COLPERCTMINIMUM = <number>;',
-    },
+    de: { description: '', syntax: 'COLPERCTMINIMUM = <number>;' },
     en: {
       description:
         'In the significance calculation using COLPERCT the column overlaps are taken into account. This method can lead to problematical significances if the number of overlaps is so high that there are only a few cases which do NOT occur in both columns which have been tested against each other.…',
@@ -1252,12 +1725,32 @@ export const keywordData: KeywordEntry[] = [
     },
   },
   {
+    name: 'COLROWPERCENT',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'COLSFROMNAME',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
     name: 'COLSUMPERCENT',
     argsHint: '( Var )',
     de: {
       description:
         'Ausgabe der Spaltenprozentuierung der Summe einer dritten Variablen, z.B. die Summe von Ausgaben für einen bestimmten Zweck in bestimmten Stadtteilen etc.',
     },
+  },
+  {
+    name: 'COLSUMPERCENTSUM',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'COLUMN',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
   },
   {
     name: 'COLUMNCOUNT',
@@ -1268,14 +1761,13 @@ export const keywordData: KeywordEntry[] = [
   },
   {
     name: 'COLUMNOFFSET',
-    de: {
-      description: '',
-      syntax: 'COLUMNOFFSET = <number> ;',
-    },
-    en: {
-      description: '',
-      syntax: 'COLUMNOFFSET = <number> ;',
-    },
+    de: { description: '', syntax: 'COLUMNOFFSET = <number> ;' },
+    en: { description: '', syntax: 'COLUMNOFFSET = <number> ;' },
+  },
+  {
+    name: 'COLUMNPERCENT',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
   },
   {
     name: 'COLUMNPERCENT100',
@@ -1283,6 +1775,21 @@ export const keywordData: KeywordEntry[] = [
       description:
         'Nach Hare-Niemeyer-Modell modifizierte Spaltenprozentwerte (Summe ergibt 100), Achtung: nicht geeignet bspw. für Mehrfachnennungsvariablen und OVERCODEs, Tabellen mit unterdrückten MISSING VALUES und selektiv gebildete Variablen',
     },
+  },
+  {
+    name: 'COLUMNPERCENTRANGE',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'COLUMNPERCENTRANGELOWER',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'COLUMNPERCENTRANGEUPPER',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
   },
   {
     name: 'COLUMNRANGE',
@@ -1326,6 +1833,11 @@ export const keywordData: KeywordEntry[] = [
     },
   },
   {
+    name: 'COLUMNWIDTH',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
     name: 'COMBINEDVAR',
     en: {
       description:
@@ -1333,18 +1845,27 @@ export const keywordData: KeywordEntry[] = [
     },
   },
   {
+    name: 'COMMENT',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'COMPACTADDRES',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'COMPARE',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
     name: 'COMPAREVAR',
-    en: {
-      description: '',
-      syntax: 'COMPAREVAR <name> = <Varlist> ;',
-    },
+    en: { description: '', syntax: 'COMPAREVAR <name> = <Varlist> ;' },
   },
   {
     name: 'COMPRESSCODEBOOK',
-    de: {
-      description: '',
-      syntax: 'COMPRESSCODEBOOK = [ YES | NO ];',
-    },
+    de: { description: '', syntax: 'COMPRESSCODEBOOK = [ YES | NO ];' },
     en: {
       description:
         'COMPRESSCODEBOOK = [ YES | NO ]; In the ASCII mode a list of CODEBOOKS can also be printed in a compressed form where a number of CODEBOOKS fit on to one page.',
@@ -1371,36 +1892,91 @@ export const keywordData: KeywordEntry[] = [
     },
   },
   {
+    name: 'COMPUTE ADD',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'COMPUTE ALPHA',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'COMPUTE ASCEND',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'COMPUTE CONCAT',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'COMPUTE COPY',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'COMPUTE DESCEND',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'COMPUTE ELIMINATE',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'COMPUTE INIT',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'COMPUTE LOAD',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'COMPUTE REPLACE',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'COMPUTE SHUFFLE',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'COMPUTE SORT',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'COMPUTE SUBSTR',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'COMPUTE SWAP',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
     name: 'CONCATCSS',
-    de: {
-      description: '',
-      syntax: 'CONCATCSS = [ YES | NO ];',
-    },
+    de: { description: '', syntax: 'CONCATCSS = [ YES | NO ];' },
   },
   {
     name: 'CONCATFILTERTEXTS',
-    de: {
-      description: '',
-      syntax: 'CONCATFILTERTEXTS = [ YES | NO ];',
-    },
+    de: { description: '', syntax: 'CONCATFILTERTEXTS = [ YES | NO ];' },
   },
   {
     name: 'CONCATNUMTOSTR',
-    de: {
-      description: '',
-      syntax: 'CONCATNUMTOSTR <varlist> = [ YES | NO ];',
-    },
+    de: { description: '', syntax: 'CONCATNUMTOSTR <varlist> = [ YES | NO ];' },
   },
   {
     name: 'CONDENSESPSSGROUP',
-    de: {
-      description: '',
-      syntax: 'CONDENSESPSSGROUP = [ YES | NO ];',
-    },
-    en: {
-      description: '',
-      syntax: 'CONDENSESPSSGROUP = [ YES | NO ];',
-    },
+    de: { description: '', syntax: 'CONDENSESPSSGROUP = [ YES | NO ];' },
+    en: { description: '', syntax: 'CONDENSESPSSGROUP = [ YES | NO ];' },
   },
   {
     name: 'CONFIDENCERANGE',
@@ -1411,11 +1987,23 @@ export const keywordData: KeywordEntry[] = [
     },
   },
   {
+    name: 'CONFIDENCERANGEPVALUE',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
     name: 'CONNECTEXCELCELLS',
-    de: {
-      description: '',
-      syntax: 'CONNECTEXCELCELLS <boxtype> : [YES|NO]',
-    },
+    de: { description: '', syntax: 'CONNECTEXCELCELLS <boxtype> : [YES|NO]' },
+  },
+  {
+    name: 'CONTENT',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'CONTENTBOX',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
   },
   {
     name: 'CONTENTFILE',
@@ -1424,10 +2012,7 @@ export const keywordData: KeywordEntry[] = [
       syntax:
         'CONTENTFILE <option> = <filename>;\noption ::= [ TABLETITLE | TOPTEXT | BOTTOMTEXT | VARIABLES X\n| VARIABLES Y ] [ option ]',
     },
-    en: {
-      description: '',
-      syntax: 'CONTENTFILE <option> = <filename>;',
-    },
+    en: { description: '', syntax: 'CONTENTFILE <option> = <filename>;' },
   },
   {
     name: 'CONTENTKEY',
@@ -1436,17 +2021,11 @@ export const keywordData: KeywordEntry[] = [
       syntax:
         'CONTENTKEY = [ <text> | TABLETITLE [ [ VARNAME | VARTEXT | VARTITLE ]\n<VARIABLE> ];',
     },
-    en: {
-      description: '',
-      syntax: 'CONTENTKEY = [ <text> | <VARIABLE> ];',
-    },
+    en: { description: '', syntax: 'CONTENTKEY = [ <text> | <VARIABLE> ];' },
   },
   {
     name: 'CONTENTKEYTOPDF',
-    de: {
-      description: '',
-      syntax: 'CONTENTKEYTOPDF = [ YES | NO ];',
-    },
+    de: { description: '', syntax: 'CONTENTKEYTOPDF = [ YES | NO ];' },
   },
   {
     name: 'CONTENTPAGE',
@@ -1457,11 +2036,43 @@ export const keywordData: KeywordEntry[] = [
     },
   },
   {
+    name: 'CONTINGENCY',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'CONTINGENCYNONSTD',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'CONTINUETITLE',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'CONTROL',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'COPY',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'COPYCHART2POWERPOINT',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'COPYCHART2PP',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
     name: 'COPYFILE',
-    de: {
-      description: '',
-      syntax: 'COPYFILE = <path>;',
-    },
+    de: { description: '', syntax: 'COPYFILE = <path>;' },
     en: {
       description:
         'The output of processed and perhaps altered data sets to an ASCII file. With exception of RECODEs, COMPUTEs etc. (see below) the content of the COPYFILE is identical to that of the DATAFILE. (for historical reasons the key word OUTFILE is accepted as a synonym.) (see also ASCIIOUT ALL;)',
@@ -1481,33 +2092,26 @@ export const keywordData: KeywordEntry[] = [
       syntax:
         'COPYLABELS <Varlist> = <source-variable>;\nUSELABELS <Varlist> = <source-variable>;\n[VALUE]LABELS <Varlist> COPY <source-variable>;\n[VALUE]LABELS <Varlist> AS <source-variable>;',
     },
-    en: {
-      description: '',
-      syntax: 'COPYLABELS <Varlist> = Variable;',
-    },
+    en: { description: '', syntax: 'COPYLABELS <Varlist> = Variable;' },
   },
   {
     name: 'COPYTEXT',
-    de: {
-      description: '',
-      syntax: 'COPYTEXT <VarList> = <variable>;',
-    },
-    en: {
-      description: '',
-      syntax: 'COPYTEXT <varlist> = <variable>;',
-    },
+    de: { description: '', syntax: 'COPYTEXT <VarList> = <variable>;' },
+    en: { description: '', syntax: 'COPYTEXT <varlist> = <variable>;' },
   },
   {
     name: 'COPYTITLE',
-    de: {
-      description: '',
-      syntax: 'COPYTITLE <VarList> = <variable>;',
-    },
+    de: { description: '', syntax: 'COPYTITLE <VarList> = <variable>;' },
     en: {
       description: '',
       syntax:
         'COPYTITLE <varlist> = <variable>;\nAll variables in <varlist> (in some cases the last defined variable) contain a reference to the\nVARTITLE of <variable>.',
     },
+  },
+  {
+    name: 'COS',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
   },
   {
     name: 'COUNT',
@@ -1525,21 +2129,35 @@ export const keywordData: KeywordEntry[] = [
   },
   {
     name: 'COUNTVALID',
-    de: {
-      description: '',
-      syntax: 'COUNTVALID <resultvars> = <varlist>;',
-    },
+    de: { description: '', syntax: 'COUNTVALID <resultvars> = <varlist>;' },
+  },
+  {
+    name: 'CPI',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'CRAMERSV',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'CROSS2VAR',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
   },
   {
     name: 'CROSSVAR',
-    de: {
-      description: '',
-      syntax: 'CROSSVAR <newvar> = <var1> <var2> ;',
-    },
+    de: { description: '', syntax: 'CROSSVAR <newvar> = <var1> <var2> ;' },
     en: {
       description:
         'Using CROSSVAR special variable families can be produced which contain all the characteristic combinations of all the variables involved. This can be used to present multiple cross tables in TABLE for example. If one were to define:…',
     },
+  },
+  {
+    name: 'CSS',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
   },
   {
     name: 'CSSCLASS',
@@ -1547,6 +2165,11 @@ export const keywordData: KeywordEntry[] = [
       description:
         'Vergabe einer CSS-Klasse für die HTML-Ausgabe, siehe Formatierung 584',
     },
+  },
+  {
+    name: 'CSV',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
   },
   {
     name: 'CSVEXPORT',
@@ -1562,11 +2185,13 @@ export const keywordData: KeywordEntry[] = [
     },
   },
   {
+    name: 'CSVEXPORTSINGLELINE',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
     name: 'CSVINALPHA',
-    de: {
-      description: '',
-      syntax: 'CSVINALPHA = <namelist>;',
-    },
+    de: { description: '', syntax: 'CSVINALPHA = <namelist>;' },
   },
   {
     name: 'CSVINFILE',
@@ -1578,10 +2203,7 @@ export const keywordData: KeywordEntry[] = [
   },
   {
     name: 'CSVINPROTOCOL',
-    de: {
-      description: '',
-      syntax: 'CSVINPROTOCOL = <filename>;',
-    },
+    de: { description: '', syntax: 'CSVINPROTOCOL = <filename>;' },
   },
   {
     name: 'CSVOUTFILE',
@@ -1593,23 +2215,40 @@ export const keywordData: KeywordEntry[] = [
   },
   {
     name: 'CSVSPECIAL',
-    de: {
-      description: '',
-      syntax: 'CSVSPECIAL = <filepath>;',
-    },
+    de: { description: '', syntax: 'CSVSPECIAL = <filepath>;' },
   },
   {
     name: 'CSVWEIGHT',
-    de: {
-      description: '',
-      syntax: 'CSVWEIGHT = <varname>;',
-    },
+    de: { description: '', syntax: 'CSVWEIGHT = <varname>;' },
+  },
+  {
+    name: 'CSVWEIGHTOUT',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'CUMPERCENT',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
   },
   {
     name: 'CUMULATIVE',
-    de: {
-      description: 'Zeilenweise prozentuiert und kumuliert',
-    },
+    de: { description: 'Zeilenweise prozentuiert und kumuliert' },
+  },
+  {
+    name: 'CURRENTMILLIS',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'CXSERVER',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'CXSERVERPORT',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
   },
   {
     name: 'DASHMISSING',
@@ -1635,9 +2274,7 @@ export const keywordData: KeywordEntry[] = [
   },
   {
     name: 'DATACELL',
-    de: {
-      description: 'Jede einzelne Datenzelle der Tabelle',
-    },
+    de: { description: 'Jede einzelne Datenzelle der Tabelle' },
   },
   {
     name: 'DATAERRORDOCUMENTATION',
@@ -1658,10 +2295,7 @@ export const keywordData: KeywordEntry[] = [
   },
   {
     name: 'DATANOINTERPOL',
-    de: {
-      description: '',
-      syntax: 'DATANOINTERPOL = [ YES | NO ];',
-    },
+    de: { description: '', syntax: 'DATANOINTERPOL = [ YES | NO ];' },
   },
   {
     name: 'DATE',
@@ -1672,10 +2306,7 @@ export const keywordData: KeywordEntry[] = [
   },
   {
     name: 'DATEFORMAT',
-    de: {
-      description: '',
-      syntax: 'DATEFORMAT = <string>;',
-    },
+    de: { description: '', syntax: 'DATEFORMAT = <string>;' },
     en: {
       description:
         'DATEFORMAT = <string>; In the string the letters Y, M and D are expanded to year, month and day. All other symbols are taken into the date. Thus: DATEFORMAT = "dd.mm.yyyy"; results in the standard European date: 31.10.2009',
@@ -1690,14 +2321,13 @@ export const keywordData: KeywordEntry[] = [
   },
   {
     name: 'DBASEIN',
-    de: {
-      description: '',
-      syntax: 'DBASEIN = <filename>;',
-    },
-    en: {
-      description: '',
-      syntax: 'DBASEIN = <filename> ;',
-    },
+    de: { description: '', syntax: 'DBASEIN = <filename>;' },
+    en: { description: '', syntax: 'DBASEIN = <filename> ;' },
+  },
+  {
+    name: 'DEBUGSTOP',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
   },
   {
     name: 'DECIMALPERCENT',
@@ -1722,11 +2352,38 @@ export const keywordData: KeywordEntry[] = [
     },
   },
   {
+    name: 'DECRYPT',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'DEFAULTBOX',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
     name: 'DEFAULTLEVEL',
-    de: {
-      description: '',
-      syntax: 'DEFAULTLEVEL = <number>;',
-    },
+    de: { description: '', syntax: 'DEFAULTLEVEL = <number>;' },
+  },
+  {
+    name: 'DELETELABELS',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'DELETEUNUSEDVARS',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'DELETEVARS',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'DELIMITED',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
   },
   {
     name: 'DELIMITEDIN',
@@ -1768,6 +2425,11 @@ export const keywordData: KeywordEntry[] = [
     },
   },
   {
+    name: 'DESCEND',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
     name: 'DESCRIPTION',
     de: {
       description:
@@ -1778,6 +2440,11 @@ export const keywordData: KeywordEntry[] = [
       description:
         'Example: DESCRIPTION MEAN = Mittel; Usually an explanation of the cell content is printed top left when using TABLE and there are standard texts for this in the system. If these texts are to be altered then the DESCRIPTION command is used, otherwise the texts can be switched off using TABLEFORMAT = NODESCRIPTION;',
     },
+  },
+  {
+    name: 'DESCRIPTIONBOX',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
   },
   {
     name: 'DESCRIPTIONSTRING',
@@ -1791,16 +2458,43 @@ export const keywordData: KeywordEntry[] = [
     },
   },
   {
+    name: 'DIALLERPROJECTKEY',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'DIALPREFIX',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
     name: 'DICHOQ',
-    de: {
-      description: '',
-      syntax: 'DICHOQ <varname> =',
-    },
+    de: { description: '', syntax: 'DICHOQ <varname> =' },
     en: {
       description:
         'also: GROUPVAR Variable groups can also be generated directly from the input without making the individual variables visible.',
       syntax: 'DICHOQ <varname> =',
     },
+  },
+  {
+    name: 'DICTMODE',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'DIRECTION',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'DISPLAY',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'DISPLAYQUOTA',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
   },
   {
     name: 'DISTANCE',
@@ -1815,9 +2509,22 @@ export const keywordData: KeywordEntry[] = [
   },
   {
     name: 'DIV',
-    de: {
-      description: 'liefert das Ergebnis einer Integer-Division',
-    },
+    de: { description: 'liefert das Ergebnis einer Integer-Division' },
+  },
+  {
+    name: 'DLL',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'DO',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'DOCODEBLOCK',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
   },
   {
     name: 'DOCUMENT',
@@ -1832,11 +2539,23 @@ export const keywordData: KeywordEntry[] = [
     },
   },
   {
+    name: 'DOMACRO',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'DOSLOCKS',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
     name: 'DOUBLECODEINOVERCODE',
-    de: {
-      description: '',
-      syntax: 'DOUBLECODEINOVERCODE = [YES | NO];',
-    },
+    de: { description: '', syntax: 'DOUBLECODEINOVERCODE = [YES | NO];' },
+  },
+  {
+    name: 'DOUGHNUT',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
   },
   {
     name: 'DRAWBOX',
@@ -1853,26 +2572,52 @@ export const keywordData: KeywordEntry[] = [
   },
   {
     name: 'DUMMYHEAD',
-    de: {
-      description: '',
-      syntax: 'DUMMYHEAD = <varname>',
-    },
-    en: {
-      description: '',
-      syntax: 'DUMMYHEAD = <name>;',
-    },
+    de: { description: '', syntax: 'DUMMYHEAD = <varname>' },
+    en: { description: '', syntax: 'DUMMYHEAD = <name>;' },
+  },
+  {
+    name: 'EDIT',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'EDITLABELINSCREEN',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'EDITOPENQ',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'EFFECTIVEBASE',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
   },
   {
     name: 'ELASTICITY',
     argsHint: '(PS)',
-    de: {
-      description: '',
-      syntax: 'ELASTICITY = <number>;',
-    },
+    de: { description: '', syntax: 'ELASTICITY = <number>;' },
     en: {
       description:
         'Elasticity is a measurement of how the scaling in the X direction is allowed to differ from the scaling in the Y direction. Preset: ELASTICITY = 0.15; Background: Printing in Postscript offers the possibility to scale tables to fit which are larger than the available area on a page. This adjustment can be made independently in the X or the Y direction.…',
     },
+  },
+  {
+    name: 'ELDAS',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'ELECTION',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'ELEMENTCOLOR',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
   },
   {
     name: 'ELEMENTFONT',
@@ -1881,6 +2626,11 @@ export const keywordData: KeywordEntry[] = [
       syntax:
         'ELEMENTFONT <cellelement> : <fontname> SIZE <number>\n[STYLE [BOLD|ITALIC|UNDERLINE]]\nELEMENTCOLOR <cellelement> : <color>',
     },
+  },
+  {
+    name: 'ELIMINATE',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
   },
   {
     name: 'ELLIPSIS',
@@ -1915,28 +2665,54 @@ export const keywordData: KeywordEntry[] = [
   },
   {
     name: 'EMPTYTABLETEXT',
-    de: {
-      description: '',
-      syntax: 'EMPTYTABLETEXT = "<text>";',
-    },
+    de: { description: '', syntax: 'EMPTYTABLETEXT = "<text>";' },
+  },
+  {
+    name: 'ENCAPSULATED',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
   },
   {
     name: 'ENCODING',
-    de: {
-      description: '',
-      syntax: 'ENCODING CSVOUTFILE = [ ANSI | UTF8 ];',
-    },
+    de: { description: '', syntax: 'ENCODING CSVOUTFILE = [ ANSI | UTF8 ];' },
     en: {
       description:
         'As GESS tabs was born as a DOS program and some clients hate nothing more than a change in standard settings, the Char-Set-Encoding from DOS, i.e. IBM850 for North/Middle Europe is set as standard. This can be changed in two ways: the encoding can be explicitly defined using the ENCODING statement presented here.…',
     },
   },
   {
+    name: 'ENCODING CSVOUTFILE',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'ENCRYPT',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
     name: 'END',
-    de: {
-      description: '',
-      syntax: 'END;',
-    },
+    de: { description: '', syntax: 'END;' },
+  },
+  {
+    name: 'ENDBLOCK',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'ENDCODEBLOCK',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'ENDEXPORT',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'ENDFILTER',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
   },
   {
     name: 'ENDMACRO',
@@ -1946,11 +2722,18 @@ export const keywordData: KeywordEntry[] = [
     },
   },
   {
+    name: 'ENFORCEUTF8INOPENQ',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
     name: 'ENFORCEUTF8INOPENQFILE',
-    de: {
-      description: '',
-      syntax: 'ENFORCEUTF8INOPENQFILE = [ YES | NO ];',
-    },
+    de: { description: '', syntax: 'ENFORCEUTF8INOPENQFILE = [ YES | NO ];' },
+  },
+  {
+    name: 'ENTIER',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
   },
   {
     name: 'EPS',
@@ -1962,9 +2745,17 @@ export const keywordData: KeywordEntry[] = [
   },
   {
     name: 'EQ',
-    de: {
-      description: 'Equal, ist gleich',
-    },
+    de: { description: 'Equal, ist gleich' },
+  },
+  {
+    name: 'ERRORTYPE',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'ESS',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
   },
   {
     name: 'ESSCOLCHIQU',
@@ -1988,10 +2779,35 @@ export const keywordData: KeywordEntry[] = [
     },
   },
   {
+    name: 'ESSMEANCOLDEPT',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'ESSMEANTEST',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'ESSMEANWELCH',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'ESSROWCHICU',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
     name: 'ESSROWCHIQU',
     de: {
       description: 'Zeilenweiser Chi²-Test auf Basis der ESS 446-Umrechnung',
     },
+  },
+  {
+    name: 'ESSROWMEANTEST',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
   },
   {
     name: 'ESSROWTTEST',
@@ -2023,11 +2839,13 @@ export const keywordData: KeywordEntry[] = [
     },
   },
   {
+    name: 'EURO',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
     name: 'EVALFAMVALONCE',
-    de: {
-      description: '',
-      syntax: 'EVALFAMVALONCE <Varlist> = [ YES | NO ];',
-    },
+    de: { description: '', syntax: 'EVALFAMVALONCE <Varlist> = [ YES | NO ];' },
     en: {
       description: '',
       syntax:
@@ -2035,18 +2853,67 @@ export const keywordData: KeywordEntry[] = [
     },
   },
   {
+    name: 'EXCEL2XLABELS',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'EXCEL2XTITLES',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'EXCEL2YLABELS',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'EXCEL2YTITLES',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'EXCELALIGNH',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'EXCELALIGNV',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
     name: 'EXCELAXISMINMAX',
-    en: {
-      description: '',
-      syntax: 'EXCELAXISMINMAX = <minvalue> maxvalue> ;',
-    },
+    en: { description: '', syntax: 'EXCELAXISMINMAX = <minvalue> maxvalue> ;' },
+  },
+  {
+    name: 'EXCELCALCROWHEIGHT',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'EXCELCHART',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'EXCELCHARTDATA',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'EXCELCHARTFORMAT',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
   },
   {
     name: 'EXCELCHARTINVERT',
-    en: {
-      description: '',
-      syntax: 'EXCELCHARTINVERT = [ YES | NO ];',
-    },
+    en: { description: '', syntax: 'EXCELCHARTINVERT = [ YES | NO ];' },
+  },
+  {
+    name: 'EXCELCOLOR',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
   },
   {
     name: 'EXCELDOCUMENT',
@@ -2057,32 +2924,45 @@ export const keywordData: KeywordEntry[] = [
   },
   {
     name: 'EXCELFILENAME',
-    de: {
-      description: '',
-      syntax: 'EXCELFILENAME = <dateiname>;',
-    },
-    en: {
-      description: '',
-      syntax: 'EXCELFILENAME = <filename>;',
-    },
+    de: { description: '', syntax: 'EXCELFILENAME = <dateiname>;' },
+    en: { description: '', syntax: 'EXCELFILENAME = <filename>;' },
+  },
+  {
+    name: 'EXCELFOOTER',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'EXCELFRAMES',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
   },
   {
     name: 'EXCELGRAPHSHEETNAME',
-    en: {
-      description: '',
-      syntax: 'EXCELGRAPHSHEETNAME = <name>;',
-    },
+    en: { description: '', syntax: 'EXCELGRAPHSHEETNAME = <name>;' },
+  },
+  {
+    name: 'EXCELHEADER',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
   },
   {
     name: 'EXCELHIDEUPDATE',
-    de: {
-      description: '',
-      syntax: 'EXCELHIDEUPDATE = [ YES | NO ];',
-    },
+    de: { description: '', syntax: 'EXCELHIDEUPDATE = [ YES | NO ];' },
     en: {
       description:
         'If this option is set to YES the Excel interface is only showed by INSTANTEXCEL=YES if a table is finished. This can reduce the processing time for the transfer to Excel. To control the appearance of tables using INSTANTEXCEL: the following TABLEFORMATs are available:…',
     },
+  },
+  {
+    name: 'EXCELLABELANGLE',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'EXCELNODISTANCE',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
   },
   {
     name: 'EXCELNOFONT',
@@ -2092,11 +2972,21 @@ export const keywordData: KeywordEntry[] = [
     },
   },
   {
+    name: 'EXCELNOWRAPTEXT',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
     name: 'EXCELNUMBERFORMAT',
     de: {
       description:
         'formatiert, und damit die Automatik von Excel umgangen, Nullen als Nachkommastellen zu tilgen. EXCELFRAMES Rahmen um die Excel-Tabelle EXCELCOLOR Übernahme von COLOR FOREGROUND bzw. BACKGROUND EXCELALIGN[H/V] Übernahme horizontales/ vertikales Alignment der Zellen EXCELPAGEBREAK generiert einen Seitenwechsel am Ende der Tabelle EXCELHEADER Übernahme eines HEADER nach Excel Bewirkt, dass…',
     },
+  },
+  {
+    name: 'EXCELONELINELABEL',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
   },
   {
     name: 'EXCELOUT',
@@ -2107,11 +2997,26 @@ export const keywordData: KeywordEntry[] = [
     },
   },
   {
+    name: 'EXCELOUT AS HTML',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'EXCELOUT VIA HTML',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
     name: 'EXCELOUTACROSS',
     de: {
       description:
         'Die atomaren Elemente von zusammengesetzten CELLELEMENTS werden bei EXCELOUT 605 nicht untereinander, sondern nebeneinander dargestellt.',
     },
+  },
+  {
+    name: 'EXCELPAGEBREAK',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
   },
   {
     name: 'EXCELPICTURE',
@@ -2122,28 +3027,31 @@ export const keywordData: KeywordEntry[] = [
   },
   {
     name: 'EXCELRANGEDELIM',
-    de: {
-      description: '',
-      syntax: 'EXCELRANGEDELIM = <char>;',
-    },
-    en: {
-      description: '',
-      syntax: 'EXCELRANGEDELIM = <char>;',
-    },
+    de: { description: '', syntax: 'EXCELRANGEDELIM = <char>;' },
+    en: { description: '', syntax: 'EXCELRANGEDELIM = <char>;' },
   },
   {
     name: 'EXCELSTYLEFILE',
-    de: {
-      description: '',
-      syntax: 'EXCELSTYLEFILE = <filename>;',
-    },
+    de: { description: '', syntax: 'EXCELSTYLEFILE = <filename>;' },
+  },
+  {
+    name: 'EXCELTEMPLATEFILE',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'EXCELUPDATEONLY',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'EXCEPT',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
   },
   {
     name: 'EXCLUDEFROMTO',
-    en: {
-      description: '',
-      syntax: 'EXCLUDEFROMTO = { vartype }*n ;',
-    },
+    en: { description: '', syntax: 'EXCLUDEFROMTO = { vartype }*n ;' },
   },
   {
     name: 'EXCLUDEVALUES',
@@ -2154,10 +3062,33 @@ export const keywordData: KeywordEntry[] = [
     },
   },
   {
+    name: 'EXDECIMALCHAR',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'EXDELIMCHAR',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'EXECUTE',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
     name: 'EXP',
-    de: {
-      description: 'inverse Funktion zu LN',
-    },
+    de: { description: 'inverse Funktion zu LN' },
+  },
+  {
+    name: 'EXPAND',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'EXPANDATCHAR',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
   },
   {
     name: 'EXPANDBOX',
@@ -2179,17 +3110,11 @@ export const keywordData: KeywordEntry[] = [
   },
   {
     name: 'EXPANDINDOMACRO',
-    de: {
-      description: '',
-      syntax: 'EXPANDINDOMACRO = [ YES | NO ];',
-    },
+    de: { description: '', syntax: 'EXPANDINDOMACRO = [ YES | NO ];' },
   },
   {
     name: 'EXPANDMISSINGTEXT',
-    de: {
-      description: '',
-      syntax: 'EXPANDMISSINGTEXT = <string>;',
-    },
+    de: { description: '', syntax: 'EXPANDMISSINGTEXT = <string>;' },
   },
   {
     name: 'EXPECT',
@@ -2199,15 +3124,24 @@ export const keywordData: KeywordEntry[] = [
     },
   },
   {
+    name: 'EXPLODE',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
     name: 'EXPORTFILE',
-    de: {
-      description: '',
-      syntax: 'EXPORTFILE = [ <filename> | "" ];',
-    },
-    en: {
-      description: '',
-      syntax: 'EXPORTFILE = [ <filename> | "" ];',
-    },
+    de: { description: '', syntax: 'EXPORTFILE = [ <filename> | "" ];' },
+    en: { description: '', syntax: 'EXPORTFILE = [ <filename> | "" ];' },
+  },
+  {
+    name: 'EXTERNALJOB',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'EXTRAFILE',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
   },
   {
     name: 'EXTREME',
@@ -2224,22 +3158,36 @@ export const keywordData: KeywordEntry[] = [
     },
   },
   {
+    name: 'FAMILYVAR',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
     name: 'FCOMPUTE',
-    de: {
-      description: '',
-      syntax: 'FCOMPUTE <varname> ....',
-    },
+    de: { description: '', syntax: 'FCOMPUTE <varname> ....' },
     en: {
       description:
         'Parallel to the COMPUTE statement there is also FCOMPUTE, which tests the filters set with SETFILTER. FCOMPUTE is only used if all the filter conditions are true or if there is no filter.',
     },
   },
   {
+    name: 'FIF',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'FILEKEY',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
     name: 'FILEPATH',
-    de: {
-      description: '',
-      syntax: 'FILEPATH "<filepath>"',
-    },
+    de: { description: '', syntax: 'FILEPATH "<filepath>"' },
+  },
+  {
+    name: 'FILL',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
   },
   {
     name: 'FILTER',
@@ -2255,28 +3203,21 @@ export const keywordData: KeywordEntry[] = [
   },
   {
     name: 'FIRSTCOLUMN',
-    de: {
-      description: '',
-      syntax: 'FIRSTCOLUMN : <number>',
-    },
+    de: { description: '', syntax: 'FIRSTCOLUMN : <number>' },
+  },
+  {
+    name: 'FIXED',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
   },
   {
     name: 'FIXEDPOSITION',
-    de: {
-      description: '',
-      syntax: 'FIXEDPOSITION <VarList> = [ YES | NO ];',
-    },
-    en: {
-      description: '',
-      syntax: 'FIXEDPOSITION <VarList> = [ YES | NO ];',
-    },
+    de: { description: '', syntax: 'FIXEDPOSITION <VarList> = [ YES | NO ];' },
+    en: { description: '', syntax: 'FIXEDPOSITION <VarList> = [ YES | NO ];' },
   },
   {
     name: 'FIXLABELCOLUMN',
-    de: {
-      description: '',
-      syntax: 'FIXLABELCOLUMN : [YES|NO]',
-    },
+    de: { description: '', syntax: 'FIXLABELCOLUMN : [YES|NO]' },
   },
   {
     name: 'FIXLABELROWS',
@@ -2288,10 +3229,12 @@ export const keywordData: KeywordEntry[] = [
   },
   {
     name: 'FLOWTEXT',
-    de: {
-      description: '',
-      syntax: 'FLOWTEXT <boxname> : [ YES | NO ]',
-    },
+    de: { description: '', syntax: 'FLOWTEXT <boxname> : [ YES | NO ]' },
+  },
+  {
+    name: 'FLT',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
   },
   {
     name: 'FONT',
@@ -2299,6 +3242,11 @@ export const keywordData: KeywordEntry[] = [
       description: '',
       syntax: 'FONT <Fontname> CPI <number> = <ESC-String>;',
     },
+  },
+  {
+    name: 'FONTNAME',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
   },
   {
     name: 'FOOTER',
@@ -2317,6 +3265,11 @@ export const keywordData: KeywordEntry[] = [
       description:
         'Kasten um den FOOTER 522, außerhalb der Tabelle FRAMEBOX X Kasten um alle FRAMECELL X FRAMEBOX Y Kasten um alle FRAMECELL Y FRAMECELL X Kasten um einzelne Datenelemente der Rahmenspalten (Elemente der X-Achse) FRAMECELL Y Kasten um einzelne Datenelemente der Rahmenzeilen (Elemente der Y-Achse)',
     },
+  },
+  {
+    name: 'FORCELABELINPUT',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
   },
   {
     name: 'FORCOUNTS',
@@ -2346,6 +3299,11 @@ export const keywordData: KeywordEntry[] = [
     },
   },
   {
+    name: 'FORHEADER',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
     name: 'FORM',
     de: {
       description:
@@ -2355,10 +3313,7 @@ export const keywordData: KeywordEntry[] = [
   },
   {
     name: 'FORMAT',
-    de: {
-      description: '',
-      syntax: 'FORMAT = "<formatstring>";',
-    },
+    de: { description: '', syntax: 'FORMAT = "<formatstring>";' },
     en: {
       description:
         'Defines a format for the representation of a particular cell content. If for example a mean is to be a scale with an algebraic sign, a comma as decimal separator and two decimal places then the following would be written (formats should always be written in quotation marks (") ): FORMAT MEAN = "+#,##"; FORMAT recognises the following control characters:…',
@@ -2373,6 +3328,11 @@ export const keywordData: KeywordEntry[] = [
     },
   },
   {
+    name: 'FORMEAN',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
     name: 'FORMEANS',
     de: {
       description:
@@ -2380,11 +3340,33 @@ export const keywordData: KeywordEntry[] = [
     },
   },
   {
+    name: 'FORMS',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'FRAMEBOX',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'FRAMECELL',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'FRAMECELL X',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'FRAMECELL Y',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
     name: 'FRAMECOLOR',
-    de: {
-      description: '',
-      syntax: 'FRAMECOLOR : <color>',
-    },
+    de: { description: '', syntax: 'FRAMECOLOR : <color>' },
     en: {
       description:
         'The colour of the frames can also be defined using HSB or RGB as above. COLOR FOREGROUND or COLOR BACKGROUND With the COLOR statement DATACELLS and FRAMECELLS can be coloured depending on the value, e.g. all mean above a certain value are printed in red etc.',
@@ -2410,6 +3392,61 @@ export const keywordData: KeywordEntry[] = [
     },
   },
   {
+    name: 'FRAMEPOSITION',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'FRAMETITLE',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'FRAMETITLE X',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'FRAMETITLE Y',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'FRAMETITLEBOX',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'FREEZEALL',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'FREEZEFILE',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'FREEZESWITCH',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'FROZEN',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'FROZENCODE',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'GAMMA',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
     name: 'GAUSS',
     de: {
       description: 'Konfidenzintervall als stilisierte Gausskurve anzeigen',
@@ -2423,15 +3460,19 @@ export const keywordData: KeywordEntry[] = [
     },
   },
   {
+    name: 'GE',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
     name: 'GENERATELABELS',
-    de: {
-      description: '',
-      syntax: 'GENERATELABELS <varname>;',
-    },
-    en: {
-      description: '',
-      syntax: 'GENERATELABELS <varlist>;',
-    },
+    de: { description: '', syntax: 'GENERATELABELS <varname>;' },
+    en: { description: '', syntax: 'GENERATELABELS <varlist>;' },
+  },
+  {
+    name: 'GEO',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
   },
   {
     name: 'GEOMETRICMEAN',
@@ -2440,6 +3481,11 @@ export const keywordData: KeywordEntry[] = [
       description:
         'Das geometrische Mittel ist die n.-Wurzel aus dem Produkt aller Einzelwerte (nur für positive Zahlen definiert)',
     },
+  },
+  {
+    name: 'GEORESTRICT',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
   },
   {
     name: 'GESS',
@@ -2465,11 +3511,18 @@ export const keywordData: KeywordEntry[] = [
     },
   },
   {
+    name: 'GESSCHARTDATA',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'GESSCHARTFONT',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
     name: 'GESSCHARTFORMAT',
-    de: {
-      description: '',
-      syntax: 'GESSCHARTFORMAT = { + | - <option> }*n ;',
-    },
+    de: { description: '', syntax: 'GESSCHARTFORMAT = { + | - <option> }*n ;' },
   },
   {
     name: 'GESSCHARTNUMFORMAT',
@@ -2487,6 +3540,21 @@ export const keywordData: KeywordEntry[] = [
     },
   },
   {
+    name: 'GETPRTSETUP',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'GETQUOTA',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'GETTABSETUP',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
     name: 'GLOBALASALPHA',
     de: {
       description: '',
@@ -2495,10 +3563,25 @@ export const keywordData: KeywordEntry[] = [
     },
   },
   {
+    name: 'GLOBALCELLMINIMUM',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
     name: 'GLOBALCOLMINIMUM',
     en: {
       description: 'Global preset for COLMINIMUM for all the following tables.',
     },
+  },
+  {
+    name: 'GLOBALOPENASALPHA',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'GLOBALPHYSCELLMINIMUM',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
   },
   {
     name: 'GLOBALPRINTALL',
@@ -2533,11 +3616,13 @@ export const keywordData: KeywordEntry[] = [
     },
   },
   {
+    name: 'GOTO',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
     name: 'GRAPHAREA',
-    de: {
-      description: '',
-      syntax: 'GRAPHAREA = <x> <y> <width> <height> ;',
-    },
+    de: { description: '', syntax: 'GRAPHAREA = <x> <y> <width> <height> ;' },
   },
   {
     name: 'GRAPHBOX',
@@ -2547,22 +3632,68 @@ export const keywordData: KeywordEntry[] = [
     },
   },
   {
+    name: 'GRAPHLABELS',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'GRAPHLEGEND',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'GRAPHNUMBERS',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'GRAPHPROJECT',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'GRAPHTITLE',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
     name: 'GRAPHTYPE',
-    en: {
-      description: '',
-      syntax: 'GRAPHTYPE = <xlGraphname>;',
-    },
+    en: { description: '', syntax: 'GRAPHTYPE = <xlGraphname>;' },
+  },
+  {
+    name: 'GRATAB',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'GREATER',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'GROUP',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
   },
   {
     name: 'GROUPCOUNTS',
-    de: {
-      description: '',
-      syntax: 'GROUPCOUNTS <Varlist> = [ YES | NO ];',
-    },
-    en: {
-      description: '',
-      syntax: 'GROUPCOUNTS <Varlist> = [ YES | NO ];',
-    },
+    de: { description: '', syntax: 'GROUPCOUNTS <Varlist> = [ YES | NO ];' },
+    en: { description: '', syntax: 'GROUPCOUNTS <Varlist> = [ YES | NO ];' },
+  },
+  {
+    name: 'GROUPEDBARS',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'GROUPEDBARS3D',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'GROUPEDBARSH',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
   },
   {
     name: 'GROUPRECODE',
@@ -2591,10 +3722,13 @@ export const keywordData: KeywordEntry[] = [
     },
   },
   {
+    name: 'GROUPVAR',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
     name: 'GT',
-    de: {
-      description: 'Greater Then, größer als',
-    },
+    de: { description: 'Greater Then, größer als' },
   },
   {
     name: 'HARMONICMEAN',
@@ -2603,6 +3737,11 @@ export const keywordData: KeywordEntry[] = [
       description:
         'Das harmonische Mittel: Kehrwert aus dem Mittelwert der Kehrwerte (nur für positive Zahlen definiert). Findet in Name Beschreibung speziellen Fällen Anwendung, z.B. als Mittelwert über Geschwindigkeiten etc.',
     },
+  },
+  {
+    name: 'HCENTER',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
   },
   {
     name: 'HEADER',
@@ -2617,11 +3756,21 @@ export const keywordData: KeywordEntry[] = [
     },
   },
   {
+    name: 'HEADERBOX',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
     name: 'HEADERS',
     en: {
       description: '',
       syntax: 'HEADERS = <tablepart> { / <tablepart> }*n;',
     },
+  },
+  {
+    name: 'HEIGHT',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
   },
   {
     name: 'HELPTEXT',
@@ -2640,6 +3789,21 @@ export const keywordData: KeywordEntry[] = [
     },
   },
   {
+    name: 'HGASPRINT',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'HGDECIMALCHAR',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'HGDELIMCHAR',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
     name: 'HGINVERSE',
     en: {
       description:
@@ -2656,14 +3820,13 @@ export const keywordData: KeywordEntry[] = [
   },
   {
     name: 'HIDDENTOVARLIST',
-    de: {
-      description: '',
-      syntax: 'HIDDENTOVARLIST = [ YES | NO ];',
-    },
-    en: {
-      description: '',
-      syntax: 'HIDDENTOVARLIST = [ YES | NO ];',
-    },
+    de: { description: '', syntax: 'HIDDENTOVARLIST = [ YES | NO ];' },
+    en: { description: '', syntax: 'HIDDENTOVARLIST = [ YES | NO ];' },
+  },
+  {
+    name: 'HIGHSIGNIFICANCE',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
   },
   {
     name: 'HISTORY',
@@ -2677,6 +3840,36 @@ export const keywordData: KeywordEntry[] = [
       syntax:
         'HISTORY =\n[ DATABOX <x> <y> ] FORMAT ( <Formatliste> ) DATA [ Absliste ] {\n<number> : <Dataliste> }*n;\nFormatliste ::= [ ABSROW | ABSCOLUMN |\nPHYSROW PHYSCOLUMN TOTALROW ] { <number> }*n\nAbsliste ::= { <number> }*n',
     },
+  },
+  {
+    name: 'HMTL',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'HORIZONTAL',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'HORIZONTALALIGN',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'HOTIMPORT',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'HOTKEY',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'HSB',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
   },
   {
     name: 'HTML',
@@ -2722,6 +3915,11 @@ export const keywordData: KeywordEntry[] = [
     },
   },
   {
+    name: 'HTMLCHARTWIDTH',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
     name: 'HTMLDOCUMENT',
     de: {
       description:
@@ -2730,10 +3928,7 @@ export const keywordData: KeywordEntry[] = [
   },
   {
     name: 'HTMLFLOWTEXT',
-    de: {
-      description: '',
-      syntax: 'HTMLFLOWTEXT <boxtype> = [ YES | NO ];',
-    },
+    de: { description: '', syntax: 'HTMLFLOWTEXT <boxtype> = [ YES | NO ];' },
   },
   {
     name: 'HTMLFOOTER',
@@ -2747,6 +3942,11 @@ export const keywordData: KeywordEntry[] = [
     },
   },
   {
+    name: 'HTMLFOREGROUND',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
     name: 'HTMLHEADER',
     de: {
       description:
@@ -2755,9 +3955,7 @@ export const keywordData: KeywordEntry[] = [
   },
   {
     name: 'HYCOLCHIQU',
-    de: {
-      description: 'Hybrider 447 Chi²-Test (gewichtet und ungewichtet)',
-    },
+    de: { description: 'Hybrider 447 Chi²-Test (gewichtet und ungewichtet)' },
   },
   {
     name: 'HYCOLDEPTTEST',
@@ -2767,6 +3965,11 @@ export const keywordData: KeywordEntry[] = [
     },
   },
   {
+    name: 'HYCOLZ',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
     name: 'HYMCNEMAR',
     de: {
       description:
@@ -2774,11 +3977,33 @@ export const keywordData: KeywordEntry[] = [
     },
   },
   {
+    name: 'HYMEANCOLDEPT',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'HYMEANTEST',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'HYMEANWELCH',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
     name: 'HYPERLINK',
-    de: {
-      description: '',
-      syntax: 'HYPERLINK = <URI> <text> ;',
-    },
+    de: { description: '', syntax: 'HYPERLINK = <URI> <text> ;' },
+  },
+  {
+    name: 'HYROWCHIQU',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'HYROWMEANTEST',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
   },
   {
     name: 'HYROWTTEST',
@@ -2786,6 +4011,11 @@ export const keywordData: KeywordEntry[] = [
       description:
         'Hybrider 447, zeilenweiser t-Test: Die t-Werte werden auf Basis der gewichteten Daten errechnet, die Freiheitsgrade zur Name Beschreibung Berechnung der p-Werte der t-Verteilung ergeben sich aus den ungewichteten Häufigkeiten.',
     },
+  },
+  {
+    name: 'HYROWZ',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
   },
   {
     name: 'HYTTEST',
@@ -2801,6 +4031,16 @@ export const keywordData: KeywordEntry[] = [
       description:
         'Hybrider 447 t-Test auf Mittelwerteunterschiede nach Welch 450 auf Basis der gewichteten Daten',
     },
+  },
+  {
+    name: 'IBMGRAPHICS',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'IDENT',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
   },
   {
     name: 'IDENTCHIQNOSIGNIF',
@@ -2824,42 +4064,24 @@ export const keywordData: KeywordEntry[] = [
   },
   {
     name: 'IFASFIF',
-    de: {
-      description: '',
-      syntax: 'IFASFIF = [ YES | NO ];',
-    },
+    de: { description: '', syntax: 'IFASFIF = [ YES | NO ];' },
   },
   {
     name: 'IFBLOCK',
-    de: {
-      description: '',
-      syntax: 'IFBLOCK <bedingung> THEN',
-    },
+    de: { description: '', syntax: 'IFBLOCK <bedingung> THEN' },
   },
   {
     name: 'IGNOREASCOUTDUPL',
-    de: {
-      description: '',
-      syntax: 'IGNOREASCOUTDUPL = [ YES | NO ];',
-    },
-    en: {
-      description: '',
-      syntax: 'IGNOREASCOUTDUPL = [ YES | NO ];',
-    },
+    de: { description: '', syntax: 'IGNOREASCOUTDUPL = [ YES | NO ];' },
+    en: { description: '', syntax: 'IGNOREASCOUTDUPL = [ YES | NO ];' },
   },
   {
     name: 'IGNORECASEINCOMPARE',
-    de: {
-      description: '',
-      syntax: 'IGNORECASEINCOMPARE = [ YES | NO ];',
-    },
+    de: { description: '', syntax: 'IGNORECASEINCOMPARE = [ YES | NO ];' },
   },
   {
     name: 'IGNOREDOUBLECASENO',
-    en: {
-      description: '',
-      syntax: 'IGNOREDOUBLECASENO = [ YES | NO ];',
-    },
+    en: { description: '', syntax: 'IGNOREDOUBLECASENO = [ YES | NO ];' },
   },
   {
     name: 'IGNOREMISSING',
@@ -2875,50 +4097,46 @@ export const keywordData: KeywordEntry[] = [
   },
   {
     name: 'IGNOREMULTIQOVERFLOW',
-    de: {
-      description: '',
-      syntax: 'IGNOREMULTIQOVERFLOW = [ YES | NO ];',
-    },
-    en: {
-      description: '',
-      syntax: 'IGNOREMULTIQOVERFLOW = [ YES | NO ];',
-    },
+    de: { description: '', syntax: 'IGNOREMULTIQOVERFLOW = [ YES | NO ];' },
+    en: { description: '', syntax: 'IGNOREMULTIQOVERFLOW = [ YES | NO ];' },
+  },
+  {
+    name: 'IGNOREPREQUOTAIFAPPO',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'IGNOREPREQUOTAIFFROZEN',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
   },
   {
     name: 'IGNORESETFILTER',
-    de: {
-      description: '',
-      syntax: 'IGNORESETFILTER = [ YES | NO ];',
-    },
-    en: {
-      description: '',
-      syntax: 'IGNORESETFILTER = [ YES | NO ];',
-    },
+    de: { description: '', syntax: 'IGNORESETFILTER = [ YES | NO ];' },
+    en: { description: '', syntax: 'IGNORESETFILTER = [ YES | NO ];' },
   },
   {
     name: 'IGNORESPSSMISSINGVALUES',
-    de: {
-      description: '',
-      syntax: 'IGNORESPSSMISSINGVALUES = [ YES | NO ];',
-    },
+    de: { description: '', syntax: 'IGNORESPSSMISSINGVALUES = [ YES | NO ];' },
   },
   {
     name: 'IGNORESPSSSYSMISVAL',
-    de: {
-      description: '',
-      syntax: 'IGNORESPSSSYSMISVAL = [ YES | NO ];',
-    },
+    de: { description: '', syntax: 'IGNORESPSSSYSMISVAL = [ YES | NO ];' },
   },
   {
     name: 'IGNORETABINTEXT',
-    de: {
-      description: '',
-      syntax: 'IGNORETABINTEXT = [ yes | no ];',
-    },
-    en: {
-      description: '',
-      syntax: 'IGNORETABINTEXT = [ yes | no ];',
-    },
+    de: { description: '', syntax: 'IGNORETABINTEXT = [ yes | no ];' },
+    en: { description: '', syntax: 'IGNORETABINTEXT = [ yes | no ];' },
+  },
+  {
+    name: 'IMAGEBUTTONS',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'IMAGESCALE',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
   },
   {
     name: 'IN',
@@ -2928,11 +4146,13 @@ export const keywordData: KeywordEntry[] = [
     },
   },
   {
+    name: 'INCH',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
     name: 'INCLUDE',
-    de: {
-      description: '',
-      syntax: 'INCLUDE = <filename.inc>;',
-    },
+    de: { description: '', syntax: 'INCLUDE = <filename.inc>;' },
     en: {
       description:
         'Defines an INCLUDE file. Commands from the INCLUDE file are interpreted as if they were in place of the INCLUDE commands. Example: INCLUDE = VARNAME.def; INCLUDE = Labels.def; This can be used for example to administrate the variable definitions and the VALUELABELS in different files so that changes in the column positions etc only have to be changed in the definition part. In the',
@@ -2947,18 +4167,22 @@ export const keywordData: KeywordEntry[] = [
     },
   },
   {
+    name: 'INCLUDEVALUES',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
     name: 'INDENTAUTOOVERSORT',
-    de: {
-      description: '',
-      syntax: 'INDENTAUTOOVERSORT = [ YES | NO ];',
-    },
+    de: { description: '', syntax: 'INDENTAUTOOVERSORT = [ YES | NO ];' },
+  },
+  {
+    name: 'INDEPENDENT',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
   },
   {
     name: 'INDEXCHARS',
-    de: {
-      description: '',
-      syntax: 'INDEXCHARS = "<Buchstaben | Zeichen>";',
-    },
+    de: { description: '', syntax: 'INDEXCHARS = "<Buchstaben | Zeichen>";' },
     en: {
       description:
         'e.g. INDEXCHARS = "GEHT"; allocates a (small or large) G to the first test column, an E to the second, an H to the third and a T to the fourth. The letters A – Z are preset. TESTCOLUMNS are taken into account. The letters A – Z can initially be used as INDEXCHARS to deal with 26 columns.…',
@@ -2966,14 +4190,13 @@ export const keywordData: KeywordEntry[] = [
   },
   {
     name: 'INDEXSTYEFILE',
-    de: {
-      description: '',
-      syntax: 'INDEXSTYEFILE = <name>;',
-    },
-    en: {
-      description: '',
-      syntax: 'INDEXSTYEFILE = <name>;',
-    },
+    de: { description: '', syntax: 'INDEXSTYEFILE = <name>;' },
+    en: { description: '', syntax: 'INDEXSTYEFILE = <name>;' },
+  },
+  {
+    name: 'INDEXSTYLEFILE',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
   },
   {
     name: 'INDEXVAR',
@@ -2987,6 +4210,16 @@ export const keywordData: KeywordEntry[] = [
     },
   },
   {
+    name: 'INFILE',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'INFOBOX',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
     name: 'INHERITBACKGROUND',
     de: {
       description: '',
@@ -2996,39 +4229,36 @@ export const keywordData: KeywordEntry[] = [
   },
   {
     name: 'INHERITFONT',
-    de: {
-      description: '',
-      syntax: 'INHERITFONT [ X | Y ] = [ YES | NO ];',
-    },
-    en: {
-      description: '',
-      syntax: 'INHERITFONT [ X | Y ] = [ YES | NO ];',
-    },
+    de: { description: '', syntax: 'INHERITFONT [ X | Y ] = [ YES | NO ];' },
+    en: { description: '', syntax: 'INHERITFONT [ X | Y ] = [ YES | NO ];' },
+  },
+  {
+    name: 'INHERITFOREGROUND',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
   },
   {
     name: 'INIT',
-    en: {
-      description: '',
-      syntax: 'INIT <varlist> = <value list>;',
-    },
+    en: { description: '', syntax: 'INIT <varlist> = <value list>;' },
+  },
+  {
+    name: 'INPUTTASK',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'INSERT',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
   },
   {
     name: 'INSTANTEXCEL',
-    de: {
-      description: '',
-      syntax: 'INSTANTEXCEL = [ YES | NO ];',
-    },
-    en: {
-      description: '',
-      syntax: 'INSTANTEXCEL = [ YES | NO ];',
-    },
+    de: { description: '', syntax: 'INSTANTEXCEL = [ YES | NO ];' },
+    en: { description: '', syntax: 'INSTANTEXCEL = [ YES | NO ];' },
   },
   {
     name: 'INSTANTPDF',
-    de: {
-      description: '',
-      syntax: 'INSTANTPDF = [ YES | NO ];',
-    },
+    de: { description: '', syntax: 'INSTANTPDF = [ YES | NO ];' },
   },
   {
     name: 'INSTITUTION',
@@ -3043,12 +4273,37 @@ export const keywordData: KeywordEntry[] = [
     },
   },
   {
+    name: 'INTERBOX',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'INTERCELL',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
     name: 'INTERVALS',
     de: {
       description: '',
       syntax:
         'INTERVALS <newvar> = <sourcevar> { | <labeltext> :\n<comparison> <comparevalue> }*n;\n<comparison> ::= [ LT | GT | LE | GE ]',
     },
+  },
+  {
+    name: 'INTERVIEWER',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'INTRO',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'INUSECODE',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
   },
   {
     name: 'INVERSE',
@@ -3060,31 +4315,19 @@ export const keywordData: KeywordEntry[] = [
   },
   {
     name: 'INVERTFILEWEIGHTOUT',
-    de: {
-      description: '',
-      syntax: 'INVERTFILEWEIGHTOUT = <variable>;',
-    },
+    de: { description: '', syntax: 'INVERTFILEWEIGHTOUT = <variable>;' },
   },
   {
     name: 'INVERTIN',
-    de: {
-      description: '',
-      syntax: 'INVERTIN = <path>;',
-    },
+    de: { description: '', syntax: 'INVERTIN = <path>;' },
   },
   {
     name: 'INVERTOUT',
-    de: {
-      description: '',
-      syntax: 'INVERTOUT = <path>;',
-    },
+    de: { description: '', syntax: 'INVERTOUT = <path>;' },
   },
   {
     name: 'INVERTOUTMAX',
-    de: {
-      description: '',
-      syntax: 'INVERTOUTMAX = <number>;',
-    },
+    de: { description: '', syntax: 'INVERTOUTMAX = <number>;' },
   },
   {
     name: 'INVERTOUTVARS',
@@ -3116,12 +4359,47 @@ export const keywordData: KeywordEntry[] = [
     },
   },
   {
+    name: 'IS',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'ITALIC',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'ITEM',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'JSON',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'KEEP',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'KEEPVARS',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
     name: 'KEY',
     de: {
       description: '',
       syntax:
         'KEY OPENQFILE = <varname> ;\nIn der Regel wird hierzu die CASENUMBER verwendet; man kann aber beliebige Variablen als\nSchlüssel in OpenQFiles verwenden. Diese Variable muss atomar sein; darf aber auch vom Typ',
     },
+  },
+  {
+    name: 'KEYDUMP',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
   },
   {
     name: 'KEYWORD',
@@ -3131,55 +4409,71 @@ export const keywordData: KeywordEntry[] = [
     },
   },
   {
+    name: 'KNOWN',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
     name: 'LABELFORMAT',
-    de: {
-      description: '',
-      syntax: 'LABELFORMAT <varlist> = <formatstring>;',
-    },
-    en: {
-      description: '',
-      syntax: 'LABELFORMAT <varlist> = <string>;',
-    },
+    de: { description: '', syntax: 'LABELFORMAT <varlist> = <formatstring>;' },
+    en: { description: '', syntax: 'LABELFORMAT <varlist> = <string>;' },
+  },
+  {
+    name: 'LABELFROMFILE',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
   },
   {
     name: 'LABELRECODE',
-    de: {
-      description: '',
-      syntax: 'LABELRECODE = [ YES | NO ];',
-    },
-    en: {
-      description: '',
-      syntax: 'LABELRECODE = [ YES | NO ];',
-    },
+    de: { description: '', syntax: 'LABELRECODE = [ YES | NO ];' },
+    en: { description: '', syntax: 'LABELRECODE = [ YES | NO ];' },
   },
   {
     name: 'LABELS',
-    de: {
-      description: '',
-      syntax: 'LABELS : [0 | 1 | 2]',
-    },
+    de: { description: '', syntax: 'LABELS : [0 | 1 | 2]' },
     en: {
       description:
         '1 "18#24" 2 "25#30" 3 "31#45" 4 "46#60" 5 "61 and älter"; SINGLEQ Bezirk = 43',
     },
   },
   {
+    name: 'LABELS AS',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'LABELS COPY',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'LABELS X',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'LABELS Y',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'LABELSET',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'LABELSPACE',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
     name: 'LABELSTOTITLE',
-    de: {
-      description: '',
-      syntax: 'LABELSTOTITLE <labelcode> = <varlist>;',
-    },
-    en: {
-      description: '',
-      syntax: 'LABELSTOTITLE <labelcode> = <varlist>;',
-    },
+    de: { description: '', syntax: 'LABELSTOTITLE <labelcode> = <varlist>;' },
+    en: { description: '', syntax: 'LABELSTOTITLE <labelcode> = <varlist>;' },
   },
   {
     name: 'LABELVALUE',
-    de: {
-      description: '',
-      syntax: 'LABELVALUE <numvariable> = <variable>;',
-    },
+    de: { description: '', syntax: 'LABELVALUE <numvariable> = <variable>;' },
   },
   {
     name: 'LABELWIDTH',
@@ -3189,22 +4483,43 @@ export const keywordData: KeywordEntry[] = [
     },
   },
   {
+    name: 'LANDSCAPE',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
     name: 'LANGUAGES',
-    de: {
-      description: '',
-      syntax: 'LANGUAGES = <csv-file-name>;',
-    },
+    de: { description: '', syntax: 'LANGUAGES = <csv-file-name>;' },
+  },
+  {
+    name: 'LASTVERSION',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'LATIN1',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'LE',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
   },
   {
     name: 'LEADINGZEROS',
-    de: {
-      description: '',
-      syntax: 'LEADINGZEROS = [ YES | NO ];',
-    },
-    en: {
-      description: '',
-      syntax: 'LEADINGZEROS = [ YES | NO ];',
-    },
+    de: { description: '', syntax: 'LEADINGZEROS = [ YES | NO ];' },
+    en: { description: '', syntax: 'LEADINGZEROS = [ YES | NO ];' },
+  },
+  {
+    name: 'LEFT',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'LEFTMARGIN',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
   },
   {
     name: 'LEGENDPOSITION',
@@ -3212,6 +4527,36 @@ export const keywordData: KeywordEntry[] = [
       description: '',
       syntax: 'LEGENDPOSITION : [TOP | BOTTOM | LEFT | RIGHT]',
     },
+  },
+  {
+    name: 'LESS',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'LEVEL',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'LINE',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'LINEBUFFER',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'LINECOLOR',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'LINEDASH',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
   },
   {
     name: 'LINEFEEDCHAR',
@@ -3222,14 +4567,28 @@ export const keywordData: KeywordEntry[] = [
   },
   {
     name: 'LINEFEEDFACTOR',
-    de: {
-      description: '',
-      syntax: 'LINEFEEDFACTOR = <number>;',
-    },
-    en: {
-      description: '',
-      syntax: 'LINEFEEDFACTOR = <number>;',
-    },
+    de: { description: '', syntax: 'LINEFEEDFACTOR = <number>;' },
+    en: { description: '', syntax: 'LINEFEEDFACTOR = <number>;' },
+  },
+  {
+    name: 'LINES',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'LINES3D',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'LINESWITHSYMBOLS',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'LINETENSION',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
   },
   {
     name: 'LINEWIDTH',
@@ -3238,11 +4597,13 @@ export const keywordData: KeywordEntry[] = [
     },
   },
   {
+    name: 'LIST',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
     name: 'LISTFILE',
-    de: {
-      description: '',
-      syntax: 'LISTFILE = <filename>;',
-    },
+    de: { description: '', syntax: 'LISTFILE = <filename>;' },
     en: {
       description:
         'Normally the interpretation of the commands is logged on the screen. This log or parts of it can be directed into a file which is declared as a LISTFILE. Example: LISTFILE = Tables.Err; If the interpretation is to appear back on the screen as of a certain point this can be achieved using: LISTFILE = con;',
@@ -3250,10 +4611,7 @@ export const keywordData: KeywordEntry[] = [
   },
   {
     name: 'LISTON',
-    de: {
-      description: '',
-      syntax: 'LISTON = [ YES | NO ];',
-    },
+    de: { description: '', syntax: 'LISTON = [ YES | NO ];' },
     en: {
       description: '',
       syntax:
@@ -3267,10 +4625,32 @@ export const keywordData: KeywordEntry[] = [
       syntax:
         'LISTVARS= <filename> [ options ];\noption ::= ASCIIOUT | COLBINOUT | ALL | SPSS | LABELS',
     },
-    en: {
-      description: '',
-      syntax: 'LISTVARS= <filename> [ options ];',
-    },
+    en: { description: '', syntax: 'LISTVARS= <filename> [ options ];' },
+  },
+  {
+    name: 'LITERAL',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'LIVETABS',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'LN',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'LOAD',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'LOCAL',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
   },
   {
     name: 'LOCALCONTENT',
@@ -3290,6 +4670,11 @@ export const keywordData: KeywordEntry[] = [
       syntax:
         'LOCALTEXTFORMAT <#<char> <option> ;\n<char> ::= frei zu wählender Char (case-sensitive)\n<option> ::= [ FOREGROUND <color> | USEFONT <fontname> SIZE\n<size> ]',
     },
+  },
+  {
+    name: 'LOCKMETHOD',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
   },
   {
     name: 'LONGVARTITLE',
@@ -3316,6 +4701,16 @@ export const keywordData: KeywordEntry[] = [
     },
   },
   {
+    name: 'LOWSIGNIFICANCE',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'LPI',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
     name: 'LSLICE',
     de: {
       description:
@@ -3324,9 +4719,12 @@ export const keywordData: KeywordEntry[] = [
   },
   {
     name: 'LT',
-    de: {
-      description: 'Lower Then, kleiner als',
-    },
+    de: { description: 'Lower Then, kleiner als' },
+  },
+  {
+    name: 'MACRO',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
   },
   {
     name: 'MACROPROTOCOL',
@@ -3341,16 +4739,28 @@ export const keywordData: KeywordEntry[] = [
     },
   },
   {
+    name: 'MACROPROTOKOLL',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'MAKE',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
     name: 'MAKEFAMILY',
     de: {
       description: '',
       syntax:
         'MAKEFAMILY <name> = <value>;\nMit MAKEFAMILY generiert man eine leere VARFAMILY bzw. MultiQ mit n (<value>)',
     },
-    en: {
-      description: '',
-      syntax: 'MAKEFAMILY <name> = <value>;',
-    },
+    en: { description: '', syntax: 'MAKEFAMILY <name> = <value>;' },
+  },
+  {
+    name: 'MAKEFILTER',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
   },
   {
     name: 'MAKEGROUP',
@@ -3359,10 +4769,12 @@ export const keywordData: KeywordEntry[] = [
       syntax:
         'MAKEGROUP <name> = <value>;\nMit MAKEGROUP wird eine leere Gruppenvariable mit n (<value>) Einzelvariablen generiert, die',
     },
-    en: {
-      description: '',
-      syntax: 'MAKEGROUP <name> = <value>;',
-    },
+    en: { description: '', syntax: 'MAKEGROUP <name> = <value>;' },
+  },
+  {
+    name: 'MAKESELECT',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
   },
   {
     name: 'MAKESINGLE',
@@ -3379,6 +4791,11 @@ export const keywordData: KeywordEntry[] = [
     },
   },
   {
+    name: 'MAKETABFILE',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
     name: 'MARGINS',
     de: {
       description: '',
@@ -3393,10 +4810,7 @@ export const keywordData: KeywordEntry[] = [
   },
   {
     name: 'MARKCELLEXCELSPECIAL',
-    de: {
-      description: '',
-      syntax: 'MARKCELLEXCELSPECIAL = [ YES | NO ];',
-    },
+    de: { description: '', syntax: 'MARKCELLEXCELSPECIAL = [ YES | NO ];' },
   },
   {
     name: 'MARKCELLS',
@@ -3412,6 +4826,11 @@ export const keywordData: KeywordEntry[] = [
     },
   },
   {
+    name: 'MARKCELLSLEVEL',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
     name: 'MARKCELLSMETHOD',
     de: {
       description: '',
@@ -3420,15 +4839,22 @@ export const keywordData: KeywordEntry[] = [
     },
   },
   {
+    name: 'MARKMEANCOL',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'MARKMEANROW',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
     name: 'MAX',
     de: {
       description:
         'Max-Wert In der einfachsten Form lautet ein DATA-Statement z.B.: DATA MEAN GlobMeanQ1 = Q1; Die Variable Q1 in dem Beispiel muss existieren. Als Resultat steht dann im Tabellierungsprozess die neue atomare Variable "GlobMeanQ1" zur Verfügung. Ihr Wert ist der globale Mittelwert von Q1 über alle eingelesenen Fälle.…',
     },
-    en: {
-      description: '',
-      syntax: 'MAX <varname> = <Varlist>;',
-    },
+    en: { description: '', syntax: 'MAX <varname> = <Varlist>;' },
   },
   {
     name: 'MAXCODEBOOKLINES',
@@ -3477,6 +4903,11 @@ export const keywordData: KeywordEntry[] = [
     },
   },
   {
+    name: 'MAXLABELWIDTH',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
     name: 'MAXLINELENGTH',
     en: {
       description:
@@ -3484,11 +4915,23 @@ export const keywordData: KeywordEntry[] = [
     },
   },
   {
+    name: 'MAXPREQUOTATRIES',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'MAXROWSPERTABLEPAGE',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'MAXTABLEWIDTH',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
     name: 'MAXWEIGHTITERATIONS',
-    de: {
-      description: '',
-      syntax: 'MAXWEIGHTITERATIONS = <number>;',
-    },
+    de: { description: '', syntax: 'MAXWEIGHTITERATIONS = <number>;' },
   },
   {
     name: 'MCNEMAR',
@@ -3510,6 +4953,11 @@ export const keywordData: KeywordEntry[] = [
         'are permitted. Additionally the key word RANGE can be used to generate whatever areas are necessary to break down a table with many characteristics:',
       syntax: 'MEAN <varname> = <Varlist>;',
     },
+  },
+  {
+    name: 'MEAN_PHYS',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
   },
   {
     name: 'MEANCOLDEPT',
@@ -3546,12 +4994,22 @@ export const keywordData: KeywordEntry[] = [
     },
   },
   {
+    name: 'MEANINCOMPARE',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
     name: 'MEANP',
     argsHint: '( Var )',
     de: {
       description:
         "Von der Berechnung her ist MEANP (vorgesehen als: MEAN für Prozentwerte) exakt dasselbe wie MEAN 423. Der zweite Bezeichner dient nur dazu, dass man diesem CELLELEMENT ein abweichendes FORMAT 566 oder DESCRIPTION geben kann. Als Default hat dieses CELLELEMENT die DESCRIPTION 385 'fake%'. Für die Tabellenausgabe wird man dies ggf. besser in '%' ändern.",
     },
+  },
+  {
+    name: 'MEANPHYSTTEST',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
   },
   {
     name: 'MEANQP',
@@ -3583,6 +5041,16 @@ export const keywordData: KeywordEntry[] = [
     },
   },
   {
+    name: 'MEANTESTCUT',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'MEANWELCH',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
     name: 'MEDIAN',
     argsHint: '( Var )',
     de: {
@@ -3591,36 +5059,36 @@ export const keywordData: KeywordEntry[] = [
     },
   },
   {
+    name: 'MEDIUM',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
     name: 'MENUFILTER',
-    en: {
-      description: '',
-      syntax: 'MENUFILTER <varlist> = [ YES | NO ];',
-    },
+    en: { description: '', syntax: 'MENUFILTER <varlist> = [ YES | NO ];' },
   },
   {
     name: 'MENUHEADER',
-    en: {
-      description: '',
-      syntax: 'MENUHEADER <varlist> = [ YES | NO ];',
-    },
+    en: { description: '', syntax: 'MENUHEADER <varlist> = [ YES | NO ];' },
+  },
+  {
+    name: 'MENUINCLUDE',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
   },
   {
     name: 'MENUMEAN',
-    en: {
-      description: '',
-      syntax: 'MENUMEAN <varlist> = [ YES | NO ];',
-    },
+    en: { description: '', syntax: 'MENUMEAN <varlist> = [ YES | NO ];' },
+  },
+  {
+    name: 'MENUTITLE',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
   },
   {
     name: 'MIN',
-    de: {
-      description: '',
-      syntax: 'MIN <varname> = <Varlist>;',
-    },
-    en: {
-      description: '',
-      syntax: 'MIN <varname> = <Varlist>;',
-    },
+    de: { description: '', syntax: 'MIN <varname> = <Varlist>;' },
+    en: { description: '', syntax: 'MIN <varname> = <Varlist>;' },
   },
   {
     name: 'MINCOLBASE',
@@ -3628,6 +5096,61 @@ export const keywordData: KeywordEntry[] = [
       description: '',
       syntax: 'MINCOLBASE = <number>;\nPreset at MINCOLBASE = 0',
     },
+  },
+  {
+    name: 'MINCOLUMNS',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'MINCOLWIDTH',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'MINFRAMECOLWIDTH',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'MINIMUM',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'MINIMUMWEIGHT',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'MINIMUMWFACT',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'MININDEX',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'MINLABELWIDTH',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'MINLINEHEIGHT',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'MINMAX',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'MINROWBASE',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
   },
   {
     name: 'MINTABLEHEIGHT',
@@ -3638,11 +5161,28 @@ export const keywordData: KeywordEntry[] = [
     },
   },
   {
+    name: 'MINTABLEWIDTH',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'MINTEXTHEIGHT',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'MINUTESASHOURSMEAN',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'MINVALUES',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
     name: 'MISSING',
-    de: {
-      description: '',
-      syntax: 'MISSING <Varlist> = { number }*n;',
-    },
+    de: { description: '', syntax: 'MISSING <Varlist> = { number }*n;' },
     en: {
       description:
         'Allows the definition of individual characteristics of nuclear variables as MISSING values.',
@@ -3661,11 +5201,28 @@ export const keywordData: KeywordEntry[] = [
     },
   },
   {
+    name: 'MM',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'MOD',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'MODE',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'MODELABEL',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
     name: 'MODIFYCSVNAMES',
-    de: {
-      description: '',
-      syntax: 'MODIFYCSVNAMES = [ YES | NO ];',
-    },
+    de: { description: '', syntax: 'MODIFYCSVNAMES = [ YES | NO ];' },
   },
   {
     name: 'MODIFYVARNAME',
@@ -3679,11 +5236,21 @@ export const keywordData: KeywordEntry[] = [
     },
   },
   {
+    name: 'MRSET',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
     name: 'MULTICOLINHG',
     en: {
       description:
         'Multiple cell contents (e.g. ABSCOLPERCENT) in CSV-Data files are usually represented in several rows. Alternatively they can be presented in several columns using +MULTICOLINHG. USEFORMATINHG Formats for CELLELEMENTS are also adopted for printouts in HG.…',
     },
+  },
+  {
+    name: 'MULTIDEF',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
   },
   {
     name: 'MULTIFROMSTRING',
@@ -3742,10 +5309,13 @@ export const keywordData: KeywordEntry[] = [
     },
   },
   {
+    name: 'NAME',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
     name: 'NE',
-    de: {
-      description: 'Not Equal, ist ungleich',
-    },
+    de: { description: 'Not Equal, ist ungleich' },
   },
   {
     name: 'NEG',
@@ -3755,11 +5325,18 @@ export const keywordData: KeywordEntry[] = [
     },
   },
   {
+    name: 'NEVER',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
     name: 'NEWOPENFORMAT',
-    de: {
-      description: '',
-      syntax: 'NEWOPENFORMAT = [ YES | NO ];',
-    },
+    de: { description: '', syntax: 'NEWOPENFORMAT = [ YES | NO ];' },
+  },
+  {
+    name: 'NEWOPENQFORMAT',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
   },
   {
     name: 'NEWPAGE',
@@ -3769,6 +5346,16 @@ export const keywordData: KeywordEntry[] = [
     },
   },
   {
+    name: 'NEXT',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'NEXTVAR',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
     name: 'NIL',
     de: {
       description:
@@ -3776,15 +5363,47 @@ export const keywordData: KeywordEntry[] = [
     },
   },
   {
+    name: 'NO',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'NOADDINFRAME',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'NOADDINFRAMETTL',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'NOADDINFRAMEX',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'NOADDINFRAMEY',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'NOADRESSSERVERALERT',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
     name: 'NOASCIIEXTENSION',
-    de: {
-      description: '',
-      syntax: 'NOASCIIEXTENSION = [ YES | NO ];',
-    },
+    de: { description: '', syntax: 'NOASCIIEXTENSION = [ YES | NO ];' },
     en: {
       description:
         'Normally ASCII data sets which have been produced by GESS tabs are finished with a right- justified *.Should this not occur it can be achieved with a switch.',
     },
+  },
+  {
+    name: 'NOAUTOTABLETITLE',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
   },
   {
     name: 'NOBODYBLANKS',
@@ -3796,6 +5415,16 @@ export const keywordData: KeywordEntry[] = [
       description:
         'Suppresses blank rows in the table body that have been added to improve legibility. Tables then may for example fit on one page.',
     },
+  },
+  {
+    name: 'NOBOX',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'NOCITATION',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
   },
   {
     name: 'NOCOLCHECK',
@@ -3818,10 +5447,7 @@ export const keywordData: KeywordEntry[] = [
   },
   {
     name: 'NOCSV',
-    de: {
-      description: '',
-      syntax: 'NOCSV <varlist> = YES;',
-    },
+    de: { description: '', syntax: 'NOCSV <varlist> = YES;' },
   },
   {
     name: 'NODESCRIPTION',
@@ -3843,10 +5469,17 @@ export const keywordData: KeywordEntry[] = [
   },
   {
     name: 'NOEXPANDAT',
-    de: {
-      description: '',
-      syntax: 'NOEXPANDAT <varlist> = [ YES | NO ];',
-    },
+    de: { description: '', syntax: 'NOEXPANDAT <varlist> = [ YES | NO ];' },
+  },
+  {
+    name: 'NOFRAME',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'NOFROZEN',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
   },
   {
     name: 'NOGRAPH',
@@ -3864,12 +5497,8 @@ export const keywordData: KeywordEntry[] = [
   },
   {
     name: 'NOHEADERBLANKS',
-    de: {
-      description: 'Unterdrückt Leerzeilen im Tabellenkopf. (NON-PS)',
-    },
-    en: {
-      description: 'Suppresses blank rows in the stub. (NON-PS)',
-    },
+    de: { description: 'Unterdrückt Leerzeilen im Tabellenkopf. (NON-PS)' },
+    en: { description: 'Suppresses blank rows in the stub. (NON-PS)' },
   },
   {
     name: 'NOINHERITTEXT',
@@ -3883,36 +5512,31 @@ export const keywordData: KeywordEntry[] = [
     },
   },
   {
+    name: 'NOINHERITTITLE',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
     name: 'NOINPUT',
-    de: {
-      description: '',
-      syntax: 'NOINPUT <varlist> = [ YES | NO ];',
-    },
+    de: { description: '', syntax: 'NOINPUT <varlist> = [ YES | NO ];' },
+  },
+  {
+    name: 'NOINSTITUTIONINCSV',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
   },
   {
     name: 'NOINVERTADDON',
-    de: {
-      description: '',
-      syntax: 'NOINVERTADDON = [ YES | NO ];',
-    },
+    de: { description: '', syntax: 'NOINVERTADDON = [ YES | NO ];' },
   },
   {
     name: 'NOIOCHECK',
-    de: {
-      description: '',
-      syntax: 'NOIOCHECK <varlist> = [ YES | NO ];',
-    },
-    en: {
-      description: '',
-      syntax: 'NOIOCHECK <varlist> = [ YES | NO ];',
-    },
+    de: { description: '', syntax: 'NOIOCHECK <varlist> = [ YES | NO ];' },
+    en: { description: '', syntax: 'NOIOCHECK <varlist> = [ YES | NO ];' },
   },
   {
     name: 'NOISE',
-    de: {
-      description: '',
-      syntax: 'NOISE = <value>;',
-    },
+    de: { description: '', syntax: 'NOISE = <value>;' },
     en: {
       description: '',
       syntax:
@@ -3920,15 +5544,24 @@ export const keywordData: KeywordEntry[] = [
     },
   },
   {
+    name: 'NOLABEL',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'NOLEGEND',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
     name: 'NOLOGFILES',
-    de: {
-      description: '',
-      syntax: 'NOLOGFILES = [ YES | NO ];',
-    },
-    en: {
-      description: '',
-      syntax: 'NOLOGFILES = [ YES | NO ];',
-    },
+    de: { description: '', syntax: 'NOLOGFILES = [ YES | NO ];' },
+    en: { description: '', syntax: 'NOLOGFILES = [ YES | NO ];' },
+  },
+  {
+    name: 'NOMINATIONS',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
   },
   {
     name: 'NOMINATIONTITLE',
@@ -3943,18 +5576,42 @@ export const keywordData: KeywordEntry[] = [
     },
   },
   {
+    name: 'NOMISSING',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'NOMULTILINEEXPANSION',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'NONOISE',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'NOOCINHEADER',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'NOOCINSTUB',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
     name: 'NOOUTPUT',
-    de: {
-      description: '',
-      syntax: 'NOOUTPUT <varlist> = [ YES | NO ];',
-    },
+    de: { description: '', syntax: 'NOOUTPUT <varlist> = [ YES | NO ];' },
+  },
+  {
+    name: 'NOQOUOTESINCSV',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
   },
   {
     name: 'NOQUOTESINCSV',
-    de: {
-      description: '',
-      syntax: 'NOQUOTESINCSV = [ YES | NO ];',
-    },
+    de: { description: '', syntax: 'NOQUOTESINCSV = [ YES | NO ];' },
   },
   {
     name: 'NORANKING',
@@ -3965,28 +5622,36 @@ export const keywordData: KeywordEntry[] = [
   },
   {
     name: 'NOREPORT',
-    de: {
-      description: '',
-      syntax: 'NOREPORT <varlist> = [ YES | NO ];',
-    },
+    de: { description: '', syntax: 'NOREPORT <varlist> = [ YES | NO ];' },
+  },
+  {
+    name: 'NORMAL',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
   },
   {
     name: 'NORMALIZE',
-    de: {
-      description: '',
-      syntax: 'NORMALIZE;\nNORMALIZE = <varlist>;',
-    },
-    en: {
-      description: '',
-      syntax: 'NORMALIZE;',
-    },
+    de: { description: '', syntax: 'NORMALIZE;\nNORMALIZE = <varlist>;' },
+    en: { description: '', syntax: 'NORMALIZE;' },
+  },
+  {
+    name: 'NOSCALE',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'NOSIGNIFMEANGREATER',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'NOSIGNIFMEANLESS',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
   },
   {
     name: 'NOSPSS',
-    de: {
-      description: '',
-      syntax: 'NOSPSS <varlist> = [ YES | NO ];',
-    },
+    de: { description: '', syntax: 'NOSPSS <varlist> = [ YES | NO ];' },
   },
   {
     name: 'NOT',
@@ -3994,6 +5659,16 @@ export const keywordData: KeywordEntry[] = [
       description:
         'Nicht Assoziationen müssen explizit durch Klammerung angegeben werden; ungeklammerte Reihungen von OR und AND werden von links nach rechts abgearbeitet. Die verbreitete abkürzende Schreibweise (z.B. "a EQ 1 OR 2" anstelle von "a EQ 1 OR a EQ 2" etc. ist nicht erlaubt. Hierfür gibt es die IN 303-Formulierung. Stringkonstanten sind erlaubt.…',
     },
+  },
+  {
+    name: 'NOTHING',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'NOTOGGLEKEY',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
   },
   {
     name: 'NOVARTITLEBOX',
@@ -4007,11 +5682,23 @@ export const keywordData: KeywordEntry[] = [
     },
   },
   {
+    name: 'NOVELLLOCKS',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'NOWHITEBACK',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
     name: 'NOWRAPINTEXT',
-    de: {
-      description: '',
-      syntax: 'NOWRAPINTEXT = [ YES | NO ] ;',
-    },
+    de: { description: '', syntax: 'NOWRAPINTEXT = [ YES | NO ] ;' },
+  },
+  {
+    name: 'NOXVARTITLEBOX',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
   },
   {
     name: 'NOZERODASH',
@@ -4039,11 +5726,21 @@ export const keywordData: KeywordEntry[] = [
     },
   },
   {
+    name: 'NUMBERSINCOLOR',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
     name: 'NUMCENTERGRAPH',
     de: {
       description:
         '| FORM RECTANGLE COLUMNS 1 ROWS 2 | FORM RECTANGLE COLUMNS 2 ROWS 1 2 ; Das einfachste Chart erweitert um Optionen für Form und Farbe 2a: Vier Charts auf einer Seite im Querformat Im folgenden Beispiel wurden vier Charts auf Basis derselben Tabelle auf einer Seite im Querformat abgebildet.…',
     },
+  },
+  {
+    name: 'NUMERIC',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
   },
   {
     name: 'NUMEXGRAPH',
@@ -4053,12 +5750,42 @@ export const keywordData: KeywordEntry[] = [
     },
   },
   {
+    name: 'NUMINGRAPH',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'OFFICECHAPTERPAGE',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'OFFICECHART',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'OFFICECHARTDEFAULTS',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'OFFICECONTENTPAGE',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
     name: 'OFFICEEXPORT',
     de: {
       description: '',
       syntax:
         'OFFICEEXPORT = <filename>;\n<filename> muss eine der folgenden Extensionen haben : xlsx | xls | ods. über die Extension',
     },
+  },
+  {
+    name: 'OFFICEEXPORTOPTIONS',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
   },
   {
     name: 'OFFICEFONT',
@@ -4076,11 +5803,28 @@ export const keywordData: KeywordEntry[] = [
     },
   },
   {
+    name: 'OFFICEPICTURE',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'OFFICETITLEPAGE',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'OLDEXCELFORMAT',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
     name: 'OLDGROUPCLEARMETHOD',
-    de: {
-      description: '',
-      syntax: 'OLDGROUPCLEARMETHOD = [ YES | NO ];',
-    },
+    de: { description: '', syntax: 'OLDGROUPCLEARMETHOD = [ YES | NO ];' },
+  },
+  {
+    name: 'ONQUESTIONNAIRE',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
   },
   {
     name: 'OPEN',
@@ -4111,32 +5855,35 @@ export const keywordData: KeywordEntry[] = [
   },
   {
     name: 'OPENCSV',
-    de: {
-      description: '',
-      syntax: 'OPENCSV = [ YES | NO ];',
-    },
+    de: { description: '', syntax: 'OPENCSV = [ YES | NO ];' },
   },
   {
     name: 'OPENOFFICEDEVIATION',
-    de: {
-      description: '',
-      syntax: 'OPENOFFICEDEVIATION = YES;',
-    },
-    en: {
-      description: '',
-      syntax: 'OPENOFFICEDEVIATION = YES;',
-    },
+    de: { description: '', syntax: 'OPENOFFICEDEVIATION = YES;' },
+    en: { description: '', syntax: 'OPENOFFICEDEVIATION = YES;' },
   },
   {
     name: 'OPENQFILE',
-    de: {
-      description: '',
-      syntax: 'OPENQFILE = <name.opn>;',
-    },
+    de: { description: '', syntax: 'OPENQFILE = <name.opn>;' },
     en: {
       description:
         'If open questions are to be used at least one OPENQFILE must be defined. GESS tabs reads all OPENQFILEs and creates a data bank which allocates which values belong to which case numbers. The OPENQFILE statement has the same syntax as the DATAFILE statement.…',
     },
+  },
+  {
+    name: 'OPENQFILES',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'OPENQFORMAT',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'OPTIMIZE',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
   },
   {
     name: 'OPTION',
@@ -4158,6 +5905,21 @@ export const keywordData: KeywordEntry[] = [
     },
   },
   {
+    name: 'OS',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'OUTFILE',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'OUTLINE',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
     name: 'OVERCODE',
     de: {
       description: 'Bildung und Benennung eines Obercodes 262',
@@ -4166,10 +5928,13 @@ export const keywordData: KeywordEntry[] = [
     },
   },
   {
+    name: 'OVERCODE SUM',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
     name: 'OVERLAPPED',
-    de: {
-      description: 'Die graphischen Elemente überlappend darstellen',
-    },
+    de: { description: 'Die graphischen Elemente überlappend darstellen' },
   },
   {
     name: 'OVEROVERCODE',
@@ -4178,6 +5943,11 @@ export const keywordData: KeywordEntry[] = [
       syntax:
         'OVEROVERCODE [ SUM ] <oocname> { :<ocname> }*n\n"<text des OVEROVERCODEs"\n<oocname> ::= neuer eindeutiger Name des OVEROVERCODE\n<ocname> ::= gültiger Name eines bestehenden OVERCODE',
     },
+  },
+  {
+    name: 'OVERSLICE',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
   },
   {
     name: 'OVERVIEW',
@@ -4189,14 +5959,27 @@ export const keywordData: KeywordEntry[] = [
     },
   },
   {
+    name: 'OVERVIEW ADD',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'PAGE',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'PAGELENGTH',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
     name: 'PAGENUMBER',
     de: {
       description:
         'Setzt die aktuelle Seitennummer neu, wird mit dem NUMBERCHAR 527 eingesetzt.',
     },
-    en: {
-      description: 'Resets the current page number.',
-    },
+    en: { description: 'Resets the current page number.' },
   },
   {
     name: 'PAGETOTALX',
@@ -4221,16 +6004,23 @@ export const keywordData: KeywordEntry[] = [
     },
   },
   {
+    name: 'PANE',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
     name: 'PAPER',
     de: {
       description: '',
       syntax:
         "PAPER = HEIGHT <number> WIDTH <number>;\nDie Interpretation von '<number>' richtet sich nach UNITS.",
     },
-    en: {
-      description: '',
-      syntax: 'PAPER = HEIGHT <number> WIDTH <number>;',
-    },
+    en: { description: '', syntax: 'PAPER = HEIGHT <number> WIDTH <number>;' },
+  },
+  {
+    name: 'PASSWORD',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
   },
   {
     name: 'PATTERN',
@@ -4238,6 +6028,11 @@ export const keywordData: KeywordEntry[] = [
       description:
         'Pattern 1 = gepunktet.) Jede Farbe wird entweder nach dem HSB-Modell (Hue-Saturation-',
     },
+  },
+  {
+    name: 'PATTERNERROR',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
   },
   {
     name: 'PCNTL1',
@@ -4263,11 +6058,31 @@ export const keywordData: KeywordEntry[] = [
     },
   },
   {
+    name: 'PCNTL4',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
     name: 'PCNTRANGE',
     argsHint: '( Var )',
     de: {
       description: 'Ausgabe des 1. und 2. Perzentils als Spanne in einer Zeile',
     },
+  },
+  {
+    name: 'PDF',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'PEARSONR',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'PERCENT',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
   },
   {
     name: 'PERCENTILEDELTA',
@@ -4300,6 +6115,31 @@ export const keywordData: KeywordEntry[] = [
     },
   },
   {
+    name: 'PERCENTSTACKED',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'PHI',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'PHONE',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'PHYSCELLMIN',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'PHYSCOLCHIQU',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
     name: 'PHYSCOLDELTA',
     de: {
       description:
@@ -4314,10 +6154,13 @@ export const keywordData: KeywordEntry[] = [
     },
   },
   {
+    name: 'PHYSCOLINHG',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
     name: 'PHYSCOLPERCENT',
-    de: {
-      description: 'Spaltenprozente, auf Basis ungewichteter Zahlen',
-    },
+    de: { description: 'Spaltenprozente, auf Basis ungewichteter Zahlen' },
   },
   {
     name: 'PHYSDEPTTEST',
@@ -4333,6 +6176,11 @@ export const keywordData: KeywordEntry[] = [
       description:
         'Physikalische Fallzahl (ohne Berücksichtigung von Gewichten) in der Spalte',
     },
+  },
+  {
+    name: 'PHYSICALCOLUMN',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
   },
   {
     name: 'PHYSICALNTITLE',
@@ -4355,15 +6203,11 @@ export const keywordData: KeywordEntry[] = [
   },
   {
     name: 'PHYSICALRECORDS',
-    de: {
-      description: 'ungewichtete Zahl der Fälle',
-    },
+    de: { description: 'ungewichtete Zahl der Fälle' },
   },
   {
     name: 'PHYSICALROW',
-    de: {
-      description: 'und folgende drei Arten von Rahmenspalten:',
-    },
+    de: { description: 'und folgende drei Arten von Rahmenspalten:' },
   },
   {
     name: 'PHYSMCNEMAR',
@@ -4371,6 +6215,36 @@ export const keywordData: KeywordEntry[] = [
       description:
         'Abhängiger Test auf Prozentwertunterschied auf Basis der ungewichteten Daten nach McNemar 449',
     },
+  },
+  {
+    name: 'PHYSMEAN',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'PHYSMEANCOLDEPT',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'PHYSMEANTEST',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'PHYSMEANWELCH',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'PHYSMINCOLBASE',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'PHYSMINROWBASE',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
   },
   {
     name: 'PHYSROWCHIQU',
@@ -4384,6 +6258,16 @@ export const keywordData: KeywordEntry[] = [
       description:
         'Differenz zwischen den gewichteten und ungewichteten Zeilenprozenten.',
     },
+  },
+  {
+    name: 'PHYSROWINHG',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'PHYSROWMEANTEST',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
   },
   {
     name: 'PHYSROWPERCENT',
@@ -4414,12 +6298,57 @@ export const keywordData: KeywordEntry[] = [
     },
   },
   {
+    name: 'PIE',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'PIE100',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'PIESTARTANGLE',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'PLAINDATAREPORT',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'PLAYBACK',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'PLUSBOX',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'POINTBOX',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'POINTS',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
     name: 'POSITION',
     de: {
       description:
         'Mit POSITION kann die Position vorgegeben werden, an der das neue Label (oder auch OVERCODE 262) in die Labelliste eingefügt wird. Die Zählung ist 1-basiert. Möchte man z.B. ein Label vor allen bestehenden einfügen, so schreibt man etwa: LABELS testvar = ADD POSITION 1',
       syntax: 'POSITION "<cellrange>"',
     },
+  },
+  {
+    name: 'POSTPONE',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
   },
   {
     name: 'POSTPROCESS',
@@ -4435,6 +6364,51 @@ export const keywordData: KeywordEntry[] = [
       description: '',
       syntax: 'POSTREPLACE <cellelement> : <text1> = <text2> [ IF <text3> ] ;',
     },
+  },
+  {
+    name: 'POSTSCRIPT',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'POWERCHARTS',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'POWERPOINTFILENAME',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'PPCHART',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'PPEXCHANGE',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'PPTEMPLATES',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'PREQUOTA',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'PRETEXT',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'PRINT',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
   },
   {
     name: 'PRINT2LINES',
@@ -4467,6 +6441,11 @@ export const keywordData: KeywordEntry[] = [
     },
   },
   {
+    name: 'PRINTDICTIONARY',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
     name: 'PRINTEREXIT',
     en: {
       description:
@@ -4482,28 +6461,16 @@ export const keywordData: KeywordEntry[] = [
   },
   {
     name: 'PRINTFILE',
-    de: {
-      description: '',
-      syntax: 'PRINTFILE <Druckername> = <FileName>;',
-    },
-    en: {
-      description: '',
-      syntax: 'PRINTFILE <Druckername> = <FileName>;',
-    },
+    de: { description: '', syntax: 'PRINTFILE <Druckername> = <FileName>;' },
+    en: { description: '', syntax: 'PRINTFILE <Druckername> = <FileName>;' },
   },
   {
     name: 'PRINTSUPPRESSVALUE',
-    de: {
-      description: '',
-      syntax: 'PRINTSUPPRESSVALUE = <number>;',
-    },
+    de: { description: '', syntax: 'PRINTSUPPRESSVALUE = <number>;' },
   },
   {
     name: 'PRINTWEIGHTPROTOCOL',
-    de: {
-      description: '',
-      syntax: 'PRINTWEIGHTPROTOCOL = [ YES | NO ];',
-    },
+    de: { description: '', syntax: 'PRINTWEIGHTPROTOCOL = [ YES | NO ];' },
   },
   {
     name: 'PROFILE',
@@ -4557,11 +6524,26 @@ export const keywordData: KeywordEntry[] = [
     },
   },
   {
+    name: 'PROJCOLPERCENT',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'PROJECT',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
     name: 'PROJECTION',
     de: {
       description:
         'absolute Häufigkeitswerte: Summe der Gewichte, multipliziert mit dem PROJECTIONFACTOR Hiermit kann man eine Stichprobe anhand der gewichteten Verteilung auf die Grundgesamtheit hochrechnen. Der PROJECTIONFACTOR kann mit der Anweisung PROJECTIONFACTOR = <Wert>; gesetzt werden. Voreinstellung: 1.0.',
     },
+  },
+  {
+    name: 'PROJECTIONFACTOR',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
   },
   {
     name: 'PROJECTIONSUM',
@@ -4572,10 +6554,22 @@ export const keywordData: KeywordEntry[] = [
   },
   {
     name: 'PROTOCOLPAGE',
-    de: {
-      description: '',
-      syntax: 'PROTOCOLPAGE = [ YES | NO ];',
-    },
+    de: { description: '', syntax: 'PROTOCOLPAGE = [ YES | NO ];' },
+  },
+  {
+    name: 'PS',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'QBLOCK',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'QST',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
   },
   {
     name: 'QU',
@@ -4585,11 +6579,33 @@ export const keywordData: KeywordEntry[] = [
     },
   },
   {
+    name: 'QUALITAB',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'QUANTUM',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
     name: 'QUANTUMINCHARS',
-    de: {
-      description: '',
-      syntax: 'QUANTUMINCHARS = <filename>;',
-    },
+    de: { description: '', syntax: 'QUANTUMINCHARS = <filename>;' },
+  },
+  {
+    name: 'QUESTION',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'QUOTA',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'QUOTAINFO',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
   },
   {
     name: 'RANDOM',
@@ -4597,6 +6613,11 @@ export const keywordData: KeywordEntry[] = [
       description:
         'RANDOM von einer negativen Zahl ist undefiniert. Der Aufruf COMPUTE xx = RANDOM( Max) mit einem positiven Argument "Max" liefert eine ganzzahlige Zufallszahl im Range 0 .. Max-1.',
     },
+  },
+  {
+    name: 'RANDOMGROUP',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
   },
   {
     name: 'RANGE',
@@ -4607,14 +6628,13 @@ export const keywordData: KeywordEntry[] = [
   },
   {
     name: 'RANGES',
-    de: {
-      description: '',
-      syntax: 'RANGES [<VarList>] <ValueList> ;',
-    },
-    en: {
-      description: '',
-      syntax: 'RANGES <VarList> <ValueList> ;',
-    },
+    de: { description: '', syntax: 'RANGES [<VarList>] <ValueList> ;' },
+    en: { description: '', syntax: 'RANGES <VarList> <ValueList> ;' },
+  },
+  {
+    name: 'RANK',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
   },
   {
     name: 'RAWDATASTRING',
@@ -4630,11 +6650,13 @@ export const keywordData: KeywordEntry[] = [
     },
   },
   {
+    name: 'READONLY',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
     name: 'RECHIPREFIX',
-    de: {
-      description: '',
-      syntax: 'RECHIPREFIX = "<Zeichenfolge>";',
-    },
+    de: { description: '', syntax: 'RECHIPREFIX = "<Zeichenfolge>";' },
   },
   {
     name: 'RECODE',
@@ -4651,10 +6673,12 @@ export const keywordData: KeywordEntry[] = [
   },
   {
     name: 'RECODELASTWINS',
-    de: {
-      description: '',
-      syntax: 'RECODELASTWINS = [ YES | NO ];',
-    },
+    de: { description: '', syntax: 'RECODELASTWINS = [ YES | NO ];' },
+  },
+  {
+    name: 'RECODESMALL',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
   },
   {
     name: 'RECODETASKS',
@@ -4662,6 +6686,21 @@ export const keywordData: KeywordEntry[] = [
       description:
         'The effect of RECODE statements can be restricted to particular task types. Using: RECODETASKS = tabtask; recodes are only carried out by GESS tabs, and all RECODE statements from GESS input or CATI etc. are ignored.',
     },
+  },
+  {
+    name: 'RECORDING',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'RECTANGLE',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'RECTLINE',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
   },
   {
     name: 'REDEFINEVARS',
@@ -4678,18 +6717,37 @@ export const keywordData: KeywordEntry[] = [
     },
   },
   {
+    name: 'REPLACE',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'REPORT',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
     name: 'REPRINT',
-    de: {
-      description: '',
-      syntax: 'REPRINT TABLE = <tablename>;',
-    },
+    de: { description: '', syntax: 'REPRINT TABLE = <tablename>;' },
+  },
+  {
+    name: 'REPRINT TABLE',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'REQ',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
   },
   {
     name: 'RESETREDEFINEVARS',
-    en: {
-      description: '',
-      syntax: 'RESETREDEFINEVARS = [ YES | NO ] ;',
-    },
+    en: { description: '', syntax: 'RESETREDEFINEVARS = [ YES | NO ] ;' },
+  },
+  {
+    name: 'RESPONSES',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
   },
   {
     name: 'RESPONSESTITLE',
@@ -4698,6 +6756,41 @@ export const keywordData: KeywordEntry[] = [
         'Bezeichnung der RESPONSES-Spalte/-zeile (wenn TABLEBASE = RESPONSES; 388 gesetzt)',
       syntax: 'RESPONSESTITLE [ X | Y ] = "<text>";',
     },
+  },
+  {
+    name: 'RESTARTFROZEN',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'RESTRICT',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'RESTRICTVALUES',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'RESULT',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'RESULTCODE',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'RETAINOPENVERBATIMS',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'REUSE',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
   },
   {
     name: 'RGB',
@@ -4711,6 +6804,26 @@ export const keywordData: KeywordEntry[] = [
       syntax:
         'RGB = [ YES | NO ];\nIf RGB = NO GESS tabs calculates the numerical colour information according to the HSB model. If RGB\n= YES the numerical values are interpreted according to the Red-Green-Blue model.',
     },
+  },
+  {
+    name: 'RIGH',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'RIGHT',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'RISING',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'ROTATE',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
   },
   {
     name: 'ROUND',
@@ -4728,14 +6841,13 @@ export const keywordData: KeywordEntry[] = [
   },
   {
     name: 'ROWCELLMINIMUM',
-    de: {
-      description: '',
-      syntax: 'ROWCELLMINIMUM = <value>;',
-    },
-    en: {
-      description: '',
-      syntax: 'ROWCELLMINIMUM = <number>;',
-    },
+    de: { description: '', syntax: 'ROWCELLMINIMUM = <value>;' },
+    en: { description: '', syntax: 'ROWCELLMINIMUM = <number>;' },
+  },
+  {
+    name: 'ROWCHIQ',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
   },
   {
     name: 'ROWCHIQU',
@@ -4767,6 +6879,11 @@ export const keywordData: KeywordEntry[] = [
     },
   },
   {
+    name: 'ROWPERCENT',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
     name: 'ROWPERCENT100',
     de: {
       description:
@@ -4781,11 +6898,31 @@ export const keywordData: KeywordEntry[] = [
     },
   },
   {
+    name: 'ROWPERCENTRANGE',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'ROWPERCENTRANGELOWER',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'ROWPERCENTRANGEUPPER',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
     name: 'ROWPERCEQUAL',
     de: {
       description:
         'Testet alle Zeilenprozente in der Zeile auf Gleichheit; d.h. alle Abweichungen von der Ungleichverteilung werden als signifikant betrachtet. Hier besteht natürlich die Möglichkeit, sehr viele unsinnige Signifikanzen zu produzieren. Bitte mit Bedacht verwenden.',
     },
+  },
+  {
+    name: 'ROWPERCSTDERR',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
   },
   {
     name: 'ROWPERCZ',
@@ -4810,6 +6947,11 @@ export const keywordData: KeywordEntry[] = [
     },
   },
   {
+    name: 'ROWSUM',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
     name: 'ROWSUMPERCENT',
     argsHint: '( Var )',
     de: {
@@ -4832,6 +6974,31 @@ export const keywordData: KeywordEntry[] = [
     },
   },
   {
+    name: 'SAVEPRTSETUP',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'SAVETABSETUP',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'SCALENUMBERS',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'SCORETAB',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'SCREEN',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
     name: 'SCRIPTEXPORTFILE',
     de: {
       description: '',
@@ -4841,6 +7008,11 @@ export const keywordData: KeywordEntry[] = [
       description:
         'These can be used to define parts of the script as a "foreign code" to be exported. If the name of a SCRIPTEXPORTFILE is set all parts of the script between #STARTEXPORT and #ENDEXPORT are carried over into this file. These texts are also processed and modified by the Macro Expander which is the appeal of this construction. Thus it is possible to output variable names produced by nested macros.…',
     },
+  },
+  {
+    name: 'SEARCHRANGE',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
   },
   {
     name: 'SECONDMEAN',
@@ -4871,16 +7043,23 @@ export const keywordData: KeywordEntry[] = [
     },
   },
   {
+    name: 'SETBLOCK',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
     name: 'SETDECIMALS',
-    de: {
-      description: '',
-      syntax: 'SETDECIMALS < Varlist > = <number>;',
-    },
+    de: { description: '', syntax: 'SETDECIMALS < Varlist > = <number>;' },
     en: {
       description:
         'Serves to explicitly set the decimal point for variables which have already been defined.',
       syntax: 'SETDECIMALS < Varlist > = number ;',
     },
+  },
+  {
+    name: 'SETEPS',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
   },
   {
     name: 'SETFILTER',
@@ -4897,10 +7076,7 @@ export const keywordData: KeywordEntry[] = [
   },
   {
     name: 'SETMISSING',
-    de: {
-      description: '',
-      syntax: 'SETMISSING <Varlist> = { number }*n;',
-    },
+    de: { description: '', syntax: 'SETMISSING <Varlist> = { number }*n;' },
     en: {
       description:
         "A MISSING value is automatically inherited on to variables which emanate from the calculation of other variables. If MISSING values go into a calculation or an 'M' is found in the input then the result is a MISSING value. The variable then receives the characteristic allocated by the user with SETMISSING. Example: SETMISSING = 9999;",
@@ -4908,14 +7084,21 @@ export const keywordData: KeywordEntry[] = [
   },
   {
     name: 'SHADE',
-    de: {
-      description: '',
-      syntax: 'SHADE <boxname> = <number> ;',
-    },
+    de: { description: '', syntax: 'SHADE <boxname> = <number> ;' },
     en: {
       description: '(PS): is ignored by line printers.',
       syntax: 'SHADE <boxname> = <number> ;',
     },
+  },
+  {
+    name: 'SHADOW',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'SHARE',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
   },
   {
     name: 'SHEETNAME',
@@ -4926,10 +7109,17 @@ export const keywordData: KeywordEntry[] = [
   },
   {
     name: 'SHEETNUMBERCHAR',
-    de: {
-      description: '',
-      syntax: 'SHEETNUMBERCHAR = <char>;',
-    },
+    de: { description: '', syntax: 'SHEETNUMBERCHAR = <char>;' },
+  },
+  {
+    name: 'SHOWHELPINTEXT',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'SHOWSHEETNAME',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
   },
   {
     name: 'SHOWSIGNIF',
@@ -4937,6 +7127,11 @@ export const keywordData: KeywordEntry[] = [
       description:
         'Be it that a test resulted in a significant difference between column A and column D, then naturally the test between column D and column A would also show a significant difference. The identification of "A" in column D and of "D" in column A is technically correct but nonetheless redundant. In many cases it is preferable to show the significance only once for each pair.…',
     },
+  },
+  {
+    name: 'SHOWSIGNIFONCE',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
   },
   {
     name: 'SHOWTTMEAN',
@@ -4953,6 +7148,21 @@ export const keywordData: KeywordEntry[] = [
     },
   },
   {
+    name: 'SHUFFLE',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'SIGN3LEVELS',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'SIGN3LOWLEVELS',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
     name: 'SIGNIF20AND10',
     de: {
       description:
@@ -4960,15 +7170,49 @@ export const keywordData: KeywordEntry[] = [
     },
   },
   {
+    name: 'SIGNIF20AND5',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'SIGNIF32AND10',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'SIGNIF3LEVELS',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'SIGNIF68',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'SIGNIF90',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'SIGNIF95',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'SIGNIF99',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'SIGNIF999',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
     name: 'SIGNIFLEVEL',
-    de: {
-      description: '',
-      syntax: 'SIGNIFLEVEL = <option>;',
-    },
-    en: {
-      description: '',
-      syntax: 'SIGNIFLEVEL = <option>;',
-    },
+    de: { description: '', syntax: 'SIGNIFLEVEL = <option>;' },
+    en: { description: '', syntax: 'SIGNIFLEVEL = <option>;' },
   },
   {
     name: 'SIGNIFMINEFFECTCHIQ',
@@ -4976,6 +7220,11 @@ export const keywordData: KeywordEntry[] = [
       description: '',
       syntax: 'SIGNIFMINEFFECTCHIQ = <value>;\nSIGNIFMINEFFECTTTEST = <value>;',
     },
+  },
+  {
+    name: 'SIGNIFMINEFFECTTTEST',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
   },
   {
     name: 'SIGNIFTEXT',
@@ -4986,11 +7235,38 @@ export const keywordData: KeywordEntry[] = [
     },
   },
   {
+    name: 'SIGNPERCENTALWAYS',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'SIGNPERCENTGREATER',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'SIMPLE',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'SIMPLEPERCENTILE',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
     name: 'SIMPLEVAR',
-    en: {
-      description: '',
-      syntax: 'SIMPLEVAR <variable> = <vargroup> ;',
-    },
+    en: { description: '', syntax: 'SIMPLEVAR <variable> = <vargroup> ;' },
+  },
+  {
+    name: 'SIN',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'SINGLE',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
   },
   {
     name: 'SINGLEFROMSTRING',
@@ -5011,6 +7287,11 @@ export const keywordData: KeywordEntry[] = [
       syntax:
         'SINGLEQ <varname> = [ TITLE <titletext> ] [ ALPHA ] [ [ start | * ] [\nwidth | BINARY ] ]\n[ LABELS [ AS <varname > | COPY <varname> | MAKE <number> | {\nLabelEntry }*n } ]\n;\nLabelEntry ::=',
     },
+  },
+  {
+    name: 'SINGLESCOREFILES',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
   },
   {
     name: 'SIZE',
@@ -5048,25 +7329,39 @@ export const keywordData: KeywordEntry[] = [
   },
   {
     name: 'SLICESTATISTICS',
-    de: {
-      description: '',
-      syntax: 'SLICESTATISTICS = <number>;',
-    },
+    de: { description: '', syntax: 'SLICESTATISTICS = <number>;' },
     en: {
       description:
         'Summary tables of the type: TABLE = #k by Mean( v1 ) Mean( v2 ) Mean( v3 ) Mean( v4 ) Mean( v5 ) Mean( v6 ) Mean( v7 ) Mean( v8 ) … Mean( v99 ) ; can be spread across several pages using the key word SLICESTATISTICS. After setting SLICESTATISTICS = 35; all the following tables of this type are always divided after 35 such rows.',
     },
   },
   {
+    name: 'SOMERSDCOL',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'SOMERSDROW',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'SOMERSDSYM',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
     name: 'SORT',
-    de: {
-      description: '',
-      syntax: 'SORT AS = [ XVALID | YVALID ];',
-    },
+    de: { description: '', syntax: 'SORT AS = [ XVALID | YVALID ];' },
     en: {
       description:
         'Normally the variable characteristics are printed in the order they are defined in VALUELABELS statement. The variable characteristics in the X or Y-Axis can however also be sorted according to other criteria. The key word SORT is written after the variable name followed by the sort criterion which are as follows: ABSOLUTE acc. to absolute cell content MEAN acc. to arithmetical mean SUM acc.…',
     },
+  },
+  {
+    name: 'SORT AS',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
   },
   {
     name: 'SORTCLASS',
@@ -5081,6 +7376,31 @@ export const keywordData: KeywordEntry[] = [
       syntax:
         'SORTCLASS <varname> OVERCODE <name> = <number>;\nHere the OVERCODE is allocated the SORTCLASS <number> and all labels belonging to the OVERCODE\nreceive the SORTCLASS <number> + 1. In this way OVERCODEs and the relevant label positions can be',
     },
+  },
+  {
+    name: 'SORTCODEOVERCODE',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'SORTMEMORY',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'SORTPOSITION',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'SORTSUMMARYALPHA',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'SORTSUMMARYFREQ',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
   },
   {
     name: 'SPACE',
@@ -5108,6 +7428,11 @@ export const keywordData: KeywordEntry[] = [
     },
   },
   {
+    name: 'SPLITDICTIONARY',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
     name: 'SPLITENTRIES',
     en: {
       description:
@@ -5116,57 +7441,35 @@ export const keywordData: KeywordEntry[] = [
   },
   {
     name: 'SPSS',
-    de: {
-      description: '',
-      syntax: 'SPSS [ ASCIIOUT ] = <filename>;',
-    },
-    en: {
-      description: '',
-      syntax: 'SPSS [ ASCIIOUT ] = <filename>;',
-    },
+    de: { description: '', syntax: 'SPSS [ ASCIIOUT ] = <filename>;' },
+    en: { description: '', syntax: 'SPSS [ ASCIIOUT ] = <filename>;' },
+  },
+  {
+    name: 'SPSS VARSTOCASES',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
   },
   {
     name: 'SPSS__',
-    en: {
-      description: '',
-      syntax: 'SPSS__ = [ YES | NO ];',
-    },
+    en: { description: '', syntax: 'SPSS__ = [ YES | NO ];' },
   },
   {
     name: 'SPSSALPHALENGTH',
-    de: {
-      description: '',
-      syntax: 'SPSSALPHALENGTH = <number>;',
-    },
+    de: { description: '', syntax: 'SPSSALPHALENGTH = <number>;' },
   },
   {
     name: 'SPSSFILTERMISSING',
-    de: {
-      description: '',
-      syntax: 'SPSSFILTERMISSING = <number>;',
-    },
+    de: { description: '', syntax: 'SPSSFILTERMISSING = <number>;' },
   },
   {
     name: 'SPSSGLOBALSEQUENCE',
-    de: {
-      description: '',
-      syntax: 'SPSSGLOBALSEQUENCE = [ YES | NO ];',
-    },
-    en: {
-      description: '',
-      syntax: 'SPSSGLOBALSEQUENCE = [ YES | NO ];',
-    },
+    de: { description: '', syntax: 'SPSSGLOBALSEQUENCE = [ YES | NO ];' },
+    en: { description: '', syntax: 'SPSSGLOBALSEQUENCE = [ YES | NO ];' },
   },
   {
     name: 'SPSSGROUP',
-    de: {
-      description: '',
-      syntax: 'SPSSGROUP <name> = <familyvarname>;',
-    },
-    en: {
-      description: '',
-      syntax: 'SPSSGROUP <name> = <familyvarname>;',
-    },
+    de: { description: '', syntax: 'SPSSGROUP <name> = <familyvarname>;' },
+    en: { description: '', syntax: 'SPSSGROUP <name> = <familyvarname>;' },
   },
   {
     name: 'SPSSGROUPLABEL0',
@@ -5174,6 +7477,11 @@ export const keywordData: KeywordEntry[] = [
       description:
         'A SPSSGROUP comprises a row of nuclear variables where the Code 0 or 1 shows whether the relevant value is "set". The SPSSGROUP statement has now (as of Version 4.0.2) been expanded so that these nuclear variables can be allocated information from the label of the relevant code of the source variable (MULTIQ).',
     },
+  },
+  {
+    name: 'SPSSGROUPLABEL1',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
   },
   {
     name: 'SPSSGROUPLABELS',
@@ -5195,10 +7503,7 @@ export const keywordData: KeywordEntry[] = [
       syntax:
         'SPSSINFILE [ FILEKEY <key> ] = <filepath>;\nCSVINFILE [ FILEKEY <key> ] [ <delimchar> ] = <filepath>;\nDATAFILE [ FILEKEY <key> ] = <filepath>;\nOPENQFILE [ FILEKEY <key> ] [ ALLOWEMPTY ] = <filepath>;\nASSOCFILE [ FILEKEY <filekey> ] [ BIG DBASEIN SPSS ] =\n<filename> KEY <keyvar> [ <start> <len> ] | [ keyField ] ;',
     },
-    en: {
-      description: '',
-      syntax: 'SPSSINFILE = <filename>;',
-    },
+    en: { description: '', syntax: 'SPSSINFILE = <filename>;' },
   },
   {
     name: 'SPSSIO',
@@ -5208,11 +7513,13 @@ export const keywordData: KeywordEntry[] = [
     },
   },
   {
+    name: 'SPSSLARGEFILELENGTH',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
     name: 'SPSSLONGNAMES',
-    de: {
-      description: '',
-      syntax: 'SPSSLONGNAMES = [ YES | NO ];',
-    },
+    de: { description: '', syntax: 'SPSSLONGNAMES = [ YES | NO ];' },
     en: {
       description: '',
       syntax:
@@ -5221,17 +7528,11 @@ export const keywordData: KeywordEntry[] = [
   },
   {
     name: 'SPSSNORECODEDLABELS',
-    de: {
-      description: '',
-      syntax: 'SPSSNORECODEDLABELS = [ YES | NO ]:',
-    },
+    de: { description: '', syntax: 'SPSSNORECODEDLABELS = [ YES | NO ]:' },
   },
   {
     name: 'SPSSOUTFILE',
-    de: {
-      description: '',
-      syntax: 'SPSSOUTFILE = <filename>;',
-    },
+    de: { description: '', syntax: 'SPSSOUTFILE = <filename>;' },
   },
   {
     name: 'SPSSOUTSUBFILE',
@@ -5250,66 +7551,140 @@ export const keywordData: KeywordEntry[] = [
   },
   {
     name: 'SPSSREADMULT',
-    de: {
-      description: '',
-      syntax: 'SPSSREADMULT = [ YES | NO ];',
-    },
+    de: { description: '', syntax: 'SPSSREADMULT = [ YES | NO ];' },
   },
   {
     name: 'SPSSSOUTFILE',
-    en: {
-      description: '',
-      syntax: 'SPSSSOUTFILE = <filename>;',
-    },
+    en: { description: '', syntax: 'SPSSSOUTFILE = <filename>;' },
   },
   {
     name: 'SPSSVARLABTOTEXT',
-    de: {
-      description: '',
-      syntax: 'SPSSVARLABTOTEXT = [ YES | NO | COPY ];',
-    },
-    en: {
-      description: '',
-      syntax: 'SPSSVARLABTOTEXT = [ YES | NO ];',
-    },
+    de: { description: '', syntax: 'SPSSVARLABTOTEXT = [ YES | NO | COPY ];' },
+    en: { description: '', syntax: 'SPSSVARLABTOTEXT = [ YES | NO ];' },
   },
   {
     name: 'SPSSWEIGHTOUT',
-    de: {
-      description: '',
-      syntax: 'SPSSWEIGHTOUT = <varname>;',
-    },
+    de: { description: '', syntax: 'SPSSWEIGHTOUT = <varname>;' },
   },
   {
     name: 'SPSSWRITEMULT',
-    de: {
-      description: '',
-      syntax: 'SPSSWRITEMULT = [ YES | NO ];',
-    },
+    de: { description: '', syntax: 'SPSSWRITEMULT = [ YES | NO ];' },
+  },
+  {
+    name: 'SQRT',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
   },
   {
     name: 'SQUARE1',
-    de: {
-      description: 'Quadrat (auf der Basis stehend)',
-    },
+    de: { description: 'Quadrat (auf der Basis stehend)' },
   },
   {
     name: 'SQUARE1O',
-    de: {
-      description: 'Quadrat (auf der Basis stehend) als Outline',
-    },
+    de: { description: 'Quadrat (auf der Basis stehend) als Outline' },
   },
   {
     name: 'SQUARE2',
-    de: {
-      description: 'Quadrat (auf der Spitze stehend)',
-    },
+    de: { description: 'Quadrat (auf der Spitze stehend)' },
   },
   {
     name: 'SQUARE2O',
-    de: {
-      description: 'Quadrat (auf der Spitze stehend) als Outline',
-    },
+    de: { description: 'Quadrat (auf der Spitze stehend) als Outline' },
+  },
+  {
+    name: 'STACKED',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'STACKEDAREAS',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'STACKEDAREAS100',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'STACKEDAREAS3D',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'STACKEDAREAS3D100',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'STACKEDBARS',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'STACKEDBARS100',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'STACKEDBARS100H',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'STACKEDBARS3D',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'STACKEDBARS3D100',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'STACKEDBARS3D100H',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'STACKEDBARSH',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'STACKEDLINES',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'STACKEDLINES100',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'STACKEDLINES100WITHSYMBOLS',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'STACKEDLINESWITHSYMBOLS',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'STANDARD',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'STARBOX',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'START',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
   },
   {
     name: 'STARTCOLUMN',
@@ -5320,22 +7695,33 @@ export const keywordData: KeywordEntry[] = [
     },
   },
   {
+    name: 'STARTEXPORT',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'STARTLINE',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
     name: 'STATIC',
-    de: {
-      description: '',
-      syntax: 'STATIC <varlist> = [ YES | NO ];',
-    },
-    en: {
-      description: '',
-      syntax: 'STATIC <varlist> = [ YES | NO ];',
-    },
+    de: { description: '', syntax: 'STATIC <varlist> = [ YES | NO ];' },
+    en: { description: '', syntax: 'STATIC <varlist> = [ YES | NO ];' },
+  },
+  {
+    name: 'STATISTICS',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
   },
   {
     name: 'STATTESTDUMP',
-    de: {
-      description: '',
-      syntax: 'STATTESTDUMP = <filename> ;',
-    },
+    de: { description: '', syntax: 'STATTESTDUMP = <filename> ;' },
+  },
+  {
+    name: 'STATUSVARIABLE',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
   },
   {
     name: 'STDDEV',
@@ -5344,6 +7730,11 @@ export const keywordData: KeywordEntry[] = [
         'STDDEV errechnet die Standardabweichung einer Variable oder Variablenliste über alle Fälle des Datensatzes.',
       syntax: 'STDDEV <varname> = <varlist>;',
     },
+  },
+  {
+    name: 'STDERR',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
   },
   {
     name: 'STDSIGNIFICANCE',
@@ -5361,17 +7752,21 @@ export const keywordData: KeywordEntry[] = [
   },
   {
     name: 'STOREALPHA',
-    de: {
-      description: '',
-      syntax: 'STOREALPHA <varlist> = [ YES | NO ];',
-    },
+    de: { description: '', syntax: 'STOREALPHA <varlist> = [ YES | NO ];' },
   },
   {
     name: 'STORELANGUAGE',
-    de: {
-      description: '',
-      syntax: 'STORELANGUAGE <sprache> = <filename>;',
-    },
+    de: { description: '', syntax: 'STORELANGUAGE <sprache> = <filename>;' },
+  },
+  {
+    name: 'STORESPSSSUBFILE',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'STORETOBASE',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
   },
   {
     name: 'STORETOCSV',
@@ -5383,24 +7778,20 @@ export const keywordData: KeywordEntry[] = [
   },
   {
     name: 'STORETOSPSS',
-    de: {
-      description: '',
-      syntax: 'STORETOSPSS = <varlist>;',
-    },
+    de: { description: '', syntax: 'STORETOSPSS = <varlist>;' },
   },
   {
     name: 'STRICTINPUTCHECK',
-    de: {
-      description: '',
-      syntax: 'STRICTINPUTCHECK = [ YES | NO ];',
-    },
+    de: { description: '', syntax: 'STRICTINPUTCHECK = [ YES | NO ];' },
+  },
+  {
+    name: 'STRICTINPUTHECK',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
   },
   {
     name: 'STRICTVARLIST',
-    de: {
-      description: '',
-      syntax: 'STRICTVARLIST = [ YES | NO ];',
-    },
+    de: { description: '', syntax: 'STRICTVARLIST = [ YES | NO ];' },
   },
   {
     name: 'STRIPECOLORS',
@@ -5412,21 +7803,31 @@ export const keywordData: KeywordEntry[] = [
   },
   {
     name: 'STROKERECT',
-    de: {
-      description: 'Umrandung zu RETANGLES zeichnen',
-    },
+    de: { description: 'Umrandung zu RETANGLES zeichnen' },
+  },
+  {
+    name: 'STRUCTURE',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'STYLE',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
   },
   {
     name: 'STYLEFILE',
-    de: {
-      description: '',
-      syntax: 'STYLEFILE = <filename>;',
-    },
+    de: { description: '', syntax: 'STYLEFILE = <filename>;' },
     en: {
       description: '',
       syntax:
         'STYLEFILE = <filename>;\nUsing the STYLEFILE individual CSS styles can be included. The contents of <filename> are included',
     },
+  },
+  {
+    name: 'SUBTITLE',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
   },
   {
     name: 'SUM',
@@ -5435,10 +7836,7 @@ export const keywordData: KeywordEntry[] = [
       description: "Darstellung der Summe von 'Var'",
       syntax: 'SUM <varname> = <Varlist>;',
     },
-    en: {
-      description: '',
-      syntax: 'SUM <varname> = <Varlist>;',
-    },
+    en: { description: '', syntax: 'SUM <varname> = <Varlist>;' },
   },
   {
     name: 'SUMMARY',
@@ -5473,11 +7871,13 @@ export const keywordData: KeywordEntry[] = [
     },
   },
   {
+    name: 'SUMSUMPERCENT',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
     name: 'SUPPRESSEMPTYSHEET',
-    de: {
-      description: '',
-      syntax: 'SUPPRESSEMPTYSHEET = [ YES | NO ];',
-    },
+    de: { description: '', syntax: 'SUPPRESSEMPTYSHEET = [ YES | NO ];' },
   },
   {
     name: 'SUPPRESSEMPTYTABLE',
@@ -5492,10 +7892,7 @@ export const keywordData: KeywordEntry[] = [
   },
   {
     name: 'SUPPRESSGRIDLINES',
-    de: {
-      description: '',
-      syntax: 'SUPPRESSGRIDLINES : [YES|NO]',
-    },
+    de: { description: '', syntax: 'SUPPRESSGRIDLINES : [YES|NO]' },
   },
   {
     name: 'SUPPRESSIFLESS',
@@ -5517,6 +7914,11 @@ export const keywordData: KeywordEntry[] = [
     },
   },
   {
+    name: 'SUPPRESSOVERCODE',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
     name: 'SUPPRESSSPSSWARNINGS',
     de: {
       description: '',
@@ -5524,10 +7926,13 @@ export const keywordData: KeywordEntry[] = [
     },
   },
   {
+    name: 'SUPRESSEMPTYTABLE',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
     name: 'SWAP',
-    de: {
-      description: 'Reihenfolge der graphischen Darstellung invertieren',
-    },
+    de: { description: 'Reihenfolge der graphischen Darstellung invertieren' },
   },
   {
     name: 'SWAPLEGEND',
@@ -5538,16 +7943,16 @@ export const keywordData: KeywordEntry[] = [
   },
   {
     name: 'SWITCHLANGUAGE',
-    de: {
-      description: '',
-      syntax: 'SWITCHLANGUAGE = <Sprachbezeichnung>;',
-    },
+    de: { description: '', syntax: 'SWITCHLANGUAGE = <Sprachbezeichnung>;' },
   },
   {
     name: 'SYMBOL',
-    de: {
-      description: 'Die Linie wird nicht gezeigt',
-    },
+    de: { description: 'Die Linie wird nicht gezeigt' },
+  },
+  {
+    name: 'SYMBOLS',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
   },
   {
     name: 'SYMBOLSIZE',
@@ -5557,11 +7962,13 @@ export const keywordData: KeywordEntry[] = [
     },
   },
   {
+    name: 'SYMBOLWIDTH',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
     name: 'SYNOPSIS',
-    de: {
-      description: '',
-      syntax: 'SYNOPSIS = <filename>;',
-    },
+    de: { description: '', syntax: 'SYNOPSIS = <filename>;' },
   },
   {
     name: 'SYNTAX',
@@ -5570,6 +7977,31 @@ export const keywordData: KeywordEntry[] = [
       syntax:
         'SYNTAX { [ POSTPONE ] [ VARIABLES | LABELS | VARTITLE\n| VALUELABELS | MISSING | EXCLUDEVALUES | RESTRICTVALUES|\nMULTIDEF | FORMAT ]}*n = <filename>;\nSYNTAXVARNAMENOQUOTES = [ YES | NO ];',
     },
+  },
+  {
+    name: 'SYNTAXVARNAMENOQUOTES',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'SYSMISS',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'SYSTEMCASENO',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'SYSTEMFILENO',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'SYSTEMGROUP',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
   },
   {
     name: 'SYSTEMIN',
@@ -5587,6 +8019,11 @@ export const keywordData: KeywordEntry[] = [
     },
   },
   {
+    name: 'SYSTEMWEIGHT',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
     name: 'TABLE',
     de: {
       description: '',
@@ -5599,11 +8036,23 @@ export const keywordData: KeywordEntry[] = [
     },
   },
   {
+    name: 'TABLE ADD',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'TABLE SORT AS',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'TABLE STRUCTURE',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
     name: 'TABLEBASE',
-    de: {
-      description: '',
-      syntax: 'TABLEBASE = [ CASES | RESPONSES ];',
-    },
+    de: { description: '', syntax: 'TABLEBASE = [ CASES | RESPONSES ];' },
     en: {
       description:
         'This controls the basis of percentaging in the TABLE printout. The following is preset: TABLEBASE = CASES ; i.e. usually percentaging is on the basis of the number of interviewees. Using TABLEBASE = NOMINATIONS ; the alternative of percentaging on the basis of the number of mentions can be achieved (only relevant for multiple responses).…',
@@ -5638,10 +8087,7 @@ export const keywordData: KeywordEntry[] = [
   },
   {
     name: 'TABLEFORMAT',
-    de: {
-      description: '',
-      syntax: 'TABLEFORMAT +/- AUTOSORTTREE;',
-    },
+    de: { description: '', syntax: 'TABLEFORMAT +/- AUTOSORTTREE;' },
     en: {
       description:
         'The table appearance can further be controlled using TABLEFORMAT.',
@@ -5662,10 +8108,7 @@ export const keywordData: KeywordEntry[] = [
   },
   {
     name: 'TABLEMINIMUM',
-    en: {
-      description: '',
-      syntax: 'TABLEMINIMUM = <number>;',
-    },
+    en: { description: '', syntax: 'TABLEMINIMUM = <number>;' },
   },
   {
     name: 'TABLENUMBER',
@@ -5680,22 +8123,36 @@ export const keywordData: KeywordEntry[] = [
     },
   },
   {
+    name: 'TABLESASJSON',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'TABLESTATISTICS',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
     name: 'TABLETITLE',
-    de: {
-      description: '',
-      syntax: 'TABLETITLE = "<text>";',
-    },
+    de: { description: '', syntax: 'TABLETITLE = "<text>";' },
     en: {
       description:
         'If the standard text "Table #:" is to be replaced it can be done as follows: TABLETITLE = "Summary Table"; If the test is not to appear at all, then: TABLETITLE = ""; If the program finds a hash "#" (more precisely: the NUMBERCHAR) in the string this character is replaced by the current table number. This is valid for all tables until it is changed.',
     },
   },
   {
+    name: 'TABLETITLEINHG',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'TABLETYPE',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
     name: 'TABSELECT',
-    de: {
-      description: '',
-      syntax: 'TABSELECT <Bedingung>;',
-    },
+    de: { description: '', syntax: 'TABSELECT <Bedingung>;' },
     en: {
       description:
         'defines a selection of cases for the following tables. TABSELECT remains valid until a new TABSELECT is defined. Should all cases be processed in the following tables then simply: TABSELECT; is written. (This condition is always true.) The syntax equates to SELECT (non permanent filter).…',
@@ -5710,6 +8167,11 @@ export const keywordData: KeywordEntry[] = [
     },
   },
   {
+    name: 'TABTASK',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
     name: 'TABULATE',
     de: {
       description: '',
@@ -5722,11 +8184,38 @@ export const keywordData: KeywordEntry[] = [
     },
   },
   {
+    name: 'TABULATOR',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'TAN',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'TAPI',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'TAUB',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'TAUC',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
     name: 'TEMPLATE',
-    en: {
-      description: '',
-      syntax: 'TEMPLATE = <templatename>;',
-    },
+    en: { description: '', syntax: 'TEMPLATE = <templatename>;' },
+  },
+  {
+    name: 'TERMINATED',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
   },
   {
     name: 'TESTCOLUMNS',
@@ -5737,11 +8226,31 @@ export const keywordData: KeywordEntry[] = [
     },
   },
   {
+    name: 'TESTCOLUMNSX',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'TEXT',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'TEXTBOX',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
     name: 'TEXTBOXFORMAT',
     de: {
       description:
         'Dieses TABLEFORMAT schaltet die Funktionen des LOCALTEXTFORMAT 564s ein/aus.',
     },
+  },
+  {
+    name: 'TEXTBOXINHG',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
   },
   {
     name: 'TEXTROWHEIGHT',
@@ -5752,14 +8261,8 @@ export const keywordData: KeywordEntry[] = [
   },
   {
     name: 'TEXTTABLE',
-    de: {
-      description: '',
-      syntax: 'TEXTTABLE;',
-    },
-    en: {
-      description: '',
-      syntax: 'TEXTTABLE ;',
-    },
+    de: { description: '', syntax: 'TEXTTABLE;' },
+    en: { description: '', syntax: 'TEXTTABLE ;' },
   },
   {
     name: 'TEXTTOPDISTANCE',
@@ -5770,10 +8273,7 @@ export const keywordData: KeywordEntry[] = [
   },
   {
     name: 'TEXTTOSPSSVARLAB',
-    de: {
-      description: '',
-      syntax: 'TEXTTOSPSSVARLAB = [ YES | NO ];',
-    },
+    de: { description: '', syntax: 'TEXTTOSPSSVARLAB = [ YES | NO ];' },
   },
   {
     name: 'TEXTWRAP',
@@ -5787,11 +8287,43 @@ export const keywordData: KeywordEntry[] = [
     },
   },
   {
+    name: 'THEN',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'THICK',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'THIN',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
     name: 'THOUSANDS',
-    de: {
-      description: '',
-      syntax: 'THOUSANDS <cellelement> : [ YES | NO ]',
-    },
+    de: { description: '', syntax: 'THOUSANDS <cellelement> : [ YES | NO ]' },
+  },
+  {
+    name: 'TIME',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'TIMER',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'TITLE',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'TITLEBOX',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
   },
   {
     name: 'TITLEPAGE',
@@ -5802,11 +8334,26 @@ export const keywordData: KeywordEntry[] = [
     },
   },
   {
+    name: 'TO',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
     name: 'TOP',
     de: {
       description:
         'Die Tabellenausgabe kann auf bestimmte Teile beschränkt werden: Es können',
     },
+  },
+  {
+    name: 'TOPCUT',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'TOPMARGIN',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
   },
   {
     name: 'TOPTEXT',
@@ -5816,6 +8363,11 @@ export const keywordData: KeywordEntry[] = [
     },
   },
   {
+    name: 'TOTALCOLINHG',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
     name: 'TOTALCOLU',
     de: {
       description:
@@ -5823,10 +8375,25 @@ export const keywordData: KeywordEntry[] = [
     },
   },
   {
+    name: 'TOTALCOLUMN',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'TOTALCOLUMNTABLE',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
     name: 'TOTALPERCENT',
     de: {
       description: 'Prozentuierung aller Zellen auf das Tabellen- Gesamt-N.',
     },
+  },
+  {
+    name: 'TOTALPERCSTDERR',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
   },
   {
     name: 'TOTALROW',
@@ -5838,6 +8405,11 @@ export const keywordData: KeywordEntry[] = [
       description:
         'ABSROW and ABSCOLUMN stand for rows (ROW) or columns (COLUMN) with absolute values of the cases or punches where relevant after weighting. PHYSICALROW or PHYSICALCOLUMN refer to the physical case number, i.e. without weighting. In TOTALROW or TOTALCOLUMN all the values for all the cases evaluated are printed as they have been defined in CELLELEMENTS. Example:…',
     },
+  },
+  {
+    name: 'TOTALROWINHG',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
   },
   {
     name: 'TOTALSUMPERCENT',
@@ -5883,9 +8455,7 @@ export const keywordData: KeywordEntry[] = [
   },
   {
     name: 'TRIANGLE1O',
-    de: {
-      description: 'Dreieck (auf der Basis stehend) als Outline',
-    },
+    de: { description: 'Dreieck (auf der Basis stehend) als Outline' },
   },
   {
     name: 'TRIANGLE2',
@@ -5896,16 +8466,16 @@ export const keywordData: KeywordEntry[] = [
   },
   {
     name: 'TRIANGLE2O',
-    de: {
-      description: 'Dreieck (auf der Spitze stehend) als Outline',
-    },
+    de: { description: 'Dreieck (auf der Spitze stehend) als Outline' },
   },
   {
     name: 'TRIMSTRINGS',
-    de: {
-      description: '',
-      syntax: 'TRIMSTRINGS = [ YES | NO ];',
-    },
+    de: { description: '', syntax: 'TRIMSTRINGS = [ YES | NO ];' },
+  },
+  {
+    name: 'TROWTEST',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
   },
   {
     name: 'TRUNC',
@@ -5920,6 +8490,16 @@ export const keywordData: KeywordEntry[] = [
       description: '',
       syntax: 'TRUNCATEDECIMALS <varlist> = <number>;\n<number> ::= -9 .. 9;',
     },
+  },
+  {
+    name: 'TRYCOUNT',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'TRYCOUNTCODE',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
   },
   {
     name: 'TTEST',
@@ -5949,29 +8529,77 @@ export const keywordData: KeywordEntry[] = [
     },
   },
   {
+    name: 'TTESTGREATERCHAR',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'TTESTHEADERS',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'TTESTINCOMPARE',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'TTESTINDEX',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'TTESTLESSCHAR',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'TTESTPHYSMIN',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'TWOCAMEMBERTS',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'UNDEFINED',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'UNDERLINE',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
     name: 'UNITS',
-    de: {
-      description: '',
-      syntax: 'UNITS = [ MM | POINTS | INCH ];',
-    },
-    en: {
-      description: '',
-      syntax: 'UNITS = [ MM | POINTS | INCH ];',
-    },
+    de: { description: '', syntax: 'UNITS = [ MM | POINTS | INCH ];' },
+    en: { description: '', syntax: 'UNITS = [ MM | POINTS | INCH ];' },
+  },
+  {
+    name: 'UNIXTIME',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
   },
   {
     name: 'UPDATEINVERT',
-    de: {
-      description: '',
-      syntax: 'UPDATEINVERT;',
-    },
+    de: { description: '', syntax: 'UPDATEINVERT;' },
+  },
+  {
+    name: 'UPPERCASE',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'USE',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
   },
   {
     name: 'USE3D',
-    de: {
-      description: '',
-      syntax: 'USE3D : [YES | NO]',
-    },
+    de: { description: '', syntax: 'USE3D : [YES | NO]' },
   },
   {
     name: 'USECASES',
@@ -5986,6 +8614,21 @@ export const keywordData: KeywordEntry[] = [
     },
   },
   {
+    name: 'USECOLMAPFILE',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'USEEPS',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'USEFILTER',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
     name: 'USEFONT',
     de: {
       description:
@@ -5993,6 +8636,11 @@ export const keywordData: KeywordEntry[] = [
       syntax:
         'USEFONT <Zielname> = <Fontname> SIZE <number>; (PS)\nUSEFONT <Zielname> = <Fontname>; (Non-PS)',
     },
+  },
+  {
+    name: 'USEFORMATINHG',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
   },
   {
     name: 'USELABELS',
@@ -6026,29 +8674,82 @@ export const keywordData: KeywordEntry[] = [
     },
   },
   {
+    name: 'USEPOSTSCRIPTALIGN',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'USEPOSTSCRIPTCOLORS',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'USEPOSTSCRIPTFONT',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'USEPRINTERCOLORS',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
     name: 'USERAWSFORSTATS',
-    en: {
-      description: '',
-      syntax: 'USERAWSFORSTATS = [ YES | NO ] ;',
-    },
+    en: { description: '', syntax: 'USERAWSFORSTATS = [ YES | NO ] ;' },
+  },
+  {
+    name: 'USESCASES',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'USESELECT',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'USEVARIABLES',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'USEVARTITLE',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
   },
   {
     name: 'USEVISIBLEDIGITSNONLY',
-    de: {
-      description: '',
-      syntax: 'USEVISIBLEDIGITSNONLY = [ YES | NO ];',
-    },
+    de: { description: '', syntax: 'USEVISIBLEDIGITSNONLY = [ YES | NO ];' },
+  },
+  {
+    name: 'USEVISIBLEDIGITSONLY',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
   },
   {
     name: 'USEWEIGHT',
-    de: {
-      description: '',
-      syntax: 'USEWEIGHT = [ YES | NO | <varname> ] ;',
-    },
-    en: {
-      description: '',
-      syntax: 'USEWEIGHT = [ YES | NO | <varname> ] ;',
-    },
+    de: { description: '', syntax: 'USEWEIGHT = [ YES | NO | <varname> ] ;' },
+    en: { description: '', syntax: 'USEWEIGHT = [ YES | NO | <varname> ] ;' },
+  },
+  {
+    name: 'UTF16BE',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'UTF16LE',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'UTF8',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'VALID',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
   },
   {
     name: 'VALIDN',
@@ -6056,6 +8757,21 @@ export const keywordData: KeywordEntry[] = [
       description:
         "Zahl der Fälle, für die ein gültiger Wert der '<bestehende_variable>' gefunden wurde",
     },
+  },
+  {
+    name: 'VALIDPHYS',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'VALUE',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'VALUELABEL',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
   },
   {
     name: 'VALUELABELS',
@@ -6070,6 +8786,16 @@ export const keywordData: KeywordEntry[] = [
       syntax:
         'VALUELABELS <VarList> = [ ADD ]\n{ LabelEntry }*n ;\nLabelEntry ::=\n[<number> "String" | OVERCODE [ SUM ] [<name>] { <number> [ :<number>\n] }*n "String" ] [ LabelOption ]\nLabelOption ::=',
     },
+  },
+  {
+    name: 'VALUELABELS AS',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'VALUELABELS COPY',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
   },
   {
     name: 'VARFAMILY',
@@ -6096,6 +8822,11 @@ export const keywordData: KeywordEntry[] = [
     },
   },
   {
+    name: 'VARIABLE',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
     name: 'VARIABLES',
     de: {
       description: '',
@@ -6111,24 +8842,25 @@ export const keywordData: KeywordEntry[] = [
   },
   {
     name: 'VARIANCE',
-    de: {
-      description: '',
-      syntax: 'VARIANCE <varname> = <varlist>;',
-    },
+    de: { description: '', syntax: 'VARIANCE <varname> = <varlist>;' },
+  },
+  {
+    name: 'VARIATION',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
   },
   {
     name: 'VARKEY',
-    de: {
-      description: '',
-      syntax: 'VARKEY <varname> = <key>;',
-    },
+    de: { description: '', syntax: 'VARKEY <varname> = <key>;' },
+  },
+  {
+    name: 'VARLABELS',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
   },
   {
     name: 'VARLIST',
-    de: {
-      description: '',
-      syntax: 'VARLIST = <dateipfad> QST;',
-    },
+    de: { description: '', syntax: 'VARLIST = <dateipfad> QST;' },
   },
   {
     name: 'VARNAME',
@@ -6138,16 +8870,28 @@ export const keywordData: KeywordEntry[] = [
     },
   },
   {
+    name: 'VARNAMEXINHG',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'VARNAMEYINHG',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'VARSTOCASES',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
     name: 'VARTEXT',
     de: {
       description:
         'Variablentext 209, typischerweise der Frage- oder Erläuterungstext Wird üblicherweise mit einer CITE[...]-Anweisung im TOPTEXT 516 angefordert (siehe Anzeige von Variablentexten 523).',
       syntax: 'VARTEXT [<VarList>] = "text";\nTEXT [<VarList>] = "text";',
     },
-    en: {
-      description: '',
-      syntax: 'VARTEXT <VarList> = "text text ";',
-    },
+    en: { description: '', syntax: 'VARTEXT <VarList> = "text text ";' },
   },
   {
     name: 'VARTITLE',
@@ -6156,10 +8900,32 @@ export const keywordData: KeywordEntry[] = [
         'schreibt den VARTITLE vor den Labeltext Beispiel: TABSELECTBYCODE VARTITLE buland( 1 ) ; In diesem fall wird in der Selektionsbeschreibung vor dem Labeltext der VARTITLE ausgegeben.',
       syntax: 'VARTITLE [<VarList>] = "text";\nTITLE [<VarList>] = "text";',
     },
-    en: {
-      description: '',
-      syntax: 'VARTITLE <VarList> = "String";',
-    },
+    en: { description: '', syntax: 'VARTITLE <VarList> = "String";' },
+  },
+  {
+    name: 'VARTITLE X',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'VARTITLE Y',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'VCENTER',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'VERBOSELOG',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'VERTICAL',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
   },
   {
     name: 'VERTICALALIGN',
@@ -6168,6 +8934,36 @@ export const keywordData: KeywordEntry[] = [
       syntax:
         'VERTICALALIGN <boxtype> : [TOP|VCENTER|BOTTOM]\nHORIZONTALALIGN <boxtype> : [LEFT|HCENTER|RIGHT]',
     },
+  },
+  {
+    name: 'VIA',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'VIRGINSTART',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'VOTECOUNTS',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'VOTES',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'VT420TENOVIS',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'WEEKOFYEAR',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
   },
   {
     name: 'WEIGHT',
@@ -6182,10 +8978,7 @@ export const keywordData: KeywordEntry[] = [
   },
   {
     name: 'WEIGHTACCURACY',
-    de: {
-      description: '',
-      syntax: 'WEIGHTACCURACY = <number>;',
-    },
+    de: { description: '', syntax: 'WEIGHTACCURACY = <number>;' },
     en: {
       description:
         'Defines the accuracy bound up to which iteration should occur. WEIGHTACCURACY is the natural logarithm of the maximum deviance of a weighting cell from the prerequisite as factor. Preset: WEIGHTACCURACY = 0.0001;',
@@ -6206,11 +8999,13 @@ export const keywordData: KeywordEntry[] = [
     },
   },
   {
+    name: 'WEIGHTEND',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
     name: 'WEIGHTOUT',
-    de: {
-      description: '',
-      syntax: 'WEIGHTOUT = <startcolumn> <width>;',
-    },
+    de: { description: '', syntax: 'WEIGHTOUT = <startcolumn> <width>;' },
     en: {
       description:
         'defines where a newly calculated weight is to be stored in the outfile. Syntax as above. Example: WEIGHTOUT = 68 6;',
@@ -6218,10 +9013,7 @@ export const keywordData: KeywordEntry[] = [
   },
   {
     name: 'WEIGHTSUM',
-    de: {
-      description: '',
-      syntax: 'WEIGHTSUM = <number>;',
-    },
+    de: { description: '', syntax: 'WEIGHTSUM = <number>;' },
     en: {
       description:
         'States the desired sum of the weights to be calculated. Normally weighting occurs to the number of the cases physically read.',
@@ -6236,10 +9028,17 @@ export const keywordData: KeywordEntry[] = [
   },
   {
     name: 'WHILEBLOCK',
-    de: {
-      description: '',
-      syntax: 'WHILEBLOCK <bedingung> DO',
-    },
+    de: { description: '', syntax: 'WHILEBLOCK <bedingung> DO' },
+  },
+  {
+    name: 'WHILEBLOCK DO',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'WHITELIST',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
   },
   {
     name: 'WHITENUMBERS',
@@ -6250,30 +9049,34 @@ export const keywordData: KeywordEntry[] = [
   },
   {
     name: 'WIDTH',
-    de: {
-      description: 'Die Breite der TITLEBOX',
-    },
+    de: { description: 'Die Breite der TITLEBOX' },
+  },
+  {
+    name: 'WITH',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
   },
   {
     name: 'WORDSPLITS',
-    de: {
-      description: '',
-      syntax: 'WORDSPLITS= [ <filename> | "" ];',
-    },
+    de: { description: '', syntax: 'WORDSPLITS= [ <filename> | "" ];' },
   },
   {
     name: 'WRAPTEXT',
-    de: {
-      description: '',
-      syntax: 'WRAPTEXT <boxtype> : [YES|NO]',
-    },
+    de: { description: '', syntax: 'WRAPTEXT <boxtype> : [YES|NO]' },
   },
   {
     name: 'WRITESIGNALFILE',
-    de: {
-      description: '',
-      syntax: 'WRITESIGNALFILE = [ YES | NO ];',
-    },
+    de: { description: '', syntax: 'WRITESIGNALFILE = [ YES | NO ];' },
+  },
+  {
+    name: 'X',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'XANDYVALID',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
   },
   {
     name: 'XCOLCHIQU',
@@ -6291,11 +9094,18 @@ export const keywordData: KeywordEntry[] = [
     },
   },
   {
+    name: 'XCOMPARE',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'XGC',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
     name: 'XLABELSIGNCHARBOX',
-    de: {
-      description: '',
-      syntax: 'XLABELSIGNCHARBOX LABELS X : [YES|NO]',
-    },
+    de: { description: '', syntax: 'XLABELSIGNCHARBOX LABELS X : [YES|NO]' },
   },
   {
     name: 'XMCNEMAR',
@@ -6303,6 +9113,26 @@ export const keywordData: KeywordEntry[] = [
       description:
         'Abhängiger Test auf Prozentwertunterschied (gewichtet und ungewichtet) nach McNemar 449',
     },
+  },
+  {
+    name: 'XMEANCOLDEPT',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'XMEANTEST',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'XMEANWELCH',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'XORYVALID',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
   },
   {
     name: 'XOVERVIEW',
@@ -6313,11 +9143,21 @@ export const keywordData: KeywordEntry[] = [
     },
   },
   {
+    name: 'XOVERVIEW ADD',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
     name: 'XROWCHIQU',
     de: {
       description:
         'Zeilenweise 4-Felder Chiquadrat-Test auf Prozentwertunterschiede (gewichtet und ungewichtet)',
     },
+  },
+  {
+    name: 'XROWMEANTEST',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
   },
   {
     name: 'XROWTTEST',
@@ -6342,11 +9182,26 @@ export const keywordData: KeywordEntry[] = [
     },
   },
   {
+    name: 'XVALID',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
     name: 'XWELCHTEST',
     de: {
       description:
         'Unabhängiger t-Test auf Mittelwerteunterschiede (gewichtet und ungewichtet) nach Welch 450 * zu ColPercT: ColPercTMinimum Bei der Signifikanzberechnung nach COLPERCT 428 wird die Spaltenüberlappung (kann bei Mehrfachnennungsvariablen passieren) berücksichtig.…',
     },
+  },
+  {
+    name: 'XYPLOT',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'Y',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
   },
   {
     name: 'YDATABOXES',
@@ -6356,24 +9211,41 @@ export const keywordData: KeywordEntry[] = [
     },
   },
   {
+    name: 'YDATABOXES X',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'YES',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'YSIGNIFINFRONT',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: 'YVALID',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
     name: 'ZEROBASED',
-    de: {
-      description: 'Die Skala soll immer den Nullpunkt enthalten',
-    },
+    de: { description: 'Die Skala soll immer den Nullpunkt enthalten' },
   },
   {
     name: 'ZERODASHCHAR',
-    de: {
-      description: '',
-      syntax: 'ZERODASHCHAR = "<char>";',
-    },
+    de: { description: '', syntax: 'ZERODASHCHAR = "<char>";' },
+  },
+  {
+    name: 'ZEROMISSING',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
   },
   {
     name: 'ZIPINVERTOUT',
-    de: {
-      description: '',
-      syntax: 'ZIPINVERTOUT = [ YES | NO ];',
-    },
+    de: { description: '', syntax: 'ZIPINVERTOUT = [ YES | NO ];' },
   },
   {
     name: 'ZONEINPUT',
@@ -6395,5 +9267,10 @@ export const keywordData: KeywordEntry[] = [
       description:
         'Ausgabe des zentralen Bereichs einer Variablen, Mittelwert +/- Streuung * ZVALUE. Mit ZVALUE kann man diesen Faktor frei wählen, z.B. ZVALUE = 1.0; Voreinstellung: ZVALUE = 0.967; (2/3-Range um Mittelwert) * und **: Beide CELLELEMENTS reagieren auf den Schalter BINOMIALPERCENTRANGE: Exkurs: BiNomialPercentRange',
     },
+  },
+  {
+    name: 'ZVALUE',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
   },
 ];
