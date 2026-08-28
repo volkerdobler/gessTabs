@@ -30,7 +30,13 @@ import { FileReader } from './includeGraph';
 async function buildMacroContext(document: vscode.TextDocument) {
   const fileNames = await findWorkspaceFiles(document);
   const reader = makeWorkspaceReader(document);
-  const index = buildWorkspaceIndex(fileNames, reader);
+  // `conditionalsAllActive`: a #MACRO / #EXPAND may be defined inside an
+  // #ifdef/#ifndef branch the current build doesn't compile — the hover,
+  // signature help and go-to-definition are still wanted there. #ifdef
+  // gating only decides what *runs*, not what a definition *is*.
+  const index = buildWorkspaceIndex(fileNames, reader, {
+    conditionalsAllActive: true,
+  });
   const defs = findMacroDefinitions(index.order);
   return {
     index,
@@ -76,13 +82,14 @@ function callAtPosition(lineText: string, character: number) {
 }
 
 // A call resolved to no known macro is the confusing case in practice —
-// the macro name looks right, but it silently isn't in the resolved
-// index. Distinguish the two very different ways that happens: (a) the
-// definition's own file/branch never made it into the resolved workspace
-// order at all (an INCLUDE-graph/`#ifdef` reachability problem), vs (b)
-// the file IS present but the definition line itself wasn't recognized as
-// one — most likely an earlier, unclosed #MACRO/#IFDEF block in the same
-// file swallowing everything after it as "still inside" that block.
+// the macro name looks right, but it silently isn't in the index. The
+// macro index is built with conditionalsAllActive, so an inactive
+// #ifdef/#ifndef branch is NOT a cause here; what's left is: (a) the
+// definition's file is never actually INCLUDE'd from any root, (b) the
+// definition sits inside a `{ ... }` block comment, (c) an earlier
+// unclosed #MACRO in the same file swallowed it, or (d) the `#macro
+// #name( ... )` line itself doesn't parse (multi-line parameter list, or
+// a `)` inside the parameters).
 function diagnoseMissingMacro(
   document: vscode.TextDocument,
   macroName: string,
@@ -108,7 +115,7 @@ function diagnoseMissingMacro(
     `  Root files: ${index.rootFiles.join(', ') || '(none)'}`,
     `  Lines from this document present in the resolved index: ${linesFromCurrentFile} of ${document.lineCount} total.`,
     `  Raw document text contains a "#macro #${macroName}(" line: ${rawTextHasDef}.`,
-    `  That line also appears in the *resolved* (INCLUDE/#ifdef-filtered) index: ${resolvedHasDef}.`,
+    `  That line also appears in the resolved index (INCLUDE- and comment-filtered; #ifdef branches are kept): ${resolvedHasDef}.`,
   ];
 
   if (!rawTextHasDef) {
@@ -118,9 +125,9 @@ function diagnoseMissingMacro(
   } else if (!resolvedHasDef) {
     // Pin down the filtered-out span: the raw def line, and the nearest
     // resolved lines of this file on either side of it. A gap that starts
-    // several lines before the definition means a `{ ... }` comment or an
-    // inactive #ifdef/#ifndef branch is covering it; a gap that starts
-    // *at* the definition points at the definition's own first line.
+    // several lines before the definition means a `{ ... }` block comment
+    // is covering it; a gap that starts *at* the definition points at the
+    // definition's own first line.
     const rawLines = document.getText().split(/\r?\n/);
     const rawDefLine = rawLines.findIndex((l) => defPattern.test(l));
     const sameFile = index.order
@@ -139,13 +146,13 @@ function diagnoseMissingMacro(
       lines.push(
         `  -> Lines ${before.line + 2}-${
           after.line
-        } of this file are all filtered out — a block comment ({ ... }) or an inactive #ifdef/#ifndef branch covers the definition. Check what opens just before line ${
+        } of this file are all filtered out — a "{ ... }" block comment covers the definition. Check for an unclosed (or extra) "{" just before line ${
           before.line + 2
         }.`
       );
     } else {
       lines.push(
-        '  -> Only the definition itself is filtered — an unclosed #MACRO/#IFDEF/#IFNDEF block just above it (or the #ifdef it sits in) is inactive; the surrounding lines still resolve.'
+        '  -> Only the definition itself is filtered — a "{" block comment on/just above the line, or an earlier unclosed #MACRO in this file has swallowed it.'
       );
     }
   } else {
@@ -335,6 +342,9 @@ export class GesstabsMacroSignatureHelpProvider
 // CodeLens on each #MACRO declaration showing how many call sites it has
 // across the resolved workspace (built on F0's include graph, so counts
 // reflect files actually INCLUDE'd, not just any .tab/.inc on disk).
+// Includes call sites in currently-inactive #ifdef/#ifndef branches —
+// buildMacroContext resolves with conditionalsAllActive (a macro used
+// only in a branch this build skips is still a usage worth showing).
 export class GesstabsMacroCodeLensProvider implements vscode.CodeLensProvider {
   public async provideCodeLenses(
     document: vscode.TextDocument,

@@ -5,9 +5,16 @@
 // every file found on disk as independently valid: a file that exists but
 // is never actually INCLUDE'd from any real entry point no longer
 // contributes definitions/references, and inactive #ifdef/#ifndef
-// branches are already excluded by resolveIncludeGraph.
+// branches are excluded by resolveIncludeGraph — unless
+// `conditionalsAllActive` is passed (macro / #EXPAND discovery wants a
+// definition found even in a branch the current build skips).
 
-import { resolveIncludeGraph, FileReader, ResolvedLine } from './includeGraph';
+import {
+  resolveIncludeGraph,
+  FileReader,
+  ResolvedLine,
+  IncludeGraphOptions,
+} from './includeGraph';
 import { Scope } from './scope';
 import { lineMatchesDefinition, lineMatchesUsage } from './matching';
 
@@ -22,13 +29,14 @@ export interface WorkspaceIndex {
 
 export function buildWorkspaceIndex(
   files: string[],
-  readFile: FileReader
+  readFile: FileReader,
+  options: Pick<IncludeGraphOptions, 'conditionalsAllActive'> = {}
 ): WorkspaceIndex {
   const graphs = new Map<string, ReturnType<typeof resolveIncludeGraph>>();
   const everIncluded = new Set<string>();
 
   files.forEach((file) => {
-    const graph = resolveIncludeGraph(file, readFile);
+    const graph = resolveIncludeGraph(file, readFile, options);
     graphs.set(file, graph);
     graph.files.forEach((f) => {
       if (f !== file) everIncluded.add(f);

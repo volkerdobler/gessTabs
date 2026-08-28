@@ -10,6 +10,10 @@
 // values) and #IFEXIST/#IFNEXIST (depends on variable-definition tracking,
 // itself a consumer of this module) — those branches are conservatively
 // treated as always active (both sides kept) rather than guessed at.
+//
+// The `conditionalsAllActive` option turns #IFDEF/#IFNDEF gating off too,
+// for consumers (macro / #EXPAND discovery) that want a definition found
+// regardless of which branch the current build compiles.
 
 import * as path from 'path';
 import { Scope } from './scope';
@@ -58,6 +62,15 @@ export interface IncludeGraphOptions {
   // macro-nesting depth of 20; reused here as a sane default in the
   // absence of a documented INCLUDE-specific limit.
   maxDepth?: number;
+  // Keep *every* branch of *every* conditional. #IFDEF/#IFNDEF stop
+  // gating (an inactive branch is no longer dropped), #ELSE stops
+  // flipping, and all INCLUDEs are followed regardless of the #ifdef
+  // state around them. Used for macro / #EXPAND discovery: a hover /
+  // go-to-definition has to work even for a definition that lives in a
+  // branch the current build doesn't compile. Comment/string filtering
+  // and INCLUDE-cycle/-depth protection still apply. (#IFEMPTY-family
+  // branches were already kept regardless.)
+  conditionalsAllActive?: boolean;
 }
 
 const includeRe = /^\s*include\s*=\s*"?([^";]+?)"?\s*;/i;
@@ -150,6 +163,7 @@ export function resolveIncludeGraph(
   options: IncludeGraphOptions = {}
 ): IncludeGraphResult {
   const maxDepth = options.maxDepth ?? 20;
+  const allActive = options.conditionalsAllActive ?? false;
   const defines = new DefineSet();
   if (options.externalDefines) {
     Array.from(options.externalDefines).forEach((name) => defines.define(name));
@@ -194,7 +208,7 @@ export function resolveIncludeGraph(
       if (text.length === 0) continue;
       if (!scope.isNotInComment(i, text.search(/\S/))) continue;
 
-      const active = evaluateActive(stack);
+      const active = allActive || evaluateActive(stack);
 
       const ignoreCaseMatch = text.match(ignoreCaseRe);
       if (ignoreCaseMatch) {
@@ -226,7 +240,7 @@ export function resolveIncludeGraph(
         scope.isNormalScope(i, col)
       ).filter((d) => d.kind !== 'macro-start' && d.kind !== 'macro-end');
       if (conds.length > 0) {
-        let frameActive = evaluateActive(stack);
+        let frameActive = allActive || evaluateActive(stack);
         conds.forEach((d, di) => {
           if (d.kind === 'conditional-end') {
             stack.pop();
@@ -241,7 +255,10 @@ export function resolveIncludeGraph(
             const argText = text.slice(d.index + d.text.length, argEnd);
             const tok = d.text.toLowerCase();
             let conditionTrue: boolean;
-            if (tok === '#ifdef') {
+            if (allActive) {
+              // #IFDEF/#IFNDEF stop gating entirely (see options doc).
+              conditionTrue = true;
+            } else if (tok === '#ifdef') {
               conditionTrue = parseNameList(argText).some((n) =>
                 defines.isDefined(n)
               );
@@ -261,7 +278,7 @@ export function resolveIncludeGraph(
               parentActive: frameActive,
             });
           }
-          frameActive = evaluateActive(stack);
+          frameActive = allActive || evaluateActive(stack);
         });
         continue;
       }

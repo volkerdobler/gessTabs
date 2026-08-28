@@ -367,4 +367,87 @@ describe('resolveIncludeGraph', () => {
       'variable a = 1;',
     ]);
   });
+
+  describe('conditionalsAllActive', () => {
+    it('keeps both branches of #ifdef/#ifndef/#else and follows all INCLUDEs', () => {
+      const reader = makeReader({
+        [p('main.tab')]: [
+          '#ifdef WIN',
+          'INCLUDE = win.inc;',
+          '#else',
+          'INCLUDE = unix.inc;',
+          '#end',
+          '#ifndef DEBUG',
+          'x = 1;',
+          '#else',
+          'x = 2;',
+          '#end',
+        ].join('\n'),
+        [p('win.inc')]: 'w = 1;',
+        [p('unix.inc')]: 'u = 1;',
+      });
+      // Normal: WIN undefined -> unix branch; DEBUG undefined -> x = 1.
+      expect(texts(resolveIncludeGraph(p('main.tab'), reader))).to.deep.equal([
+        'u = 1;',
+        'x = 1;',
+      ]);
+      // All-active: every branch kept, both INCLUDEs followed.
+      expect(
+        texts(
+          resolveIncludeGraph(p('main.tab'), reader, {
+            conditionalsAllActive: true,
+          })
+        )
+      ).to.deep.equal(['w = 1;', 'u = 1;', 'x = 1;', 'x = 2;']);
+    });
+
+    it('surfaces a #MACRO / #EXPAND defined only in an inactive #ifdef branch', () => {
+      const reader = makeReader({
+        [p('main.tab')]: [
+          '#ifdef PowerChart',
+          '#macro #fillSlide39 ( &a &b )',
+          'table = x by &a;',
+          '#endmacro',
+          '#expand #pcKey pc-42',
+          '#end',
+          '#fillSlide39( 1 2 )',
+        ].join('\n'),
+      });
+      const normal = resolveIncludeGraph(p('main.tab'), reader);
+      expect(
+        normal.order.some((l) => /#macro\s+#fillSlide39\b/i.test(l.text))
+      ).to.equal(false);
+
+      const all = resolveIncludeGraph(p('main.tab'), reader, {
+        conditionalsAllActive: true,
+      });
+      const macros = findMacroDefinitions(
+        all.order.map((l) => ({ file: l.file, line: l.line, text: l.text }))
+      );
+      expect(macros.map((m) => m.name)).to.include('fillSlide39');
+      expect(
+        all.order.some((l) => /#expand\s+#pcKey\b/i.test(l.text))
+      ).to.equal(true);
+    });
+
+    it('still filters { ... } block comments and unclosed macros', () => {
+      const reader = makeReader({
+        [p('main.tab')]: [
+          '{',
+          '#macro #hidden ( &a )',
+          'x;',
+          '#endmacro',
+          '}',
+          'y;',
+        ].join('\n'),
+      });
+      const all = resolveIncludeGraph(p('main.tab'), reader, {
+        conditionalsAllActive: true,
+      });
+      expect(
+        all.order.some((l) => /#macro\s+#hidden\b/i.test(l.text))
+      ).to.equal(false);
+      expect(texts(all)).to.deep.equal(['y;']);
+    });
+  });
 });
