@@ -205,41 +205,16 @@ export const keywordData: KeywordEntry[] = [
   },
   {
     name: '#MACROEND',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
-  },
-  {
-    name: '#STARTEXPORT',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
-  },
-  {
-    name: '#STDCOLORS',
-    de: {
-      description:
-        'GESSCHART INVERSE CELLELEMENT PHYSCOLDELTA CHARTTITLE "Effekte von Gewichtung auf Parteianteile"',
-    },
-    en: {
-      description:
-        'GESSCHART INVERSE CELLELEMENT PHYSCOLDELTA CHARTTITLE "Effects of weighting on party shares"',
-      syntax: '',
-    },
-  },
-  {
-    name: '#TEST',
-    argsHint: '( f2a f2b f2c )',
-    de: {
-      description:
-        "usw. Im ersten Aufruf wird dann 'f1a' anstelle des ersten im Makro definierten Parameters (&p1), 'f1b' anstelle des zweiten Parameter (&p2) und 'f1c' anstelle des dritten Parameters (&p3) eingesetzt. Macros können bis zu 50 Parameter haben. Die Länge der formalen Parameternamen ist auf 10 Zeichen beschränkt. Die Namen von Parametern müssen mit dem &-Zeichen beginnen.…",
-    },
-    en: {
-      description:
-        'etc. Macros can have up to 50 parameters. The length of the formal parameter names is restricted to 10 symbols. The names of parameter must begin with an ampersand (&). The key word #ENDMACRO means the same as #MACROEND. The replacements made by a macro are purely text; the order of symbols that conform to the formal parameter names are replaced within the strings or as part of the token.…',
-    },
+    de: { description: 'Beendet eine Macro-Definition', syntax: '#MACROEND' },
+    en: { description: 'Closed a macro definition', syntax: '#MACROEND' },
   },
   {
     name: '#UNDEFINE',
-    de: { description: '', syntax: '#UNDEFINE <string>' },
+    de: {
+      description:
+        'Gesetzte #DEFINE Steuerelemente können damit wieder zurückgenommen werden.',
+      syntax: '#UNDEFINE <string>',
+    },
     en: { description: '', syntax: '#UNDEFINE <string>' },
   },
   {
