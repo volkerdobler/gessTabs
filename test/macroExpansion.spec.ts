@@ -173,9 +173,8 @@ describe('expandMacro', () => {
         ].join('\n')
       )
     );
-    const index = buildMacroIndex(defs);
     const call = findMacroCalls('#scorecard ( "Total" "" "(1 eq 1)")')[0];
-    const expanded = expandMacro(defs[0], call.args, index);
+    const expanded = expandMacro(defs[0], call.args);
     // "" (an intentional empty &subtitle) contributes nothing, leaving
     // the template's own separating spaces around it — that's correct,
     // matching plain positional token substitution.
@@ -186,8 +185,7 @@ describe('expandMacro', () => {
     const defs = findMacroDefinitions(
       src('#macro #example( &parameter )\ncompute  &parameter = 1;\n#endmacro')
     );
-    const index = buildMacroIndex(defs);
-    const expanded = expandMacro(defs[0], ['frage1'], index);
+    const expanded = expandMacro(defs[0], ['frage1']);
     expect(expanded).to.deep.equal(['compute  frage1 = 1;']);
   });
 
@@ -201,12 +199,11 @@ describe('expandMacro', () => {
         ].join('\n')
       )
     );
-    const index = buildMacroIndex(defs);
-    const expanded = expandMacro(defs[0], ['F1'], index);
+    const expanded = expandMacro(defs[0], ['F1']);
     expect(expanded).to.deep.equal(['compute    F1_OC  = F1;']);
   });
 
-  it('recursively expands a nested call to another known macro', () => {
+  it('leaves a nested call in place (args substituted, body not inlined)', () => {
     const defs = findMacroDefinitions(
       src(
         [
@@ -219,27 +216,22 @@ describe('expandMacro', () => {
         ].join('\n')
       )
     );
-    const index = buildMacroIndex(defs);
     const outer = defs.find((d) => d.name === 'outer')!;
-    const expanded = expandMacro(outer, ['F1'], index);
-    expect(expanded).to.deep.equal(['table = #k1 by F1;']);
+    expect(expandMacro(outer, ['F1'])).to.deep.equal(['#typ_a( F1 )']);
   });
 
-  it('does not expand a call to an unknown macro (leaves it as-is)', () => {
+  it('leaves a call to an unknown macro as-is too', () => {
     const defs = findMacroDefinitions(
       src('#macro #a( &x )\n#unknownmacro( &x )\n#endmacro')
     );
-    const index = buildMacroIndex(defs);
-    const expanded = expandMacro(defs[0], ['1'], index);
-    expect(expanded).to.deep.equal(['#unknownmacro( 1 )']);
+    expect(expandMacro(defs[0], ['1'])).to.deep.equal(['#unknownmacro( 1 )']);
   });
 
-  it('does not infinite-loop on a self-recursive macro (depth-capped)', () => {
+  it('leaves a self-referential call as a literal call (no recursion to loop)', () => {
     const defs = findMacroDefinitions(
       src('#macro #loop( &x )\n#loop( &x )\n#endmacro')
     );
-    const index = buildMacroIndex(defs);
-    expect(() => expandMacro(defs[0], ['1'], index, 5)).to.not.throw();
+    expect(expandMacro(defs[0], ['1'])).to.deep.equal(['#loop( 1 )']);
   });
 
   it('matches macro names case-insensitively', () => {
@@ -253,14 +245,8 @@ describe('expandMacro', () => {
 
 describe('expandLines', () => {
   it('preserves blank lines and comment-only lines verbatim, substituting params in both', () => {
-    const index = buildMacroIndex([]);
-    const rawBody = [
-      '',
-      '// uses &varname below',
-      'compute &varname = 1;',
-      '',
-    ];
-    const expanded = expandLines(rawBody, ['varname'], ['F1'], index);
+    const rawBody = ['', '// uses &varname below', 'compute &varname = 1;', ''];
+    const expanded = expandLines(rawBody, ['varname'], ['F1']);
     expect(expanded).to.deep.equal([
       '',
       '// uses F1 below',
@@ -269,18 +255,21 @@ describe('expandLines', () => {
     ]);
   });
 
+  it('leaves a nested #other(...) call in the body, substituting its args', () => {
+    const rawBody = ['#barchart( 10 01 &sp1 &zeilen )', '// uses &sp1'];
+    expect(
+      expandLines(rawBody, ['sp1', 'zeilen'], ['s3', '1:16'])
+    ).to.deep.equal(['#barchart( 10 01 s3 1:16 )', '// uses s3']);
+  });
+
   it('is what expandMacro uses under the hood for a filtered body', () => {
     const defs = findMacroDefinitions(
       src('#macro #example( &parameter )\ncompute  &parameter = 1;\n#endmacro')
     );
-    const index = buildMacroIndex(defs);
-    const viaExpandMacro = expandMacro(defs[0], ['frage1'], index);
-    const viaExpandLines = expandLines(
-      defs[0].body,
-      defs[0].params,
-      ['frage1'],
-      index
-    );
+    const viaExpandMacro = expandMacro(defs[0], ['frage1']);
+    const viaExpandLines = expandLines(defs[0].body, defs[0].params, [
+      'frage1',
+    ]);
     expect(viaExpandLines).to.deep.equal(viaExpandMacro);
   });
 });

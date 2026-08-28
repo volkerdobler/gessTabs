@@ -239,73 +239,31 @@ function substituteParams(
   );
 }
 
-// Same substitution + nested-call-expansion engine used by expandMacro
-// below, but operating on an arbitrary line array rather than a
-// MacroDefinition's own (already filtered) `body` — lets a caller feed in
-// e.g. the raw, unfiltered source lines for a macro's line range (blank
-// lines and comments included) for a "full" expansion preview, while still
-// sharing the exact same substitution/recursion logic as the normal
-// "compiled body" expansion.
+// Substitutes a call's positional `args` into each body line's `&param`
+// tokens — nothing more. A nested `#other(...)` call inside the body is
+// left exactly as written (its own `&param` args do get substituted,
+// since that's the same per-line token replacement); it is NOT replaced
+// with `#other`'s body. The hover this feeds shows one macro's body, not
+// a fully-flattened compile — to see what a nested macro does, hover it.
+// (The gessTabs compiler does flatten macros-in-macros; a preview
+// doesn't need to, and flattening a nested call that resolves to an
+// empty, e.g. #ifdef-gated, body just makes it silently vanish.)
+//
+// `body` is any line array: a MacroDefinition's already-filtered `body`,
+// or a raw, unfiltered source slice (blank lines + comments kept) for the
+// "normal" preview style.
 export function expandLines(
   body: string[],
   params: string[],
-  args: string[],
-  allMacros: Map<string, MacroDefinition>,
-  maxDepth = 20
+  args: string[]
 ): string[] {
-  // eslint-disable-next-line no-use-before-define -- mutual recursion with expandNestedCalls
-  return expandLinesAtDepth(body, params, args, allMacros, 0, maxDepth);
+  return body.map((line) => substituteParams(line, params, args));
 }
 
-function expandLinesAtDepth(
-  body: string[],
-  params: string[],
-  args: string[],
-  allMacros: Map<string, MacroDefinition>,
-  depth: number,
-  maxDepth: number
-): string[] {
-  const substituted = body.map((line) => substituteParams(line, params, args));
-  if (depth >= maxDepth) return substituted;
-
-  return substituted.map((line) =>
-    // eslint-disable-next-line no-use-before-define -- mutual recursion with expandLinesAtDepth
-    expandNestedCalls(line, allMacros, depth, maxDepth)
-  );
-}
-
-function expandNestedCalls(
-  line: string,
-  allMacros: Map<string, MacroDefinition>,
-  depth: number,
-  maxDepth: number
-): string {
-  const calls = findMacroCalls(line);
-  return calls.reduce((result, call) => {
-    const target = allMacros.get(call.name.toLowerCase());
-    if (!target) return result;
-    const expandedLines = expandLinesAtDepth(
-      target.body,
-      target.params,
-      call.args,
-      allMacros,
-      depth + 1,
-      maxDepth
-    );
-    return result.split(call.raw).join(expandedLines.join(' '));
-  }, line);
-}
-
-// Expands `macro` called with `args` into its substituted body lines,
-// recursively expanding any nested calls to other *known* macros within
-// that body (matching real compiler behavior — macros can call macros).
-export function expandMacro(
-  macro: MacroDefinition,
-  args: string[],
-  allMacros: Map<string, MacroDefinition>,
-  maxDepth = 20
-): string[] {
-  return expandLines(macro.body, macro.params, args, allMacros, maxDepth);
+// Fills `macro`'s parameters with `args` in its (already-filtered) body
+// lines. See expandLines for what is and isn't done.
+export function expandMacro(macro: MacroDefinition, args: string[]): string[] {
+  return expandLines(macro.body, macro.params, args);
 }
 
 // Resolves a "&paramname" reference at a given character offset back to

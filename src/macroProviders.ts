@@ -134,9 +134,12 @@ function hoverSettingEnabled(kind: 'macros' | 'expands'): boolean {
   return config.get<boolean>(`hover.${kind}`, true) !== false;
 }
 
-// "Show expanded macro": hovering a #name(...) call site shows the
-// textually-substituted body, matching what the compiler's own
-// MACROPROTOCOL debug feature would dump.
+// "Show expanded macro": hovering a #name(...) call site shows this one
+// macro's body with the call's arguments substituted into its &params.
+// Nested #other(...) calls in the body are left as literal calls (hover
+// those to see them) — unlike the compiler's MACROPROTOCOL, which fully
+// flattens; a preview doesn't need to, and flattening a nested call whose
+// body is empty (e.g. #ifdef-gated off) would just make it vanish.
 export class GesstabsMacroHoverProvider implements vscode.HoverProvider {
   public async provideHover(
     document: vscode.TextDocument,
@@ -219,10 +222,9 @@ export class GesstabsMacroHoverProvider implements vscode.HoverProvider {
         ? expandLines(
             macroPreviewBody(target, reader),
             target.params,
-            call.args,
-            macroIndex
+            call.args
           )
-        : expandMacro(target, call.args, macroIndex);
+        : expandMacro(target, call.args);
       const range = new vscode.Range(
         new vscode.Position(position.line, call.index),
         new vscode.Position(position.line, call.index + call.raw.length)
