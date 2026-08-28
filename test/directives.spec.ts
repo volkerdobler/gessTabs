@@ -59,4 +59,18 @@ describe('scanBlockDirectives', () => {
       'conditional-end',
     ]);
   });
+
+  it('drops a directive token that isCodeAt rejects (e.g. a trailing comment)', () => {
+    const line = '#end // #ifdef PowerChart';
+    const commentAt = line.indexOf('//');
+    const ds = scanBlockDirectives(line, (col) => col < commentAt);
+    expect(ds.map((d) => d.kind)).to.deep.equal(['conditional-end']);
+  });
+
+  it('keeps every directive when isCodeAt is not given', () => {
+    expect(kinds('#end // #ifdef PowerChart')).to.deep.equal([
+      'conditional-end',
+      'conditional-start',
+    ]);
+  });
 });

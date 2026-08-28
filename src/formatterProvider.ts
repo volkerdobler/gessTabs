@@ -19,12 +19,9 @@ export class GesstabsFormattingProvider
         lines.push(document.lineAt(i).text);
       }
 
-      const isCodeLine = (i: number): boolean => {
-        const firstNonWs = lines[i].search(/\S/);
-        return firstNonWs === -1 || scope.isNotInComment(i, firstNonWs);
-      };
-
-      const formatted = formatLines(lines, isCodeLine);
+      const formatted = formatLines(lines, (line, char) =>
+        scope.isNotInComment(line, char)
+      );
       if (
         formatted.length === lines.length &&
         formatted.every((l, i) => l === lines[i])

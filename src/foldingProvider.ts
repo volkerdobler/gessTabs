@@ -19,14 +19,9 @@ export class GesstabsFoldingRangeProvider
         lines.push(document.lineAt(i).text);
       }
 
-      const isCodeLine = (i: number): boolean => {
-        const firstNonWs = lines[i].search(/\S/);
-        return firstNonWs === -1 || scope.isNotInComment(i, firstNonWs);
-      };
-
-      return findFoldRanges(lines, isCodeLine).map(
-        (r) => new vscode.FoldingRange(r.startLine, r.endLine)
-      );
+      return findFoldRanges(lines, (line, char) =>
+        scope.isNotInComment(line, char)
+      ).map((r) => new vscode.FoldingRange(r.startLine, r.endLine));
     } catch (e) {
       printDebugMessage(`gesstabs: folding failed: ${e}`);
       return [];

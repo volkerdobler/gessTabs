@@ -25,6 +25,17 @@ describe('findFoldRanges', () => {
     expect(findFoldRanges(lines)).to.be.empty;
   });
 
+  it('ignores a directive keyword inside a trailing // comment', () => {
+    const lines = ['#ifdef FOO', 'x;', '#end // #ifdef FOO', 'y;'];
+    const notInComment = (line: number, char: number) => {
+      const c = lines[line].indexOf('//');
+      return c === -1 || char < c;
+    };
+    expect(findFoldRanges(lines, notInComment)).to.deep.equal([
+      { startLine: 0, endLine: 2, kind: 'conditional' },
+    ]);
+  });
+
   it('folds an #IFDEF/#END block', () => {
     const lines = ['#ifdef FOO', 'variable x = 1;', '#end'];
     expect(findFoldRanges(lines)).to.deep.equal([

@@ -139,6 +139,21 @@ describe('checkUnmatchedBlocks', () => {
     expect(checkUnmatchedBlocks(lines, alwaysCode)).to.be.empty;
   });
 
+  it('ignores a directive keyword inside a trailing // comment', () => {
+    // `#end // #ifdef PowerChart` — the annotation must not re-open a block.
+    const lines = [
+      '#ifdef PowerChart',
+      'x;',
+      '#ifnempty "&rows" &rows #else 1:99 #end',
+      '#end // #ifdef PowerChart',
+    ];
+    const notInComment = (line: number, char: number) => {
+      const c = lines[line].indexOf('//');
+      return c === -1 || char < c;
+    };
+    expect(checkUnmatchedBlocks(lines, notInComment)).to.be.empty;
+  });
+
   it('ignores a directive-shaped line inside a comment (so it does not open a real block)', () => {
     const isCodeLine = (i: number) => i !== 0;
     const issues = checkUnmatchedBlocks(['{ #ifdef OLD }', '#end'], isCodeLine);

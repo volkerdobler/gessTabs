@@ -72,6 +72,20 @@ describe('formatLines', () => {
     ]);
   });
 
+  it('does not count a directive keyword inside a trailing // comment', () => {
+    const lines = ['#ifdef FOO', 'a;', '#end // #ifdef FOO', 'b;'];
+    const notInComment = (line: number, char: number) => {
+      const c = lines[line].indexOf('//');
+      return c === -1 || char < c;
+    };
+    expect(formatLines(lines, notInComment)).to.deep.equal([
+      '#ifdef FOO',
+      '  a;',
+      '#end // #ifdef FOO',
+      'b;',
+    ]);
+  });
+
   it('re-normalizes existing indentation rather than trusting it', () => {
     expect(
       formatLines([

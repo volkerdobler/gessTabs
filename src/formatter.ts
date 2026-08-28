@@ -20,14 +20,16 @@ export interface FormatOptions {
   indentUnit?: string;
 }
 
-// `isCodeLine(lineIndex)` lets a caller exclude a line whose directive-
-// looking text is actually inside a comment, same reasoning as
-// src/foldingRanges.ts. A comment/string line is trailing-whitespace
-// trimmed like any other line, but its own indentation is left untouched
-// rather than guessed at.
+// `isNotInComment(line, char)` lets a caller exclude directive-looking
+// text that's actually inside a comment/string, same reasoning as
+// src/foldingRanges.ts (a `#end // #ifdef X` annotation must not count as
+// two directives). A line that *starts* inside a comment/string is
+// trailing-whitespace trimmed like any other line, but its own
+// indentation is left untouched rather than guessed at. Defaults to "no
+// comments anywhere".
 export function formatLines(
   lines: string[],
-  isCodeLine: (lineIndex: number) => boolean = () => true,
+  isNotInComment: (line: number, char: number) => boolean = () => true,
   options: FormatOptions = {}
 ): string[] {
   const indentUnit = options.indentUnit ?? '  ';
@@ -45,21 +47,26 @@ export function formatLines(
     }
     sawBlank = false;
 
-    if (!isCodeLine(i)) {
+    const firstNonWs = trimmedEnd.search(/\S/);
+    if (!isNotInComment(i, firstNonWs === -1 ? 0 : firstNonWs)) {
       result.push(trimmedEnd);
       return;
     }
 
-    const content = trimmedEnd.replace(/^\s+/, '');
+    const indentLen = firstNonWs === -1 ? 0 : firstNonWs;
+    const content = trimmedEnd.slice(indentLen);
 
     // Walk the line's directives once: `delta` is its net effect on
     // nesting depth, `minRunning` the lowest point reached along the way
     // (an #END or #ELSE dedents before the line is printed). A plain line
     // has neither, so it prints at the current depth. A single-line
     // `#ifnempty … #else … #end` nets to 0 and prints where it stands.
+    // Columns are mapped back to the raw line for the comment check.
     let delta = 0;
     let minRunning = 0;
-    scanBlockDirectives(content).forEach((d) => {
+    scanBlockDirectives(content, (col) =>
+      isNotInComment(i, col + indentLen)
+    ).forEach((d) => {
       if (d.kind === 'macro-start' || d.kind === 'conditional-start') {
         delta += 1;
       } else if (d.kind === 'macro-end' || d.kind === 'conditional-end') {

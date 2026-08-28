@@ -10,7 +10,8 @@
 // Directive recognition is shared with src/diagnostics.ts / formatter.ts
 // via src/directives.ts (which also handles multiple directives on one
 // line — a single-line `#ifdef X … #end` simply produces no fold range,
-// since start and end are the same line).
+// since start and end are the same line — and drops a directive token
+// sitting in a comment or string).
 
 import { scanBlockDirectives } from './directives';
 
@@ -20,15 +21,14 @@ export interface FoldRange {
   kind: 'macro' | 'conditional';
 }
 
-// `isCodeLine(lineIndex)` lets a caller exclude a line whose directive-
-// looking text is actually inside a comment (e.g. an old, commented-out
-// "#MACRO"/"#ENDMACRO" fragment) — the exact real-world bug already fixed
-// once for findMacroDefinitions (see src/includeGraph.ts's blankComments)
-// and worth guarding against here too, since a stray commented directive
-// would otherwise throw off fold nesting for everything after it.
+// `isNotInComment(line, char)` lets a caller exclude directive-looking
+// text that's actually inside a comment (an old, commented-out
+// "#MACRO"/"#ENDMACRO" fragment; a `#end // #ifdef X` annotation) — a
+// stray one would otherwise throw off fold nesting for everything after
+// it. Defaults to "no comments anywhere".
 export function findFoldRanges(
   lines: string[],
-  isCodeLine: (lineIndex: number) => boolean = () => true
+  isNotInComment: (line: number, char: number) => boolean = () => true
 ): FoldRange[] {
   const ranges: FoldRange[] = [];
   const conditionalStack: number[] = [];
@@ -37,9 +37,7 @@ export function findFoldRanges(
   let macroStart: number | undefined;
 
   lines.forEach((text, i) => {
-    if (!isCodeLine(i)) return;
-
-    scanBlockDirectives(text).forEach((d) => {
+    scanBlockDirectives(text, (col) => isNotInComment(i, col)).forEach((d) => {
       if (d.kind === 'conditional-start') {
         conditionalStack.push(i);
       } else if (d.kind === 'conditional-end') {

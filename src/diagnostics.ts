@@ -113,12 +113,12 @@ export function findLastDeclaredVariableBefore(
 }
 
 // --- 2. Unmatched #MACRO/#ENDMACRO and #IFDEF-family/#END blocks ---------
-// Directive recognition (incl. the single-line `#ifnempty … #else … #end`
-// case) lives in src/directives.ts, shared with foldingRanges.ts /
-// formatter.ts.
+// Directive recognition (single-line `#ifnempty … #else … #end`, and
+// directives sitting in a trailing `// …` comment / string) lives in
+// src/directives.ts, shared with foldingRanges.ts / formatter.ts.
 export function checkUnmatchedBlocks(
   lines: string[],
-  isCodeLine: (line: number) => boolean
+  isNotInComment: IsNotInComment
 ): DiagnosticIssue[] {
   const issues: DiagnosticIssue[] = [];
   const conditionalStack: number[] = [];
@@ -142,9 +142,7 @@ export function checkUnmatchedBlocks(
   };
 
   lines.forEach((text, i) => {
-    if (!isCodeLine(i)) return;
-
-    scanBlockDirectives(text).forEach((d) => {
+    scanBlockDirectives(text, (col) => isNotInComment(i, col)).forEach((d) => {
       switch (d.kind) {
         case 'conditional-start':
           conditionalStack.push(i);
@@ -576,12 +574,9 @@ export function computeDiagnostics(
   lines: string[],
   isNotInComment: IsNotInComment
 ): DiagnosticIssue[] {
-  const isCodeLine = (line: number): boolean =>
-    isNotInComment(line, firstNonWs(lines[line]));
-
   return [
     ...checkEmptyVarlist(lines, isNotInComment),
-    ...checkUnmatchedBlocks(lines, isCodeLine),
+    ...checkUnmatchedBlocks(lines, isNotInComment),
     ...checkDuplicateDeclarations(lines, isNotInComment),
     ...checkRecodeBounds(lines, isNotInComment),
     ...checkCardOrdering(lines, isNotInComment),

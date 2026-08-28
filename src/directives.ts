@@ -16,6 +16,11 @@
 // name list out of the rest of an #ifdef line, so adopting this needs a
 // bigger rework there — tracked in TODO.md. #ELSE is reported here (the
 // formatter needs it) even though it neither opens nor closes a block.
+//
+// Comment/string awareness is per *character*, not per line: `#end // …`
+// annotations (and the odd directive keyword mentioned inside a comment
+// or string) are common, so a hit is kept only where `isCodeAt` says
+// that column is real code.
 
 export type BlockDirectiveKind =
   | 'macro-start'
@@ -68,16 +73,23 @@ function classify(token: string): BlockDirectiveKind {
   return 'conditional-start';
 }
 
-// Every block directive on `line`, in source order. Pure; callers decide
-// what to do about comments/strings (line-level callers already skip a
-// whole comment line; the diagnostic additionally re-checks each hit
-// against its character-level comment scope).
-export function scanBlockDirectives(line: string): BlockDirective[] {
+// Every block directive on `line`, in source order. `isCodeAt(col)` drops
+// a hit that isn't real code at that column — a directive token sitting
+// in a trailing `// …` comment (e.g. `#end // #ifdef PowerChart`, a very
+// common annotation) or a `{ … }` comment span, or inside a string. It
+// defaults to "everything is code"; the real callers pass a Scope-backed
+// check curried to this line.
+export function scanBlockDirectives(
+  line: string,
+  isCodeAt: (col: number) => boolean = () => true
+): BlockDirective[] {
   const out: BlockDirective[] = [];
   directiveRe.lastIndex = 0;
   let m = directiveRe.exec(line);
   while (m !== null) {
-    out.push({ kind: classify(m[0]), index: m.index, text: m[0] });
+    if (isCodeAt(m.index)) {
+      out.push({ kind: classify(m[0]), index: m.index, text: m[0] });
+    }
     // Guard against a zero-length match stalling the loop (can't happen
     // with these alternatives, but cheap insurance).
     if (m.index === directiveRe.lastIndex) directiveRe.lastIndex += 1;
