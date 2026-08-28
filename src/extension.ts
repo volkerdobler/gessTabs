@@ -338,7 +338,16 @@ class GesstabsDefintionProvider implements vscode.DefinitionProvider {
     }
     if (token && token.isCancellationRequested) return null;
 
-    const index = buildWorkspaceIndex(fileNames, makeWorkspaceReader(document));
+    // conditionalsAllActive: a definition/usage in an #ifdef/#ifndef
+    // branch this build doesn't compile is still a real definition/usage —
+    // go-to-definition, references and rename must see it (same reasoning
+    // as the macro hover). #ifdef gating decides what runs, not what a
+    // symbol is.
+    const index = buildWorkspaceIndex(
+      fileNames,
+      makeWorkspaceReader(document),
+      { conditionalsAllActive: true }
+    );
     const currentFile = normalizePath(document.uri.fsPath);
     const def = findDefinitionLine(index, currentFile, position.line, word);
     if (!def) return null;
@@ -407,7 +416,16 @@ class GesstabsReferenceProvider implements vscode.ReferenceProvider {
     }
     if (token && token.isCancellationRequested) return null;
 
-    const index = buildWorkspaceIndex(fileNames, makeWorkspaceReader(document));
+    // conditionalsAllActive: a definition/usage in an #ifdef/#ifndef
+    // branch this build doesn't compile is still a real definition/usage —
+    // go-to-definition, references and rename must see it (same reasoning
+    // as the macro hover). #ifdef gating decides what runs, not what a
+    // symbol is.
+    const index = buildWorkspaceIndex(
+      fileNames,
+      makeWorkspaceReader(document),
+      { conditionalsAllActive: true }
+    );
     const usages = findAllUsages(index, word);
     return usages.map(
       (usage) =>
@@ -441,7 +459,16 @@ class GesstabsRenameProvider implements vscode.RenameProvider {
     }
     if (token && token.isCancellationRequested) return null;
 
-    const index = buildWorkspaceIndex(fileNames, makeWorkspaceReader(document));
+    // conditionalsAllActive: a definition/usage in an #ifdef/#ifndef
+    // branch this build doesn't compile is still a real definition/usage —
+    // go-to-definition, references and rename must see it (same reasoning
+    // as the macro hover). #ifdef gating decides what runs, not what a
+    // symbol is.
+    const index = buildWorkspaceIndex(
+      fileNames,
+      makeWorkspaceReader(document),
+      { conditionalsAllActive: true }
+    );
     const usages = findAllUsages(index, word);
     if (usages.length === 0) return null;
 

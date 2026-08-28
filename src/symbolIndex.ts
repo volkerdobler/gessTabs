@@ -6,8 +6,12 @@
 // is never actually INCLUDE'd from any real entry point no longer
 // contributes definitions/references, and inactive #ifdef/#ifndef
 // branches are excluded by resolveIncludeGraph — unless
-// `conditionalsAllActive` is passed (macro / #EXPAND discovery wants a
-// definition found even in a branch the current build skips).
+// `conditionalsAllActive` is passed. All the symbol tooling that answers
+// "where is this / who uses this" (macro & #EXPAND hover, go-to-
+// definition, find-references, rename) passes it: an #ifdef branch the
+// current build skips still contains real definitions and uses.
+// Autocomplete and the effective-CELLELEMENTS hover keep the gated
+// resolution (they answer "what would run here").
 
 import {
   resolveIncludeGraph,

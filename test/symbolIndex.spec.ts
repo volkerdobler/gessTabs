@@ -129,6 +129,35 @@ describe('findAllUsages', () => {
   });
 });
 
+describe('conditionalsAllActive', () => {
+  it('finds a definition and its uses inside an inactive #ifdef branch', () => {
+    const files = {
+      [p('main.tab')]: [
+        '#ifdef DRAFT',
+        'variable a = 1;',
+        'table t1 = #k by a;',
+        '#else',
+        'variable a = 2;',
+        '#end',
+      ].join('\n'),
+    };
+    // DRAFT is not defined -> normally the whole #ifdef branch is gone.
+    const gated = buildWorkspaceIndex([p('main.tab')], makeReader(files));
+    expect(findAllUsages(gated, 'a').map((u) => u.text)).to.deep.equal([
+      'variable a = 2;',
+    ]);
+
+    const all = buildWorkspaceIndex([p('main.tab')], makeReader(files), {
+      conditionalsAllActive: true,
+    });
+    const texts = findAllUsages(all, 'a').map((u) => u.text);
+    expect(texts).to.include('variable a = 1;');
+    expect(texts).to.include('table t1 = #k by a;');
+    expect(texts).to.include('variable a = 2;');
+    expect(findDefinitionLine(all, p('main.tab'), 2, 'a')).to.not.be.undefined;
+  });
+});
+
 describe('findWordRangeInLine', () => {
   it('finds the word-boundary range of a plain occurrence', () => {
     expect(findWordRangeInLine('variable myVar = 1;', 'myVar')).to.deep.equal([
