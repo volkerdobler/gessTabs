@@ -33,9 +33,9 @@ function resolvedKeywordIndex(): Map<string, ResolvedKeyword> {
 function renderHover(entry: ResolvedKeyword): vscode.MarkdownString {
   const md = new vscode.MarkdownString();
   const title = entry.argsHint ? `${entry.name}${entry.argsHint}` : entry.name;
-  // A "KEYWORD <name>" header, so a keyword hover is visibly labelled the
-  // way the macro/#EXPAND hovers already are ("Expanded #x(...)",
-  // "#x expands to") rather than showing a bare word.
+  // A "**KEYWORD** `name`" header, so every symbol hover leads with the
+  // same upper-case category label: KEYWORD here, MACRO / EXPAND in
+  // src/macroProviders.ts.
   md.appendMarkdown(`**KEYWORD** \`${title}\`\n`);
   if (entry.syntax) {
     md.appendCodeblock(entry.syntax, 'gesstabs');

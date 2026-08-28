@@ -58,7 +58,7 @@ export class GesstabsEffectiveElementsHoverProvider
       );
 
       const md = new vscode.MarkdownString();
-      md.appendMarkdown('**Effective at this statement:**\n\n');
+      md.appendMarkdown('**EFFECTIVE ELEMENTS** — at this statement\n\n');
 
       if (cellElements) {
         const value = extractElementsValue(cellElements.text, 'cellelements');

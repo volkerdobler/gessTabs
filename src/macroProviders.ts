@@ -202,7 +202,7 @@ export class GesstabsMacroHoverProvider implements vscode.HoverProvider {
         }
 
         const md = new vscode.MarkdownString();
-        md.appendMarkdown(`\`#${hashName}\` expands to:\n`);
+        md.appendMarkdown(`**EXPAND** \`#${hashName}\`\n`);
         md.appendCodeblock(value, 'gesstabs');
         return new vscode.Hover(md);
       }
@@ -230,7 +230,7 @@ export class GesstabsMacroHoverProvider implements vscode.HoverProvider {
         new vscode.Position(position.line, call.index + call.raw.length)
       );
       const md = new vscode.MarkdownString();
-      md.appendMarkdown(`Expanded \`${call.raw}\`:\n`);
+      md.appendMarkdown(`**MACRO** \`${call.raw}\`\n`);
       md.appendCodeblock(expanded.join('\n'), 'gesstabs');
       return new vscode.Hover(md, range);
     } catch (e) {
