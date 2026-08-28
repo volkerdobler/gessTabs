@@ -66,6 +66,11 @@ export const keywordData: KeywordEntry[] = [
     },
   },
   {
+    name: '#ELSE',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
     name: '#END',
     de: {
       description:
@@ -75,6 +80,11 @@ export const keywordData: KeywordEntry[] = [
       description:
         'Pre-processor commands are processed before the GESS tabs program is translated into its internal form. Using #DEFINE names are chosen which then are taken as defined; using #UNDEFINE they can be deleted. Using #IFDEF or #IFNDEF GESS tabs checks whether a name has been defined or not.…',
     },
+  },
+  {
+    name: '#ENDEXPORT',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
   },
   {
     name: '#ENDMACRO',
@@ -118,6 +128,31 @@ export const keywordData: KeywordEntry[] = [
     },
   },
   {
+    name: '#IFEMPTY',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: '#IFEXIST',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: '#IFNDEF',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: '#IFNEMPTY',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: '#IFNEXIST',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
     name: '#IGNORECASE',
     de: { description: '', syntax: '#IGNORECASE = [ YES | NO ] ;' },
   },
@@ -133,6 +168,16 @@ export const keywordData: KeywordEntry[] = [
         'Defines a macro: every call site #<name>(...) is replaced by the macro content, with &param placeholders substituted by the arguments passed at the call.',
       syntax: '#MACRO #<name>( <&param> ... )\n<macro content>\n#ENDMACRO',
     },
+  },
+  {
+    name: '#MACROEND',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: '#STARTEXPORT',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
   },
   {
     name: '#STDCOLORS',
@@ -156,6 +201,16 @@ export const keywordData: KeywordEntry[] = [
   {
     name: '#UNDEFINE',
     de: { description: '', syntax: '#UNDEFINE <string>' },
+  },
+  {
+    name: '#WEIGHT',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
+  },
+  {
+    name: '#WEIGHTEND',
+    de: { description: '', syntax: '' },
+    en: { description: '', syntax: '' },
   },
   {
     name: 'ABANDON',
@@ -963,9 +1018,10 @@ export const keywordData: KeywordEntry[] = [
   {
     name: 'BY',
     de: {
-      description:
-        'MEAN VALIDN ( a11 a12 DESCRIPTION "this was a12" USEFONT "Helvetica-Bold" size 9 a13 LEVEL 252 a14 USEWEIGHT dummyweight a15 a16 a17 FILTER a11 EQ 1 OR a12 EQ 5 | SORTCLASS -12 a18 a19 ) SORT MEAN DESCEND; ... folgende Tabelle: Übersichtstabelle mit OVERVIEW mit modifizierten Variablen Gehen wir die Bedeutung dieser Optionen der Reihenfolge nach durch:…',
+      description: 'Trennt den Kopf von der Achse',
+      syntax: '<kop> BY <achse>{*n}',
     },
+    en: { description: '', syntax: '' },
   },
   {
     name: 'CALCCOLLOWACCURACY',
