@@ -1,26 +1,31 @@
 // Shared recognition of the block-structuring preprocessor directives —
-// #MACRO/#ENDMACRO and the #IFDEF-family/#ELSE/#END — for the three
-// per-document, line-based consumers that care about their *nesting*:
-// the F2 "unmatched block" diagnostic (src/diagnostics.ts), F5 code
-// folding (src/foldingRanges.ts), and the F5 formatter's indent-by-depth
-// pass (src/formatter.ts). Each of those used to carry its own
-// `^\s*#…`-anchored copy that assumed at most one directive per line and
-// bailed out of the line the moment it matched one — which wrongly
-// reported `#ifnempty "&x" &x #else 1:99 #end` (a valid single-line
-// idiom, common in macro bodies) as an unclosed block, mis-indented
-// everything after it, etc. This scans a line for *every* block directive
-// on it, left to right, so those single-line forms pair up correctly.
+// #MACRO/#ENDMACRO and the #IFDEF-family/#ELSE/#END — for every consumer
+// that cares about their *nesting*: the F2 "unmatched block" diagnostic
+// (src/diagnostics.ts), F5 code folding (src/foldingRanges.ts), the F5
+// formatter's indent-by-depth pass (src/formatter.ts), and the
+// INCLUDE/#ifdef resolver (src/includeGraph.ts — for the conditional
+// directives; it still handles #define/#undefine/#ignorecase/INCLUDE with
+// its own one-per-line-at-start regexes).
 //
-// NOT used by src/includeGraph.ts: that resolver interleaves directive
-// handling with #define/#undefine/INCLUDE on the same pass and pulls the
-// name list out of the rest of an #ifdef line, so adopting this needs a
-// bigger rework there — tracked in TODO.md. #ELSE is reported here (the
-// formatter needs it) even though it neither opens nor closes a block.
+// Each used to carry its own `^\s*#…`-anchored copy that assumed at most
+// one directive per line and bailed out of the line the moment it matched
+// one — which wrongly reported `#ifnempty "&x" &x #else 1:99 #end` (a
+// valid single-line idiom, common in macro bodies) as an unclosed block,
+// mis-indented everything after it, and — in the resolver — left an
+// #ifdef block "open" for the rest of the file, hiding later #MACRO
+// definitions. This scans a line for *every* block directive on it, left
+// to right, so those single-line forms pair up correctly.
+//
+// #ELSE is reported (the formatter and the resolver need it) even though
+// it neither opens nor closes a block.
 //
 // Comment/string awareness is per *character*, not per line: `#end // …`
 // annotations (and the odd directive keyword mentioned inside a comment
-// or string) are common, so a hit is kept only where `isCodeAt` says
-// that column is real code.
+// or string) are common, so a hit is kept only where `isCodeAt` says that
+// column is real code. Callers pick their strictness — the resolver uses
+// `isNormalScope` (code only); the editor-facing consumers use
+// `isNotInComment` (code or string), matching what they already do
+// elsewhere.
 
 export type BlockDirectiveKind =
   | 'macro-start'

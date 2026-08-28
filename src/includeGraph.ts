@@ -13,6 +13,7 @@
 
 import * as path from 'path';
 import { Scope } from './scope';
+import { scanBlockDirectives } from './directives';
 
 export type FileReader = (filePath: string) => string[] | undefined;
 
@@ -62,12 +63,6 @@ export interface IncludeGraphOptions {
 const includeRe = /^\s*include\s*=\s*"?([^";]+?)"?\s*;/i;
 const defineRe = /^\s*#define\s+(\S+)/i;
 const undefineRe = /^\s*#undefine\s+(\S+)/i;
-const ifdefRe = /^\s*#ifdef\b\s*(.*)$/i;
-const ifndefRe = /^\s*#ifndef\b\s*(.*)$/i;
-const ifEmptyFamilyRe = /^\s*#if(n?)empty\b/i;
-const ifExistFamilyRe = /^\s*#if(n?)exist\b/i;
-const elseRe = /^\s*#else\b/i;
-const endRe = /^\s*#end\b/i;
 const ignoreCaseRe = /^\s*#ignorecase\s*=\s*(yes|no)/i;
 
 function parseNameList(raw: string): string[] {
@@ -219,41 +214,55 @@ export function resolveIncludeGraph(
         continue;
       }
 
-      const ifdefMatch = text.match(ifdefRe);
-      if (ifdefMatch) {
-        const names = parseNameList(ifdefMatch[1]);
-        const conditionTrue = names.some((n) => defines.isDefined(n));
-        stack.push({ conditionTrue, inElse: false, parentActive: active });
-        continue;
-      }
-
-      const ifndefMatch = text.match(ifndefRe);
-      if (ifndefMatch) {
-        const names = parseNameList(ifndefMatch[1]);
-        const conditionTrue = names.some((n) => !defines.isDefined(n));
-        stack.push({ conditionTrue, inElse: false, parentActive: active });
-        continue;
-      }
-
-      // #IFEMPTY/#IFNEMPTY/#IFEXIST/#IFNEXIST: not statically evaluated
-      // (see module doc comment) — keep both branches active so real
-      // definitions inside either arm are still found.
-      if (ifEmptyFamilyRe.test(text) || ifExistFamilyRe.test(text)) {
-        stack.push({
-          conditionTrue: true,
-          inElse: false,
-          parentActive: active,
+      // #IFDEF/#IFNDEF/#IF[N]EMPTY/#IF[N]EXIST(S), #ELSE and #END can all
+      // sit on one line — `#ifnempty "&x" &x #else 1:99 #end` is a common
+      // single-line idiom in macro bodies. Walk every conditional
+      // directive on the line, in order (shared recognition with the F2
+      // diagnostic / folding / formatter via src/directives.ts), so an
+      // inline #END isn't dropped — a dropped one would leave a phantom
+      // frame open and wrongly gate everything after it in the file,
+      // including later #MACRO definitions.
+      const conds = scanBlockDirectives(text, (col) =>
+        scope.isNormalScope(i, col)
+      ).filter((d) => d.kind !== 'macro-start' && d.kind !== 'macro-end');
+      if (conds.length > 0) {
+        let frameActive = evaluateActive(stack);
+        conds.forEach((d, di) => {
+          if (d.kind === 'conditional-end') {
+            stack.pop();
+          } else if (d.kind === 'conditional-else') {
+            if (stack.length > 0) stack[stack.length - 1].inElse = true;
+          } else {
+            // conditional-start. Its name list is the text up to the next
+            // directive on the line (or end of line). parseNameList only
+            // takes the first token / bracketed group anyway, so a
+            // trailing `#else`/`#end` in that slice is harmless.
+            const argEnd = conds[di + 1]?.index ?? text.length;
+            const argText = text.slice(d.index + d.text.length, argEnd);
+            const tok = d.text.toLowerCase();
+            let conditionTrue: boolean;
+            if (tok === '#ifdef') {
+              conditionTrue = parseNameList(argText).some((n) =>
+                defines.isDefined(n)
+              );
+            } else if (tok === '#ifndef') {
+              conditionTrue = parseNameList(argText).some(
+                (n) => !defines.isDefined(n)
+              );
+            } else {
+              // #IF[N]EMPTY / #IF[N]EXIST(S): not statically evaluated
+              // (see module doc comment) — keep both branches active so
+              // real definitions inside either arm are still found.
+              conditionTrue = true;
+            }
+            stack.push({
+              conditionTrue,
+              inElse: false,
+              parentActive: frameActive,
+            });
+          }
+          frameActive = evaluateActive(stack);
         });
-        continue;
-      }
-
-      if (elseRe.test(text)) {
-        if (stack.length > 0) stack[stack.length - 1].inElse = true;
-        continue;
-      }
-
-      if (endRe.test(text)) {
-        stack.pop();
         continue;
       }
 

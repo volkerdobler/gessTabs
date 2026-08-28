@@ -298,4 +298,73 @@ describe('resolveIncludeGraph', () => {
       'variable other = 1;',
     ]);
   });
+
+  it('handles a single-line #ifnempty … #else … #end without leaking a frame', () => {
+    // The inline #END must close the inline #IFNEMPTY, so the enclosing
+    // #ifdef block still ends where its own #end says — otherwise every
+    // line after it (a later #MACRO definition, say) is wrongly treated
+    // as still inside #ifdef PowerChart and dropped when it's not set.
+    const reader = makeReader({
+      [p('main.tab')]: [
+        '#ifdef PowerChart',
+        'position = | rows #ifnempty "&rows" &rows #else 1:99 #end',
+        '#end // #ifdef PowerChart',
+        '#macro #fillSlide68left ( &sp1 &zeilen "&var" "&text" )',
+        'x;',
+        '#endmacro',
+      ].join('\n'),
+    });
+    const result = resolveIncludeGraph(p('main.tab'), reader);
+    expect(texts(result)).to.deep.equal([
+      '#macro #fillSlide68left ( &sp1 &zeilen "&var" "&text" )',
+      'x;',
+      '#endmacro',
+    ]);
+    expect(
+      findMacroDefinitions(
+        result.order.map((rl) => ({
+          file: rl.file,
+          line: rl.line,
+          text: rl.text,
+        }))
+      ).map((d) => d.name)
+    ).to.include('fillSlide68left');
+  });
+
+  it('handles a single-line #ifdef … #end and pairs two closers on one line', () => {
+    const reader = makeReader({
+      [p('main.tab')]: [
+        '#ifdef A x-inside #end',
+        'after;',
+        '#ifdef A',
+        '#ifdef B',
+        'deep;',
+        '#end #end',
+        'tail;',
+      ].join('\n'),
+    });
+    // A/B undefined: the single-line block is inactive, everything else
+    // (which is at file scope) stays.
+    expect(texts(resolveIncludeGraph(p('main.tab'), reader))).to.deep.equal([
+      'after;',
+      'tail;',
+    ]);
+  });
+
+  it('ignores a directive keyword inside a string or trailing comment', () => {
+    const reader = makeReader({
+      [p('main.tab')]: [
+        'title = "chapter #end of section";',
+        '#end // stray #ifdef note',
+        'variable a = 1;',
+      ].join('\n'),
+    });
+    // The string #end and the comment #ifdef are not directives; the bare
+    // #end on line 2 is a real (unmatched) closer that pops an empty
+    // stack — harmless here — and line 3 stays active.
+    expect(texts(resolveIncludeGraph(p('main.tab'), reader))).to.deep.equal([
+      'title = "chapter #end of section";',
+      'variable a = 1;',
+    ]);
+  });
 });
