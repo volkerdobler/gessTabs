@@ -1,6 +1,5 @@
 {
   "root": true,
-  "ignorePatterns": ["src/keywordDatabase.*.ts"],
   "plugins": ["prettier", "@typescript-eslint"],
   "extends": [
     "eslint:recommended",

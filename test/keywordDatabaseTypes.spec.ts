@@ -1,11 +1,12 @@
 import { expect } from 'chai';
 import {
+  KeywordEntry,
+  KEYWORD_LANGUAGES,
+  DEFAULT_KEYWORD_LANGUAGE,
   keywordLookupKey,
   keywordLookupKeyAt,
-  buildKeywordIndex,
-  applyKeywordOverrides,
   resolveKeywordLanguage,
-  buildIndexWithFallback,
+  buildResolvedIndex,
 } from '../src/keywordDatabaseTypes';
 
 describe('keywordLookupKey', () => {
@@ -34,95 +35,77 @@ describe('keywordLookupKeyAt', () => {
   });
 });
 
-describe('buildKeywordIndex', () => {
-  it('keys entries by their lookup key, keeping # and non-# forms distinct', () => {
-    const index = buildKeywordIndex([
-      { name: 'END', description: 'ends the script', source: 'x:1' },
-      { name: '#END', description: 'closes a preprocessor block', source: 'x:2' },
-    ]);
-    expect(index.get('end')?.description).to.equal('ends the script');
-    expect(index.get('#end')?.description).to.equal('closes a preprocessor block');
-  });
-});
-
-describe('applyKeywordOverrides', () => {
-  const base = [
-    { name: 'MAX', description: 'garbled extracted text', source: 'x:1' },
-    { name: 'EQ', description: 'Equal, ist gleich', source: 'x:2' },
-  ];
-
-  it('replaces only the fields an override sets, keeping the rest', () => {
-    const merged = applyKeywordOverrides(base, [
-      { name: 'MAX', description: 'Der Maximalwert einer Variablen.' },
-    ]);
-    const entry = merged.find((e) => e.name === 'MAX');
-    expect(entry?.description).to.equal('Der Maximalwert einer Variablen.');
-    expect(entry?.source).to.equal('x:1');
-  });
-
-  it('leaves an entry with no matching override untouched', () => {
-    const merged = applyKeywordOverrides(base, [
-      { name: 'MAX', description: 'corrected' },
-    ]);
-    const entry = merged.find((e) => e.name === 'EQ');
-    expect(entry?.description).to.equal('Equal, ist gleich');
-  });
-
-  it('adds a brand new entry for a name with no existing match', () => {
-    const merged = applyKeywordOverrides(base, [
-      { name: '#MACRO', syntax: '#MACRO #<name>( &param )', description: 'defines a macro' },
-    ]);
-    const entry = merged.find((e) => e.name === '#MACRO');
-    expect(entry?.syntax).to.equal('#MACRO #<name>( &param )');
-    expect(entry?.source).to.equal('manual override');
-  });
-
-  it('removes an entry entirely when remove is true', () => {
-    const merged = applyKeywordOverrides(base, [{ name: 'MAX', remove: true }]);
-    expect(merged.find((e) => e.name === 'MAX')).to.be.undefined;
-    expect(merged.find((e) => e.name === 'EQ')).to.exist;
-  });
-
-  it('matches case-insensitively, keeping # and non-# forms distinct', () => {
-    const merged = applyKeywordOverrides(
-      [{ name: 'END', description: 'old', source: 'x:1' }],
-      [{ name: 'end', description: 'new' }]
-    );
-    expect(merged[0].description).to.equal('new');
-  });
-});
-
 describe('resolveKeywordLanguage', () => {
-  it('honors an explicit "de" or "en" setting regardless of the env language', () => {
+  it('honors any explicit KEYWORD_LANGUAGES setting regardless of the env language', () => {
     expect(resolveKeywordLanguage('de', 'en-US')).to.equal('de');
     expect(resolveKeywordLanguage('en', 'de')).to.equal('en');
+    KEYWORD_LANGUAGES.forEach((lang) => {
+      expect(resolveKeywordLanguage(lang, 'zz-ZZ')).to.equal(lang);
+    });
   });
 
-  it('falls back to the env language when set to "auto"', () => {
+  it('falls back to the env language when the setting is not a known language ("auto")', () => {
     expect(resolveKeywordLanguage('auto', 'de')).to.equal('de');
     expect(resolveKeywordLanguage('auto', 'de-DE')).to.equal('de');
+    expect(resolveKeywordLanguage('auto', 'en-US')).to.equal('en');
+    expect(resolveKeywordLanguage('nonsense', 'de')).to.equal('de');
   });
 
-  it('defaults to English for any non-German env language', () => {
-    expect(resolveKeywordLanguage('auto', 'en-US')).to.equal('en');
-    expect(resolveKeywordLanguage('auto', 'fr')).to.equal('en');
+  it('falls back to DEFAULT_KEYWORD_LANGUAGE when nothing matches', () => {
+    expect(resolveKeywordLanguage('auto', 'fr')).to.equal(
+      DEFAULT_KEYWORD_LANGUAGE
+    );
+    expect(resolveKeywordLanguage('auto', '')).to.equal(DEFAULT_KEYWORD_LANGUAGE);
+    expect(DEFAULT_KEYWORD_LANGUAGE).to.equal('en');
   });
 });
 
-describe('buildIndexWithFallback', () => {
-  const de = [{ name: 'TABLE', description: 'Deutsche Beschreibung', source: 'x:1' }];
-  const en = [
-    { name: 'TABLE', description: 'English description', source: 'y:1' },
-    { name: '#MACRO', description: 'only in English', source: 'y:2' },
+describe('buildResolvedIndex', () => {
+  const entries: KeywordEntry[] = [
+    {
+      name: 'TABLE',
+      de: { description: 'Deutsche Beschreibung', syntax: 'TABLE = a BY b;' },
+      en: { description: 'English description' },
+    },
+    { name: '#MACRO', en: { description: 'only in English' } },
+    { name: 'MEAN', de: { description: 'nur auf Deutsch' } },
+    { name: 'EMPTY' },
   ];
 
-  it('prefers the primary language when both have the keyword', () => {
-    const index = buildIndexWithFallback(de, en);
-    expect(index.get('table')?.description).to.equal('Deutsche Beschreibung');
+  it('keys entries by their lookup key, keeping # and non-# forms distinct', () => {
+    const index = buildResolvedIndex(entries, 'de');
+    expect(index.has('table')).to.equal(true);
+    expect(index.has('#macro')).to.equal(true);
   });
 
-  it('falls back to the other language when the primary is missing it', () => {
-    const index = buildIndexWithFallback(de, en);
+  it('flattens the primary language when the entry has it', () => {
+    const index = buildResolvedIndex(entries, 'de');
+    const table = index.get('table');
+    expect(table?.description).to.equal('Deutsche Beschreibung');
+    expect(table?.syntax).to.equal('TABLE = a BY b;');
+  });
+
+  it('falls back to the other language block when the primary is missing', () => {
+    const index = buildResolvedIndex(entries, 'de');
     expect(index.get('#macro')?.description).to.equal('only in English');
+  });
+
+  it('uses the primary language when it is English', () => {
+    const index = buildResolvedIndex(entries, 'en');
+    expect(index.get('table')?.description).to.equal('English description');
+    expect(index.get('mean')?.description).to.equal('nur auf Deutsch');
+  });
+
+  it('skips an entry that carries neither language block', () => {
+    const index = buildResolvedIndex(entries, 'de');
+    expect(index.has('empty')).to.equal(false);
+  });
+
+  it('carries argsHint through to the resolved entry', () => {
+    const index = buildResolvedIndex(
+      [{ name: 'COLSUMPERCENT', argsHint: '( a b )', de: { description: 'x' } }],
+      'de'
+    );
+    expect(index.get('colsumpercent')?.argsHint).to.equal('( a b )');
   });
 });

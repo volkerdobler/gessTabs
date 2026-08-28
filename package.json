@@ -126,8 +126,7 @@
     "lint": "eslint src --ext ts",
     "watch": "tsc -watch -p ./",
     "pretest": "tsc --noEmit -p .",
-    "test": "mocha -r ts-node/register test/**/*.spec.ts",
-    "extract-keywords": "ts-node scripts/extractKeywordDatabase.ts"
+    "test": "mocha -r ts-node/register test/**/*.spec.ts"
   },
   "devDependencies": {
     "@types/chai": "^4.3.20",

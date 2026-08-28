@@ -16,7 +16,8 @@ Internal beta ahead of 1.0.0 — large feature update built on a new INCLUDE/#if
 - A basic formatter (trailing whitespace, blank-line runs, directive-nesting indentation).
 - Snippet library expanded from 1 to 14 snippets (`recode`, `compute`, `weightcells`, `#macro`, `overview`, `#twobases`, and more).
 - Many new `gesstabs.*` settings to turn individual hovers/diagnostics/autocomplete on or off — see the README.
-- Internal: fixed the packaged extension accidentally including internal/dev-only files; resolved all `npm audit` findings; added the missing LICENSE file.
+- Syntax highlighting: the keyword list was brought back up to parity with the older `.tmLanguage` grammar (~375 keywords re-added, including `BY` in `TABLE` statements).
+- Internal: fixed the packaged extension accidentally including internal/dev-only files; resolved all `npm audit` findings; added the missing LICENSE file. The keyword hover/autocomplete database is now a single hand-maintained `src/keywordData.ts` (nested `de`/`en` blocks per keyword) instead of two generated per-language files plus separate override files — the manuals are moving online and won't be re-extracted.
 
 ## 0.2.9
 

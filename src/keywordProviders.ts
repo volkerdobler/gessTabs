@@ -1,59 +1,36 @@
-// Thin vscode wiring for the F1 keyword database
-// (src/keywordDatabase.de.ts / src/keywordDatabase.en.ts): a hover
-// showing syntax + description for the keyword under the cursor, and
+// Thin vscode wiring for the F1 keyword database (src/keywordData.ts): a
+// hover showing syntax + description for the keyword under the cursor, and
 // completion items for every known keyword. Same "pure data/logic + thin
 // provider" split as the rest of this codebase's providers.
 
 import * as vscode from 'vscode';
 import { Scope } from './scope';
-import { keywordDatabase as keywordDatabaseDe } from './keywordDatabase.de';
-import { keywordDatabase as keywordDatabaseEn } from './keywordDatabase.en';
-import { keywordDatabaseOverridesDe } from './keywordDatabaseOverrides.de';
-import { keywordDatabaseOverridesEn } from './keywordDatabaseOverrides.en';
+import { keywordData } from './keywordData';
 import {
-  KeywordEntry,
-  applyKeywordOverrides,
-  buildIndexWithFallback,
+  ResolvedKeyword,
+  buildResolvedIndex,
   resolveKeywordLanguage,
   keywordLookupKeyAt,
 } from './keywordDatabaseTypes';
 import { printDebugMessage } from './workspaceFiles';
 
-// Hand-written corrections/additions/removals
-// (src/keywordDatabaseOverrides.<lang>.ts) are merged in here, once per
-// language, rather than baked into the generated
-// src/keywordDatabase.<lang>.ts files — so re-running the extraction
-// script never touches, and never needs to preserve, anything edited by
-// hand. This part doesn't depend on the language *setting*, so it's
-// computed once at module load; only the fallback combination below
-// (which does depend on the setting, and the setting can change at any
-// time) is resolved per call.
-const mergedDe = applyKeywordOverrides(
-  keywordDatabaseDe,
-  keywordDatabaseOverridesDe
-);
-const mergedEn = applyKeywordOverrides(
-  keywordDatabaseEn,
-  keywordDatabaseOverridesEn
-);
-
 // Picks the effective keyword-doc language from gesstabs.hover.language
-// (falling back to vscode.env.language for "auto") and returns an index
-// with the other language's entries filling in any gap — see
-// resolveKeywordLanguage/buildIndexWithFallback for the reasoning.
-function resolvedKeywordIndex(): Map<string, KeywordEntry> {
+// (falling back to vscode.env.language for "auto") and returns an index of
+// each keyword flattened to that language, with the other language's doc
+// filling any gap — see resolveKeywordLanguage/buildResolvedIndex for the
+// reasoning. Rebuilt per call because the setting can change at any time;
+// it's a cheap pass over an in-memory array.
+function resolvedKeywordIndex(): Map<string, ResolvedKeyword> {
   const config = vscode.workspace.getConfiguration('gesstabs');
   const setting = config.get<string>('hover.language', 'auto');
   const language = resolveKeywordLanguage(
     setting ?? 'auto',
     vscode.env.language
   );
-  return language === 'de'
-    ? buildIndexWithFallback(mergedDe, mergedEn)
-    : buildIndexWithFallback(mergedEn, mergedDe);
+  return buildResolvedIndex(keywordData, language);
 }
 
-function renderHover(entry: KeywordEntry): vscode.MarkdownString {
+function renderHover(entry: ResolvedKeyword): vscode.MarkdownString {
   const md = new vscode.MarkdownString();
   const title = entry.argsHint ? `${entry.name}${entry.argsHint}` : entry.name;
   md.appendMarkdown(`**${title}**\n`);

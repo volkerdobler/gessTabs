@@ -1,13 +1,26 @@
+// DEPRECATED — kept for provenance only, no longer wired into the build.
+//
+// The GESStabs manuals are moving online and will not be re-extracted, so
+// the keyword database (formerly src/keywordDatabase.<lang>.ts, one file
+// per language) was collapsed into a single hand-maintained
+// src/keywordData.ts (one nested { name, argsHint?, de?, en? } entry per
+// keyword) and is edited directly from there on. The `extract-keywords`
+// npm script and the src/keywordDatabaseOverrides.<lang>.ts files were
+// removed at the same time.
+//
+// This file is left in the tree as the record of how that data was
+// originally mined. It still runs (`ts-node scripts/extractKeywordDatabase.ts`)
+// against a local checkout that has dokumentation/*.md and emits the OLD
+// flat per-language shape (see `serialize` / `LegacyEntry` below); folding
+// a fresh run back into src/keywordData.ts would be a manual merge.
+//
+// ---------------------------------------------------------------------
+//
 // Offline, run-once extraction script for the F1 keyword database (see
 // docs/HISTORY.md's F1 section). NOT part of npm run compile/test/lint —
 // it reads dokumentation/*.md, which are the real GESStabs manuals and
 // deliberately git-ignored (.gitignore: "dokumentation/*.md"), so this
-// script only works with a local checkout that actually has them. Its
-// OUTPUT, src/keywordDatabase.<lang>.ts, is committed as ordinary source
-// — see the F1 docs/HISTORY.md entry for why that's fine even though the
-// raw manuals aren't tracked.
-//
-// Run with: npm run extract-keywords (regenerates every language below)
+// script only works with a local checkout that actually has them.
 //
 // Multi-language: added 2026-08-27 once an English manual
 // (GESStabs-Handbuch_engl.md) became available. Keyword *names* are
@@ -77,7 +90,19 @@
 
 import * as fs from 'fs';
 import * as path from 'path';
-import { KeywordEntry, keywordLookupKey } from '../src/keywordDatabaseTypes';
+import { keywordLookupKey } from '../src/keywordDatabaseTypes';
+
+// The flat shape this script produced when src/keywordData.ts was still two
+// generated per-language files. Kept local so the current, nested
+// KeywordEntry type in src/keywordDatabaseTypes.ts can evolve freely.
+interface LegacyEntry {
+  name: string;
+  argsHint?: string;
+  description: string;
+  syntax?: string;
+  source: string;
+}
+type KeywordEntry = LegacyEntry;
 
 const DOC_DIR = path.resolve(__dirname, '../dokumentation');
 const MIN_DESCRIPTION_LENGTH = 15;
@@ -300,18 +325,24 @@ function mergeEntries(candidates: KeywordEntry[]): KeywordEntry[] {
 }
 
 function serialize(entries: KeywordEntry[], language: string): string {
-  return `// GENERATED FILE — do not hand-edit.
-// Produced by scripts/extractKeywordDatabase.ts from the local
-// dokumentation/*.md manuals (git-ignored — see that script's header
-// comment for what this covers, what it doesn't, and why). Re-run
-// npm run extract-keywords to regenerate after documentation changes.
-// Language: ${language}. Hand corrections go in
-// src/keywordDatabaseOverrides.${language}.ts instead — that file is
-// never touched by this script.
+  return `// LEGACY EXTRACTION OUTPUT (${language}) — not used by the build.
+// scripts/extractKeywordDatabase.ts is deprecated (see its header). The
+// live keyword database is the hand-maintained, nested src/keywordData.ts;
+// fold anything useful from here into that file by hand.
 
-import { KeywordEntry } from './keywordDatabaseTypes';
+interface LegacyKeywordEntry {
+  name: string;
+  argsHint?: string;
+  description: string;
+  syntax?: string;
+  source: string;
+}
 
-export const keywordDatabase: KeywordEntry[] = ${JSON.stringify(entries, null, 2)};
+export const keywordDatabase: LegacyKeywordEntry[] = ${JSON.stringify(
+    entries,
+    null,
+    2
+  )};
 `;
 }
 
