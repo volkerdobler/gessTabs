@@ -103,27 +103,59 @@ function diagnoseMissingMacro(
   const rawTextHasDef = defPattern.test(document.getText());
   const resolvedHasDef = index.order.some((rl) => defPattern.test(rl.text));
 
-  let diagnosis: string;
-  if (!rawTextHasDef) {
-    diagnosis =
-      '  -> The definition text itself was not found verbatim in this document — check for a typo, extra whitespace variant, or that it truly lives in this file.';
-  } else if (!resolvedHasDef) {
-    diagnosis =
-      '  -> The definition exists in the file but was filtered out while resolving INCLUDEs/#ifdef branches, or an earlier unclosed #MACRO/#IFDEF/#IFNDEF block in the same file is swallowing everything after it.';
-  } else {
-    diagnosis =
-      '  -> The line is present in the resolved index but findMacroDefinitions still did not parse it as a macro start — likely an earlier unclosed #MACRO block in the same file.';
-  }
-
-  return [
+  const lines: string[] = [
     `gesstabs: no #MACRO named "${macroName}" is defined in the resolved workspace.`,
     `  Root files: ${index.rootFiles.join(', ') || '(none)'}`,
     `  Lines from this document present in the resolved index: ${linesFromCurrentFile} of ${document.lineCount} total.`,
     `  Raw document text contains a "#macro #${macroName}(" line: ${rawTextHasDef}.`,
     `  That line also appears in the *resolved* (INCLUDE/#ifdef-filtered) index: ${resolvedHasDef}.`,
-    diagnosis,
-    `  Other macros found: ${known || '(none)'}`,
-  ].join('\n');
+  ];
+
+  if (!rawTextHasDef) {
+    lines.push(
+      '  -> The definition text itself was not found verbatim in this document — check for a typo, extra whitespace variant, or that it truly lives in this file.'
+    );
+  } else if (!resolvedHasDef) {
+    // Pin down the filtered-out span: the raw def line, and the nearest
+    // resolved lines of this file on either side of it. A gap that starts
+    // several lines before the definition means a `{ ... }` comment or an
+    // inactive #ifdef/#ifndef branch is covering it; a gap that starts
+    // *at* the definition points at the definition's own first line.
+    const rawLines = document.getText().split(/\r?\n/);
+    const rawDefLine = rawLines.findIndex((l) => defPattern.test(l));
+    const sameFile = index.order
+      .filter((rl) => rl.file === currentFile)
+      .sort((a, b) => a.line - b.line);
+    const before = [...sameFile].reverse().find((rl) => rl.line < rawDefLine);
+    const after = sameFile.find((rl) => rl.line > rawDefLine);
+    const snip = (rl?: { line: number; text: string }): string =>
+      rl ? `line ${rl.line + 1} "${rl.text.trim().slice(0, 60)}"` : '(none)';
+    lines.push(
+      `  Raw "#macro #${macroName}" is at line ${rawDefLine + 1}.`,
+      `  Nearest resolved line of this file before it: ${snip(before)}`,
+      `  Nearest resolved line of this file after it:  ${snip(after)}`
+    );
+    if (before && after && after.line - before.line > 2) {
+      lines.push(
+        `  -> Lines ${before.line + 2}-${
+          after.line
+        } of this file are all filtered out — a block comment ({ ... }) or an inactive #ifdef/#ifndef branch covers the definition. Check what opens just before line ${
+          before.line + 2
+        }.`
+      );
+    } else {
+      lines.push(
+        '  -> Only the definition itself is filtered — an unclosed #MACRO/#IFDEF/#IFNDEF block just above it (or the #ifdef it sits in) is inactive; the surrounding lines still resolve.'
+      );
+    }
+  } else {
+    lines.push(
+      '  -> The line is present in the resolved index but findMacroDefinitions still did not parse it as a macro start — likely an earlier unclosed #MACRO block in the same file, or its `( ... )` parameter list is split across lines / contains a `)`.'
+    );
+  }
+
+  lines.push(`  Other macros found: ${known || '(none)'}`);
+  return lines.join('\n');
 }
 
 // Master on/off switch plus independent per-kind toggles, mirroring how
