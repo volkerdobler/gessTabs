@@ -2,7 +2,7 @@
   "name": "gesstabs",
   "displayName": "GESStabs",
   "description": "GESStabs Support",
-  "version": "0.99.0-beta",
+  "version": "0.99.0",
   "publisher": "volkerdobler",
   "engines": {
     "vscode": "^1.109.0"
