@@ -7,22 +7,18 @@
 // guess, this only does changes that are safe regardless of a script's
 // own style: trim trailing whitespace, collapse runs of 2+ blank lines
 // down to 1, and reindent based on #MACRO/#ENDMACRO and #IFDEF-family/
-// #END nesting depth (reusing the same directive recognition as
-// src/foldingRanges.ts) — the one structural concept this language has
-// that maps unambiguously to indentation. Statement content itself
-// (TABLE/CELLELEMENTS/etc. bodies, comments) is left completely
-// untouched beyond trailing-whitespace trimming.
+// #END nesting depth (directive recognition shared with
+// src/foldingRanges.ts / diagnostics.ts via src/directives.ts) — the one
+// structural concept this language has that maps unambiguously to
+// indentation. Statement content itself (TABLE/CELLELEMENTS/etc. bodies,
+// comments) is left completely untouched beyond trailing-whitespace
+// trimming.
+
+import { scanBlockDirectives } from './directives';
 
 export interface FormatOptions {
   indentUnit?: string;
 }
-
-const macroStartRe = /^\s*#macro\s+#\S+\s*\(/i;
-const macroEndRe = /^\s*#(?:endmacro|macroend)\b/i;
-const conditionalStartRe =
-  /^\s*#(?:ifdef|ifndef|ifempty|ifnempty|ifexist|ifnexist|ifnexists)\b/i;
-const conditionalElseRe = /^\s*#else\b/i;
-const conditionalEndRe = /^\s*#end\b/i;
 
 // `isCodeLine(lineIndex)` lets a caller exclude a line whose directive-
 // looking text is actually inside a comment, same reasoning as
@@ -55,17 +51,28 @@ export function formatLines(
     }
 
     const content = trimmedEnd.replace(/^\s+/, '');
-    const isEnd = macroEndRe.test(content) || conditionalEndRe.test(content);
-    const isElse = conditionalElseRe.test(content);
-    const lineDepth = isEnd || isElse ? Math.max(depth - 1, 0) : depth;
 
+    // Walk the line's directives once: `delta` is its net effect on
+    // nesting depth, `minRunning` the lowest point reached along the way
+    // (an #END or #ELSE dedents before the line is printed). A plain line
+    // has neither, so it prints at the current depth. A single-line
+    // `#ifnempty … #else … #end` nets to 0 and prints where it stands.
+    let delta = 0;
+    let minRunning = 0;
+    scanBlockDirectives(content).forEach((d) => {
+      if (d.kind === 'macro-start' || d.kind === 'conditional-start') {
+        delta += 1;
+      } else if (d.kind === 'macro-end' || d.kind === 'conditional-end') {
+        delta -= 1;
+        minRunning = Math.min(minRunning, delta);
+      } else if (d.kind === 'conditional-else') {
+        minRunning = Math.min(minRunning, delta - 1);
+      }
+    });
+
+    const lineDepth = Math.max(depth + minRunning, 0);
     result.push(indentUnit.repeat(lineDepth) + content);
-
-    if (macroStartRe.test(content) || conditionalStartRe.test(content)) {
-      depth += 1;
-    } else if (isEnd) {
-      depth = Math.max(depth - 1, 0);
-    }
+    depth = Math.max(depth + delta, 0);
   });
 
   return result;

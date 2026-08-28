@@ -53,16 +53,16 @@ describe('checkEmptyVarlist', () => {
 describe('findLastDeclaredVariableBefore', () => {
   it('finds the most recently declared variable before the given line', () => {
     const lines = ['variable x = 1;', 'variable y = 2;', 'VARTITLE = "x";'];
-    expect(findLastDeclaredVariableBefore(lines, 2, alwaysNotInComment)).to.equal(
-      'y'
-    );
+    expect(
+      findLastDeclaredVariableBefore(lines, 2, alwaysNotInComment)
+    ).to.equal('y');
   });
 
   it('never looks at the diagnostic line itself or later', () => {
     const lines = ['variable x = 1;', 'variable y = 2;'];
-    expect(findLastDeclaredVariableBefore(lines, 1, alwaysNotInComment)).to.equal(
-      'x'
-    );
+    expect(
+      findLastDeclaredVariableBefore(lines, 1, alwaysNotInComment)
+    ).to.equal('x');
   });
 
   it('returns undefined when nothing was declared earlier', () => {
@@ -104,13 +104,39 @@ describe('checkUnmatchedBlocks', () => {
   it('flags an unclosed conditional block', () => {
     const issues = checkUnmatchedBlocks(['#ifdef FOO', 'x;'], alwaysCode);
     expect(issues).to.have.length(1);
-    expect(issues[0]).to.deep.include({ line: 0, code: 'unclosed-conditional' });
+    expect(issues[0]).to.deep.include({
+      line: 0,
+      code: 'unclosed-conditional',
+    });
   });
 
   it('flags a stray #END with nothing open', () => {
     const issues = checkUnmatchedBlocks(['#end'], alwaysCode);
     expect(issues).to.have.length(1);
     expect(issues[0].code).to.equal('unmatched-end');
+  });
+
+  it('accepts a single-line #ifnempty … #else … #end', () => {
+    const lines = ['#ifnempty "&rows" &rows #else 1:99 #end'];
+    expect(checkUnmatchedBlocks(lines, alwaysCode)).to.be.empty;
+  });
+
+  it('accepts a single-line #ifdef … #end and still flags a real unclosed one', () => {
+    expect(checkUnmatchedBlocks(['#ifdef A x; #end'], alwaysCode)).to.be.empty;
+    const issues = checkUnmatchedBlocks(
+      ['#ifdef A x; #end', '#ifdef B', 'y;'],
+      alwaysCode
+    );
+    expect(issues).to.have.length(1);
+    expect(issues[0]).to.deep.include({
+      line: 1,
+      code: 'unclosed-conditional',
+    });
+  });
+
+  it('pairs two closers written on one line', () => {
+    const lines = ['#ifdef A', '#ifdef B', 'x;', '#end #end'];
+    expect(checkUnmatchedBlocks(lines, alwaysCode)).to.be.empty;
   });
 
   it('ignores a directive-shaped line inside a comment (so it does not open a real block)', () => {
@@ -130,7 +156,10 @@ describe('checkDuplicateDeclarations', () => {
     const lines = ['variable x = 1;', 'variable x = 2;'];
     const issues = checkDuplicateDeclarations(lines, alwaysNotInComment);
     expect(issues).to.have.length(1);
-    expect(issues[0]).to.deep.include({ line: 1, code: 'duplicate-declaration' });
+    expect(issues[0]).to.deep.include({
+      line: 1,
+      code: 'duplicate-declaration',
+    });
   });
 
   it('does not flag a VARTITLE re-mentioning an existing variable', () => {
@@ -140,7 +169,9 @@ describe('checkDuplicateDeclarations', () => {
 
   it('is case-insensitive', () => {
     const lines = ['variable X = 1;', 'variable x = 2;'];
-    expect(checkDuplicateDeclarations(lines, alwaysNotInComment)).to.have.length(1);
+    expect(
+      checkDuplicateDeclarations(lines, alwaysNotInComment)
+    ).to.have.length(1);
   });
 });
 
@@ -157,7 +188,12 @@ describe('checkRecodeBounds', () => {
   });
 
   it('does not flag intentionally overlapping ranges', () => {
-    const lines = ['RECODE x y z', '1:5 , 7 = 1 /', '6 : 10 = 2 /', '11 : 15 = 3;'];
+    const lines = [
+      'RECODE x y z',
+      '1:5 , 7 = 1 /',
+      '6 : 10 = 2 /',
+      '11 : 15 = 3;',
+    ];
     expect(checkRecodeBounds(lines, alwaysNotInComment)).to.be.empty;
   });
 
@@ -185,9 +221,8 @@ describe('checkCardOrdering', () => {
   });
 
   it('does not flag CARD within the current CARDS', () => {
-    expect(
-      checkCardOrdering(['CARDS = 2;', 'CARD = 2;'], alwaysNotInComment)
-    ).to.be.empty;
+    expect(checkCardOrdering(['CARDS = 2;', 'CARD = 2;'], alwaysNotInComment))
+      .to.be.empty;
   });
 
   it('uses the documented default CARDS = 1 when never set', () => {
@@ -252,11 +287,7 @@ describe('checkCellsetElements', () => {
   });
 
   it('checks a multi-line CELLSET statement', () => {
-    const lines = [
-      'cellset set2( v1 v2 ) =',
-      'mean ( v1 )',
-      'median ( v2 );',
-    ];
+    const lines = ['cellset set2( v1 v2 ) =', 'mean ( v1 )', 'median ( v2 );'];
     expect(checkCellsetElements(lines, alwaysNotInComment)).to.be.empty;
   });
 });
@@ -266,7 +297,10 @@ describe('checkInvertoutUpdateinvert', () => {
     const lines = ['INVERTOUT = out.dat;', 'UPDATEINVERT;'];
     const issues = checkInvertoutUpdateinvert(lines, alwaysNotInComment);
     expect(issues).to.have.length(1);
-    expect(issues[0]).to.deep.include({ line: 1, code: 'invertout-updateinvert' });
+    expect(issues[0]).to.deep.include({
+      line: 1,
+      code: 'invertout-updateinvert',
+    });
   });
 
   it('does not flag UPDATEINVERT alone', () => {
@@ -286,7 +320,10 @@ describe('checkDefineCaseMismatch', () => {
     const lines = ['#define xyz', '#ifdef XYZ', 'x;', '#end'];
     const issues = checkDefineCaseMismatch(lines, alwaysNotInComment);
     expect(issues).to.have.length(1);
-    expect(issues[0]).to.deep.include({ line: 1, code: 'define-case-mismatch' });
+    expect(issues[0]).to.deep.include({
+      line: 1,
+      code: 'define-case-mismatch',
+    });
   });
 
   it('does not flag an exact-case match', () => {
@@ -300,7 +337,13 @@ describe('checkDefineCaseMismatch', () => {
   });
 
   it('is suppressed once #IGNORECASE = YES; is set', () => {
-    const lines = ['#define xyz', '#ignorecase = yes;', '#ifdef XYZ', 'x;', '#end'];
+    const lines = [
+      '#define xyz',
+      '#ignorecase = yes;',
+      '#ifdef XYZ',
+      'x;',
+      '#end',
+    ];
     expect(checkDefineCaseMismatch(lines, alwaysNotInComment)).to.be.empty;
   });
 

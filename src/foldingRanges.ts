@@ -6,18 +6,19 @@
 // program-order one, so there's no need to resolve INCLUDEs or #ifdef
 // activity to decide what folds — even an inactive branch should still
 // fold in the editor showing it.
+//
+// Directive recognition is shared with src/diagnostics.ts / formatter.ts
+// via src/directives.ts (which also handles multiple directives on one
+// line — a single-line `#ifdef X … #end` simply produces no fold range,
+// since start and end are the same line).
+
+import { scanBlockDirectives } from './directives';
 
 export interface FoldRange {
   startLine: number;
   endLine: number;
   kind: 'macro' | 'conditional';
 }
-
-const macroStartRe = /^\s*#macro\s+#\S+\s*\(/i;
-const macroEndRe = /^\s*#(?:endmacro|macroend)\b/i;
-const conditionalStartRe =
-  /^\s*#(?:ifdef|ifndef|ifempty|ifnempty|ifexist|ifnexist|ifnexists)\b/i;
-const conditionalEndRe = /^\s*#end\b/i;
 
 // `isCodeLine(lineIndex)` lets a caller exclude a line whose directive-
 // looking text is actually inside a comment (e.g. an old, commented-out
@@ -38,27 +39,23 @@ export function findFoldRanges(
   lines.forEach((text, i) => {
     if (!isCodeLine(i)) return;
 
-    if (conditionalStartRe.test(text)) {
-      conditionalStack.push(i);
-      return;
-    }
-    if (conditionalEndRe.test(text)) {
-      const start = conditionalStack.pop();
-      if (start !== undefined && i > start) {
-        ranges.push({ startLine: start, endLine: i, kind: 'conditional' });
+    scanBlockDirectives(text).forEach((d) => {
+      if (d.kind === 'conditional-start') {
+        conditionalStack.push(i);
+      } else if (d.kind === 'conditional-end') {
+        const start = conditionalStack.pop();
+        if (start !== undefined && i > start) {
+          ranges.push({ startLine: start, endLine: i, kind: 'conditional' });
+        }
+      } else if (d.kind === 'macro-start') {
+        if (macroStart === undefined) macroStart = i;
+      } else if (d.kind === 'macro-end' && macroStart !== undefined) {
+        if (i > macroStart) {
+          ranges.push({ startLine: macroStart, endLine: i, kind: 'macro' });
+        }
+        macroStart = undefined;
       }
-      return;
-    }
-    if (macroStart === undefined && macroStartRe.test(text)) {
-      macroStart = i;
-      return;
-    }
-    if (macroStart !== undefined && macroEndRe.test(text)) {
-      if (i > macroStart) {
-        ranges.push({ startLine: macroStart, endLine: i, kind: 'macro' });
-      }
-      macroStart = undefined;
-    }
+    });
   });
 
   return ranges;

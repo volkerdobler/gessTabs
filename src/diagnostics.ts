@@ -11,6 +11,7 @@
 // INCLUDE boundary is a known, accepted gap.
 
 import { collectDeclarationTokens } from './semanticTokens';
+import { scanBlockDirectives } from './directives';
 
 export type DiagnosticSeverity = 'error' | 'warning';
 
@@ -112,16 +113,9 @@ export function findLastDeclaredVariableBefore(
 }
 
 // --- 2. Unmatched #MACRO/#ENDMACRO and #IFDEF-family/#END blocks ---------
-// Same directive recognition as src/foldingRanges.ts/src/formatter.ts
-// (kept as its own small local copy rather than a shared import, same as
-// those two already are relative to each other — these regexes are
-// simple and unlikely to drift).
-const macroStartRe = /^\s*#macro\s+#\S+\s*\(/i;
-const macroEndRe = /^\s*#(?:endmacro|macroend)\b/i;
-const conditionalStartRe =
-  /^\s*#(?:ifdef|ifndef|ifempty|ifnempty|ifexist|ifnexist|ifnexists)\b/i;
-const conditionalEndRe = /^\s*#end\b/i;
-
+// Directive recognition (incl. the single-line `#ifnempty … #else … #end`
+// case) lives in src/directives.ts, shared with foldingRanges.ts /
+// formatter.ts.
 export function checkUnmatchedBlocks(
   lines: string[],
   isCodeLine: (line: number) => boolean
@@ -150,39 +144,47 @@ export function checkUnmatchedBlocks(
   lines.forEach((text, i) => {
     if (!isCodeLine(i)) return;
 
-    if (conditionalStartRe.test(text)) {
-      conditionalStack.push(i);
-      return;
-    }
-    if (conditionalEndRe.test(text)) {
-      if (conditionalStack.length === 0) {
-        issueAt(
-          i,
-          'error',
-          '#END with no matching #IFDEF/#IFNDEF/#IFEMPTY/#IFNEMPTY/#IFEXIST/#IFNEXIST before it.',
-          'unmatched-end'
-        );
-      } else {
-        conditionalStack.pop();
+    scanBlockDirectives(text).forEach((d) => {
+      switch (d.kind) {
+        case 'conditional-start':
+          conditionalStack.push(i);
+          break;
+        case 'conditional-end':
+          if (conditionalStack.length === 0) {
+            issueAt(
+              i,
+              'error',
+              '#END with no matching #IFDEF/#IFNDEF/#IFEMPTY/#IFNEMPTY/#IFEXIST/#IFNEXIST before it.',
+              'unmatched-end'
+            );
+          } else {
+            conditionalStack.pop();
+          }
+          break;
+        case 'macro-start':
+          // A #MACRO body can't legally nest another #MACRO; a second
+          // start while one is open is left for the macro engine to
+          // reject rather than double-counted here.
+          if (macroStart === undefined) macroStart = i;
+          break;
+        case 'macro-end':
+          if (macroStart === undefined) {
+            issueAt(
+              i,
+              'error',
+              '#ENDMACRO/#MACROEND with no matching #MACRO before it.',
+              'unmatched-endmacro'
+            );
+          } else {
+            macroStart = undefined;
+          }
+          break;
+        case 'conditional-else':
+          break;
+        default:
+          break;
       }
-      return;
-    }
-    if (macroStart === undefined && macroStartRe.test(text)) {
-      macroStart = i;
-      return;
-    }
-    if (macroEndRe.test(text)) {
-      if (macroStart === undefined) {
-        issueAt(
-          i,
-          'error',
-          '#ENDMACRO/#MACROEND with no matching #MACRO before it.',
-          'unmatched-endmacro'
-        );
-      } else {
-        macroStart = undefined;
-      }
-    }
+    });
   });
 
   conditionalStack.forEach((line) =>

@@ -5,16 +5,17 @@ const alwaysCode = () => true;
 
 describe('formatLines', () => {
   it('trims trailing whitespace', () => {
-    expect(formatLines(['variable x = 1;   ', 'compute y = 2;\t'])).to.deep.equal([
-      'variable x = 1;',
-      'compute y = 2;',
-    ]);
+    expect(
+      formatLines(['variable x = 1;   ', 'compute y = 2;\t'])
+    ).to.deep.equal(['variable x = 1;', 'compute y = 2;']);
   });
 
   it('collapses runs of blank lines down to a single blank line', () => {
-    expect(
-      formatLines(['a;', '', '', '', 'b;'])
-    ).to.deep.equal(['a;', '', 'b;']);
+    expect(formatLines(['a;', '', '', '', 'b;'])).to.deep.equal([
+      'a;',
+      '',
+      'b;',
+    ]);
   });
 
   it('keeps a single existing blank line as-is', () => {
@@ -55,9 +56,29 @@ describe('formatLines', () => {
     ).to.deep.equal(['#ifdef FOO', '  a;', '#else', '  b;', '#end']);
   });
 
+  it('leaves depth unchanged after a single-line #ifnempty … #else … #end', () => {
+    expect(
+      formatLines([
+        '#macro #m( &rows )',
+        'table = a #ifnempty "&rows" &rows #else 1:99 #end;',
+        'compute x = 1;',
+        '#endmacro',
+      ])
+    ).to.deep.equal([
+      '#macro #m( &rows )',
+      '  table = a #ifnempty "&rows" &rows #else 1:99 #end;',
+      '  compute x = 1;',
+      '#endmacro',
+    ]);
+  });
+
   it('re-normalizes existing indentation rather than trusting it', () => {
     expect(
-      formatLines(['#macro #example( &p )', '        compute &p = 1;', '#endmacro'])
+      formatLines([
+        '#macro #example( &p )',
+        '        compute &p = 1;',
+        '#endmacro',
+      ])
     ).to.deep.equal([
       '#macro #example( &p )',
       '  compute &p = 1;',
@@ -65,7 +86,7 @@ describe('formatLines', () => {
     ]);
   });
 
-  it('leaves a comment/string line\'s own indentation untouched (via isCodeLine), trimming only trailing whitespace', () => {
+  it("leaves a comment/string line's own indentation untouched (via isCodeLine), trimming only trailing whitespace", () => {
     const lines = ['   { an old comment }   ', 'variable x = 1;'];
     const isCodeLine = (i: number) => i !== 0;
     expect(formatLines(lines, isCodeLine)).to.deep.equal([

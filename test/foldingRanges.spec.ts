@@ -20,6 +20,11 @@ describe('findFoldRanges', () => {
     ]);
   });
 
+  it('produces no fold range for a single-line #ifnempty … #else … #end', () => {
+    const lines = ['a;', '#ifnempty "&rows" &rows #else 1:99 #end', 'b;'];
+    expect(findFoldRanges(lines)).to.be.empty;
+  });
+
   it('folds an #IFDEF/#END block', () => {
     const lines = ['#ifdef FOO', 'variable x = 1;', '#end'];
     expect(findFoldRanges(lines)).to.deep.equal([
@@ -59,8 +64,8 @@ describe('findFoldRanges', () => {
   });
 
   it('does not fold an unclosed #MACRO or #IFDEF block', () => {
-    expect(findFoldRanges(['#macro #example( &p )', 'compute &p = 1;'])).to
-      .be.empty;
+    expect(findFoldRanges(['#macro #example( &p )', 'compute &p = 1;'])).to.be
+      .empty;
     expect(findFoldRanges(['#ifdef FOO', 'variable x = 1;'])).to.be.empty;
   });
 
