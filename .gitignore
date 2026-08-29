@@ -56,6 +56,7 @@ test/*.js.map
 scripts/*.js
 scripts/*.js.map
 dokumentation/*.md
+*.pdf
 
 # Packaged extension (build artifact of `vsce package`)
 *.vsix
