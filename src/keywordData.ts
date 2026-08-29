@@ -6,10908 +6,12298 @@
 // deprecated); the manuals are moving online and will not be re-extracted,
 // so this file is edited directly from here on.
 //
-// One entry per keyword: { name, argsHint?, de?, en? }, each language block
-// being { description, syntax? }. Names are language-independent (GESStabs
-// syntax doesn't translate); only the `de` / `en` blocks differ. An entry
-// may carry only one language's block — the providers fall back to the
-// other. The German descriptions had their umlauts/ß destroyed (replaced
-// with U+FFFD) by the manuals' original PDF-to-markdown conversion and were
-// reconstructed by hand; other conversion artifacts (page numbers embedded
-// mid-sentence, the odd truncated sentence) may still be present — fix them
-// in place as you come across them.
+// One entry per keyword: { name, argsHint?, syntax, description }. Names and
+// syntax are language-independent (GESStabs syntax doesn't translate); only
+// `description` differs per language, as a { de, en } map. Every entry
+// always has `syntax` and both `description` languages, but any of those
+// strings may be '' when that piece isn't documented yet — the providers
+// fall back to the other language. The German descriptions had their
+// umlauts/ß destroyed
+// (replaced with U+FFFD) by the manuals' original PDF-to-markdown
+// conversion and were reconstructed by hand; other conversion artifacts
+// (page numbers embedded mid-sentence, the odd truncated sentence) may
+// still be present — fix them in place as you come across them.
 
 import { KeywordEntry } from './keywordDatabaseTypes';
 
 export const keywordData: KeywordEntry[] = [
   {
     name: '#DEFINE',
-    de: {
-      description:
-        'Mithilfe von Funktionen, die zur Gruppe der Defines gehören, können über Mechanismen des "Conditional Compiling" mehrere Varianten eines Tabellenprogramms in einer Quelle verwaltet und ausgeführt werden:\nMit #DEFINE können beliebige Namen vereinbart werden, die dann als Abkürzungen für den DEFINE-Inhalt geführt werden können.\n\n#DEFINEs kann man nicht nur in der Quelle definieren, sondern einen #DEFINE-String auch über die Kommandozeile mit der Option "-D" als Parameter übergeben.\n\nZum Beispiel: "GTC xyz.TAB -Dascii" übergibt den String »ascii« zur Definition.',
-      syntax: '#DEFINE <string>',
-    },
-    en: {
-      description:
-        'Using functions from the group of defines, several variants of a table program can be maintained and run from a single source through "conditional compiling" mechanisms:\nWith #DEFINE, arbitrary names can be declared that can then be used as abbreviations for the DEFINE content.\n\n#DEFINEs can be defined not only in the source but also passed as a #DEFINE string on the command line with the "-D" option as a parameter.\n\nFor example: "GTC xyz.TAB -Dascii" passes the string »ascii« as a definition.',
-      syntax: '#DEFINE <string>',
+    syntax: '#DEFINE <string>',
+    description: {
+      en: 'Using functions from the group of defines, several variants of a table program can be maintained and run from a single source through "conditional compiling" mechanisms:\nWith #DEFINE, arbitrary names can be declared that can then be used as abbreviations for the DEFINE content.\n\n#DEFINEs can be defined not only in the source but also passed as a #DEFINE string on the command line with the "-D" option as a parameter.\n\nFor example: "GTC xyz.TAB -Dascii" passes the string »ascii« as a definition.',
+      de: 'Mithilfe von Funktionen, die zur Gruppe der Defines gehören, können über Mechanismen des "Conditional Compiling" mehrere Varianten eines Tabellenprogramms in einer Quelle verwaltet und ausgeführt werden:\nMit #DEFINE können beliebige Namen vereinbart werden, die dann als Abkürzungen für den DEFINE-Inhalt geführt werden können.\n\n#DEFINEs kann man nicht nur in der Quelle definieren, sondern einen #DEFINE-String auch über die Kommandozeile mit der Option "-D" als Parameter übergeben.\n\nZum Beispiel: "GTC xyz.TAB -Dascii" übergibt den String »ascii« zur Definition.',
     },
   },
   {
     name: '#DOMACRO',
-    argsHint: '( <Macroname> <Schleifenliste> )',
-    de: {
-      description: 'Beispiel: #tab( 1 ) #tab( 2 ) #tab( 3 ) kann man als',
-      syntax: '#DOMACRO( <Macroname> <Schleifenliste> )',
-    },
-    en: {
-      description: 'Example: #tab( 1 ) #tab( 2 ) #tab( 3 ) can be written as',
-      syntax: '#DOMACRO( <macroname> <looplist> )',
+    argsHint: '( <macroname> <looplist> )',
+    syntax: '#DOMACRO( <macroname> <looplist> )',
+    description: {
+      en: '',
+      de: '',
     },
   },
   {
     name: '#DOMACRO2',
-    argsHint: '( <Macroname> <Schleifenliste> ; <weitere parameter> )',
-    de: {
-      description: '#DoMacro2 ist eine Erweiterung des #DOMACRO. Beispiel:',
-      syntax: '#DOMACRO2( <Macroname> <Schleifenliste> ; <weitere parameter> )',
-    },
-    en: {
-      description: '#tab( 1 ) #tab( 2 ) #tab( 3 ) can be shortened to',
-      syntax: '#DOMACRO2( <Macroname> <Schleifenliste> ; <weitere parameter> )',
+    argsHint: '( <macroname> <looplist> ; <additional parameters> )',
+    syntax: '#DOMACRO2( <macroname> <looplist> ; <additional parameters> )',
+    description: {
+      en: '',
+      de: '#DoMacro2 ist eine Erweiterung des #DOMACRO. Beispiel:',
     },
   },
   {
     name: '#DOMACRO3',
     argsHint: '( <macroname> <filename> )',
-    de: {
-      description:
-        'Wie #DOMACRO und #DOMACRO2 dient das #DOMACRO3-Statement der wiederholten Abarbeitung von Macros. Die Macro-Parameter werden hierbei aus einer CSV-Datei entnommen, die am einfachsten mit einem Tabellenverarbeitungsprogramm erzeugt werden kann. Dadurch bietet es eine Schnittstelle zu MitarbeiterInnen, die nicht im Scripting versiert sind.…',
-      syntax: '#DOMACRO3 ( <macroname> <filename> )',
-    },
-    en: {
-      description:
-        'Like #DOMACRO and #DOMACRO2, the #DOMACRO3 statement serves the repeated processing of macros. The macro parameters are taken from a CSV file, which is most easily created with a spreadsheet program. This provides an interface for staff who are not experienced in scripting.…',
-      syntax: '#DOMACRO3 ( <macroname> <filename> )',
+    syntax: '#DOMACRO3 ( <macroname> <filename> )',
+    description: {
+      en: 'Like #DOMACRO and #DOMACRO2, the #DOMACRO3 statement serves the repeated processing of macros. The macro parameters are taken from a CSV file, which is most easily created with a spreadsheet program. This provides an interface for staff who are not experienced in scripting.…',
+      de: 'Wie #DOMACRO und #DOMACRO2 dient das #DOMACRO3-Statement der wiederholten Abarbeitung von Macros. Die Macro-Parameter werden hierbei aus einer CSV-Datei entnommen, die am einfachsten mit einem Tabellenverarbeitungsprogramm erzeugt werden kann. Dadurch bietet es eine Schnittstelle zu MitarbeiterInnen, die nicht im Scripting versiert sind.…',
     },
   },
   {
     name: '#DOMACRO4',
     argsHint: '( <filename> )',
-    de: {
-      description:
-        'Einen ähnlichen Hintergrund hat auch das #DOMACRO4-Statement. Der Unterschied ist, dass der Name des Macros nicht im Script festgelegt wird, sondern als erstes Feld in der CSV-Datei benannt wird. Der Aufruf',
-      syntax: '#DOMACRO4 ( <filename> )',
-    },
-    en: {
-      description:
-        'The #DOMACRO4 statement has a similar background. The difference is that the name of the macro is not fixed in the script but is given as the first field in the CSV file. The call',
-      syntax: '#DOMACRO4 ( <filename> )',
+    syntax: '#DOMACRO4 ( <filename> )',
+    description: {
+      en: 'The #DOMACRO4 statement has a similar background. The difference is that the name of the macro is not fixed in the script but is given as the first field in the CSV file. The call',
+      de: 'Einen ähnlichen Hintergrund hat auch das #DOMACRO4-Statement. Der Unterschied ist, dass der Name des Macros nicht im Script festgelegt wird, sondern als erstes Feld in der CSV-Datei benannt wird. Der Aufruf',
     },
   },
   {
     name: '#ELSE',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: '#END',
-    de: {
-      description:
-        'so würde abweichend vom normalen Ablauf eine ASCII-Druckdatei erzeugt. #IfDef und #IfNDef Mit #IFDEF bzw. #IFNDEF kann man abfragen, ob ein Name definiert ist oder nicht. Alle GESStabs-Quellzeilen und alle #DEFINE bzw. #UNDEFINE-Statements zwischen dem #IFDEF bzw. #IFNDEF und dem schließenden #END werden in Abhängigkeit vom Wahrheitswert dieses Tests durchgeführt.…',
-    },
-    en: {
-      description:
-        'Pre-processor commands are processed before the GESS tabs program is translated into its internal form. Using #DEFINE names are chosen which then are taken as defined; using #UNDEFINE they can be deleted. Using #IFDEF or #IFNDEF GESS tabs checks whether a name has been defined or not.…',
+    syntax: '',
+    description: {
+      en: 'Pre-processor commands are processed before the GESS tabs program is translated into its internal form. Using #DEFINE names are chosen which then are taken as defined; using #UNDEFINE they can be deleted. Using #IFDEF or #IFNDEF GESS tabs checks whether a name has been defined or not.…',
+      de: 'Mit #IFDEF bzw. #IFNDEF kann man abfragen, ob ein Name definiert ist oder nicht. Alle GESStabs-Quellzeilen und alle #DEFINE bzw. #UNDEFINE-Statements zwischen dem #IFDEF bzw. #IFNDEF und dem schließenden #END werden in Abhängigkeit vom Wahrheitswert dieses Tests durchgeführt.',
     },
   },
   {
     name: '#ENDEXPORT',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: '#ENDMACRO',
-    de: { description: 'kann man es anschließend beliebig oft aufrufen:' },
-    en: { description: 'it can be called up as often as required:' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: '#EXPAND',
-    de: {
-      description:
-        'Definiert einen Textplatzhalter: ein späteres #<name> (ohne Klammern) wird durch <Wert> ersetzt.',
-      syntax: '#EXPAND #<name> <Wert>',
-    },
-    en: {
-      description:
-        'Defines a text placeholder: a later bare #<name> (without parentheses) is replaced by <value>.',
-      syntax: '#EXPAND #<name> <value>',
+    syntax: '#EXPAND #<name> <value>',
+    description: {
+      en: 'Defines a text placeholder: a later bare #<name> (without parentheses) is replaced by <value>.',
+      de: 'Definiert einen Textplatzhalter: ein späteres #<name> (ohne Klammern) wird durch <Wert> ersetzt.',
     },
   },
   {
     name: '#EXPANDINC',
-    de: {
-      description: '',
-      syntax:
-        '#EXPANDINC #<Name des Expands> <Wert>\nIm Kern ist dies ein #EXPAND. Das Argument <value> muss aber eine ganze Zahl sein, aus',
-    },
-    en: {
-      description: '',
-      syntax:
-        '#EXPANDINC #<name of the expand> <value>\nAt its core this is an #EXPAND. The argument <value> must, however, be a whole number, from',
+    syntax:
+      '#EXPANDINC #<name of the expand> <value>\nAt its core this is an #EXPAND. The argument <value> must, however, be a whole number, from',
+    description: {
+      en: '',
+      de: '',
     },
   },
   {
     name: '#EXPANDINTOKEN',
-    de: {
-      description: '',
-      syntax:
-        '#EXPANDINTOKEN &<search>& <replace>\n<search> ::= zu ersetzender text\n<replace> ::= einzufügender text',
-    },
-    en: {
-      description: '',
-      syntax:
-        '#EXPANDINTOKEN &<search>& <replace>\n<search> ::= text to be replaced\n<replace> ::= text to be inserted',
+    syntax:
+      '#EXPANDINTOKEN &<search>& <replace>\n<search> ::= text to be replaced\n<replace> ::= text to be inserted',
+    description: {
+      en: '',
+      de: '',
     },
   },
   {
     name: '#IFDEF',
-    de: {
-      description: '',
-      syntax: '#IFDEF <Define-Name>\n<Syntax-Statement 1>',
-    },
-    en: {
-      description: '',
-      syntax: '#IFDEF <define name>\n<syntax statement 1>',
+    syntax: '#IFDEF <define name>\n<syntax statement 1>',
+    description: {
+      en: '',
+      de: '',
     },
   },
   {
     name: '#IFEMPTY',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: '#IFEXIST',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: '#IFNDEF',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: '#IFNEMPTY',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: '#IFNEXIST',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: '#IGNORECASE',
-    de: { description: '', syntax: '#IGNORECASE = [ YES | NO ] ;' },
-    en: { description: '', syntax: '#IGNORECASE = [ YES | NO ] ;' },
+    syntax: '#IGNORECASE = [ YES | NO ] ;',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: '#MACRO',
-    de: {
-      description:
-        'Definiert ein Macro: an jeder Aufrufstelle #<name>(...) wird der Macroinhalt eingesetzt, wobei &param-Platzhalter durch die übergebenen Argumente ersetzt werden (GESStabs_Makros.md).',
-      syntax: '#MACRO #<name>( <&param> ... )\n<macroinhalt>\n#ENDMACRO',
-    },
-    en: {
-      description:
-        'Defines a macro: every call site #<name>(...) is replaced by the macro content, with &param placeholders substituted by the arguments passed at the call.',
-      syntax: '#MACRO #<name>( <&param> ... )\n<macro content>\n#ENDMACRO',
+    syntax: '#MACRO #<name>( <&param> ... )\n<macro content>\n#ENDMACRO',
+    description: {
+      en: 'Defines a macro: every call site #<name>(...) is replaced by the macro content, with &param placeholders substituted by the arguments passed at the call.',
+      de: 'Definiert ein Macro: an jeder Aufrufstelle #<name>(...) wird der Macroinhalt eingesetzt, wobei &param-Platzhalter durch die übergebenen Argumente ersetzt werden (GESStabs_Makros.md).',
     },
   },
   {
     name: '#MACROEND',
-    de: { description: 'Beendet eine Macro-Definition', syntax: '#MACROEND' },
-    en: { description: 'Closed a macro definition', syntax: '#MACROEND' },
+    syntax: '#MACROEND',
+    description: {
+      en: 'Closed a macro definition',
+      de: 'Beendet eine Macro-Definition',
+    },
   },
   {
     name: '#UNDEFINE',
-    de: {
-      description:
-        'Gesetzte #DEFINE Steuerelemente können damit wieder zurückgenommen werden.',
-      syntax: '#UNDEFINE <string>',
+    syntax: '#UNDEFINE <string>',
+    description: {
+      en: '',
+      de: 'Gesetzte #DEFINE Steuerelemente können damit wieder zurückgenommen werden.',
     },
-    en: { description: '', syntax: '#UNDEFINE <string>' },
   },
   {
     name: '#WEIGHT',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: '#WEIGHTEND',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'ABANDON',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'ABANDONFILE',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'ABANDONOPENFILE',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'ABS',
-    en: {
-      description:
-        'DAYOFWEEK The day of the week in a date in the form YYYYMMDD 1=Monday, 2=Tuesday etc Thus e.g. DAYOFWEEK( 20061030 ) = 1. DAYOFWEEK( 0 ) is today.',
+    syntax: '',
+    description: {
+      en: 'DAYOFWEEK The day of the week in a date in the form YYYYMMDD 1=Monday, 2=Tuesday etc Thus e.g. DAYOFWEEK( 20061030 ) = 1. DAYOFWEEK( 0 ) is today.',
+      de: '',
     },
   },
   {
     name: 'ABSCOLINHG',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'ABSCOLPERCENT',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'ABSCOLUMN',
-    de: {
-      description:
-        'PHYSICALCOLUMN. Im Standardfall einer Tabelle mit absoluten Häufigkeiten ist von den sechs Rahmenelementen nur eines vorhanden: die Zeile mit den absoluten Häufigkeiten, ABSROW. In unserem Fall sollen in den Zellen Spaltenprozente abgebildet werden, das heißt als CELLELEMENTS wählen wir COLUMNPERCENT. Dazu passen eine Totalspalte und eine Absolutzeile.…',
-    },
-    en: {
-      description:
-        'PHYSICALCOLUMN. In the default case of a table with absolute frequencies, only one of the six frame elements is present: the row with the absolute frequencies, ABSROW. In our case column percentages are to be shown in the cells, i.e. we choose COLUMNPERCENT as CELLELEMENTS. A total column and an absolute row fit with that.…',
-      syntax: '',
+    syntax: '',
+    description: {
+      en: 'PHYSICALCOLUMN. In the default case of a table with absolute frequencies, only one of the six frame elements is present: the row with the absolute frequencies, ABSROW. In our case column percentages are to be shown in the cells, i.e. we choose COLUMNPERCENT as CELLELEMENTS. A total column and an absolute row fit with that.…',
+      de: 'PHYSICALCOLUMN. Im Standardfall einer Tabelle mit absoluten Häufigkeiten ist von den sechs Rahmenelementen nur eines vorhanden: die Zeile mit den absoluten Häufigkeiten, ABSROW. In unserem Fall sollen in den Zellen Spaltenprozente abgebildet werden, das heißt als CELLELEMENTS wählen wir COLUMNPERCENT. Dazu passen eine Totalspalte und eine Absolutzeile.…',
     },
   },
   {
     name: 'ABSINLABEL',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'ABSINLABELBOX',
-    de: {
-      description:
-        'Drucke die ABSROW 417 nicht wie üblich in einem eigenen Kasten, sondern drucke die Werte am unteren Rand der Labelkästchen.',
-    },
-    en: {
-      description:
-        'Prints the ABSOLUTEROW at the lower frame of the label box instead of as it is usually in its own box.',
+    syntax: '',
+    description: {
+      en: 'Prints the ABSOLUTEROW at the lower frame of the label box instead of as it is usually in its own box.',
+      de: 'Drucke die ABSROW nicht wie üblich in einem eigenen Kasten, sondern drucke die Werte am unteren Rand der Labelkästchen.',
     },
   },
   {
     name: 'ABSMEAN',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'ABSMEANSUM',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'ABSOLUTE',
-    de: { description: 'Zahl der Fälle (Summe der Gewichte)' },
-    en: { description: 'Number of cases (sum of weights)', syntax: '' },
+    syntax: '',
+    description: {
+      en: 'Number of cases (sum of weights)',
+      de: 'Zahl der Fälle (Summe der Gewichte)',
+    },
   },
   {
     name: 'ABSROW',
-    de: { description: 'Absolute Zahl der Nennungen/ Fälle in der Zeile' },
-    en: {
-      description: 'Absolute number of responses / cases in the row',
-      syntax: '',
+    syntax: '',
+    description: {
+      en: 'Absolute number of responses / cases in the row',
+      de: 'Absolute Zahl der Nennungen/ Fälle in der Zeile',
     },
   },
   {
     name: 'ABSROWINHG',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'ABSROWPERCENT',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'ABSZERODASH',
-    de: {
-      description:
-        'Im Standardfall wird die Null als Absolutwert als eine 0 dargestellt. Mit ABSZERODASH kann man erreichen, dass die Null in einem CELLELEMENT ABSOLUTE 419 als Dash („-“) dargestellt wird.',
-    },
-    en: {
-      description:
-        'Usually zero as an absolute value is represented with a "0". ABSZERODASH can be used to represent the zero in a CELLELEMENT ABSOLUTE as a dash (\'-\').',
+    syntax: '',
+    description: {
+      en: 'Usually zero as an absolute value is represented with a "0". ABSZERODASH can be used to represent the zero in a CELLELEMENT ABSOLUTE as a dash (\'-\').',
+      de: 'Im Standardfall wird die Null als Absolutwert als eine 0 dargestellt. Mit ABSZERODASH kann man erreichen, dass die Null in einem CELLELEMENT ABSOLUTE als Dash („-“) dargestellt wird.',
     },
   },
   {
     name: 'ACCOUNT',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'ACROSS',
-    de: {
-      description:
-        'Die atomaren Elemente von zusammengesetzten CELLELEMENTS werden in PS/PDF-Ausgabe nicht untereinander, sondern nebeneinander dargestellt.',
-    },
-    en: {
-      description:
-        'The atomic elements of composite CELLELEMENTS are shown side by side in PS/PDF output rather than one below the other.',
-      syntax: '',
+    syntax: '',
+    description: {
+      en: 'The atomic elements of composite CELLELEMENTS are shown side by side in PS/PDF output rather than one below the other.',
+      de: 'Die atomaren Elemente von zusammengesetzten CELLELEMENTS werden in PS/PDF-Ausgabe nicht untereinander, sondern nebeneinander dargestellt.',
     },
   },
   {
     name: 'ADD',
-    de: {
-      description:
-        "Editierung bestehender Labellisten, siehe ADD 212 Wird ein LABEL/OVERCODE an eine Position eingefügt, die so nicht 'exsitiert' (z.B. an POSTIION 5 in einer liste mit nur drei VALUELABELS, wird dieses Label einfach ans Listenende angehängt - so, als ob keine POSITION angegeben wäre.",
-    },
-    en: {
-      description:
-        "Editing of existing label lists, see ADD 212. If a LABEL/OVERCODE is inserted at a position that does not 'exist' this way (e.g. at POSITION 5 in a list with only three VALUELABELS), this label is simply appended to the end of the list — as if no POSITION had been given.",
-      syntax: '',
+    syntax: '',
+    description: {
+      en: "Editing of existing label lists, see ADD. If a LABEL/OVERCODE is inserted at a position that does not 'exist' this way (e.g. at POSITION 5 in a list with only three VALUELABELS), this label is simply appended to the end of the list — as if no POSITION had been given.",
+      de: "Editierung bestehender Labellisten, siehe ADD Wird ein LABEL/OVERCODE an eine Position eingefügt, die so nicht 'exsitiert' (z.B. an POSTIION 5 in einer liste mit nur drei VALUELABELS, wird dieses Label einfach ans Listenende angehängt - so, als ob keine POSITION angegeben wäre.",
     },
   },
   {
     name: 'ADDNAMETOVARTITLE',
-    de: { description: '', syntax: 'ADDNAMETOVARTITLE = [ YES | NO ];' },
-    en: { description: '', syntax: 'ADDNAMETOVARTITLE = [ YES | NO ];' },
+    syntax: 'ADDNAMETOVARTITLE = [ YES | NO ];',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'ADDOVERCODE',
-    de: {
-      description:
-        'In der Regel werden OVERCODE 262s je Fall nur einmal gezählt, wenn mehrere der dazugehörenden Kategorien vorkommen, d.h. es wird ein logisches ODER gebildet. Mit ADDOVERCODE kann eine Addition der Einzelhäufigkeiten verlangt werden. AUTOOVERSORT 647 Sortiert die OVERCODE 262s einer Tabelle und bereitet die Labels für die Sortierung unterhalb der Overcodes vor.…',
-    },
-    en: {
-      description:
-        'Usually the OVERCODE is only tallied once per case if several of the relevant categories arise i.e. a logical OR is used. ADDOVERCODE requests the addition of the individual frequencies.',
+    syntax: '',
+    description: {
+      en: 'Usually the OVERCODE is only tallied once per case if several of the relevant categories arise i.e. a logical OR is used. ADDOVERCODE requests the addition of the individual frequencies.',
+      de: 'In der Regel werden OVERCODEs je Fall nur einmal gezählt, wenn mehrere der dazugehörenden Kategorien vorkommen, d.h. es wird ein logisches ODER gebildet. Mit ADDOVERCODE kann eine Addition der Einzelhäufigkeiten verlangt werden. AUTOOVERSORT Sortiert die OVERCODEs einer Tabelle und bereitet die Labels für die Sortierung unterhalb der Overcodes vor.…',
     },
   },
   {
     name: 'ADDRESSBASE',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'ADDRSERVER',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'ADDSPLITS',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'ADOBELATIN1',
-    en: { description: '', syntax: 'ADOBELATIN1;' },
+    syntax: 'ADOBELATIN1;',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'ADOBENAME',
-    en: { description: '', syntax: 'ADOBENAME <char> = <name>;' },
+    syntax: 'ADOBENAME <char> = <name>;',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'AFTER',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'AGGR',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'ALFA',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'ALIGN',
-    de: {
-      description: '',
-      syntax:
-        'ALIGN <boxname> = { <hpos> | <vpos> }*n ;\n<hpos> = [ LEFT | RIGHT | HCENTER ] [ <number> ] [ TABULATOR <number> ]\n<vpos> = [ TOP | BOTTOM | VCENTER ] [ <number> ] [ TABULATOR <number> ]',
-    },
-    en: {
-      description:
-        '(PS): is ignored by line printers. The text in each box can be positioned vertically as well as horizontally. The following terms are required: TOP - VCENTER - BOTTOM and LEFT - HCENTER - RIGHT. Example: ALIGN LABELS X = HCENTER VCENTER; The terms LEFT and RIGHT can also contain a command for the distance to the edge of the box:…',
-      syntax:
-        'ALIGN <boxname> = { <hpos> | <vpos> }*n ;\n<hpos> = [ LEFT | RIGHT | HCENTER ] [ <number> ] [ TABULATOR <number> ]\n<vpos> = [ TOP | BOTTOM | VCENTER ] [ <number> ] [ TABULATOR <number> ]',
+    syntax:
+      'ALIGN <boxname> = { <hpos> | <vpos> }*n ;\n<hpos> = [ LEFT | RIGHT | HCENTER ] [ <number> ] [ TABULATOR <number> ]\n<vpos> = [ TOP | BOTTOM | VCENTER ] [ <number> ] [ TABULATOR <number> ]',
+    description: {
+      en: '(PS): is ignored by line printers. The text in each box can be positioned vertically as well as horizontally. The following terms are required: TOP - VCENTER - BOTTOM and LEFT - HCENTER - RIGHT. Example: ALIGN LABELS X = HCENTER VCENTER; The terms LEFT and RIGHT can also contain a command for the distance to the edge of the box:…',
+      de: '',
     },
   },
   {
     name: 'ALIGNALPHA',
-    de: { description: '', syntax: 'ALIGNALPHA = [ LEFT | RIGHT ];' },
-    en: { description: '', syntax: 'ALIGNALPHA = [ LEFT | RIGHT ];' },
+    syntax: 'ALIGNALPHA = [ LEFT | RIGHT ];',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'ALIGNDATA',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'ALIGNLABELLEFT',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'ALL',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'ALLOWALPHATEST',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'ALLOWASYMMETRY',
-    de: {
-      description:
-        'asymmetrische Ausgabe der Skala bei RISING/FALLING Analog zum TABLEFORMAT kann man die einzelnen Optionen ein- und ausschalten. Der 534 Zustand von GESSCHARTFORMAT gilt für alle danach stehenden Charts, bis ein weiteres GESSCHARTFORMAT dieses wieder ändert. Mit GESSCHARTFORMAT kann man immer nur alle entsprechenden Elemente beeinflussen.…',
-    },
-    en: {
-      description:
-        'asymmetric output of the scale with RISING/FALLING. As with TABLEFORMAT, the individual options can be switched on and off. The 534 state of GESSCHARTFORMAT applies to all charts that follow, until another GESSCHARTFORMAT changes it again. With GESSCHARTFORMAT you can only ever affect all corresponding elements at once.…',
-      syntax: '',
+    syntax: '',
+    description: {
+      en: 'asymmetric output of the scale with RISING/FALLING.',
+      de: 'asymmetrische Ausgabe der Skala bei RISING/FALLING',
     },
   },
   {
     name: 'ALLOWEMPTY',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'ALLOWEXPANDINTOKEN',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'ALLOWLINEFEED',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'ALLOWNOTEXTINVAR',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'ALLQUESTIONSASKED',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'ALLSIGNIFICANCE',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'ALPHA',
-    de: { description: '', syntax: 'ALPHA <varlist> = YES;' },
-    en: {
-      description:
-        '1 100 20 ; In this case the names of politicians are punched in the fields 1-20, 21-40, etc. which makes coding by hand superfluous. If using input from a COLBIN file then the key word ALPHA can obviously not be used. Generally the use of an asterisk instead of the initial column is processed the same as in a SINGLEQ. MULTIQs can also be defined as relocatable.…',
-      syntax: 'ALPHA <varlist> = YES;',
+    syntax: 'ALPHA <varlist> = YES;',
+    description: {
+      en: '1 100 20 ; In this case the names of politicians are punched in the fields 1-20, 21-40, etc. which makes coding by hand superfluous. If using input from a COLBIN file then the key word ALPHA can obviously not be used. Generally the use of an asterisk instead of the initial column is processed the same as in a SINGLEQ. MULTIQs can also be defined as relocatable.…',
+      de: '',
     },
   },
   {
     name: 'ALPHACASESENSITIVE',
-    de: {
-      description: '',
-      syntax: 'ALPHACASESENSITIVE = [ YES | NO | LOWERCASE | UPPERCASE ];',
-    },
-    en: {
-      description: '',
-      syntax: 'ALPHACASESENSITIVE = [ YES | NO | LOWERCASE | UPPERCASE ];',
+    syntax: 'ALPHACASESENSITIVE = [ YES | NO | LOWERCASE | UPPERCASE ];',
+    description: {
+      en: '',
+      de: '',
     },
   },
   {
     name: 'ALPHAFAMILY',
-    de: {
-      description: '',
-      syntax: 'ALPHAFAMILY <neueAlphaFamily> = { <alphavar> }*n ;',
-    },
-    en: {
-      description: '',
-      syntax: 'ALPHAFAMILY <newAlphaFamily> = { <alphavar> }*n ;',
+    syntax: 'ALPHAFAMILY <newAlphaFamily> = { <alphavar> }*n ;',
+    description: {
+      en: '',
+      de: '',
     },
   },
   {
     name: 'ALTXCODE',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'ALWAYS',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'AND',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'ANSWER',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'ANYCASE',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'APPEND',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'APPOINTCODE',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'APPOINTMENTWAIT',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'APPOTRY',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'AREAS',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'AREAS3D',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'AS',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'ASALPHA',
-    de: {
-      description: '',
-      syntax:
-        'ASALPHA <varlist> = [ YES | NO ];\nOPENASALPHA <varlist> = [ YES | NO ];',
+    syntax: 'ASALPHA <varlist> = [ YES | NO ];',
+    description: {
+      en: '',
+      de: '',
     },
-    en: { description: '', syntax: 'ASALPHA <varlist> = [ YES | NO ];' },
   },
   {
     name: 'ASCEND',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'ASCIIIN',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'ASCIIOUT',
-    de: {
-      description: '',
-      syntax: 'ASCIIOUT <Varlist> = startcolumn [ width ];',
-    },
-    en: {
-      description:
-        'Every variable which is to appear in an ASCIIOUTFILE must be included in an ASCIIOUT statement.',
-      syntax: 'ASCIIOUT <Varlist> = startcolumn [ width ];',
+    syntax: 'ASCIIOUT <varlist> = startcolumn [ width ];',
+    description: {
+      en: 'Every variable which is to appear in an ASCIIOUTFILE must be included in an ASCIIOUT statement.',
+      de: '',
     },
   },
   {
     name: 'ASCIIOUTCARD',
-    en: {
-      description:
-        'The number of cards and the preset of the present card for the output of variables in ASCII format in the ASCIIOUTFILE.',
+    syntax: '',
+    description: {
+      en: 'The number of cards and the preset of the present card for the output of variables in ASCII format in the ASCIIOUTFILE.',
+      de: '',
     },
   },
   {
     name: 'ASCIIOUTCARDS',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'ASCIIOUTDECIMALCAR',
-    en: {
-      description:
-        'Defines CHAR value which is to be used as a decimal separator in ASCIIOUT.',
+    syntax: '',
+    description: {
+      en: 'Defines CHAR value which is to be used as a decimal separator in ASCIIOUT.',
+      de: '',
     },
   },
   {
     name: 'ASCIIOUTDECIMALCHAR',
-    de: { description: '', syntax: 'ASCIIOUTDECIMALCHAR = [ . | , ];' },
-    en: { description: '', syntax: 'ASCIIOUTDECIMALCHAR = [ . | , ];' },
+    syntax: 'ASCIIOUTDECIMALCHAR = [ . | , ];',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'ASCIIOUTFILE',
-    de: {
-      description: '',
-      syntax: 'ASCIIOUTFILE [ DELIMITED [ ASCIIOUT ] ] = <filename>;',
-    },
-    en: {
-      description: '',
-      syntax: 'ASCIIOUTFILE [ DELIMITED [ ASCIIOUT ] ] = <filename>;',
+    syntax: 'ASCIIOUTFILE [ DELIMITED [ ASCIIOUT ] ] = <filename>;',
+    description: {
+      en: '',
+      de: '',
     },
   },
   {
     name: 'ASKMULTIASSINGLES',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'ASSCOCEND',
-    de: { description: '', syntax: 'ASSCOCEND <filename> ;' },
-    en: { description: '', syntax: 'ASSCOCEND <filename> ;' },
+    syntax: 'ASSCOCEND <filename> ;',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'ASSERT',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'ASSERTFILTERINASCII',
-    de: { description: '', syntax: 'ASSERTFILTERINASCII = [ YES | NO ];' },
-    en: { description: '', syntax: 'ASSERTFILTERINASCII = [ YES | NO ];' },
+    syntax: 'ASSERTFILTERINASCII = [ YES | NO ];',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'ASSERTFILTERVARS',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'ASSOCEND',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'ASSOCFILE',
-    de: {
-      description: '',
-      syntax: 'ASSOCFILE = <filename> KEY <varname> <startcol> <len> ;',
-    },
-    en: {
-      description: '',
-      syntax:
-        'ASSOCFILE [ BIG | DBASEIN ] = <filename> KEY <varname> <startcol>\n<len> ;',
+    syntax:
+      'ASSOCFILE [ BIG | DBASEIN ] = <filename> KEY <varname> <startcol>\n<len> ;',
+    description: {
+      en: '',
+      de: '',
     },
   },
   {
     name: 'ASSOCTOINVERT',
-    de: {
-      description: '',
-      syntax:
-        'ASSOCTOINVERT = [ CSV | SPSS | DBASE | ASCIIN }*n = [ YES | NO ];\nVoreinstellung: ASSOCTOINVERT = CSV SPSS DBASE ASCIIN;',
-    },
-    en: {
-      description: '',
-      syntax:
-        'ASSOCTOINVERT = [ CSV | SPSS | DBASE | ASCIIN }*n = [ YES | NO ];\nDefault: ASSOCTOINVERT = CSV SPSS DBASE ASCIIN;',
+    syntax:
+      'ASSOCTOINVERT = [ CSV | SPSS | DBASE | ASCIIN }*n = [ YES | NO ];\nDefault: ASSOCTOINVERT = CSV SPSS DBASE ASCIIN;',
+    description: {
+      en: '',
+      de: '',
     },
   },
   {
     name: 'ASSOCVAR',
-    de: {
-      description: '',
-      syntax:
-        "ASSOCVAR <varname> = [ ALPHA] <startcol> [ <len> [ <width> ] ] ;\nJedes ASSOCVAR-Statement erzeugt eine neue, ergänzende Variable namens '<varname>'.",
-    },
-    en: {
-      description: '',
-      syntax:
-        'ASSOCVAR <varname> = [ ALPHA] <startcol> [ <len> [ <width> ] ] ;',
+    syntax: 'ASSOCVAR <varname> = [ ALPHA] <startcol> [ <len> [ <width> ] ] ;',
+    description: {
+      en: '',
+      de: '',
     },
   },
   {
     name: 'AUTO',
-    de: { description: '', syntax: 'AUTO : [YES | NO]' },
-    en: { description: '', syntax: 'AUTO : [YES | NO]' },
+    syntax: 'AUTO : [YES | NO]',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'AUTOALIGN',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'AUTOCASENUM',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'AUTOCHARTFORMAT',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'AUTOCLEAR',
-    de: { description: '', syntax: 'AUTOCLEAR = [ YES | NO ];' },
-    en: { description: '', syntax: 'AUTOCLEAR = [ YES | NO ];' },
+    syntax: 'AUTOCLEAR = [ YES | NO ];',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'AUTOCONTENTKEY',
-    de: {
-      description: '',
-      syntax:
-        'AUTOCONTENTKEY = [ TABLETITLE | VARNAME | VARTEXT | VARTITLE ]\n[ YVALID | XVALID ];\nAusschalten: AUTOCONTENTKEY = NO;',
-    },
-    en: {
-      description: '',
-      syntax:
-        'AUTOCONTENTKEY = [ VARNAME ] [ YVALID | XVALID | NO ];\nA CONTENTKEY (see above) is automatically allocated; if YVALID then the first variable in the Y-direction',
+    syntax:
+      'AUTOCONTENTKEY = [ VARNAME ] [ YVALID | XVALID | NO ];\nA CONTENTKEY (see above) is automatically allocated; if YVALID then the first variable in the Y-direction',
+    description: {
+      en: '',
+      de: '',
     },
   },
   {
     name: 'AUTONOANSWER',
-    de: {
-      description: '',
-      syntax:
-        'AUTONOANSWER [ <varlist> ] = [ YES "noanswertext" | NO ]\n[ LEVEL < number > ];',
-    },
-    en: {
-      description: '',
-      syntax:
-        'AUTONOANSWER [ <varlist> ] = [ YES "noanswertext" | NO ] [ LEVEL <\nnumber > ;\nAUTONOANSWER is either (without <varlist>) preset or it refers to explicit variables and the preset',
+    syntax:
+      'AUTONOANSWER [ <varlist> ] = [ YES "noanswertext" | NO ] [ LEVEL <\nnumber > ;\nAUTONOANSWER is either (without <varlist>) preset or it refers to explicit variables and the preset',
+    description: {
+      en: '',
+      de: '',
     },
   },
   {
     name: 'AUTONOANSWERCODE',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'AUTOOPEN',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'AUTOOVERSORT',
-    en: {
-      description:
-        'Sorts the OVERCODES in a table and prepares the labels for sorting within the overcode. Overcodes can hierarchically be sorted on up to five levels.',
+    syntax: '',
+    description: {
+      en: 'Sorts the OVERCODES in a table and prepares the labels for sorting within the overcode. Overcodes can hierarchically be sorted on up to five levels.',
+      de: '',
     },
   },
   {
     name: 'AUTOREPLACEOPEN',
-    de: { description: '', syntax: 'AUTOREPLACEOPEN = [ YES | NO ];' },
-    en: { description: '', syntax: 'AUTOREPLACEOPEN = [ YES | NO ];' },
+    syntax: 'AUTOREPLACEOPEN = [ YES | NO ];',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'AUTOSIGNCHAR',
-    de: {
-      description:
-        'Dieses TableFormat veranlasst eine automatische Kennzeichnung der Spalten mit Kennbuchstaben (INDEXCHARS 529) für spaltenorientierte Signifikanztests. Wenn TESTCOLUMNS 451 vereinbart sind, werden die Buchstaben nicht für die einzelnen Variablen neu vergeben, wie sonst im Standardfall.',
-    },
-    en: {
-      description:
-        'This TABLEFORMAT ensures an automatic identification of the column with an identifying letter (see INDEXCHARS) for significance tests per column. If TESTCOLUMNS has been set the letters are not re- allocated for each variable as is usually the case.',
+    syntax: '',
+    description: {
+      en: 'This TABLEFORMAT ensures an automatic identification of the column with an identifying letter (see INDEXCHARS) for significance tests per column. If TESTCOLUMNS has been set the letters are not re- allocated for each variable as is usually the case.',
+      de: 'Dieses TableFormat veranlasst eine automatische Kennzeichnung der Spalten mit Kennbuchstaben (INDEXCHARS) für spaltenorientierte Signifikanztests. Wenn TESTCOLUMNS vereinbart sind, werden die Buchstaben nicht für die einzelnen Variablen neu vergeben, wie sonst im Standardfall.',
     },
   },
   {
     name: 'AUTOSIGNCHARALWAYS',
-    de: {
-      description:
-        'Wie AUTOSIGNCHAR 535. AUTOSIGNCHAR enthält aber eine Automatik, dass nur dann die Kennzeichnung im Kopf vorgenommen wird, wenn auch mindestens ein zutreffendes CELLELEMENT 418 in der Tabelle enthalten ist. Bei AUTOSIGNCHARALWAYS unterbleibt diese Prüfung.',
-    },
-    en: {
-      description:
-        'As AUTOSIGNCHAR but using AUTOSIGNCHAR the identification in the stub automatically only occurs if also at least one valid CELLELEMENT is present in the table. This test does not take place if using AUTOSIGNCHARALWAYS.',
+    syntax: '',
+    description: {
+      en: 'As AUTOSIGNCHAR but using AUTOSIGNCHAR the identification in the stub automatically only occurs if also at least one valid CELLELEMENT is present in the table. This test does not take place if using AUTOSIGNCHARALWAYS.',
+      de: 'Wie AUTOSIGNCHAR. AUTOSIGNCHAR enthält aber eine Automatik, dass nur dann die Kennzeichnung im Kopf vorgenommen wird, wenn auch mindestens ein zutreffendes CELLELEMENT in der Tabelle enthalten ist. Bei AUTOSIGNCHARALWAYS unterbleibt diese Prüfung.',
     },
   },
   {
     name: 'AUTOSIGNFORMAT',
-    de: {
-      description:
-        '5.Protokollierung der Signifikanzberechnung 460: STATTESTDUMP Gegenstand des Signifikanztests TestColumns Gibt man keine TESTCOLUMNS an, werden je Variable alle Spalten gegeneinander getestet.',
-      syntax: 'AUTOSIGNFORMAT = "<formatstring>";',
-    },
-    en: {
-      description:
-        '5. Logging of the significance calculation 460: STATTESTDUMP. Subject of the significance test: TestColumns. If you do not specify any TESTCOLUMNS, all columns are tested against each other per variable.',
-      syntax: 'AUTOSIGNFORMAT = "<formatstring>";',
+    syntax: 'AUTOSIGNFORMAT = "<formatstring>";',
+    description: {
+      en: '5. Logging of the significance calculation 460: STATTESTDUMP. Subject of the significance test: TestColumns. If you do not specify any TESTCOLUMNS, all columns are tested against each other per variable.',
+      de: '5.Protokollierung der Signifikanzberechnung 460: STATTESTDUMP Gegenstand des Signifikanztests TestColumns Gibt man keine TESTCOLUMNS an, werden je Variable alle Spalten gegeneinander getestet.',
     },
   },
   {
     name: 'AUTOSIGNIFTEXT',
-    de: { description: '', syntax: 'AUTOSIGNIFTEXT = [ YES | NO ];' },
-    en: { description: '', syntax: 'AUTOSIGNIFTEXT = [ YES | NO ];' },
+    syntax: 'AUTOSIGNIFTEXT = [ YES | NO ];',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'AUTOSORTTREE',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'AXISMINMAX',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'BACKGROUND',
     argsHint: '( ge 2 le 3 : $e0e0ff ge 0 le 2 : $d0d0ff )',
-    de: {
-      description:
-        'FORMAT "#,#" = <1 4> / <1 1> ; Der Ergebniswert 2 wäre ohne die obenstehende Regel nicht eindeutig zuzuordnen. so wird die Zelle mit $d0d0ff und nicht mit $e0e0ff gefärbt. Die letzte Zeile könnte auch in zwei getrennten BACKGROUND-Regeln beschrieben werden, gleichbedeutend wäre: BACKGROUND ( ge 2 le 3 : $e0e0ff ) BACKGROUND ( ge 0 le 2 :…',
-      syntax: 'BACKGROUND <boxtype> : <color>\nFOREGROUND <boxtype> : <color>',
-    },
-    en: {
-      description:
-        'FORMAT "#,#" = <1 4> / <1 1> ; The result value 2 could not be assigned unambiguously without the rule above. Thus the cell is coloured with $d0d0ff and not with $e0e0ff. The last line could also be described in two separate BACKGROUND rules; equivalent would be: BACKGROUND ( ge 2 le 3 : $e0e0ff ) BACKGROUND ( ge 0 le 2 :…',
-      syntax: 'BACKGROUND <boxname> = <hue> <saturation> <brightness>;',
+    syntax: 'BACKGROUND <boxname> = <hue> <saturation> <brightness>;',
+    description: {
+      en: 'FORMAT "#,#" = <1 4> / <1 1> ; The result value 2 could not be assigned unambiguously without the rule above. Thus the cell is coloured with $d0d0ff and not with $e0e0ff. The last line could also be described in two separate BACKGROUND rules; equivalent would be: BACKGROUND ( ge 2 le 3 : $e0e0ff ) BACKGROUND ( ge 0 le 2 :…',
+      de: 'FORMAT "#,#" = <1 4> / <1 1> ; Der Ergebniswert 2 wäre ohne die obenstehende Regel nicht eindeutig zuzuordnen. so wird die Zelle mit $d0d0ff und nicht mit $e0e0ff gefärbt. Die letzte Zeile könnte auch in zwei getrennten BACKGROUND-Regeln beschrieben werden, gleichbedeutend wäre: BACKGROUND ( ge 2 le 3 : $e0e0ff ) BACKGROUND ( ge 0 le 2 :…',
     },
   },
   {
     name: 'BACKGROUNDBOX',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'BACKLIMIT',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'BACKTOCONTENT',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'BANKERSROUNDMODE',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'BARS',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'BARS3D',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'BASEIN',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'BASESELECT',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'BCDVAR',
-    en: { description: '', syntax: 'BCDVAR <variable> = <vargroup> ;' },
+    syntax: 'BCDVAR <variable> = <vargroup> ;',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'BEEP',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'BENCHMARKCOLOR',
-    de: {
-      description: '',
-      syntax: 'BENCHMARKCOLOR = <color_high> <color_low> ;',
-    },
-    en: {
-      description: '',
-      syntax: 'BENCHMARKCOLOR = <color_high> <color_low> ;',
+    syntax: 'BENCHMARKCOLOR = <color_high> <color_low> ;',
+    description: {
+      en: '',
+      de: '',
     },
   },
   {
     name: 'BENCHMARKLEVEL',
-    de: {
-      description: '',
-      syntax:
-        'BENCHMARKLEVEL = [ SIGNIF90 | SIGNIF95 | SIGNIF99 | SIGNIF999 ];',
-    },
-    en: {
-      description: '',
-      syntax:
-        'BENCHMARKLEVEL = [ SIGNIF90 | SIGNIF95 | SIGNIF99 | SIGNIF999 ];',
+    syntax: 'BENCHMARKLEVEL = [ SIGNIF90 | SIGNIF95 | SIGNIF99 | SIGNIF999 ];',
+    description: {
+      en: '',
+      de: '',
     },
   },
   {
     name: 'BENCHMARKVALUES',
-    de: {
-      description:
-        '| 1 1:3 / 1 1:1 = 8.45 9213 | 1 1:3 / 1 2:2 = 54.33 9213 ; Die erste Zeile des Beispiels bedeutet also: Für alle Zellen im Schnittpunkt der ersten Variablen in der X-Richtung mit den x-Werten 1 2 und 3 und der ersten Variablen in der Y-Richtung mit dem Wert 1 gilt der Benchmarkprozentwert 8.45 bei einem N von 9213.…',
-    },
-    en: {
-      description:
-        'A different subject: percentage values and bases (e.g. from other surveys) can be set in BENCHMARKVALUES. Then the column percentages in the relevant cells are compared with the benchmark values using a z-test. The BACKGROUND of the cell can then be coded with BENCHMARKCOLOR.…',
+    syntax: '',
+    description: {
+      en: 'A different subject: percentage values and bases (e.g. from other surveys) can be set in BENCHMARKVALUES. Then the column percentages in the relevant cells are compared with the benchmark values using a z-test. The BACKGROUND of the cell can then be coded with BENCHMARKCOLOR.…',
+      de: '',
     },
   },
   {
     name: 'BIG',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'BIK001',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'BINARY',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'BINOMIALPERCENTRANGE',
-    de: { description: '', syntax: 'BINOMIALPERCENTRANGE = [ YES | NO ];' },
-    en: { description: '', syntax: 'BINOMIALPERCENTRANGE = [ YES | NO ];' },
+    syntax: 'BINOMIALPERCENTRANGE = [ YES | NO ];',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'BIPOL',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'BIT',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'BITGROUP',
-    en: { description: '', syntax: 'BITGROUP <vargroup> = <varname> ;' },
+    syntax: 'BITGROUP <vargroup> = <varname> ;',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'BLACKLIST',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'BLACKLISTCODE',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'BLACKLISTSERVER',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'BLANKVALUE',
-    de: {
-      description: '',
-      syntax: 'BLANKVALUE = <number>;\nBeispiel: BLANKVALUE = -1;',
-    },
-    en: {
-      description:
-        'Normally an input field which only contains blanks is internally set to zero. If these values are however required then the BLANKVALUE command can define a value. Example: BLANKVALUE = -1; Preset: BLANKVALUE = 0.0;',
-      syntax: 'BLANKVALUE = <number>;\nExample: BLANKVALUE = -1;',
+    syntax: 'BLANKVALUE = <number>;\nExample: BLANKVALUE = -1;',
+    description: {
+      en: 'Normally an input field which only contains blanks is internally set to zero. If these values are however required then the BLANKVALUE command can define a value. Example: BLANKVALUE = -1; Preset: BLANKVALUE = 0.0;',
+      de: '',
     },
   },
   {
     name: 'BOLD',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'BORDERS',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'BOTH',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'BOTTOM',
-    de: {
-      description:
-        'Label wird innerhalb einer Sortierklasse immer ans Ende sortiert, siehe',
-    },
-    en: {
-      description:
-        'The label is always sorted to the end within a sort class, see',
-      syntax: '',
+    syntax: '',
+    description: {
+      en: 'The label is always sorted to the end within a sort class.',
+      de: 'Label wird innerhalb einer Sortierklasse immer ans Ende sortiert.',
     },
   },
   {
     name: 'BOTTOMCUT',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'BOTTOMTEXT',
-    de: {
-      description: 'Optionaler Text am Ende der Tabelle',
-      syntax: 'BOTTOMTEXT = "<text>";',
-    },
-    en: {
-      description:
-        'This is an alternative method for defining text at the end of a table. BOTTOMTEXT has in contrast to the CITEVARTEXT command which refers to variables, the text to be printed as its argument. If a BOTTOMTEXT is defined any additional CITEVARTEXT or CITEALLVARS commands for the BOTTOMTEXT are ignored. Maximum text length: 1500 characters.',
-      syntax: 'BOTTOMTEXT = "<text>";',
+    syntax: 'BOTTOMTEXT = "<text>";',
+    description: {
+      en: 'This is an alternative method for defining text at the end of a table. BOTTOMTEXT has in contrast to the CITEVARTEXT command which refers to variables, the text to be printed as its argument. If a BOTTOMTEXT is defined any additional CITEVARTEXT or CITEALLVARS commands for the BOTTOMTEXT are ignored. Maximum text length: 1500 characters.',
+      de: 'Optionaler Text am Ende der Tabelle',
     },
   },
   {
     name: 'BOXFONT',
-    de: {
-      description: '',
-      syntax:
-        'BOXFONT <boxtype> : <fontname> SIZE <number>\n[OPTION [BOLD|ITALIC|UNDERLINE]]',
-    },
-    en: {
-      description: '',
-      syntax:
-        'BOXFONT <boxtype> : <fontname> SIZE <number>\n[OPTION [BOLD|ITALIC|UNDERLINE]]',
+    syntax:
+      'BOXFONT <boxtype> : <fontname> SIZE <number>\n[OPTION [BOLD|ITALIC|UNDERLINE]]',
+    description: {
+      en: '',
+      de: '',
     },
   },
   {
     name: 'BOXLINEFEED',
-    de: { description: '', syntax: 'BOXLINEFEED <boxname> = <number> ;' },
-    en: {
-      description: '(PS): is ignored by line printers.',
-      syntax: 'BOXLINEFEED <boxname> = <number> ;',
+    syntax: 'BOXLINEFEED <boxname> = <number> ;',
+    description: {
+      en: '(PS): is ignored by line printers.',
+      de: '',
     },
   },
   {
     name: 'BOXMINHEIGHT',
-    de: {
-      description: '',
-      syntax:
-        "BOXMINHEIGHT <boxname> = <number>;\nWird wegen der Abhängigkeit der Boxes voneinander nicht bei allen '<boxnames>'",
-    },
-    en: {
-      description: '(PS): is ignored by line printers.',
-      syntax: 'BOXMINHEIGHT <boxname> = <number> ;',
+    syntax: 'BOXMINHEIGHT <boxname> = <number> ;',
+    description: {
+      en: '(PS): is ignored by line printers.',
+      de: '',
     },
   },
   {
     name: 'BOXRADIUS',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'BOXTEXT',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'BOXTYPE',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'BY',
-    de: {
-      description: 'Trennt den Kopf von der Achse',
-      syntax: '<kop> BY <achse>{*n}',
-    },
-    en: {
-      description: 'Separates the header from the axis',
-      syntax: '<header> BY <axis>{*n}',
+    syntax: '<header> BY <axis>{*n}',
+    description: {
+      en: 'Separates the header from the axis',
+      de: 'Trennt den Kopf von der Achse',
     },
   },
   {
     name: 'CALCCOLLOWACCURACY',
-    de: { description: '', syntax: 'CALCCOLLOWACCURACY = [ YES | NO ] ;' },
-    en: { description: '', syntax: 'CALCCOLLOWACCURACY = [ YES | NO ] ;' },
+    syntax: 'CALCCOLLOWACCURACY = [ YES | NO ] ;',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'CALCULATECOLUMN',
-    de: {
-      description: '',
-      syntax:
-        'CALCULATECOLUMN <Zielspalte> [ FORMAT <format> ]\n[ FOREGROUND <rules> ] [ BACKGROUND <rules> ]\n= <arithmetischer Spaltenausdruck>;\n<Zielspalte> ::= <varno> <code> >\n<rules> ::= ( { <rule> }*n )\n<rule> ::= [ GE | GT ] <number1> [ LT | LE ] <number2> : <color>',
-    },
-    en: {
-      description: '',
-      syntax:
-        'CALCULATECOLUMN = <zielcolumn> [ format "<format>" ] =\n<arithmetischer ausdruck>;\nThe notation for the column is: < <varno> <code> >. <varno> stands for the tally of the variables',
+    syntax:
+      'CALCULATECOLUMN = <targetcolumn> [ format "<format>" ] =\n<arithmetic expression>;\nThe notation for the column is: < <varno> <code> >. <varno> stands for the tally of the variables',
+    description: {
+      en: '',
+      de: '',
     },
   },
   {
     name: 'CAMEMBERT',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'CAMEMBERT3D',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'CAMEMBERTANDBAR',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'CAMEMBERTEXPLODE',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'CAMEMBERTEXPLODE3D',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'CAPI',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'CARD',
-    en: {
-      description:
-        'discloses in which row or "card" the then following variables or weight is to be found. Preset is on CARD=1. CARD and CARDS refer to the DATAFILE (and thus automatically the COPYFILE). Relevant commands are also available for ASCIIOUTFILE, COLBININFILE and COLBINOUTFILE.',
+    syntax: '',
+    description: {
+      en: 'discloses in which row or "card" the then following variables or weight is to be found. Preset is on CARD=1. CARD and CARDS refer to the DATAFILE (and thus automatically the COPYFILE). Relevant commands are also available for ASCIIOUTFILE, COLBININFILE and COLBINOUTFILE.',
+      de: '',
     },
   },
   {
     name: 'CARDNUMBER',
-    de: { description: '', syntax: 'CARDNUMBER = <STARTCOLUMN> <WIDTH>;' },
-    en: { description: '', syntax: 'CARDNUMBER = startcolumn width;' },
+    syntax: 'CARDNUMBER = startcolumn width;',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'CARDS',
-    en: {
-      description:
-        'CARDS discloses how many records or rows constitute the case. Example: CARDS = 2; Preset is CARDS=1, i.e. for data sets which comprise one row the specification is not necessary.',
+    syntax: '',
+    description: {
+      en: 'CARDS discloses how many records or rows constitute the case. Example: CARDS = 2; Preset is CARDS=1, i.e. for data sets which comprise one row the specification is not necessary.',
+      de: '',
     },
   },
   {
     name: 'CASEBASESTRING',
-    de: {
-      description:
-        'Text, der bei Mehrfachnennungen in CODEBOOK 346-Tabellen auf die Prozentuierung verweist.',
-      syntax:
-        'CASEBASESTRING = "<text>";\nStandardtext: \'Prozentuiert auf die Zahl der Fälle\';',
-    },
-    en: {
-      description:
-        'Defines the text which refers to the percentaging for multi-responses CODEBOOK tables. Preset: CASEBASESTRING = "Prozentuiert auf die Zahl der Fälle"; This is valid for all tables until changed.',
-      syntax:
-        'CASEBASESTRING = "<text>";\nDefault text: \'Percentaged on the number of cases\';',
+    syntax:
+      'CASEBASESTRING = "<text>";\nDefault text: \'Percentaged on the number of cases\';',
+    description: {
+      en: 'Defines the text which refers to the percentaging for multi-responses CODEBOOK tables. Preset: CASEBASESTRING = "Prozentuiert auf die Zahl der Fälle"; This is valid for all tables until changed.',
+      de: 'Text, der bei Mehrfachnennungen in CODEBOOK-Tabellen auf die Prozentuierung verweist.',
     },
   },
   {
     name: 'CASELIST',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'CASENUMBER',
-    en: {
-      description:
-        'Syntax CASENUMBER = startcolumn width; If the column definition is known for a case number then an identical value is expected at that position for all cards of a case. Divergence leads to an error log which is shown in the lower error window on screen and where necessary in the LISTFILE.',
+    syntax: '',
+    description: {
+      en: 'Syntax CASENUMBER = startcolumn width; If the column definition is known for a case number then an identical value is expected at that position for all cards of a case. Divergence leads to an error log which is shown in the lower error window on screen and where necessary in the LISTFILE.',
+      de: '',
     },
   },
   {
     name: 'CASES',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'CASESTITLE',
-    en: {
-      description:
-        'If the standard text "number of Interviewees abs." in TABLEBASE = CASES is to be replaced it can be done in this way: CASESTITLE = "Number of Inter-views (abs.)"; The CASESTITLE can be set differently for the X and Y axes Example: CASESTITLE X = "n"; CASESTITLE Y = "N"; The same separating rules are valid as for VALUELABELS and are valid for all tables until changed.',
+    syntax: '',
+    description: {
+      en: 'If the standard text "number of Interviewees abs." in TABLEBASE = CASES is to be replaced it can be done in this way: CASESTITLE = "Number of Inter-views (abs.)"; The CASESTITLE can be set differently for the X and Y axes Example: CASESTITLE X = "n"; CASESTITLE Y = "N"; The same separating rules are valid as for VALUELABELS and are valid for all tables until changed.',
+      de: '',
     },
   },
   {
     name: 'CASETITLE',
-    de: {
-      description:
-        'Bezeichnung der CASES-Spalte/-zeile (wenn TABLEBASE = CASES; 388 gesetzt)',
-      syntax: 'CASETITLE [ X | Y ] = "<text>";',
-    },
-    en: {
-      description:
-        'Label of the CASES column/row (when TABLEBASE = CASES; 388 is set)',
-      syntax: 'CASETITLE [ X | Y ] = "<text>";',
+    syntax: 'CASETITLE [ X | Y ] = "<text>";',
+    description: {
+      en: 'Label of the CASES column/row (when TABLEBASE = CASES; 388 is set)',
+      de: 'Bezeichnung der CASES-Spalte/-zeile (wenn TABLEBASE = CASES; 388 gesetzt)',
     },
   },
   {
     name: 'CATI',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'CATIDISPLAYLIST',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'CBEXCLUDEMISSING',
-    de: { description: '', syntax: 'CBEXCLUDEMISSING = [ YES | NO ];' },
-    en: { description: '', syntax: 'CBEXCLUDEMISSING = [ YES | NO ];' },
+    syntax: 'CBEXCLUDEMISSING = [ YES | NO ];',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'CBPERCENTINTOTAL',
-    de: {
-      description:
-        'In der Totalzeile von CODEBOOK 346 werden jeweils die Zahl der Fälle oder die Zahl der Nennungen ausgewiesen. Wird das TABLEFORMAT CBPERCENTINTOTAL gesetzt, werden in den Totalspalte stattdessen Prozentwerte ausgegeben.',
-    },
-    en: {
-      description:
-        'In the total row of CODEBOOK 346, either the number of cases or the number of responses is shown. If the TABLEFORMAT CBPERCENTINTOTAL is set, percentage values are output in the total column instead.',
-      syntax: '',
+    syntax: '',
+    description: {
+      en: 'In the total row of CODEBOOK, either the number of cases or the number of responses is shown. If the TABLEFORMAT CBPERCENTINTOTAL is set, percentage values are output in the total column instead.',
+      de: 'In der Totalzeile von CODEBOOK werden jeweils die Zahl der Fälle oder die Zahl der Nennungen ausgewiesen. Wird das TABLEFORMAT CBPERCENTINTOTAL gesetzt, werden in den Totalspalte stattdessen Prozentwerte ausgegeben.',
     },
   },
   {
     name: 'CELLELEMENT',
-    de: {
-      description: '[ MINIMUM <number> ] minimale im PIE abzubildende %-Zahl',
-    },
-    en: {
-      description:
-        '[ MINIMUM <number> ] minimum percentage value to be shown in the PIE',
-      syntax: '',
+    syntax: '',
+    description: {
+      en: '[ MINIMUM <number> ] minimum percentage value to be shown in the PIE',
+      de: '[ MINIMUM <number> ] minimale im PIE abzubildende %-Zahl',
     },
   },
   {
     name: 'CELLELEMENTS',
     argsHint: '( ABSOLUTE COLUMNPERCENT )',
-    de: {
-      description:
-        'Anforderung spezifischer Zellenelemente 418 für dieses Label',
-      syntax: 'CELLELEMENTS [ TOTALROW | TOTALCOLUMN ] = { <cellelement> }*n ;',
-    },
-    en: {
-      description:
-        '; .... CELLELEMENTS = COLUMNPERCENT; TABLE = Kopf BY y SORT ABSOLUTE DESCEND; In connection with MULTITOTAL it is not necessary to stipulate an evaluation level. Normally all characteristics have LEVEL 0. If the LEVEL is set to <> 0 the relevant characteristics will be ignored when tallying the total. Level values: 0 – 127.',
-      syntax: 'CELLELEMENTS [ TOTALROW | TOTALCOLUMN ] = { <cellelement> }*n ;',
+    syntax: 'CELLELEMENTS [ TOTALROW | TOTALCOLUMN ] = { <cellelement> }*n ;',
+    description: {
+      en: '',
+      de: 'Anforderung spezifischer Zellenelemente 418 für dieses Label',
     },
   },
   {
     name: 'CELLMINALWAYS',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'CELLMINIMUM',
-    de: { description: '', syntax: 'CELLMINIMUM = <value>;' },
-    en: {
-      description:
-        'The option CELLMINIMUM states as of which minimum value a table cell counts as valid and should be included. Example: CELLMINIMUM = 10; In all cells where the minimum value has not been reached there will be "-". Preset at 0.0001; CELLMINIMUM as ROWMINIMUM and COLMINIMUM are TABLE options. Options always refer to the last table requested. They are therefore always written after the TABLE command.…',
-      syntax: 'CELLMINIMUM = <value>;',
+    syntax: 'CELLMINIMUM = <value>;',
+    description: {
+      en: 'The option CELLMINIMUM states as of which minimum value a table cell counts as valid and should be included. Example: CELLMINIMUM = 10; In all cells where the minimum value has not been reached there will be "-". Preset at 0.0001; CELLMINIMUM as ROWMINIMUM and COLMINIMUM are TABLE options. Options always refer to the last table requested. They are therefore always written after the TABLE command.…',
+      de: '',
     },
   },
   {
     name: 'CELLSEQUENCE',
-    de: {
-      description: '',
-      syntax:
-        'CELLSEQUENCE = <cellelements>;\nCLASSICCELLSEQUENCE = <cellelements>;',
-    },
-    en: {
-      description:
-        'If several CELLELEMENTS are required for a table the cell contents are printed underneath each other in a standard order. This standard order can be altered using the CELLSEQUENCE statement. CELLSEQUENCE defines a new order. All CELLELEMENTS which do not appear in CELLSEQUENCE are not printed.',
-      syntax:
-        'CELLSEQUENCE = <cellelements>;\nCLASSICCELLSEQUENCE = <cellelements>;',
+    syntax:
+      'CELLSEQUENCE = <cellelements>;\nCLASSICCELLSEQUENCE = <cellelements>;',
+    description: {
+      en: 'If several CELLELEMENTS are required for a table the cell contents are printed underneath each other in a standard order. This standard order can be altered using the CELLSEQUENCE statement. CELLSEQUENCE defines a new order. All CELLELEMENTS which do not appear in CELLSEQUENCE are not printed.',
+      de: '',
     },
   },
   {
     name: 'CELLSET',
-    de: { description: 'Statement verwendet werden.' },
-    en: {
-      description:
-        'The CELLELEMENTS statement can be used to combine several pieces of information in a single table cell in the parts of the table which span across both axes using LABELS. In summary tables additional summarised rows are often required where e.g. means are to be presented. Due to the syntax this is only one CELLELEMENT, if necessary this can be one that includes two values e.g.…',
+    syntax: '',
+    description: {
+      en: 'The CELLELEMENTS statement can be used to combine several pieces of information in a single table cell in the parts of the table which span across both axes using LABELS. In summary tables additional summarised rows are often required where e.g. means are to be presented. Due to the syntax this is only one CELLELEMENT, if necessary this can be one that includes two values e.g.…',
+      de: 'Statement verwendet werden.',
     },
   },
   {
     name: 'CHANGE',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'CHANGEKEYWORD',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'CHANGESPSSVARNAMES',
-    de: {
-      description: '',
-      syntax: 'CHANGESPSSVARNAMES = [ UPPERCASE | LOWERCASE | NO ];',
-    },
-    en: {
-      description: '',
-      syntax: 'CHANGESPSSVARNAMES = [ UPPERCASE | LOWERCASE | NO ];',
+    syntax: 'CHANGESPSSVARNAMES = [ UPPERCASE | LOWERCASE | NO ];',
+    description: {
+      en: '',
+      de: '',
     },
   },
   {
     name: 'CHAPTER',
-    de: { description: '', syntax: 'CHAPTER <varlist> = [ {<string>}*n ];' },
-    en: { description: '', syntax: 'CHAPTER <varlist> = [ {<string>}*n ];' },
+    syntax: 'CHAPTER <varlist> = [ {<string>}*n ];',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'CHAPTERPAGE',
-    de: {
-      description:
-        'Gesellschaft für Software in der Sozialforschung mbH Waterloohain 6 - 8',
-    },
-    en: {
-      description:
-        'Gesellschaft für Software in der Sozialforschung mbH Waterloohain 6 - 8',
-      syntax: '',
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
     },
   },
   {
     name: 'CHAPTERTITLE',
-    de: { description: '', syntax: 'CHAPTERTITLE = <name>;' },
-    en: { description: '', syntax: 'CHAPTERTITLE = <name>;' },
+    syntax: 'CHAPTERTITLE = <name>;',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'CHARTAREA',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'CHARTCOLORS',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'CHARTFOOTER',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'CHARTHEADER',
-    de: {
-      description: '',
-      syntax:
-        'CHARTHEADER = <string> [ TOP | BOTTOM | VCENTER |LEFT\n| RIGHT | HCENTER ] ;\nCHARTFOOTER = <string> [ TOP | BOTTOM | VCENTER |LEFT\n| RIGHT | HCENTER ] ;',
-    },
-    en: {
-      description: '',
-      syntax:
-        'CHARTHEADER = <string> [ TOP | BOTTOM | VCENTER |LEFT\n| RIGHT | HCENTER ] ;\nCHARTFOOTER = <string> [ TOP | BOTTOM | VCENTER |LEFT\n| RIGHT | HCENTER ] ;',
+    syntax:
+      'CHARTHEADER = <string> [ TOP | BOTTOM | VCENTER |LEFT\n| RIGHT | HCENTER ] ;\nCHARTFOOTER = <string> [ TOP | BOTTOM | VCENTER |LEFT\n| RIGHT | HCENTER ] ;',
+    description: {
+      en: '',
+      de: '',
     },
   },
   {
     name: 'CHARTHEIGHT',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'CHARTLABELS',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'CHARTLEGEND',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'CHARTNUMBERS',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'CHARTRANGE',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'CHARTTITLE',
-    de: {
-      description:
-        '"Top-2-Box horizontal nach Modellen: Bullet mit Zahlenangabe (weiß)" CHARTAREA 105 15 87 180 SAMEPAGE HORIZONTAL INVERSE = | FORM CIRCLE ROWS 1:22 COLUMNS 65002 SYMBOLSIZE 10 ; GESSCHARTFONT CHARTNUMBERS = "HELVETICA" SIZE 8; GESSCHARTFORMAT = NUMEXGRAPH NOFRAME NOSCALE; GESSCHARTCOLORS = $EE6699;',
-      syntax: 'CHARTTITLE : <title>',
-    },
-    en: {
-      description:
-        '"Top-2 box horizontal by models: bullet with figure (white)" CHARTAREA 105 15 87 180 SAMEPAGE HORIZONTAL INVERSE = | FORM CIRCLE ROWS 1:22 COLUMNS 65002 SYMBOLSIZE 10 ; GESSCHARTFONT CHARTNUMBERS = "HELVETICA" SIZE 8; GESSCHARTFORMAT = NUMEXGRAPH NOFRAME NOSCALE; GESSCHARTCOLORS = $EE6699;',
-      syntax: 'CHARTTITLE : <title>',
+    syntax: 'CHARTTITLE : <title>',
+    description: {
+      en: '',
+      de: '',
     },
   },
   {
     name: 'CHARTWIDTH',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'CHECKALLOW',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'CHECKBLACKSERV',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'CHECKMISSINGINMULTI',
-    de: { description: '', syntax: 'CHECKMISSINGINMULTI = [ YES | NO ];' },
-    en: { description: '', syntax: 'CHECKMISSINGINMULTI = [ YES | NO ];' },
+    syntax: 'CHECKMISSINGINMULTI = [ YES | NO ];',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'CHECKRECODES',
-    de: { description: '', syntax: 'CHECKRECODES = [ YES | NO };' },
-    en: { description: '', syntax: 'CHECKRECODES = [ YES | NO };' },
+    syntax: 'CHECKRECODES = [ YES | NO };',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'CHIQOCOLMINIMUM',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'CHIQU',
-    de: {
-      description:
-        'Ausgabe des Chi-Quadrats zellenweise. Das Chi-Quadrat bewertet die Abweichung der empirischen Verteilung in jeder Zelle vom anhand der Randverteilungen ermittelten Erwartungswert.',
-    },
-    en: {
-      description:
-        'Output of the chi-square per cell. The chi-square evaluates the deviation of the empirical distribution in each cell from the expected value derived from the marginal distributions.',
-      syntax: '',
+    syntax: '',
+    description: {
+      en: 'Output of the chi-square per cell. The chi-square evaluates the deviation of the empirical distribution in each cell from the expected value derived from the marginal distributions.',
+      de: 'Ausgabe des Chi-Quadrats zellenweise. Das Chi-Quadrat bewertet die Abweichung der empirischen Verteilung in jeder Zelle vom anhand der Randverteilungen ermittelten Erwartungswert.',
     },
   },
   {
     name: 'CHIQUCOLMINIMUM',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'CHIQUMINIMUM',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'CHIQUROWMINIMUM',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'CIRCLE',
-    de: { description: 'Skalenwert mit einem Kreis markieren' },
-    en: { description: 'Mark the scale value with a circle', syntax: '' },
+    syntax: '',
+    description: {
+      en: 'Mark the scale value with a circle',
+      de: 'Skalenwert mit einem Kreis markieren',
+    },
   },
   {
     name: 'CIRCLEO',
-    de: {
-      description:
-        'LineDash LINEDASH ist ein ganzzahliger Wert zwischen 1 und 10. In GESStabs sind zehn Formen gestrichelter Linien vordefiniert, die man zur Gestaltung von LINE oder RECTLINE abrufen kann. Voreinstellung: 0, das entspricht einer durchgezogenen Linie. LineWidth Die Dicke von LINE bzw. RECTLINE. Explode Ist bei anderen Formen als PIE oder PIE100 wirkungslos.…',
-    },
-    en: {
-      description:
-        'LineDash: LINEDASH is an integer value between 1 and 10. GESStabs predefines ten shapes of dashed lines that can be used for designing LINE or RECTLINE. Default: 0, which corresponds to a solid line. LineWidth: the thickness of LINE or RECTLINE. Explode: has no effect on shapes other than PIE or PIE100.…',
-      syntax: '',
+    syntax: '',
+    description: {
+      en: 'LineDash: LINEDASH is an integer value between 1 and 10. GESStabs predefines ten shapes of dashed lines that can be used for designing LINE or RECTLINE. Default: 0, which corresponds to a solid line. LineWidth: the thickness of LINE or RECTLINE. Explode: has no effect on shapes other than PIE or PIE100.…',
+      de: 'LineDash LINEDASH ist ein ganzzahliger Wert zwischen 1 und 10. In GESStabs sind zehn Formen gestrichelter Linien vordefiniert, die man zur Gestaltung von LINE oder RECTLINE abrufen kann. Voreinstellung: 0, das entspricht einer durchgezogenen Linie. LineWidth Die Dicke von LINE bzw. RECTLINE. Explode Ist bei anderen Formen als PIE oder PIE100 wirkungslos.…',
     },
   },
   {
     name: 'CITEALLVARS',
-    de: {
-      description: '',
-      syntax:
-        'CITEALLVARS = [ TOPTEXT | BOTTOMTEXT | NO ]\n{ XVALIDXVALID | YVALIDYVALID };',
-    },
-    en: {
-      description: '',
-      syntax:
-        'CITEALLVARS = [ TOPTEXT | BOTTOMTEXT | NO ] { XVALID | YVALID };',
+    syntax: 'CITEALLVARS = [ TOPTEXT | BOTTOMTEXT | NO ] { XVALID | YVALID };',
+    description: {
+      en: '',
+      de: '',
     },
   },
   {
     name: 'CITEFIRSTVAR',
-    de: {
-      description: '',
-      syntax:
-        'CITEFIRSTVAR = [ TOPTEXT | BOTTOMTEXT | NO ] { XVALID | YVALID };\nParallel zu CITEALLVARS gibt es auch ein CITEFIRSTVAR; dann wird nur der Text der die',
-    },
-    en: {
-      description: '',
-      syntax:
-        'CITEFIRSTVAR = [ TOPTEXT | BOTTOMTEXT | NO ] { XVALID | YVALID };\nIn parallel with CITEALLVARS there is also a CITEFIRSTVAR; then only the text of the',
+    syntax:
+      'CITEFIRSTVAR = [ TOPTEXT | BOTTOMTEXT | NO ] { XVALID | YVALID };\nIn parallel with CITEALLVARS there is also a CITEFIRSTVAR; then only the text of the',
+    description: {
+      en: '',
+      de: '',
     },
   },
   {
     name: 'CITEVARTEXT',
-    de: {
-      description: '',
-      syntax: 'CITEVARTEXT [ TOPTEXT | BOTTOMTEXT ] = <Varlist> ;',
-    },
-    en: {
-      description: '',
-      syntax: 'CITEVARTEXT [ TOPTEXT | BOTTOMTEXT ] = <Varlist> ;',
+    syntax: 'CITEVARTEXT [ TOPTEXT | BOTTOMTEXT ] = <varlist> ;',
+    description: {
+      en: '',
+      de: '',
     },
   },
   {
     name: 'CKONTO',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'CKONTOKEY',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'CLASSIC',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'CLASSICCELLSEQUENCE',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'CLONEVAR',
-    de: {
-      description: '',
-      syntax:
-        'CLONEVAR <destinationvar> = <sourcevar>\n[ DELETELABELS [ MISSING | AUTONOANSWER | OVERCODE | {<number>}*n ] ];',
-    },
-    en: {
-      description: '',
-      syntax:
-        'CLONEVAR <destinationvar> = <sourcevar>\n[ DELETELABELS [ MISSING | AUTONOANSWER | OVERCODE | {<number>}*n ] ];',
+    syntax:
+      'CLONEVAR <destinationvar> = <sourcevar>\n[ DELETELABELS [ MISSING | AUTONOANSWER | OVERCODE | {<number>}*n ] ];',
+    description: {
+      en: '',
+      de: '',
     },
   },
   {
     name: 'CLOSED',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'CLUSTERED',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'CODE',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'CODEBLOCK',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'CODEBOOK',
-    de: { description: '', syntax: 'CODEBOOK [ EXCEPT ][ <VarList> ] ;' },
-    en: { description: '', syntax: 'CODEBOOK [ <VarList> ] ;' },
+    syntax: 'CODEBOOK [ <VarList> ] ;',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'CODEBOOKHEADER',
-    de: {
-      description: '',
-      syntax:
-        'CODEBOOKHEADER =\n| CODE "Text"\n| ABSOLUTE "Text"\n| COLUMNPERCENT "Text"\n| NOMPERCENT "Text"\n| CUMPERCENT "Text"',
-    },
-    en: {
-      description: '',
-      syntax:
-        'CODEBOOKHEADER =\n| CODE "Text"\n| ABSOLUTE "Text"\n| COLUMNPERCENT "Text"\n| NOMPERCENT "Text"\n| CUMPERCENT "Text"',
+    syntax:
+      'CODEBOOKHEADER =\n| CODE "Text"\n| ABSOLUTE "Text"\n| COLUMNPERCENT "Text"\n| NOMPERCENT "Text"\n| CUMPERCENT "Text"',
+    description: {
+      en: '',
+      de: '',
     },
   },
   {
     name: 'CODEBOOKTOTAL',
-    de: { description: '', syntax: 'CODEBOOKTOTAL = "text";' },
-    en: { description: '', syntax: 'CODEBOOKTOTAL = "text";' },
+    syntax: 'CODEBOOKTOTAL = "text";',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'CODEBOOKVALUES',
-    de: {
-      description:
-        'In CODEBOOK 346s wird der Labelcode jeder Variablenausprägung als eigene Spalte ausgegeben.',
-    },
-    en: {
-      description:
-        'Prints the numerical codes beside the VALUELABELS in CODEBOOK tables. This is particularly useful for controlling the automatic coding which is carried out by ALPHA-VARS.',
+    syntax: '',
+    description: {
+      en: 'Prints the numerical codes beside the VALUELABELS in CODEBOOK tables. This is particularly useful for controlling the automatic coding which is carried out by ALPHA-VARS.',
+      de: 'In CODEBOOKs wird der Labelcode jeder Variablenausprägung als eigene Spalte ausgegeben.',
     },
   },
   {
     name: 'CODEBOOKZEROLINES',
-    de: {
-      description:
-        'Bewirkt die Ausgabe gelabelter Codes in CODEBOOK 346s, auch wenn die Häufigkeit null ist.',
-    },
-    en: {
-      description:
-        'Causes labelled codes to be output in CODEBOOK 346 even when the frequency is zero.',
-      syntax: '',
+    syntax: '',
+    description: {
+      en: 'Causes labelled codes to be output in CODEBOOK even when the frequency is zero.',
+      de: 'Bewirkt die Ausgabe gelabelter Codes in CODEBOOKs, auch wenn die Häufigkeit null ist.',
     },
   },
   {
     name: 'CODEINLABELS',
-    de: { description: '', syntax: 'CODEINLABELS = [ YES | NO ];' },
-    en: { description: '', syntax: 'CODEINLABELS = [ YES | NO ];' },
+    syntax: 'CODEINLABELS = [ YES | NO ];',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'CODISISDN',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'COLBINCRLF',
-    de: { description: '', syntax: 'COLBINCRLF = [ YES | NO ];' },
-    en: { description: '', syntax: 'COLBINCRLF = [ YES | NO ];' },
+    syntax: 'COLBINCRLF = [ YES | NO ];',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'COLBINFORMAT',
-    de: { description: '', syntax: 'COLBINFORMAT = <Colbinformatname>;' },
-    en: { description: '', syntax: 'COLBINFORMAT = <colbinformatname>;' },
+    syntax: 'COLBINFORMAT = <colbinformatname>;',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'COLBINFORNAT',
-    en: { description: '', syntax: 'COLBINFORNAT = <Colbinformatname>;' },
+    syntax: 'COLBINFORNAT = <colbinformatname>;',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'COLBININ',
-    de: {
-      description: '',
-      syntax: 'COLBININ <varname> = { | value < column : code }*n };',
-    },
-    en: {
-      description: '',
-      syntax: 'COLBININ <varname> = { | value < column : code }*n };',
+    syntax: 'COLBININ <varname> = { | value < column : code }*n };',
+    description: {
+      en: '',
+      de: '',
     },
   },
   {
     name: 'COLBININCARD',
-    en: {
-      description: 'Definition for the data set to be read in COLBIN format.',
+    syntax: '',
+    description: {
+      en: 'Definition for the data set to be read in COLBIN format.',
+      de: '',
     },
   },
   {
     name: 'COLBININCARDS',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'COLBININCOLS',
-    de: { description: '', syntax: 'COLBININCOLS = <value>;' },
-    en: { description: '', syntax: 'COLBININCOLS = <value>;' },
+    syntax: 'COLBININCOLS = <value>;',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'COLBININFILE',
-    de: { description: '', syntax: 'COLBININFILE = <filename>;' },
-    en: { description: '', syntax: 'COLBININFILE = <filename>;' },
+    syntax: 'COLBININFILE = <filename>;',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'COLBININSWAPPED',
-    de: { description: '', syntax: 'COLBININSWAPPED = [ YES | NO ];' },
-    en: { description: '', syntax: 'COLBININSWAPPED = [ YES | NO ];' },
+    syntax: 'COLBININSWAPPED = [ YES | NO ];',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'COLBINOUT',
-    de: {
-      description: '',
-      syntax: 'COLBINOUT <varlist> = <start> <width>\nBITGROUP [ 10 | 12 ];',
-    },
-    en: {
-      description:
-        'The counterpart of COLBININ is COLBINOUT. In the first form it is very similar to COLBININ described above: Example: COLBINOUT Alter = | 1 > 22:9 | 2 > 22:X | 3 > 22:Y | 4 > 23:0 | 5 > 23:1 | 6 > 23:3; The COLBINOUT statement is also used to build VARFAMILYs and VARGROUPs on COLBIN multi punches as the variables can be multi-response variables.…',
-      syntax: 'COLBINOUT <varlist> = <start> <width> BITGROUP [ 10 | 12 ];',
+    syntax: 'COLBINOUT <varlist> = <start> <width> BITGROUP [ 10 | 12 ];',
+    description: {
+      en: 'The counterpart of COLBININ is COLBINOUT. In the first form it is very similar to COLBININ described above: Example: COLBINOUT Alter = | 1 > 22:9 | 2 > 22:X | 3 > 22:Y | 4 > 23:0 | 5 > 23:1 | 6 > 23:3; The COLBINOUT statement is also used to build VARFAMILYs and VARGROUPs on COLBIN multi punches as the variables can be multi-response variables.…',
+      de: '',
     },
   },
   {
     name: 'COLBINOUTCARD',
-    en: {
-      description:
-        'Definition for the data set to be written in COLBIN format.',
+    syntax: '',
+    description: {
+      en: 'Definition for the data set to be written in COLBIN format.',
+      de: '',
     },
   },
   {
     name: 'COLBINOUTCARDS',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'COLBINOUTCOLS',
-    de: { description: '', syntax: 'COLBINOUTCOLS = <value>;' },
-    en: { description: '', syntax: 'COLBINOUTCOLS = <value>;' },
+    syntax: 'COLBINOUTCOLS = <value>;',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'COLBINOUTFILE',
-    en: {
-      description:
-        'Output of data in COLumn-BINary-format. See COLBIN-Data above.',
+    syntax: '',
+    description: {
+      en: 'Output of data in COLumn-BINary-format. See COLBIN-Data above.',
+      de: '',
     },
   },
   {
     name: 'COLBINOUTSWAPPED',
-    de: { description: '', syntax: 'COLBINOUTSWAPPED = [ YES | NO ];' },
-    en: { description: '', syntax: 'COLBINOUTSWAPPED = [ YES | NO ];' },
+    syntax: 'COLBINOUTSWAPPED = [ YES | NO ];',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'COLCCHIQUABSMIN',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'COLCCHIQUPHYSMIN',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'COLCHIQU',
-    de: {
-      description:
-        'Spaltenweise 4-Felder Chi²-Test auf Prozentwertunterschied. Um die Chi²-Prüfgröße und den dazu passenden Signifikanzwert zu ermitteln, wird intern eine 4-Felder-Matrix bei jedem Paarvergleich generiert, bei der in der ersten Zeile die beobachteten, absoluten Fälle des gefragten Zellenpaars stehen und in der zweiten Zeile jeweils die Differenz dieser Werte zu den Totalwerten aus der Totalzeile der…',
-    },
-    en: {
-      description:
-        'Column-wise 4-field chi-square test on percentage differences. To determine the chi-square statistic and the corresponding significance value, an internal 4-field matrix is generated for each pairwise comparison, with the observed absolute cases of the cell pair in question in the first row and, in the second row, the difference between these values and the total values from the total row of the…',
-      syntax: '',
+    syntax: '',
+    description: {
+      en: 'Column-wise 4-field chi-square test on percentage differences. To determine the chi-square statistic and the corresponding significance value, an internal 4-field matrix is generated for each pairwise comparison, with the observed absolute cases of the cell pair in question in the first row and, in the second row, the difference between these values and the total values from the total row of the…',
+      de: 'Spaltenweise 4-Felder Chi²-Test auf Prozentwertunterschied. Um die Chi²-Prüfgröße und den dazu passenden Signifikanzwert zu ermitteln, wird intern eine 4-Felder-Matrix bei jedem Paarvergleich generiert, bei der in der ersten Zeile die beobachteten, absoluten Fälle des gefragten Zellenpaars stehen und in der zweiten Zeile jeweils die Differenz dieser Werte zu den Totalwerten aus der Totalzeile der…',
     },
   },
   {
     name: 'COLCOUNTLINES',
-    en: {
-      description:
-        'Printing of column tallies (COLUMNCOUNT) in a row-orientated format. Usually the results are printed in columns. (NON-PS) An example of an 80-Column-Tally:',
+    syntax: '',
+    description: {
+      en: 'Printing of column tallies (COLUMNCOUNT) in a row-orientated format. Usually the results are printed in columns. (NON-PS) An example of an 80-Column-Tally:',
+      de: '',
     },
   },
   {
     name: 'COLDEPTTEST',
     argsHint: '(Var)',
-    de: { description: 'Abhängiger t-Test auf Mittelwertsunterschiede' },
-    en: { description: 'Dependent t-test on mean differences', syntax: '' },
+    syntax: '',
+    description: {
+      en: 'Dependent t-test on mean differences',
+      de: 'Abhängiger t-Test auf Mittelwertsunterschiede',
+    },
   },
   {
     name: 'COLLECT',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'COLMEANINVRANK',
     argsHint: '( Var )',
-    de: {
-      description:
-        'Für die Rangplatzberechnungen werden alle Zellen in einer Tabellenspalte miteinander verglichen und es wird ein Rangplatz berechnet, in diesem Fall für den MEAN. Identische MEANs bekommen identische Ränge. Zwei MEAN gelten als identsich, wenn sie dieselbe Druckausgabe ergeben, d.h. es kommt auch auf die verwendeten Formate an.…',
-    },
-    en: {
-      description:
-        'For the rank calculations, all cells in a table column are compared with each other and a rank is computed, in this case for the MEAN. Identical MEANs get identical ranks. Two MEANs are considered identical if they produce the same printed output, i.e. the formats used also matter.…',
-      syntax: '',
+    syntax: '',
+    description: {
+      en: 'For the rank calculations, all cells in a table column are compared with each other and a rank is computed, in this case for the MEAN. Identical MEANs get identical ranks. Two MEANs are considered identical if they produce the same printed output, i.e. the formats used also matter.…',
+      de: 'Für die Rangplatzberechnungen werden alle Zellen in einer Tabellenspalte miteinander verglichen und es wird ein Rangplatz berechnet, in diesem Fall für den MEAN. Identische MEANs bekommen identische Ränge. Zwei MEAN gelten als identsich, wenn sie dieselbe Druckausgabe ergeben, d.h. es kommt auch auf die verwendeten Formate an.…',
     },
   },
   {
     name: 'COLMEANRANK',
     argsHint: '( Var )',
-    de: {
-      description:
-        'siehe COLMEANINVRANK, aber: der niedrigste Mittelwert bekommt hier den Rang 1',
-    },
-    en: {
-      description: 'see COLMEANINVRANK, but here the lowest mean gets rank 1',
-      syntax: '',
+    syntax: '',
+    description: {
+      en: 'see COLMEANINVRANK, but here the lowest mean gets rank 1',
+      de: 'siehe COLMEANINVRANK, aber: der niedrigste Mittelwert bekommt hier den Rang 1',
     },
   },
   {
     name: 'COLMINIMUM',
-    en: {
-      description:
-        'Option for TABLE statement. Only those columns are printed which contain at least COLMINIMUM cases, i.e., columns with very low case numbers in side group variables are suppressed. Preset at 0.0001.',
+    syntax: '',
+    description: {
+      en: 'Option for TABLE statement. Only those columns are printed which contain at least COLMINIMUM cases, i.e., columns with very low case numbers in side group variables are suppressed. Preset at 0.0001.',
+      de: '',
     },
   },
   {
     name: 'COLOR',
-    de: {
-      description:
-        'Brightness) oder dem RGB-Modell (Red-Green-Blue) ausgewählt. Symbolnummer 1 . . . 6',
-      syntax:
-        'COLOR [ FOREGROUND | BACKGROUND ] =\n{ |\n[ DATABOX <number> <number> CODE [ X | Y ] <number > ]\n<cellelement> RANGE <low> <high> = <number> <number> number> }*n\n;',
-    },
-    en: {
-      description:
-        'Brightness) or the RGB model (Red-Green-Blue) is used for selection. Symbol number 1 . . . 6',
-      syntax:
-        'COLOR [ FOREGROUND | BACKGROUND ] =\n{ |\n[ DATABOX <number> <number> CODE [ X | Y ] <number > ]\n<cellelement> RANGE <low> <high> = <number> <number> number> }*n\n;',
+    syntax:
+      'COLOR [ FOREGROUND | BACKGROUND ] =\n{ |\n[ DATABOX <number> <number> CODE [ X | Y ] <number > ]\n<cellelement> RANGE <low> <high> = <number> <number> number> }*n\n;',
+    description: {
+      en: '',
+      de: '',
     },
   },
   {
     name: 'COLORIFBASELESS',
-    de: {
-      description: '',
-      syntax:
-        'COLORIFBASELESS <place> <test> <number> [ <cellelement> ] = <color>;\n<place> ::= [ FRAMECELL X | FRAMECELL X | DATACELL ]\n<test> ::= [ ABSOLUTE PHYSICALRECORDS VALIDN VALIDPHYS ]\n<number> ::= Schwellenwert, bei dessen Unterschreitung die Farbe geändert werden soll\n<cellelement> ::= Das betroffene CELLELEMENT: wird diese Angabe weggelassen,',
-    },
-    en: {
-      description: '',
-      syntax:
-        'COLORIFBASELESS <place> <test> <number> [ <cellelement> ] = <color>;\n<place> ::= [ FRAMECELL X | FRAMECELL X | DATACELL ]\n<test> ::= [ ABSOLUTE PHYSICALRECORDS VALIDN VALIDPHYS ]\n<number> ::= threshold below which the colour should be changed\n<cellelement> ::= the CELLELEMENT concerned: if this is omitted,',
+    syntax:
+      'COLORIFBASELESS <place> <test> <number> [ <cellelement> ] = <color>;\n<place> ::= [ FRAMECELL X | FRAMECELL X | DATACELL ]\n<test> ::= [ ABSOLUTE PHYSICALRECORDS VALIDN VALIDPHYS ]\n<number> ::= threshold below which the colour should be changed\n<cellelement> ::= the CELLELEMENT concerned: if this is omitted,',
+    description: {
+      en: '',
+      de: '',
     },
   },
   {
     name: 'COLPCTBENCHMARK',
-    de: {
-      description:
-        'Zum Vergleich von Spaltenprozenten mit extern festgelegten Benchmarkwerten (siehe BENCHMARKVALUES 443)',
-    },
-    en: {
-      description:
-        'For comparing column percentages with externally defined benchmark values (see BENCHMARKVALUES 443)',
-      syntax: '',
+    syntax: '',
+    description: {
+      en: 'For comparing column percentages with externally defined benchmark values (see BENCHMARKVALUES)',
+      de: 'Zum Vergleich von Spaltenprozenten mit extern festgelegten Benchmarkwerten (siehe BENCHMARKVALUES)',
     },
   },
   {
     name: 'COLPERCANDCHIQU',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'COLPERCANDHYCHIQU',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'COLPERCANDSIGN',
-    en: {
-      description: 'Column percent and COLPERCT Tests for Mean Differences:',
+    syntax: '',
+    description: {
+      en: 'Column percent and COLPERCT Tests for Mean Differences:',
+      de: '',
     },
   },
   {
     name: 'COLPERCENTABS',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'COLPERCENTDELTA',
-    de: {
-      description: 'Deltawerte (in Prozentpunkten) zum Wert in der Totalspalte',
-    },
-    en: {
-      description:
-        'Delta values (in percentage points) relative to the value in the total column',
-      syntax: '',
+    syntax: '',
+    description: {
+      en: 'Delta values (in percentage points) relative to the value in the total column',
+      de: 'Deltawerte (in Prozentpunkten) zum Wert in der Totalspalte',
     },
   },
   {
     name: 'COLPERCENTINDEX',
-    de: {
-      description:
-        'Indexwerte zu den Spaltenprozenten (100 entspricht dem Wert in der Totalspalte)',
-    },
-    en: {
-      description:
-        'Index values for the column percentages (100 corresponds to the value in the total column)',
-      syntax: '',
+    syntax: '',
+    description: {
+      en: 'Index values for the column percentages (100 corresponds to the value in the total column)',
+      de: 'Indexwerte zu den Spaltenprozenten (100 entspricht dem Wert in der Totalspalte)',
     },
   },
   {
     name: 'COLPERCENTINVRANK',
-    de: {
-      description:
-        'Die Rangbildung basiert auf COLPERCENT, Die Regeln zur Identität gelten entsprechend. Der höchste Wert bekommt dem niedrigsten Rang.',
-    },
-    en: {
-      description:
-        'The ranking is based on COLPERCENT. The identity rules apply accordingly. The highest value gets the lowest rank.',
-      syntax: '',
+    syntax: '',
+    description: {
+      en: 'The ranking is based on COLPERCENT. The identity rules apply accordingly. The highest value gets the lowest rank.',
+      de: 'Die Rangbildung basiert auf COLPERCENT, Die Regeln zur Identität gelten entsprechend. Der höchste Wert bekommt dem niedrigsten Rang.',
     },
   },
   {
     name: 'COLPERCENTIRANK',
-    de: {
-      description:
-        'siehe COLPERCENTINVRANK, aber der niedrigste Prozentwert bekommt den Rang 1',
-    },
-    en: {
-      description:
-        'see COLPERCENTINVRANK, but the lowest percentage value gets rank 1',
-      syntax: '',
+    syntax: '',
+    description: {
+      en: 'see COLPERCENTINVRANK, but the lowest percentage value gets rank 1',
+      de: 'siehe COLPERCENTINVRANK, aber der niedrigste Prozentwert bekommt den Rang 1',
     },
   },
   {
     name: 'COLPERCENTLINELIMIT',
-    de: { description: '', syntax: 'COLPERCENTLINELIMIT = <number>;' },
-    en: {
-      description: '',
-      syntax:
-        'COLPERCENTLINELIMIT = <number>;\nParallel to the option above, a row is suppressed if a cell has a column percent value of <number>.',
+    syntax:
+      'COLPERCENTLINELIMIT = <number>;\nParallel to the option above, a row is suppressed if a cell has a column percent value of <number>.',
+    description: {
+      en: '',
+      de: '',
     },
   },
   {
     name: 'COLPERCENTMEAN',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'COLPERCENTPROJ',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'COLPERCENTRANK',
-    de: {
-      description:
-        'nach dem Rangplatz des Prozentwerts in der Spalte, kleinster Wert = Rang 1',
-    },
-    en: {
-      description:
-        'by the rank of the percentage value in the column, smallest value = rank 1',
-      syntax: '',
+    syntax: '',
+    description: {
+      en: 'by the rank of the percentage value in the column, smallest value = rank 1',
+      de: 'nach dem Rangplatz des Prozentwerts in der Spalte, kleinster Wert = Rang 1',
     },
   },
   {
     name: 'COLPERCENTSUM',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'COLPERCEQUAL',
-    de: {
-      description:
-        'Testet alle Spaltenprozente in der Spalte auf Gleichheit; d.h. alle Abweichungen von der Ungleichverteilung werden als signifikant betrachtet. Hier besteht natürlich die Möglichkeit, sehr viele unsinnige Signifikanzen zu produzieren. Bitte mit Bedacht verwenden. COLPERCT* t-Test auf Prozentwertunterschiede: Test auf Basis von ESS 446 und Spaltenüberlappung',
-    },
-    en: {
-      description:
-        'Tests all column percentages in the column for equality; i.e. all deviations from the equal distribution are considered significant. This can of course produce a great many meaningless significances. Please use with care. COLPERCT* t-test on percentage differences: test based on ESS 446 and column overlap',
-      syntax: '',
+    syntax: '',
+    description: {
+      en: 'Tests all column percentages in the column for equality; i.e. all deviations from the equal distribution are considered significant. This can of course produce a great many meaningless significances. Please use with care. COLPERCT* t-test on percentage differences: test based on ESS and column overlap',
+      de: 'Testet alle Spaltenprozente in der Spalte auf Gleichheit; d.h. alle Abweichungen von der Ungleichverteilung werden als signifikant betrachtet. Hier besteht natürlich die Möglichkeit, sehr viele unsinnige Signifikanzen zu produzieren. Bitte mit Bedacht verwenden. COLPERCT* t-Test auf Prozentwertunterschiede: Test auf Basis von ESS und Spaltenüberlappung',
     },
   },
   {
     name: 'COLPERCHYMCNEMAR',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'COLPERCMCNEMAR',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'COLPERCSTDERR',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'COLPERCT',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'COLPERCTMINIMUM',
-    de: { description: '', syntax: 'COLPERCTMINIMUM = <number>;' },
-    en: {
-      description:
-        'In the significance calculation using COLPERCT the column overlaps are taken into account. This method can lead to problematical significances if the number of overlaps is so high that there are only a few cases which do NOT occur in both columns which have been tested against each other.…',
-      syntax: 'COLPERCTMINIMUM = <number>;',
+    syntax: 'COLPERCTMINIMUM = <number>;',
+    description: {
+      en: 'In the significance calculation using COLPERCT the column overlaps are taken into account. This method can lead to problematical significances if the number of overlaps is so high that there are only a few cases which do NOT occur in both columns which have been tested against each other.…',
+      de: '',
     },
   },
   {
     name: 'COLPERCZ',
-    de: {
-      description:
-        'Spaltenweiser Test der Unterschiede in den erweiterte Z-Test mit Arcus-Sinus-Korrektur benutzt',
-    },
-    en: {
-      description:
-        'Column-wise test of the differences using the extended Z-test with arcsine correction',
-      syntax: '',
+    syntax: '',
+    description: {
+      en: 'Column-wise test of the differences using the extended Z-test with arcsine correction',
+      de: 'Spaltenweiser Test der Unterschiede in den erweiterte Z-Test mit Arcus-Sinus-Korrektur benutzt',
     },
   },
   {
     name: 'COLROWPERCENT',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'COLSFROMNAME',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'COLSUMPERCENT',
     argsHint: '( Var )',
-    de: {
-      description:
-        'Ausgabe der Spaltenprozentuierung der Summe einer dritten Variablen, z.B. die Summe von Ausgaben für einen bestimmten Zweck in bestimmten Stadtteilen etc.',
-    },
-    en: {
-      description:
-        'Output of the column percentaging of the sum of a third variable, e.g. the sum of expenditures for a particular purpose in particular city districts, etc.',
-      syntax: '',
+    syntax: '',
+    description: {
+      en: 'Output of the column percentaging of the sum of a third variable, e.g. the sum of expenditures for a particular purpose in particular city districts, etc.',
+      de: 'Ausgabe der Spaltenprozentuierung der Summe einer dritten Variablen, z.B. die Summe von Ausgaben für einen bestimmten Zweck in bestimmten Stadtteilen etc.',
     },
   },
   {
     name: 'COLSUMPERCENTSUM',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'COLUMN',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'COLUMNCOUNT',
-    en: {
-      description: '',
-      syntax: 'COLUMNCOUNT = <startcolumn> <endcolumn> ;',
+    syntax: 'COLUMNCOUNT = <startcolumn> <endcolumn> ;',
+    description: {
+      en: '',
+      de: '',
     },
   },
   {
     name: 'COLUMNOFFSET',
-    de: { description: '', syntax: 'COLUMNOFFSET = <number> ;' },
-    en: { description: '', syntax: 'COLUMNOFFSET = <number> ;' },
+    syntax: 'COLUMNOFFSET = <number> ;',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'COLUMNPERCENT',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'COLUMNPERCENT100',
-    de: {
-      description:
-        'Nach Hare-Niemeyer-Modell modifizierte Spaltenprozentwerte (Summe ergibt 100), Achtung: nicht geeignet bspw. für Mehrfachnennungsvariablen und OVERCODEs, Tabellen mit unterdrückten MISSING VALUES und selektiv gebildete Variablen',
-    },
-    en: {
-      description:
-        'Column percentages modified by the Hare-Niemeyer method (sum equals 100). Note: not suitable e.g. for multiple-response variables and OVERCODEs, tables with suppressed MISSING VALUES and selectively built variables',
-      syntax: '',
+    syntax: '',
+    description: {
+      en: 'Column percentages modified by the Hare-Niemeyer method (sum equals 100). Note: not suitable e.g. for multiple-response variables and OVERCODEs, tables with suppressed MISSING VALUES and selectively built variables',
+      de: 'Nach Hare-Niemeyer-Modell modifizierte Spaltenprozentwerte (Summe ergibt 100), Achtung: nicht geeignet bspw. für Mehrfachnennungsvariablen und OVERCODEs, Tabellen mit unterdrückten MISSING VALUES und selektiv gebildete Variablen',
     },
   },
   {
     name: 'COLUMNPERCENTRANGE',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'COLUMNPERCENTRANGELOWER',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'COLUMNPERCENTRANGEUPPER',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'COLUMNRANGE',
-    de: {
-      description:
-        'Ausgabe einer Tabelle mit den unteren und oberen Rändern des Konfidenzintervalls (5%) von Spaltenprozenten COLUMNPERCENTRANGE* Konfidenzintervall für Spaltenprozente ROWPERCENTRANGE** Konfidenzintervall für Zeilenprozente',
-    },
-    en: {
-      description:
-        'Output of a table with the lower and upper bounds of the confidence interval (5%) of column percentages. COLUMNPERCENTRANGE* confidence interval for column percentages. ROWPERCENTRANGE** confidence interval for row percentages',
-      syntax: '',
+    syntax: '',
+    description: {
+      en: 'Output of a table with the lower and upper bounds of the confidence interval (5%) of column percentages. COLUMNPERCENTRANGE* confidence interval for column percentages. ROWPERCENTRANGE** confidence interval for row percentages',
+      de: 'Ausgabe einer Tabelle mit den unteren und oberen Rändern des Konfidenzintervalls (5%) von Spaltenprozenten COLUMNPERCENTRANGE* Konfidenzintervall für Spaltenprozente ROWPERCENTRANGE** Konfidenzintervall für Zeilenprozente',
     },
   },
   {
     name: 'COLUMNS',
-    de: {
-      description:
-        '| "Männer": geschl eq 1 : var=&2 | "Frauen": geschl eq 2 : var=&2 #endmacro Innerhalb der Tabelle wird das Macro dann fünfmal aufgerufen:',
-    },
-    en: {
-      description:
-        '| "Männer": geschl eq 1 : var=&2 | "Frauen": geschl eq 2 : var=&2 #endmacro This macro is then called up five times within the table:',
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
     },
   },
   {
     name: 'COLUMNSTRIPES',
-    de: {
-      description:
-        'Ist dieses TABLEFORMAT gesetzt, werden die Spalten von Tabellen farblich hinterlegt, und zwar abwechselnd mit den Farben, die in STRIPECOLORS 559 vereinbart wurden.',
-    },
-    en: {
-      description:
-        'If this TABLEFORMAT is set, the columns of tables are shaded, alternately with the colours declared in STRIPECOLORS 559.',
-      syntax: '',
+    syntax: '',
+    description: {
+      en: 'If this TABLEFORMAT is set, the columns of tables are shaded, alternately with the colours declared in STRIPECOLORS.',
+      de: 'Ist dieses TABLEFORMAT gesetzt, werden die Spalten von Tabellen farblich hinterlegt, und zwar abwechselnd mit den Farben, die in STRIPECOLORS vereinbart wurden.',
     },
   },
   {
     name: 'COLUMNSUMMARY',
-    de: {
-      description: '',
-      syntax:
-        'COLUMNSUMMARY <zielspalte> [ format "#,#..." ]\n= <function> [ <option>( {<quellspalte>}*n );\n<zielspalte> ::= < varno code >\n<quellspalte> ::= < varno code >\n<function> ::= [ MEAN | SUM | MIN | MAX ]\n<option> ::= [ ZEROMISSING | DASHMISSING ]',
-    },
-    en: {
-      description: '',
-      syntax:
-        'COLUMNSUMMARY <targetcolumn> [ format "#,#..." ]\n= <function> [ <option>( {<sourcecolumn>}*n );\n<targetcolumn> ::= < varno code >\n<sourcecolumn> ::= < varno code >\n<function> ::= [ MEAN | SUM | MIN | MAX ]\n<option> ::= [ ZEROMISSING | DASHMISSING ]',
+    syntax:
+      'COLUMNSUMMARY <targetcolumn> [ format "#,#..." ]\n= <function> [ <option>( {<sourcecolumn>}*n );\n<targetcolumn> ::= < varno code >\n<sourcecolumn> ::= < varno code >\n<function> ::= [ MEAN | SUM | MIN | MAX ]\n<option> ::= [ ZEROMISSING | DASHMISSING ]',
+    description: {
+      en: '',
+      de: '',
     },
   },
   {
     name: 'COLUMNVARS',
-    en: {
-      description:
-        'This is an alternative method of building a series of variables. The initial column of the variable becomes a component part of the name.',
-      syntax: 'COLUMNVARS <nameprefix> = start - end [width];',
+    syntax: 'COLUMNVARS <nameprefix> = start - end [width];',
+    description: {
+      en: 'This is an alternative method of building a series of variables. The initial column of the variable becomes a component part of the name.',
+      de: '',
     },
   },
   {
     name: 'COLUMNWIDTH',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'COMBINEDVAR',
-    en: {
-      description:
-        'COMBINEDVAR produces a VARFAMILY which contains all the individual characteristics of the individual variables next to each other. COMBINEDVAR X = Alter Geschlecht; produces for example a variable family with which a table can evaluate age and sex simultaneously next to one another. COMBINEDVAR is also suitable for allocating one variable to another including its VALUELABELS.',
+    syntax: '',
+    description: {
+      en: 'COMBINEDVAR produces a VARFAMILY which contains all the individual characteristics of the individual variables next to each other. COMBINEDVAR X = Alter Geschlecht; produces for example a variable family with which a table can evaluate age and sex simultaneously next to one another. COMBINEDVAR is also suitable for allocating one variable to another including its VALUELABELS.',
+      de: '',
     },
   },
   {
     name: 'COMMENT',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'COMPACTADDRES',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'COMPARE',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'COMPAREVAR',
-    en: { description: '', syntax: 'COMPAREVAR <name> = <Varlist> ;' },
+    syntax: 'COMPAREVAR <name> = <varlist> ;',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'COMPRESSCODEBOOK',
-    de: { description: '', syntax: 'COMPRESSCODEBOOK = [ YES | NO ];' },
-    en: {
-      description:
-        'COMPRESSCODEBOOK = [ YES | NO ]; In the ASCII mode a list of CODEBOOKS can also be printed in a compressed form where a number of CODEBOOKS fit on to one page.',
-      syntax: 'COMPRESSCODEBOOK = [ YES | NO ];',
+    syntax: 'COMPRESSCODEBOOK = [ YES | NO ];',
+    description: {
+      en: 'COMPRESSCODEBOOK = [ YES | NO ]; In the ASCII mode a list of CODEBOOKS can also be printed in a compressed form where a number of CODEBOOKS fit on to one page.',
+      de: '',
     },
   },
   {
     name: 'COMPUT',
-    de: {
-      description: '',
-      syntax: 'COMPUT <result> = <arithmetic_expressiom>;',
-    },
-    en: {
-      description: '',
-      syntax: 'COMPUT <result> = <arithmetic_expressiom>;',
+    syntax: 'COMPUT <result> = <arithmetic_expressiom>;',
+    description: {
+      en: '',
+      de: '',
     },
   },
   {
     name: 'COMPUTE',
-    de: {
-      description:
-        'Neuberechnung atomarer Variablen COMPUTE ADD Ergänzende Speicherung definierter Werte COMPUTE ALPHA Verknüpfung von String-Elementen COMPUTE ASCEND/DESCEND Sortierung der Werte (vor deren Übertrag in Zielvariable) COMPUTE CONCAT Verkettung von Labels und Textkonstanten COMPUTE COPY Kopieren von Variablenbereichen COMPUTE ELIMINATE Löschen einer definierten Wertemenge COMPUTE INIT Übertrag einer…',
-      syntax: 'COMPUTE ADD <zielvar> = <varlist>;',
-    },
-    en: {
-      description:
-        'allows the new calculation of variables by means of four basic arithmetical operations. New variables can be defined or existent variables can have their values changed. If there is a variable in the left half of the COMPUTE statement which the compiler does not yet recognise then it is produced. This is then valid as the "current" variable.…',
-      syntax: 'COMPUTE LOAD <zielvar> = <varlist> ;',
+    syntax: 'COMPUTE LOAD <zielvar> = <varlist> ;',
+    description: {
+      en: 'allows the new calculation of variables by means of four basic arithmetical operations. New variables can be defined or existent variables can have their values changed. If there is a variable in the left half of the COMPUTE statement which the compiler does not yet recognise then it is produced. This is then valid as the "current" variable.…',
+      de: 'Neuberechnung atomarer Variablen COMPUTE ADD Ergänzende Speicherung definierter Werte COMPUTE ALPHA Verknüpfung von String-Elementen COMPUTE ASCEND/DESCEND Sortierung der Werte (vor deren Übertrag in Zielvariable) COMPUTE CONCAT Verkettung von Labels und Textkonstanten COMPUTE COPY Kopieren von Variablenbereichen COMPUTE ELIMINATE Löschen einer definierten Wertemenge COMPUTE INIT Übertrag einer…',
     },
   },
   {
     name: 'COMPUTE ADD',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'COMPUTE ALPHA',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'COMPUTE ASCEND',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'COMPUTE CONCAT',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'COMPUTE COPY',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'COMPUTE DESCEND',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'COMPUTE ELIMINATE',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'COMPUTE INIT',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'COMPUTE LOAD',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'COMPUTE REPLACE',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'COMPUTE SHUFFLE',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'COMPUTE SORT',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'COMPUTE SUBSTR',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'COMPUTE SWAP',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'CONCATCSS',
-    de: { description: '', syntax: 'CONCATCSS = [ YES | NO ];' },
-    en: { description: '', syntax: 'CONCATCSS = [ YES | NO ];' },
+    syntax: 'CONCATCSS = [ YES | NO ];',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'CONCATFILTERTEXTS',
-    de: { description: '', syntax: 'CONCATFILTERTEXTS = [ YES | NO ];' },
-    en: { description: '', syntax: 'CONCATFILTERTEXTS = [ YES | NO ];' },
+    syntax: 'CONCATFILTERTEXTS = [ YES | NO ];',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'CONCATNUMTOSTR',
-    de: { description: '', syntax: 'CONCATNUMTOSTR <varlist> = [ YES | NO ];' },
-    en: { description: '', syntax: 'CONCATNUMTOSTR <varlist> = [ YES | NO ];' },
+    syntax: 'CONCATNUMTOSTR <varlist> = [ YES | NO ];',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'CONDENSESPSSGROUP',
-    de: { description: '', syntax: 'CONDENSESPSSGROUP = [ YES | NO ];' },
-    en: { description: '', syntax: 'CONDENSESPSSGROUP = [ YES | NO ];' },
+    syntax: 'CONDENSESPSSGROUP = [ YES | NO ];',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'CONFIDENCERANGE',
     argsHint: '( Var )',
-    de: {
-      description:
-        'Ausgabe der Konfidenzintervalls einer zusätzlichen Variablen (zwei Werte auf einer Zeile)',
-    },
-    en: {
-      description:
-        'Output of the confidence interval of an additional variable (two values on one line)',
-      syntax: '',
+    syntax: '',
+    description: {
+      en: 'Output of the confidence interval of an additional variable (two values on one line)',
+      de: 'Ausgabe der Konfidenzintervalls einer zusätzlichen Variablen (zwei Werte auf einer Zeile)',
     },
   },
   {
     name: 'CONFIDENCERANGEPVALUE',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'CONNECTEXCELCELLS',
-    de: { description: '', syntax: 'CONNECTEXCELCELLS <boxtype> : [YES|NO]' },
-    en: { description: '', syntax: 'CONNECTEXCELCELLS <boxtype> : [YES|NO]' },
+    syntax: 'CONNECTEXCELCELLS <boxtype> : [YES|NO]',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'CONTENT',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'CONTENTBOX',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'CONTENTFILE',
-    de: {
-      description: '',
-      syntax:
-        'CONTENTFILE <option> = <filename>;\noption ::= [ TABLETITLE | TOPTEXT | BOTTOMTEXT | VARIABLES X\n| VARIABLES Y ] [ option ]',
+    syntax: 'CONTENTFILE <option> = <filename>;',
+    description: {
+      en: '',
+      de: '',
     },
-    en: { description: '', syntax: 'CONTENTFILE <option> = <filename>;' },
   },
   {
     name: 'CONTENTKEY',
-    de: {
-      description: '',
-      syntax:
-        'CONTENTKEY = [ <text> | TABLETITLE [ [ VARNAME | VARTEXT | VARTITLE ]\n<VARIABLE> ];',
+    syntax: 'CONTENTKEY = [ <text> | <VARIABLE> ];',
+    description: {
+      en: '',
+      de: '',
     },
-    en: { description: '', syntax: 'CONTENTKEY = [ <text> | <VARIABLE> ];' },
   },
   {
     name: 'CONTENTKEYTOPDF',
-    de: { description: '', syntax: 'CONTENTKEYTOPDF = [ YES | NO ];' },
-    en: { description: '', syntax: 'CONTENTKEYTOPDF = [ YES | NO ];' },
+    syntax: 'CONTENTKEYTOPDF = [ YES | NO ];',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'CONTENTPAGE',
-    de: {
-      description: '',
-      syntax:
-        'CONTENTPAGE = YES\nUSEFONT <font>\n[ TITLE <Überschrift> USEFONT <font> ]\nMARGINS TOP <number> LEFT <number> BOTTOM <number>\nDISTANCE <number>\n;',
-    },
-    en: {
-      description: '',
-      syntax:
-        'CONTENTPAGE = YES\nUSEFONT <font>\n[ TITLE <heading> USEFONT <font> ]\nMARGINS TOP <number> LEFT <number> BOTTOM <number>\nDISTANCE <number>\n;',
+    syntax:
+      'CONTENTPAGE = YES\nUSEFONT <font>\n[ TITLE <heading> USEFONT <font> ]\nMARGINS TOP <number> LEFT <number> BOTTOM <number>\nDISTANCE <number>\n;',
+    description: {
+      en: '',
+      de: '',
     },
   },
   {
     name: 'CONTINGENCY',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'CONTINGENCYNONSTD',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'CONTINUETITLE',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'CONTROL',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'COPY',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'COPYCHART2POWERPOINT',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'COPYCHART2PP',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'COPYFILE',
-    de: { description: '', syntax: 'COPYFILE = <path>;' },
-    en: {
-      description:
-        'The output of processed and perhaps altered data sets to an ASCII file. With exception of RECODEs, COMPUTEs etc. (see below) the content of the COPYFILE is identical to that of the DATAFILE. (for historical reasons the key word OUTFILE is accepted as a synonym.) (see also ASCIIOUT ALL;)',
-      syntax: 'COPYFILE = <path>;',
+    syntax: 'COPYFILE = <path>;',
+    description: {
+      en: 'The output of processed and perhaps altered data sets to an ASCII file. With exception of RECODEs, COMPUTEs etc. (see below) the content of the COPYFILE is identical to that of the DATAFILE. (for historical reasons the key word OUTFILE is accepted as a synonym.) (see also ASCIIOUT ALL;)',
+      de: '',
     },
   },
   {
     name: 'COPYFILTER',
-    en: {
-      description:
-        'defines a variable (or list of variables) as filtered according to a condition: the filtered variables then never flow into the tables if the condition is FALSE. The most frequently used use is probably the filtering of questionnaires. This filtering can also be used to steer GESS input. SETFILTER is however also useful for limiting the valid range for VARGROUPS and VARFAMILY.…',
+    syntax: '',
+    description: {
+      en: 'defines a variable (or list of variables) as filtered according to a condition: the filtered variables then never flow into the tables if the condition is FALSE. The most frequently used use is probably the filtering of questionnaires. This filtering can also be used to steer GESS input. SETFILTER is however also useful for limiting the valid range for VARGROUPS and VARFAMILY.…',
+      de: '',
     },
   },
   {
     name: 'COPYLABELS',
-    de: {
-      description: '',
-      syntax:
-        'COPYLABELS <Varlist> = <source-variable>;\nUSELABELS <Varlist> = <source-variable>;\n[VALUE]LABELS <Varlist> COPY <source-variable>;\n[VALUE]LABELS <Varlist> AS <source-variable>;',
+    syntax: 'COPYLABELS <varlist> = Variable;',
+    description: {
+      en: '',
+      de: '',
     },
-    en: { description: '', syntax: 'COPYLABELS <Varlist> = Variable;' },
   },
   {
     name: 'COPYTEXT',
-    de: { description: '', syntax: 'COPYTEXT <VarList> = <variable>;' },
-    en: { description: '', syntax: 'COPYTEXT <varlist> = <variable>;' },
+    syntax: 'COPYTEXT <varlist> = <variable>;',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'COPYTITLE',
-    de: { description: '', syntax: 'COPYTITLE <VarList> = <variable>;' },
-    en: {
-      description: '',
-      syntax:
-        'COPYTITLE <varlist> = <variable>;\nAll variables in <varlist> (in some cases the last defined variable) contain a reference to the\nVARTITLE of <variable>.',
+    syntax:
+      'COPYTITLE <varlist> = <variable>;\nAll variables in <varlist> (in some cases the last defined variable) contain a reference to the\nVARTITLE of <variable>.',
+    description: {
+      en: '',
+      de: '',
     },
   },
   {
     name: 'COS',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'COUNT',
-    de: {
-      description: '',
-      syntax:
-        'COUNT <varlist> = ( <varlist> ) [ <logop> <number>\nIN [ <number> : number ] ] ;',
-    },
-    en: {
-      description:
-        'tallies the frequency of preselected characteristics in a variable list.',
-      syntax:
-        'COUNT <varlist> = ( <varlist> ) [ <logop> <number> | IN [ <number> :\nnumber ] ] ;\nlogop ::== [ EQ, NE, LT, LE, GT, GE ]',
+    syntax:
+      'COUNT <varlist> = ( <varlist> ) [ <logop> <number> | IN [ <number> :\nnumber ] ] ;\nlogop ::== [ EQ, NE, LT, LE, GT, GE ]',
+    description: {
+      en: 'tallies the frequency of preselected characteristics in a variable list.',
+      de: '',
     },
   },
   {
     name: 'COUNTVALID',
-    de: { description: '', syntax: 'COUNTVALID <resultvars> = <varlist>;' },
-    en: { description: '', syntax: 'COUNTVALID <resultvars> = <varlist>;' },
+    syntax: 'COUNTVALID <resultvars> = <varlist>;',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'CPI',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'CRAMERSV',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'CROSS2VAR',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'CROSSVAR',
-    de: { description: '', syntax: 'CROSSVAR <newvar> = <var1> <var2> ;' },
-    en: {
-      description:
-        'Using CROSSVAR special variable families can be produced which contain all the characteristic combinations of all the variables involved. This can be used to present multiple cross tables in TABLE for example. If one were to define:…',
-      syntax: 'CROSSVAR <newvar> = <var1> <var2> ;',
+    syntax: 'CROSSVAR <newvar> = <var1> <var2> ;',
+    description: {
+      en: 'Using CROSSVAR special variable families can be produced which contain all the characteristic combinations of all the variables involved. This can be used to present multiple cross tables in TABLE for example. If one were to define:…',
+      de: '',
     },
   },
   {
     name: 'CSS',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'CSSCLASS',
-    de: {
-      description:
-        'Vergabe einer CSS-Klasse für die HTML-Ausgabe, siehe Formatierung 584',
-    },
-    en: {
-      description:
-        'Assignment of a CSS class for the HTML output, see Formatting 584',
-      syntax: '',
+    syntax: '',
+    description: {
+      en: 'Assignment of a CSS class for the HTML output, see Formatting 584',
+      de: 'Vergabe einer CSS-Klasse für die HTML-Ausgabe, siehe Formatierung 584',
     },
   },
   {
     name: 'CSV',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'CSVEXPORT',
-    de: {
-      description: '',
-      syntax:
-        'CSVEXPORT = [ <filename> | "" ];\nImplementierung der guten alten Ausgabe von Tabellen im CSV-Format (HG=...). Alle',
-    },
-    en: {
-      description: '',
-      syntax:
-        'CSVEXPORT = [ <filename> | "" ];\nNew implementation of the good old output of tables in CSV-Format (HG= ). All text components of the',
+    syntax:
+      'CSVEXPORT = [ <filename> | "" ];\nNew implementation of the good old output of tables in CSV-Format (HG= ). All text components of the',
+    description: {
+      en: '',
+      de: '',
     },
   },
   {
     name: 'CSVEXPORTSINGLELINE',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'CSVINALPHA',
-    de: { description: '', syntax: 'CSVINALPHA = <namelist>;' },
-    en: { description: '', syntax: 'CSVINALPHA = <namelist>;' },
+    syntax: 'CSVINALPHA = <namelist>;',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'CSVINFILE',
-    de: {
-      description: '',
-      syntax:
-        'CSVINFILE [ FILEKEY <key> ] [ <delimchar> ] [ ALLOWEMPTY ]\n= <filepath>;',
-    },
-    en: {
-      description: '',
-      syntax:
-        'CSVINFILE [ FILEKEY <key> ] [ <delimchar> ] [ ALLOWEMPTY ]\n= <filepath>;',
+    syntax:
+      'CSVINFILE [ FILEKEY <key> ] [ <delimchar> ] [ ALLOWEMPTY ]\n= <filepath>;',
+    description: {
+      en: '',
+      de: '',
     },
   },
   {
     name: 'CSVINPROTOCOL',
-    de: { description: '', syntax: 'CSVINPROTOCOL = <filename>;' },
-    en: { description: '', syntax: 'CSVINPROTOCOL = <filename>;' },
+    syntax: 'CSVINPROTOCOL = <filename>;',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'CSVOUTFILE',
-    de: {
-      description: '',
-      syntax:
-        'CSVOUTFILE = <name>;\n<name> kann ein vollständiger Pfad oder nur ein Dateiname sein. Die Datei-Extension wird',
-    },
-    en: {
-      description: '',
-      syntax:
-        'CSVOUTFILE = <name>;\n<name> can be a full path or just a file name. The file extension is',
+    syntax:
+      'CSVOUTFILE = <name>;\n<name> can be a full path or just a file name. The file extension is',
+    description: {
+      en: '',
+      de: '',
     },
   },
   {
     name: 'CSVSPECIAL',
-    de: { description: '', syntax: 'CSVSPECIAL = <filepath>;' },
-    en: { description: '', syntax: 'CSVSPECIAL = <filepath>;' },
+    syntax: 'CSVSPECIAL = <filepath>;',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'CSVWEIGHT',
-    de: { description: '', syntax: 'CSVWEIGHT = <varname>;' },
-    en: { description: '', syntax: 'CSVWEIGHT = <varname>;' },
+    syntax: 'CSVWEIGHT = <varname>;',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'CSVWEIGHTOUT',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'CUMPERCENT',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'CUMULATIVE',
-    de: { description: 'Zeilenweise prozentuiert und kumuliert' },
-    en: { description: 'Row-wise percentaged and cumulated', syntax: '' },
+    syntax: '',
+    description: {
+      en: 'Row-wise percentaged and cumulated',
+      de: 'Zeilenweise prozentuiert und kumuliert',
+    },
   },
   {
     name: 'CURRENTMILLIS',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'CXSERVER',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'CXSERVERPORT',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'DASHMISSING',
-    de: {
-      description: '',
-      syntax: 'DASHMISSING = <char>;\nZEROMISSING = <char>;',
-    },
-    en: {
-      description: '',
-      syntax: 'DASHMISSING = <char>;\nZEROMISSING = <char>;',
+    syntax: 'DASHMISSING = <char>;\nZEROMISSING = <char>;',
+    description: {
+      en: '',
+      de: '',
     },
   },
   {
     name: 'DATA',
-    de: {
-      description: '',
-      syntax:
-        'DATA [ USEWEIGHT <weightvar> ] <method> <newvar>\n= <basevar> [ BY <groupvar> ] ;',
-    },
-    en: {
-      description: '',
-      syntax:
-        'DATA [ USEWEIGHT <weightvar> ] <method> <newvar>\n= <basevar> [ BY <groupvar> ] ;',
+    syntax:
+      'DATA [ USEWEIGHT <weightvar> ] <method> <newvar>\n= <basevar> [ BY <groupvar> ] ;',
+    description: {
+      en: '',
+      de: '',
     },
   },
   {
     name: 'DATABOX',
-    de: {
-      description:
-        'Kasten um alle DATACELLS, die zur Kreuzung jeweils zweier Variablen gehören.',
-    },
-    en: {
-      description:
-        'Box around all DATACELLS that belong to the intersection of any two variables.',
-      syntax: '',
+    syntax: '',
+    description: {
+      en: 'Box around all DATACELLS that belong to the intersection of any two variables.',
+      de: 'Kasten um alle DATACELLS, die zur Kreuzung jeweils zweier Variablen gehören.',
     },
   },
   {
     name: 'DATACELL',
-    de: { description: 'Jede einzelne Datenzelle der Tabelle' },
-    en: { description: 'Each individual data cell of the table', syntax: '' },
+    syntax: '',
+    description: {
+      en: 'Each individual data cell of the table',
+      de: 'Jede einzelne Datenzelle der Tabelle',
+    },
   },
   {
     name: 'DATAERRORDOCUMENTATION',
-    de: {
-      description:
-        'ERRORTYPE EXCEPT NUMERIC FILTER VARIABLES EXCEPT numtest y1 to y11 = filename; In diesem Fall würden alle Variablen geprüft, die aus dem Input gelesen werden, bis auf "numtest" und die Variablen y1 bis y11. Es würden alle ERRORTYPE geprüft bis auf NUMERIC und FILTER, d.h. die Prüfung erstreckt sich inhaltlich auf LABELS RANGE und ALIGN.',
-      syntax:
-        'DATAERRORDOCUMENTATION [ VARIABLES <varlist> ]\n[errortype {<errortype>}*n ] = <filename>;\nerrortype ::= LABELS | RANGE | FILTER | NUMERIC | ALIGN',
-    },
-    en: {
-      description:
-        'ERRORTYPE EXCEPT NUMERIC FILTER VARIABLES EXCEPT numtest y1 to y11 = filename; In this case all variables that are read from the input would be checked, except "numtest" and the variables y1 to y11. All ERRORTYPEs would be checked except NUMERIC and FILTER, i.e. the check covers LABELS RANGE and ALIGN in terms of content.',
-      syntax:
-        'DATAERRORDOCUMENTATION [ VARIABLES <varlist> ]\n[errortype {<errortype>}*n ] = <filename>;\nerrortype ::= LABELS | RANGE | FILTER | NUMERIC | ALIGN',
+    syntax:
+      'DATAERRORDOCUMENTATION [ VARIABLES <varlist> ]\n[errortype {<errortype>}*n ] = <filename>;\nerrortype ::= LABELS | RANGE | FILTER | NUMERIC | ALIGN',
+    description: {
+      en: 'ERRORTYPE EXCEPT NUMERIC FILTER VARIABLES EXCEPT numtest y1 to y11 = filename; In this case all variables that are read from the input would be checked, except "numtest" and the variables y1 to y11. All ERRORTYPEs would be checked except NUMERIC and FILTER, i.e. the check covers LABELS RANGE and ALIGN in terms of content.',
+      de: 'ERRORTYPE EXCEPT NUMERIC FILTER VARIABLES EXCEPT numtest y1 to y11 = filename; In diesem Fall würden alle Variablen geprüft, die aus dem Input gelesen werden, bis auf "numtest" und die Variablen y1 bis y11. Es würden alle ERRORTYPE geprüft bis auf NUMERIC und FILTER, d.h. die Prüfung erstreckt sich inhaltlich auf LABELS RANGE und ALIGN.',
     },
   },
   {
     name: 'DATAFILE',
-    de: {
-      description: '',
-      syntax:
-        'DATAFILE [ FILEKEY <key> ] [ ALLOWEMPTY ] = <filepath>;\nINFILE [ FILEKEY <key> ] [ ALLOWEMPTY ] = <filepath>;',
-    },
-    en: {
-      description: '',
-      syntax:
-        'DATAFILE [ FILEKEY <key> ] [ ALLOWEMPTY ] = <filepath>;\nINFILE [ FILEKEY <key> ] [ ALLOWEMPTY ] = <filepath>;',
+    syntax:
+      'DATAFILE [ FILEKEY <key> ] [ ALLOWEMPTY ] = <filepath>;\nINFILE [ FILEKEY <key> ] [ ALLOWEMPTY ] = <filepath>;',
+    description: {
+      en: '',
+      de: '',
     },
   },
   {
     name: 'DATANOINTERPOL',
-    de: { description: '', syntax: 'DATANOINTERPOL = [ YES | NO ];' },
-    en: { description: '', syntax: 'DATANOINTERPOL = [ YES | NO ];' },
+    syntax: 'DATANOINTERPOL = [ YES | NO ];',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'DATE',
-    de: {
-      description:
-        'aktuelles Datum in der Form YYYYMMDD als Zahl CurrentMillis aktueller Zeitpunkt in Millisekunden',
-    },
-    en: {
-      description:
-        'current date in the form YYYYMMDD as a number. CurrentMillis: current point in time in milliseconds',
-      syntax: '',
+    syntax: '',
+    description: {
+      en: 'current date in the form YYYYMMDD as a number.',
+      de: 'aktuelles Datum in der Form YYYYMMDD als Zahl.',
     },
   },
   {
     name: 'DATEFORMAT',
-    de: { description: '', syntax: 'DATEFORMAT = <string>;' },
-    en: {
-      description:
-        'DATEFORMAT = <string>; In the string the letters Y, M and D are expanded to year, month and day. All other symbols are taken into the date. Thus: DATEFORMAT = "dd.mm.yyyy"; results in the standard European date: 31.10.2009',
-      syntax: 'DATEFORMAT = <string>;',
+    syntax: 'DATEFORMAT = <string>;',
+    description: {
+      en: 'DATEFORMAT = <string>; In the string the letters Y, M and D are expanded to year, month and day. All other symbols are taken into the date. Thus: DATEFORMAT = "dd.mm.yyyy"; results in the standard European date: 31.10.2009',
+      de: '',
     },
   },
   {
     name: 'DAYOFWEEK',
-    de: {
-      description:
-        'Der Wochentag eines Datums in der Form JJJJMMTT: 1=Montag, 2=Dienstag etc., also ist z.B. DAYOFWEEK( 20061030 ) = 1. WeekOfYear(x) Wochennummer (Kalenderwoche)',
-    },
-    en: {
-      description:
-        'The weekday of a date in the form YYYYMMDD: 1=Monday, 2=Tuesday etc., so e.g. DAYOFWEEK( 20061030 ) = 1. WeekOfYear(x) week number (calendar week)',
-      syntax: '',
+    syntax: '',
+    description: {
+      en: 'The weekday of a date in the form YYYYMMDD: 1=Monday, 2=Tuesday etc., so e.g. DAYOFWEEK( 20061030 ) = 1. WeekOfYear(x) week number (calendar week)',
+      de: 'Der Wochentag eines Datums in der Form JJJJMMTT: 1=Montag, 2=Dienstag etc., also ist z.B. DAYOFWEEK( 20061030 ) = 1. WeekOfYear(x) Wochennummer (Kalenderwoche)',
     },
   },
   {
     name: 'DBASEIN',
-    de: { description: '', syntax: 'DBASEIN = <filename>;' },
-    en: { description: '', syntax: 'DBASEIN = <filename> ;' },
+    syntax: 'DBASEIN = <filename> ;',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'DEBUGSTOP',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'DECIMALPERCENT',
-    de: {
-      description: '',
-      syntax: 'DECIMALPERCENT = <number>;\nVoreinstellung: DECIMALPERCENT = 0;',
-    },
-    en: {
-      description:
-        'Defines the number of decimal places for the percentages in cross tables (TABLE) or comparative tables (COMPARE). DECIMALPERCENT settings are valid for all following tables until the next DECIMALPERCENT command. Example: DECIMALPERCENT = 1; Preset: DECIMALPERCENT = 0;',
-      syntax: 'DECIMALPERCENT = <number>;\nDefault: DECIMALPERCENT = 0;',
+    syntax: 'DECIMALPERCENT = <number>;\nDefault: DECIMALPERCENT = 0;',
+    description: {
+      en: 'Defines the number of decimal places for the percentages in cross tables (TABLE) or comparative tables (COMPARE). DECIMALPERCENT settings are valid for all following tables until the next DECIMALPERCENT command. Example: DECIMALPERCENT = 1; Preset: DECIMALPERCENT = 0;',
+      de: '',
     },
   },
   {
     name: 'DECIMALS',
-    de: {
-      description: '',
-      syntax: 'DECIMALS = <number>;\nDefault: DECIMALS = 0;',
-    },
-    en: {
-      description:
-        'The number of decimal places can be stipulated for variable output if no VALUELABEL has been allocated and PRINTALL=YES. It is also used for MEAN or SUM output. Example: DECIMALS = 2; The characteristics or rather sums or mean of all variables then defined have two decimal places after the comma. This is valid until the next DECIMALS command (see also:…',
-      syntax: 'DECIMALS = <number>;\nDefault: DECIMALS = 0;',
+    syntax: 'DECIMALS = <number>;\nDefault: DECIMALS = 0;',
+    description: {
+      en: 'The number of decimal places can be stipulated for variable output if no VALUELABEL has been allocated and PRINTALL=YES. It is also used for MEAN or SUM output. Example: DECIMALS = 2; The characteristics or rather sums or mean of all variables then defined have two decimal places after the comma. This is valid until the next DECIMALS command (see also:…',
+      de: '',
     },
   },
   {
     name: 'DECRYPT',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'DEFAULTBOX',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'DEFAULTLEVEL',
-    de: { description: '', syntax: 'DEFAULTLEVEL = <number>;' },
-    en: { description: '', syntax: 'DEFAULTLEVEL = <number>;' },
+    syntax: 'DEFAULTLEVEL = <number>;',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'DELETELABELS',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'DELETEUNUSEDVARS',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'DELETEVARS',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'DELIMITED',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'DELIMITEDIN',
-    en: {
-      description: '',
-      syntax:
-        'DELIMITEDIN [ delim ] = <filename>;\ndelim ::= \'<char>\' | "<char>" | number [ 1..255 ]',
+    syntax:
+      'DELIMITEDIN [ delim ] = <filename>;\ndelim ::= \'<char>\' | "<char>" | number [ 1..255 ]',
+    description: {
+      en: '',
+      de: '',
     },
   },
   {
     name: 'DELTAEXPECT',
-    de: {
-      description:
-        'Ausgabe der Differenz zwischen der empirischen Zellenbesetzung und der nach der Randverteilung zu erwartenden Zellenbesetzung',
-    },
-    en: {
-      description:
-        'Output of the difference between the empirical cell count and the cell count expected from the marginal distribution',
-      syntax: '',
+    syntax: '',
+    description: {
+      en: 'Output of the difference between the empirical cell count and the cell count expected from the marginal distribution',
+      de: 'Ausgabe der Differenz zwischen der empirischen Zellenbesetzung und der nach der Randverteilung zu erwartenden Zellenbesetzung',
     },
   },
   {
     name: 'DELTAPERCENT',
     argsHint: '( Var, BasisVar )',
-    de: {
-      description:
-        "Aus 'Var' und 'BasisVar' werden die Summen berechnet. Die Differenz wird auf die 'BasisVar' prozentuiert.",
-    },
-    en: {
-      description:
-        "The sums are calculated from 'Var' and 'BasisVar'. The difference is percentaged on 'BasisVar'.",
-      syntax: '',
+    syntax: '',
+    description: {
+      en: "The sums are calculated from 'Var' and 'BasisVar'. The difference is percentaged on 'BasisVar'.",
+      de: "Aus 'Var' und 'BasisVar' werden die Summen berechnet. Die Differenz wird auf die 'BasisVar' prozentuiert.",
     },
   },
   {
     name: 'DELTAPOINTS',
     argsHint: '( Var, BasisVar )',
-    de: {
-      description:
-        "Aus 'Var' und 'BasisVar' werden die Summen berechnet. Die Differenz wird auf die Zahl der gültigen Fälle prozentuiert Name Beschreibung",
-    },
-    en: {
-      description:
-        "The sums are calculated from 'Var' and 'BasisVar'. The difference is percentaged on the number of valid cases. Name Description",
-      syntax: '',
+    syntax: '',
+    description: {
+      en: "The sums are calculated from 'Var' and 'BasisVar'. The difference is percentaged on the number of valid cases.",
+      de: "Aus 'Var' und 'BasisVar' werden die Summen berechnet. Die Differenz wird auf die Zahl der gültigen Fälle prozentuiert",
     },
   },
   {
     name: 'DELTASUMPERCENT',
     argsHint: '( VarFamily )',
-    de: {
-      description:
-        'Die VarFamily 274 muss vier Einzelvariablen enthalten. Diese bezeichnen jeweils Zähler und Nenner eines Bruches. über Zähler und Nennen werden die Summen berechnet, und bei der Ausgabe wird die Differenz der Quotienten als Prozentwert ausgegeben.',
-    },
-    en: {
-      description:
-        'The VarFamily 274 must contain four individual variables. These each denote the numerator and denominator of a fraction. The sums are calculated over numerator and denominator, and on output the difference of the quotients is shown as a percentage value.',
-      syntax: '',
+    syntax: '',
+    description: {
+      en: 'The VarFamily 274 must contain four individual variables. These each denote the numerator and denominator of a fraction. The sums are calculated over numerator and denominator, and on output the difference of the quotients is shown as a percentage value.',
+      de: 'Die VarFamily 274 muss vier Einzelvariablen enthalten. Diese bezeichnen jeweils Zähler und Nenner eines Bruches. über Zähler und Nennen werden die Summen berechnet, und bei der Ausgabe wird die Differenz der Quotienten als Prozentwert ausgegeben.',
     },
   },
   {
     name: 'DESCEND',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'DESCRIPTION',
-    de: {
-      description:
-        'Änderung der Standardtexte zur Erklärung des Zelleninhalts in Kreuztabellen 355.',
-      syntax: 'DESCRIPTION [ CELLELEMENT ] = <text>;',
-    },
-    en: {
-      description:
-        'Example: DESCRIPTION MEAN = Mittel; Usually an explanation of the cell content is printed top left when using TABLE and there are standard texts for this in the system. If these texts are to be altered then the DESCRIPTION command is used, otherwise the texts can be switched off using TABLEFORMAT = NODESCRIPTION;',
-      syntax: 'DESCRIPTION [ CELLELEMENT ] = <text>;',
+    syntax: 'DESCRIPTION [ CELLELEMENT ] = <text>;',
+    description: {
+      en: 'Example: DESCRIPTION MEAN = Mittel; Usually an explanation of the cell content is printed top left when using TABLE and there are standard texts for this in the system. If these texts are to be altered then the DESCRIPTION command is used, otherwise the texts can be switched off using TABLEFORMAT = NODESCRIPTION;',
+      de: 'Änderung der Standardtexte zur Erklärung des Zelleninhalts in Kreuztabellen 355.',
     },
   },
   {
     name: 'DESCRIPTIONBOX',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'DESCRIPTIONSTRING',
-    de: {
-      description: '',
-      syntax: 'DESCRIPTIONSTRING = "<DESCRIPTION 1>|...|<DESCRIPTION n>";',
-    },
-    en: {
-      description:
-        'Alternatively a descriptive text can be explicitly set. Example: DESCRIPTIONSTRING = "Mittelwert|Absolut"; Individual rows are separated using a vertical line.',
-      syntax: 'DESCRIPTIONSTRING = "<DESCRIPTION 1>|...|<DESCRIPTION n>";',
+    syntax: 'DESCRIPTIONSTRING = "<DESCRIPTION 1>|...|<DESCRIPTION n>";',
+    description: {
+      en: 'Alternatively a descriptive text can be explicitly set. Example: DESCRIPTIONSTRING = "Mittelwert|Absolut"; Individual rows are separated using a vertical line.',
+      de: '',
     },
   },
   {
     name: 'DIALLERPROJECTKEY',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'DIALPREFIX',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'DICHOQ',
-    de: { description: '', syntax: 'DICHOQ <varname> =' },
-    en: {
-      description:
-        'also: GROUPVAR Variable groups can also be generated directly from the input without making the individual variables visible.',
-      syntax: 'DICHOQ <varname> =',
+    syntax: 'DICHOQ <varname> =',
+    description: {
+      en: 'Variable groups can also be generated directly from the input without making the individual variables visible.',
+      de: '',
     },
   },
   {
     name: 'DICTMODE',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'DIRECTION',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'DISPLAY',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'DISPLAYQUOTA',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'DISTANCE',
-    de: {
-      description: '',
-      syntax: 'DISTANCE INTERBOX [ X | Y ] <number> = <Zahl>;',
-    },
-    en: {
-      description:
-        '(PS): is ignored by line printers. Usually there are no gaps between the different boxes which make up the table. Spaces can however be defined in the X and the Y direction. Example: DISTANCE INTERBOX X = 13; DISTANCE INTERBOX Y = 13; In the standard form (see above) all spaces are set to the stipulated value. DISTANCE INTERBOX can also be differentiated: Valid for X:…',
-      syntax: 'DISTANCE INTERBOX [ X | Y ] <number> = <number>;',
+    syntax: 'DISTANCE INTERBOX [ X | Y ] <number> = <number>;',
+    description: {
+      en: '(PS): is ignored by line printers. Usually there are no gaps between the different boxes which make up the table. Spaces can however be defined in the X and the Y direction. Example: DISTANCE INTERBOX X = 13; DISTANCE INTERBOX Y = 13; In the standard form (see above) all spaces are set to the stipulated value. DISTANCE INTERBOX can also be differentiated: Valid for X:…',
+      de: '',
     },
   },
   {
     name: 'DIV',
-    de: { description: 'liefert das Ergebnis einer Integer-Division' },
-    en: {
-      description: 'returns the result of an integer division',
-      syntax: '',
+    syntax: '',
+    description: {
+      en: 'returns the result of an integer division',
+      de: 'liefert das Ergebnis einer Integer-Division',
     },
   },
   {
     name: 'DLL',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'DO',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'DOCODEBLOCK',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'DOCUMENT',
-    de: {
-      description:
-        'Angabe einer Dokumentkennzeichnung, die rechts unten unter den Tabellen erscheint',
-      syntax: 'DOCUMENT = "<text>";',
-    },
-    en: {
-      description:
-        'Specifies a document indicatorwhich appears at the bottom right under the tables. Example: DOCUMENT = "Demo 2009"; The key words DATE and/or TIME produce a date or time. TIME and DATE key words can be mixed with any number of strings. Example: DOCUMENT = "Auszählung vom" DATE " Zwischenstand" TIME; Valid for all tables. PS):…',
-      syntax: 'DOCUMENT = "<text>";',
+    syntax: 'DOCUMENT = "<text>";',
+    description: {
+      en: 'Specifies a document indicatorwhich appears at the bottom right under the tables. Example: DOCUMENT = "Demo 2009"; The key words DATE and/or TIME produce a date or time. TIME and DATE key words can be mixed with any number of strings. Example: DOCUMENT = "Auszählung vom" DATE " Zwischenstand" TIME; Valid for all tables. PS):…',
+      de: 'Angabe einer Dokumentkennzeichnung, die rechts unten unter den Tabellen erscheint',
     },
   },
   {
     name: 'DOMACRO',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'DOSLOCKS',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'DOUBLECODEINOVERCODE',
-    de: { description: '', syntax: 'DOUBLECODEINOVERCODE = [YES | NO];' },
-    en: { description: '', syntax: 'DOUBLECODEINOVERCODE = [YES | NO];' },
+    syntax: 'DOUBLECODEINOVERCODE = [YES | NO];',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'DOUGHNUT',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'DRAWBOX',
-    de: {
-      description: '',
-      syntax:
-        'DRAWBOX [<boxtype>] : [WEIGHT [THIN|MEDIUM|BOLD]]\n[COLOR <color>][BORDERS [TOP|LEFT|BOTTOM|RIGHT]]',
-    },
-    en: {
-      description: '(PS): is ignored by line printers.',
-      syntax:
-        'DRAWBOX <boxname> =\n<number> { [ TOP | LEFT | RIGHT | BOTTOM | BOXRADIUS <number> ] }*n ;',
+    syntax:
+      'DRAWBOX <boxname> =\n<number> { [ TOP | LEFT | RIGHT | BOTTOM | BOXRADIUS <number> ] }*n ;',
+    description: {
+      en: '(PS): is ignored by line printers.',
+      de: '',
     },
   },
   {
     name: 'DUMMYHEAD',
-    de: { description: '', syntax: 'DUMMYHEAD = <varname>' },
-    en: { description: '', syntax: 'DUMMYHEAD = <name>;' },
+    syntax: 'DUMMYHEAD = <name>;',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'EDIT',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'EDITLABELINSCREEN',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'EDITOPENQ',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'EFFECTIVEBASE',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'ELASTICITY',
     argsHint: '(PS)',
-    de: { description: '', syntax: 'ELASTICITY = <number>;' },
-    en: {
-      description:
-        'Elasticity is a measurement of how the scaling in the X direction is allowed to differ from the scaling in the Y direction. Preset: ELASTICITY = 0.15; Background: Printing in Postscript offers the possibility to scale tables to fit which are larger than the available area on a page. This adjustment can be made independently in the X or the Y direction.…',
-      syntax: 'ELASTICITY = <number>;',
+    syntax: 'ELASTICITY = <number>;',
+    description: {
+      en: 'Elasticity is a measurement of how the scaling in the X direction is allowed to differ from the scaling in the Y direction. Preset: ELASTICITY = 0.15; Background: Printing in Postscript offers the possibility to scale tables to fit which are larger than the available area on a page. This adjustment can be made independently in the X or the Y direction.…',
+      de: '',
     },
   },
   {
     name: 'ELDAS',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'ELECTION',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'ELEMENTCOLOR',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'ELEMENTFONT',
-    de: {
-      description: '',
-      syntax:
-        'ELEMENTFONT <cellelement> : <fontname> SIZE <number>\n[STYLE [BOLD|ITALIC|UNDERLINE]]\nELEMENTCOLOR <cellelement> : <color>',
-    },
-    en: {
-      description: '',
-      syntax:
-        'ELEMENTFONT <cellelement> : <fontname> SIZE <number>\n[STYLE [BOLD|ITALIC|UNDERLINE]]\nELEMENTCOLOR <cellelement> : <color>',
+    syntax:
+      'ELEMENTFONT <cellelement> : <fontname> SIZE <number>\n[STYLE [BOLD|ITALIC|UNDERLINE]]\nELEMENTCOLOR <cellelement> : <color>',
+    description: {
+      en: '',
+      de: '',
     },
   },
   {
     name: 'ELIMINATE',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'ELLIPSIS',
-    de: {
-      description: 'Konfidenzintervall als Ellipse anzeigen (wenn bekannt)',
-    },
-    en: {
-      description: 'Show the confidence interval as an ellipse (when known)',
-      syntax: '',
+    syntax: '',
+    description: {
+      en: 'Show the confidence interval as an ellipse (when known)',
+      de: 'Konfidenzintervall als Ellipse anzeigen (wenn bekannt)',
     },
   },
   {
     name: 'ELSE',
-    de: {
-      description:
-        "CONCAT neue = 'xx' '-' 'yy' '-' xx1 '-' x5; übersichtlicher ist oft die Verwendung von IFBLOCK/ELSEBLOCK/ENDBLOCK anstelle von IF/ELSE: IFBLOCK [ 2 3 ] IN x7 THEN COMPUTE CONCAT neue = 'aa' '-' 'bb' '-' xx1 '-' x5; COMPUTE SUBSTR PART = neue 1 20;",
-    },
-    en: {
-      description:
-        'x = e / ( d + c ); The ELSE part of the command can be omitted, e.g. IF a EQ 3 THEN d = 5; Compared with the set operator IN easily allows the test for the existence of values in multi-response variables. The test can look like this: IF 4 IN famvar_01 THEN ... A variable must always be on the right side.…',
+    syntax: '',
+    description: {
+      en: 'x = e / ( d + c ); The ELSE part of the command can be omitted, e.g. IF a EQ 3 THEN d = 5; Compared with the set operator IN easily allows the test for the existence of values in multi-response variables. The test can look like this: IF 4 IN famvar_01 THEN ... A variable must always be on the right side.…',
+      de: "CONCAT neue = 'xx' '-' 'yy' '-' xx1 '-' x5; übersichtlicher ist oft die Verwendung von IFBLOCK/ELSEBLOCK/ENDBLOCK anstelle von IF/ELSE: IFBLOCK [ 2 3 ] IN x7 THEN COMPUTE CONCAT neue = 'aa' '-' 'bb' '-' xx1 '-' x5; COMPUTE SUBSTR PART = neue 1 20;",
     },
   },
   {
     name: 'ELSEBLOCK',
-    de: {
-      description:
-        '//hier können mehrere computes/ifs etc stehen ENDBLOCK; Die Komponente ELSEBLOCK ist optional. Von dieser Logik betroffen sind: alle COMPUTE 286s, alle Formen von IF (IF ... THEN 302, IF ... PRINT 48, IF ... LOAD 306) alle RECODE 254s, COUNT 285 und MEAN 312. Alle übrigen Statements ignorieren die IFBLOCK-Anweisungen. Mehrere IFBLOCKs können ineinander geschachtelt werden.…',
-    },
-    en: {
-      description:
-        '//several computes/ifs etc. can appear here ENDBLOCK; The ELSEBLOCK component is optional. Affected by this logic are: all COMPUTE 286, all forms of IF (IF ... THEN 302, IF ... PRINT 48, IF ... LOAD 306), all RECODE 254, COUNT 285 and MEAN 312. All other statements ignore the IFBLOCK directives. Several IFBLOCKs can be nested within each other.…',
-      syntax: '',
+    syntax: '',
+    description: {
+      en: '//several computes/ifs etc. can appear here ENDBLOCK; The ELSEBLOCK component is optional. Affected by this logic are: all COMPUTE, all forms of IF (IF ... THEN, IF ... PRINT 48, IF ... LOAD), all RECODE, COUNT and MEAN. All other statements ignore the IFBLOCK directives. Several IFBLOCKs can be nested within each other.…',
+      de: '//hier können mehrere computes/ifs etc stehen ENDBLOCK; Die Komponente ELSEBLOCK ist optional. Von dieser Logik betroffen sind: alle COMPUTEs, alle Formen von IF (IF ... THEN, IF ... PRINT 48, IF ... LOAD) alle RECODEs, COUNT und MEAN. Alle übrigen Statements ignorieren die IFBLOCK-Anweisungen. Mehrere IFBLOCKs können ineinander geschachtelt werden.…',
     },
   },
   {
     name: 'EMPTYSIGNDASH',
-    de: {
-      description:
-        "Im Normalfall wird in Fällen, wo alle Signifikanztests gegen alle Spalten bzw. Zeilen fehlgeschlagen sind, nichts ausgegeben. Da kann bei einem vertikalen Alignment (ALIGN VCENTER 554) zu unerwünschter Optik führen. Ist dies TABLEFORMAT gesetzt, wird in diesen Fälle ein '-' ausgegeben, damit alle Elemente auf derselben Höhe stehen.",
-    },
-    en: {
-      description:
-        "Normally nothing is output in cases where all significance tests against all columns or rows have failed. With vertical alignment (ALIGN VCENTER 554) this can lead to undesirable appearance. If this TABLEFORMAT is set, a '-' is output in these cases so that all elements are at the same height.",
-      syntax: '',
+    syntax: '',
+    description: {
+      en: "Normally nothing is output in cases where all significance tests against all columns or rows have failed. With vertical alignment (ALIGN VCENTER) this can lead to undesirable appearance. If this TABLEFORMAT is set, a '-' is output in these cases so that all elements are at the same height.",
+      de: "Im Normalfall wird in Fällen, wo alle Signifikanztests gegen alle Spalten bzw. Zeilen fehlgeschlagen sind, nichts ausgegeben. Da kann bei einem vertikalen Alignment (ALIGN VCENTER) zu unerwünschter Optik führen. Ist dies TABLEFORMAT gesetzt, wird in diesen Fälle ein '-' ausgegeben, damit alle Elemente auf derselben Höhe stehen.",
     },
   },
   {
     name: 'EMPTYTABLETEXT',
-    de: { description: '', syntax: 'EMPTYTABLETEXT = "<text>";' },
-    en: { description: '', syntax: 'EMPTYTABLETEXT = "<text>";' },
+    syntax: 'EMPTYTABLETEXT = "<text>";',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'ENCAPSULATED',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'ENCODING',
-    de: { description: '', syntax: 'ENCODING CSVOUTFILE = [ ANSI | UTF8 ];' },
-    en: {
-      description:
-        'As GESS tabs was born as a DOS program and some clients hate nothing more than a change in standard settings, the Char-Set-Encoding from DOS, i.e. IBM850 for North/Middle Europe is set as standard. This can be changed in two ways: the encoding can be explicitly defined using the ENCODING statement presented here.…',
-      syntax: 'ENCODING CSVOUTFILE = [ ANSI | UTF8 ];',
+    syntax: 'ENCODING CSVOUTFILE = [ ANSI | UTF8 ];',
+    description: {
+      en: 'As GESS tabs was born as a DOS program and some clients hate nothing more than a change in standard settings, the Char-Set-Encoding from DOS, i.e. IBM850 for North/Middle Europe is set as standard. This can be changed in two ways: the encoding can be explicitly defined using the ENCODING statement presented here.…',
+      de: '',
     },
   },
   {
     name: 'ENCODING CSVOUTFILE',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'ENCRYPT',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'END',
-    de: { description: '', syntax: 'END;' },
-    en: { description: '', syntax: 'END;' },
+    syntax: 'END;',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'ENDBLOCK',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'ENDCODEBLOCK',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'ENDEXPORT',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'ENDFILTER',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'ENDMACRO',
-    de: {
-      description:
-        'Dann würde der Aufruf von #tab( var1 ) ebenso funktionieren wie der Aufruf von #tab( var1 var2 var3 var4 ) #IfExist und #IfNExist Mit #IFEXIST und #IFNEXIST kann man abfragen, ob eine Variable dieses Namens bereits existiert. Anwendungsbeispiele Ein Include-File mit dem Namen "SETPAPER.INC" könnte z.B. folgende Anweisungen enthalten: #IFDEF A4 #IFDEF quer PAPER = Height 210 Width 297;',
-    },
-    en: {
-      description:
-        'Then the call #tab( var1 ) would work just as well as the call #tab( var1 var2 var3 var4 ). #IfExist and #IfNExist: with #IFEXIST and #IFNEXIST you can check whether a variable of this name already exists. Usage examples: an include file named "SETPAPER.INC" could e.g. contain the following instructions: #IFDEF A4 #IFDEF quer PAPER = Height 210 Width 297;',
-      syntax: '',
+    syntax: '',
+    description: {
+      en: 'Then the call #tab( var1 ) would work just as well as the call #tab( var1 var2 var3 var4 ). #IfExist and #IfNExist: with #IFEXIST and #IFNEXIST you can check whether a variable of this name already exists. Usage examples: an include file named "SETPAPER.INC" could e.g. contain the following instructions: #IFDEF A4 #IFDEF quer PAPER = Height 210 Width 297;',
+      de: 'Dann würde der Aufruf von #tab( var1 ) ebenso funktionieren wie der Aufruf von #tab( var1 var2 var3 var4 ) #IfExist und #IfNExist Mit #IFEXIST und #IFNEXIST kann man abfragen, ob eine Variable dieses Namens bereits existiert. Anwendungsbeispiele Ein Include-File mit dem Namen "SETPAPER.INC" könnte z.B. folgende Anweisungen enthalten: #IFDEF A4 #IFDEF quer PAPER = Height 210 Width 297;',
     },
   },
   {
     name: 'ENFORCEUTF8INOPENQ',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'ENFORCEUTF8INOPENQFILE',
-    de: { description: '', syntax: 'ENFORCEUTF8INOPENQFILE = [ YES | NO ];' },
-    en: { description: '', syntax: 'ENFORCEUTF8INOPENQFILE = [ YES | NO ];' },
+    syntax: 'ENFORCEUTF8INOPENQFILE = [ YES | NO ];',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'ENTIER',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'EPS',
-    en: {
-      description: '',
-      syntax:
-        'EPS [ REPLACE | FOREGROUND ] = <FileName> <xPoints> <yPoints> [ [\nWIDTH | HEIGHT ] <Points> ] ;',
+    syntax:
+      'EPS [ REPLACE | FOREGROUND ] = <FileName> <xPoints> <yPoints> [ [\nWIDTH | HEIGHT ] <Points> ] ;',
+    description: {
+      en: '',
+      de: '',
     },
   },
   {
     name: 'EQ',
-    de: { description: 'Equal, ist gleich' },
-    en: { description: 'Equal', syntax: '' },
+    syntax: '',
+    description: {
+      en: 'Equal',
+      de: 'Equal, ist gleich',
+    },
   },
   {
     name: 'ERRORTYPE',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'ESS',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'ESSCOLCHIQU',
-    de: {
-      description:
-        'Spaltenweise 4-Felder Chi²-Test auf Prozentwertunterschied nach Umrechnung aus ESS 446',
-    },
-    en: {
-      description:
-        'Column-wise 4-field chi-square test on percentage differences after conversion from ESS 446',
-      syntax: '',
+    syntax: '',
+    description: {
+      en: 'Column-wise 4-field chi-square test on percentage differences after conversion from ESS',
+      de: 'Spaltenweise 4-Felder Chi²-Test auf Prozentwertunterschied nach Umrechnung aus ESS',
     },
   },
   {
     name: 'ESSCOLDEPTTEST',
-    de: {
-      description:
-        'Abhängiger t-Test auf Mittelwertsunterschiede nach Umrechnung auf ESS 446 Name Beschreibung',
-    },
-    en: {
-      description:
-        'Dependent t-test on mean differences after conversion to ESS 446. Name Description',
-      syntax: '',
+    syntax: '',
+    description: {
+      en: 'Dependent t-test on mean differences after conversion to ESS.',
+      de: 'Abhängiger t-Test auf Mittelwertsunterschiede nach Umrechnung auf ESS',
     },
   },
   {
     name: 'ESSMCNEMAR',
-    de: {
-      description:
-        'Abhängiger Test auf Prozentwertunterschied nach McNemar 449 nach Umrechnung auf ESS 446',
-    },
-    en: {
-      description:
-        'Dependent test on percentage differences per McNemar 449 after conversion to ESS 446',
-      syntax: '',
+    syntax: '',
+    description: {
+      en: 'Dependent test on percentage differences per McNemar after conversion to ESS',
+      de: 'Abhängiger Test auf Prozentwertunterschied nach McNemar nach Umrechnung auf ESS',
     },
   },
   {
     name: 'ESSMEANCOLDEPT',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'ESSMEANTEST',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'ESSMEANWELCH',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'ESSROWCHICU',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'ESSROWCHIQU',
-    de: {
-      description: 'Zeilenweiser Chi²-Test auf Basis der ESS 446-Umrechnung',
-    },
-    en: {
-      description: 'Row-wise chi-square test based on the ESS 446 conversion',
-      syntax: '',
+    syntax: '',
+    description: {
+      en: 'Row-wise chi-square test based on the ESS conversion',
+      de: 'Zeilenweiser Chi²-Test auf Basis der ESS-Umrechnung',
     },
   },
   {
     name: 'ESSROWMEANTEST',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'ESSROWTTEST',
-    de: {
-      description:
-        'Unabhängiger t-Test auf Mittelwertsunterschiede nach Umrechnung auf ESS 446, zeilenweise',
-    },
-    en: {
-      description:
-        'Independent t-test on mean differences after conversion to ESS 446, row-wise',
-      syntax: '',
+    syntax: '',
+    description: {
+      en: 'Independent t-test on mean differences after conversion to ESS, row-wise',
+      de: 'Unabhängiger t-Test auf Mittelwertsunterschiede nach Umrechnung auf ESS, zeilenweise',
     },
   },
   {
     name: 'ESSTTEST',
     argsHint: '(Var)',
-    de: {
-      description:
-        'Unabhängiger t-Test auf Mittelwertsunterschiede nach Umrechnung auf ESS 446',
-    },
-    en: {
-      description:
-        'Independent t-test on mean differences after conversion to ESS 446',
-      syntax: '',
+    syntax: '',
+    description: {
+      en: 'Independent t-test on mean differences after conversion to ESS',
+      de: 'Unabhängiger t-Test auf Mittelwertsunterschiede nach Umrechnung auf ESS',
     },
   },
   {
     name: 'ESSWELCHTEST',
-    de: {
-      description:
-        'Unabhängiger Welch 450’s t-Test auf Mittelwertsunterschiede nach Umrechnung auf ESS 446',
-    },
-    en: {
-      description:
-        'Independent Welch’s t-test on mean differences after conversion to ESS 446',
-      syntax: '',
+    syntax: '',
+    description: {
+      en: 'Independent Welch’s t-test on mean differences after conversion to ESS',
+      de: 'Unabhängiger Welch’s t-Test auf Mittelwertsunterschiede nach Umrechnung auf ESS',
     },
   },
   {
     name: 'EST',
-    de: {
-      description:
-        '|                | MEANTEST | PHYSMEANTE |            | ESSMEANTEST |             | | -------------- | -------- | ---------- | ---------- | ----------- | ----------- | | kombiniert mit |          |            | XMEANTEST  |             | HYMEANTEST  |',
-    },
-    en: {
-      description:
-        '|                | MEANTEST | PHYSMEANTE |            | ESSMEANTEST |             | | -------------- | -------- | ---------- | ---------- | ----------- | ----------- | | combined with  |          |            | XMEANTEST  |             | HYMEANTEST  |',
-      syntax: '',
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
     },
   },
   {
     name: 'EURO',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'EVALFAMVALONCE',
-    de: { description: '', syntax: 'EVALFAMVALONCE <Varlist> = [ YES | NO ];' },
-    en: {
-      description: '',
-      syntax:
-        'EVALFAMVALONCE <Varlist> = YES or NO;\n(EvalFamValOnce = EVALuate FAMilyvariables VALues ONCE). Using VARFAMILYs it can make',
+    syntax:
+      'EVALFAMVALONCE <varlist> = YES or NO;\n(EvalFamValOnce = EVALuate FAMilyvariables VALues ONCE). Using VARFAMILYs it can make',
+    description: {
+      en: '',
+      de: '',
     },
   },
   {
     name: 'EXCEL2XLABELS',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'EXCEL2XTITLES',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'EXCEL2YLABELS',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'EXCEL2YTITLES',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'EXCELALIGNH',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'EXCELALIGNV',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'EXCELAXISMINMAX',
-    en: { description: '', syntax: 'EXCELAXISMINMAX = <minvalue> maxvalue> ;' },
+    syntax: 'EXCELAXISMINMAX = <minvalue> maxvalue> ;',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'EXCELCALCROWHEIGHT',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'EXCELCHART',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'EXCELCHARTDATA',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'EXCELCHARTFORMAT',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'EXCELCHARTINVERT',
-    en: { description: '', syntax: 'EXCELCHARTINVERT = [ YES | NO ];' },
+    syntax: 'EXCELCHARTINVERT = [ YES | NO ];',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'EXCELCOLOR',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'EXCELDOCUMENT',
-    de: {
-      description:
-        'Kennzeichnung des Tabellenbandes in Excel übertragen. Wenn dies TABLEFORMAT gesetzt ist, werden Zahlen mit Nachkommastellen explizit auf die Zahl der Nachkommastellen',
-    },
-    en: {
-      description:
-        'Transfer the labelling of the table volume to Excel. If this TABLEFORMAT is set, numbers with decimal places are explicitly formatted to the number of decimal places',
-      syntax: '',
+    syntax: '',
+    description: {
+      en: 'Transfer the labelling of the table volume to Excel. If this TABLEFORMAT is set, numbers with decimal places are explicitly formatted to the number of decimal places',
+      de: 'Kennzeichnung des Tabellenbandes in Excel übertragen. Wenn dies TABLEFORMAT gesetzt ist, werden Zahlen mit Nachkommastellen explizit auf die Zahl der Nachkommastellen',
     },
   },
   {
     name: 'EXCELFILENAME',
-    de: { description: '', syntax: 'EXCELFILENAME = <dateiname>;' },
-    en: { description: '', syntax: 'EXCELFILENAME = <filename>;' },
+    syntax: 'EXCELFILENAME = <filename>;',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'EXCELFOOTER',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'EXCELFRAMES',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'EXCELGRAPHSHEETNAME',
-    en: { description: '', syntax: 'EXCELGRAPHSHEETNAME = <name>;' },
+    syntax: 'EXCELGRAPHSHEETNAME = <name>;',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'EXCELHEADER',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'EXCELHIDEUPDATE',
-    de: { description: '', syntax: 'EXCELHIDEUPDATE = [ YES | NO ];' },
-    en: {
-      description:
-        'If this option is set to YES the Excel interface is only showed by INSTANTEXCEL=YES if a table is finished. This can reduce the processing time for the transfer to Excel. To control the appearance of tables using INSTANTEXCEL: the following TABLEFORMATs are available:…',
-      syntax: 'EXCELHIDEUPDATE = [ YES | NO ];',
+    syntax: 'EXCELHIDEUPDATE = [ YES | NO ];',
+    description: {
+      en: 'If this option is set to YES the Excel interface is only showed by INSTANTEXCEL=YES if a table is finished. This can reduce the processing time for the transfer to Excel. To control the appearance of tables using INSTANTEXCEL: the following TABLEFORMATs are available:…',
+      de: '',
     },
   },
   {
     name: 'EXCELLABELANGLE',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'EXCELNODISTANCE',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'EXCELNOFONT',
-    de: {
-      description:
-        'trägt dies zur Performance bei. dies gilt auch bei OPENOFFICEDEVIATION. Wenn dies TABLEFORMAT gesetzt ist, wird die DOCUMENT-',
-    },
-    en: {
-      description:
-        'this contributes to performance. This also applies with OPENOFFICEDEVIATION. If this TABLEFORMAT is set, the DOCUMENT',
-      syntax: '',
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
     },
   },
   {
     name: 'EXCELNOWRAPTEXT',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'EXCELNUMBERFORMAT',
-    de: {
-      description:
-        'formatiert, und damit die Automatik von Excel umgangen, Nullen als Nachkommastellen zu tilgen. EXCELFRAMES Rahmen um die Excel-Tabelle EXCELCOLOR Übernahme von COLOR FOREGROUND bzw. BACKGROUND EXCELALIGN[H/V] Übernahme horizontales/ vertikales Alignment der Zellen EXCELPAGEBREAK generiert einen Seitenwechsel am Ende der Tabelle EXCELHEADER Übernahme eines HEADER nach Excel Bewirkt, dass…',
-    },
-    en: {
-      description:
-        "formatted, thereby bypassing Excel's automatic removal of zeros as decimal places. EXCELFRAMES box around the Excel table. EXCELCOLOR adoption of COLOR FOREGROUND or BACKGROUND. EXCELALIGN[H/V] adoption of horizontal/vertical alignment of the cells. EXCELPAGEBREAK generates a page break at the end of the table. EXCELHEADER adoption of a HEADER into Excel. Causes…",
-      syntax: '',
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
     },
   },
   {
     name: 'EXCELONELINELABEL',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'EXCELOUT',
     argsHint: '(out-dated)',
-    en: {
-      description: '(In many cases INSTANTEXCEL should be more practical)',
-      syntax: 'EXCELOUT = <filename>;',
+    syntax: 'EXCELOUT = <filename>;',
+    description: {
+      en: '(In many cases INSTANTEXCEL should be more practical)',
+      de: '',
     },
   },
   {
     name: 'EXCELOUT AS HTML',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'EXCELOUT VIA HTML',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'EXCELOUTACROSS',
-    de: {
-      description:
-        'Die atomaren Elemente von zusammengesetzten CELLELEMENTS werden bei EXCELOUT 605 nicht untereinander, sondern nebeneinander dargestellt.',
-    },
-    en: {
-      description:
-        'The atomic elements of composite CELLELEMENTS are shown side by side rather than one below the other in EXCELOUT 605.',
-      syntax: '',
+    syntax: '',
+    description: {
+      en: 'The atomic elements of composite CELLELEMENTS are shown side by side rather than one below the other in EXCELOUT.',
+      de: 'Die atomaren Elemente von zusammengesetzten CELLELEMENTS werden bei EXCELOUT nicht untereinander, sondern nebeneinander dargestellt.',
     },
   },
   {
     name: 'EXCELPAGEBREAK',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'EXCELPICTURE',
-    en: {
-      description:
-        'This key word is used to transfer an illustration (PNG-FILE or JPG-FILE) to an Excel table. This then appears above the table.',
+    syntax: '',
+    description: {
+      en: 'This key word is used to transfer an illustration (PNG-FILE or JPG-FILE) to an Excel table. This then appears above the table.',
+      de: '',
     },
   },
   {
     name: 'EXCELRANGEDELIM',
-    de: { description: '', syntax: 'EXCELRANGEDELIM = <char>;' },
-    en: { description: '', syntax: 'EXCELRANGEDELIM = <char>;' },
+    syntax: 'EXCELRANGEDELIM = <char>;',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'EXCELSTYLEFILE',
-    de: { description: '', syntax: 'EXCELSTYLEFILE = <filename>;' },
-    en: { description: '', syntax: 'EXCELSTYLEFILE = <filename>;' },
+    syntax: 'EXCELSTYLEFILE = <filename>;',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'EXCELTEMPLATEFILE',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'EXCELUPDATEONLY',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'EXCEPT',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'EXCLUDEFROMTO',
-    en: { description: '', syntax: 'EXCLUDEFROMTO = { vartype }*n ;' },
+    syntax: 'EXCLUDEFROMTO = { vartype }*n ;',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'EXCLUDEVALUES',
-    de: {
-      description: '',
-      syntax:
-        'EXCLUDEVALUES <varlist> = <valuelist>;\nRESTRICTVALUES <varlist> = <valuelist>;',
-    },
-    en: {
-      description: '',
-      syntax:
-        'EXCLUDEVALUES <varlist> = <valuelist>;\nRESTRICTVALUES <varlist> = <valuelist>;',
+    syntax:
+      'EXCLUDEVALUES <varlist> = <valuelist>;\nRESTRICTVALUES <varlist> = <valuelist>;',
+    description: {
+      en: '',
+      de: '',
     },
   },
   {
     name: 'EXDECIMALCHAR',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'EXDELIMCHAR',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'EXECUTE',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'EXP',
-    de: { description: 'inverse Funktion zu LN' },
-    en: { description: 'inverse function of LN', syntax: '' },
+    syntax: '',
+    description: {
+      en: 'inverse function of LN',
+      de: 'inverse Funktion zu LN',
+    },
   },
   {
     name: 'EXPAND',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'EXPANDATCHAR',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'EXPANDBOX',
-    de: {
-      description:
-        'Das TABLEFORMAT EXPANDBOX wird intern in EXPANDHEIGHT 537 übersetzt. Also: TABLEFORMAT = + EXPANDBOX; bedeutet, dass die Höhe der Zellen erweitert werden soll.',
-    },
-    en: {
-      description:
-        'If a shared block has been drawn around the data cells using DRAWBOX it often looks better if there is a vertical space before the first and after the last data row and the upper and lower frames. This space can be set using EXPANDHEIGHT; it should be noted that then the DATABOX is not congruent to the sum of the DATACELLs. (Only effective with Postscript-printouts). (PS)',
+    syntax: '',
+    description: {
+      en: 'If a shared block has been drawn around the data cells using DRAWBOX it often looks better if there is a vertical space before the first and after the last data row and the upper and lower frames. This space can be set using EXPANDHEIGHT; it should be noted that then the DATABOX is not congruent to the sum of the DATACELLs. (Only effective with Postscript-printouts). (PS)',
+      de: 'Das TABLEFORMAT EXPANDBOX wird intern in EXPANDHEIGHT übersetzt. Also: TABLEFORMAT = + EXPANDBOX; bedeutet, dass die Höhe der Zellen erweitert werden soll.',
     },
   },
   {
     name: 'EXPANDHEIGHT',
-    de: {
-      description:
-        'Zeichnet man mit DRAWBOX 552 einen gemeinsamen Block um die Datenzellen, sieht es häufig besser aus, wenn vor der ersten und nach der letzten Datenzeile ein vertikaler Zwischenraum zum oberen und unteren Rand geschaffen wird. Diesen Rand kann man mit EXPANDHEIGHT anfordern; zu beachten ist, dass dann die DATABOX nicht deckungsgleich ist mit der Summe der DATACELLs.…',
-    },
-    en: {
-      description:
-        'If you draw a common block around the data cells with DRAWBOX 552, it often looks better if vertical space is created before the first and after the last data row towards the top and bottom edge. This margin can be requested with EXPANDHEIGHT; note that the DATABOX is then not congruent with the sum of the DATACELLs.…',
-      syntax: '',
+    syntax: '',
+    description: {
+      en: 'If you draw a common block around the data cells with DRAWBOX, it often looks better if vertical space is created before the first and after the last data row towards the top and bottom edge. This margin can be requested with EXPANDHEIGHT; note that the DATABOX is then not congruent with the sum of the DATACELLs.…',
+      de: 'Zeichnet man mit DRAWBOX einen gemeinsamen Block um die Datenzellen, sieht es häufig besser aus, wenn vor der ersten und nach der letzten Datenzeile ein vertikaler Zwischenraum zum oberen und unteren Rand geschaffen wird. Diesen Rand kann man mit EXPANDHEIGHT anfordern; zu beachten ist, dass dann die DATABOX nicht deckungsgleich ist mit der Summe der DATACELLs.…',
     },
   },
   {
     name: 'EXPANDINDOMACRO',
-    de: { description: '', syntax: 'EXPANDINDOMACRO = [ YES | NO ];' },
-    en: { description: '', syntax: 'EXPANDINDOMACRO = [ YES | NO ];' },
+    syntax: 'EXPANDINDOMACRO = [ YES | NO ];',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'EXPANDMISSINGTEXT',
-    de: { description: '', syntax: 'EXPANDMISSINGTEXT = <string>;' },
-    en: { description: '', syntax: 'EXPANDMISSINGTEXT = <string>;' },
+    syntax: 'EXPANDMISSINGTEXT = <string>;',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'EXPECT',
-    de: {
-      description:
-        'Ausgabe der nach der Randverteilung zu erwartenden Zellenbesetzung',
-    },
-    en: {
-      description:
-        'Output of the cell count expected from the marginal distribution',
-      syntax: '',
+    syntax: '',
+    description: {
+      en: 'Output of the cell count expected from the marginal distribution',
+      de: 'Ausgabe der nach der Randverteilung zu erwartenden Zellenbesetzung',
     },
   },
   {
     name: 'EXPLODE',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'EXPORTFILE',
-    de: { description: '', syntax: 'EXPORTFILE = [ <filename> | "" ];' },
-    en: { description: '', syntax: 'EXPORTFILE = [ <filename> | "" ];' },
+    syntax: 'EXPORTFILE = [ <filename> | "" ];',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'EXTERNALJOB',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'EXTRAFILE',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'EXTREME',
-    de: {
-      description:
-        'der Verteilung (EXTREME) können selektiert werden. Beispiele: TABLE = a MEAN( b ) BY c SORT MEAN PANE 2 EXTREME 20; // jeweils 20 von jedem Ende der Verteilung TABLE = a BY c SORT ABSOLUTE TOP 80; // die obersten 80',
-    },
-    en: {
-      description:
-        'of the distribution (EXTREME) can be selected. Examples: TABLE = a MEAN( b ) BY c SORT MEAN PANE 2 EXTREME 20; // 20 from each end of the distribution. TABLE = a BY c SORT ABSOLUTE TOP 80; // the top 80',
-      syntax: '',
+    syntax: '',
+    description: {
+      en: 'of the distribution (EXTREME) can be selected. Examples: TABLE = a MEAN( b ) BY c SORT MEAN PANE 2 EXTREME 20; // 20 from each end of the distribution. TABLE = a BY c SORT ABSOLUTE TOP 80; // the top 80',
+      de: 'der Verteilung (EXTREME) können selektiert werden. Beispiele: TABLE = a MEAN( b ) BY c SORT MEAN PANE 2 EXTREME 20; // jeweils 20 von jedem Ende der Verteilung TABLE = a BY c SORT ABSOLUTE TOP 80; // die obersten 80',
     },
   },
   {
     name: 'FALLING',
-    de: {
-      description:
-        'gegenläufige Skalen | HORIZONTAL | VERTICAL ] ] Kombination HORIZONTAL/VERTICAL XY-Plot [ COLOR <$rrggbb> ] Hexadezimaler RGB-Wert [ LINECOLOR < $rrggbb > ] [ NUMINGRAPH | NUMEXGRAPH | Numerische Beschriftung eines grafischen NUMCENTERGRAPH ] Elements innerhalb bzw, außerhalb der Grafik oder in ihr zentriert [ AXISMINMAX <minval> <maxval> Vorbelegung der Skala mit Extremwerten ]',
-    },
-    en: {
-      description:
-        'opposing scales | HORIZONTAL | VERTICAL ] ] combination HORIZONTAL/VERTICAL XY plot [ COLOR <$rrggbb> ] hexadecimal RGB value [ LINECOLOR < $rrggbb > ] [ NUMINGRAPH | NUMEXGRAPH | numeric labelling of a graphical NUMCENTERGRAPH ] element inside, outside or centred within the graphic [ AXISMINMAX <minval> <maxval> preset the scale with extreme values ]',
-      syntax: '',
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
     },
   },
   {
     name: 'FAMILYVAR',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'FCOMPUTE',
-    de: { description: '', syntax: 'FCOMPUTE <varname> ....' },
-    en: {
-      description:
-        'Parallel to the COMPUTE statement there is also FCOMPUTE, which tests the filters set with SETFILTER. FCOMPUTE is only used if all the filter conditions are true or if there is no filter.',
-      syntax: 'FCOMPUTE <varname> ....',
+    syntax: 'FCOMPUTE <varname> ....',
+    description: {
+      en: 'Parallel to the COMPUTE statement there is also FCOMPUTE, which tests the filters set with SETFILTER. FCOMPUTE is only used if all the filter conditions are true or if there is no filter.',
+      de: '',
     },
   },
   {
     name: 'FIF',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'FILEKEY',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'FILEPATH',
-    de: { description: '', syntax: 'FILEPATH "<filepath>"' },
-    en: { description: '', syntax: 'FILEPATH "<filepath>"' },
+    syntax: 'FILEPATH "<filepath>"',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'FILL',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'FILTER',
-    de: {
-      description:
-        'Im Anschluss an jedes Tabellenelement können mit FILTER <Bedingung> | lokale Selektionen 330 vorgenommen werden, zum Beispiel: TABLE = V1 FILTER geschl EQ 1 | V1 FILTER geschl EQ 2 | BY V1 MEANTEST; SORT SORT [ DESCEND ] [ POSITION | ALPHA | CODE | Cellelement ] [ PANE <value> CODE <value> ] :…',
-      syntax: 'FILTER <varlist> [ = <Bedingung> | AS <varname> ] ;',
-    },
-    en: {
-      description:
-        'After each table element, local selections 330 can be made with FILTER <condition> |, for example: TABLE = V1 FILTER geschl EQ 1 | V1 FILTER geschl EQ 2 | BY V1 MEANTEST; SORT SORT [ DESCEND ] [ POSITION | ALPHA | CODE | Cellelement ] [ PANE <value> CODE <value> ] :…',
-      syntax: 'FILTER <varlist> [ = <bedingung> | AS <varname> ] ;',
+    syntax: 'FILTER <varlist> [ = <bedingung> | AS <varname> ] ;',
+    description: {
+      en: 'After each table element, local selections 330 can be made with FILTER <condition> |, for example: TABLE = V1 FILTER geschl EQ 1 | V1 FILTER geschl EQ 2 | BY V1 MEANTEST; SORT SORT [ DESCEND ] [ POSITION | ALPHA | CODE | Cellelement ] [ PANE <value> CODE <value> ] :…',
+      de: 'Im Anschluss an jedes Tabellenelement können mit FILTER <Bedingung> | lokale Selektionen 330 vorgenommen werden, zum Beispiel: TABLE = V1 FILTER geschl EQ 1 | V1 FILTER geschl EQ 2 | BY V1 MEANTEST; SORT SORT [ DESCEND ] [ POSITION | ALPHA | CODE | Cellelement ] [ PANE <value> CODE <value> ] :…',
     },
   },
   {
     name: 'FIRSTCOLUMN',
-    de: { description: '', syntax: 'FIRSTCOLUMN : <number>' },
-    en: { description: '', syntax: 'FIRSTCOLUMN : <number>' },
+    syntax: 'FIRSTCOLUMN : <number>',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'FIXED',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'FIXEDPOSITION',
-    de: { description: '', syntax: 'FIXEDPOSITION <VarList> = [ YES | NO ];' },
-    en: { description: '', syntax: 'FIXEDPOSITION <VarList> = [ YES | NO ];' },
+    syntax: 'FIXEDPOSITION <VarList> = [ YES | NO ];',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'FIXLABELCOLUMN',
-    de: { description: '', syntax: 'FIXLABELCOLUMN : [YES|NO]' },
-    en: { description: '', syntax: 'FIXLABELCOLUMN : [YES|NO]' },
+    syntax: 'FIXLABELCOLUMN : [YES|NO]',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'FIXLABELROWS',
-    de: {
-      description: '',
-      syntax:
-        'FIXLABELROWS : <number>\nFIXLABELROWS wird den <number> Zeilen-Teil der Tabelle "fix" halten, sodass diese sichtbar',
-    },
-    en: {
-      description: '',
-      syntax:
-        'FIXLABELROWS : <number>\nFIXLABELROWS will keep the <number> rows part of the table "fixed", so that it stays visible',
+    syntax:
+      'FIXLABELROWS : <number>\nFIXLABELROWS will keep the <number> rows part of the table "fixed", so that it stays visible',
+    description: {
+      en: '',
+      de: '',
     },
   },
   {
     name: 'FLOWTEXT',
-    de: { description: '', syntax: 'FLOWTEXT <boxname> : [ YES | NO ]' },
-    en: { description: '', syntax: 'FLOWTEXT <boxname> : [ YES | NO ]' },
+    syntax: 'FLOWTEXT <boxname> : [ YES | NO ]',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'FLT',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'FONT',
-    en: {
-      description: '',
-      syntax: 'FONT <Fontname> CPI <number> = <ESC-String>;',
+    syntax: 'FONT <fontname> CPI <number> = <ESC-String>;',
+    description: {
+      en: '',
+      de: '',
     },
   },
   {
     name: 'FONTNAME',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'FOOTER',
-    de: {
-      description: '',
-      syntax: 'FOOTER = "<text>" [ LEFT | HCENTER | RIGHT ] ;',
-    },
-    en: {
-      description: '',
-      syntax: 'FOOTER = "text" [ LEFT | HCENTER | RIGHT | ] ;',
+    syntax: 'FOOTER = "text" [ LEFT | HCENTER | RIGHT | ] ;',
+    description: {
+      en: '',
+      de: '',
     },
   },
   {
     name: 'FOOTERBOX',
-    de: {
-      description:
-        'Kasten um den FOOTER 522, außerhalb der Tabelle FRAMEBOX X Kasten um alle FRAMECELL X FRAMEBOX Y Kasten um alle FRAMECELL Y FRAMECELL X Kasten um einzelne Datenelemente der Rahmenspalten (Elemente der X-Achse) FRAMECELL Y Kasten um einzelne Datenelemente der Rahmenzeilen (Elemente der Y-Achse)',
-    },
-    en: {
-      description:
-        'Box around the FOOTER 522, outside the table. FRAMEBOX X box around all FRAMECELL X. FRAMEBOX Y box around all FRAMECELL Y. FRAMECELL X box around individual data elements of the frame columns (elements of the X axis). FRAMECELL Y box around individual data elements of the frame rows (elements of the Y axis)',
-      syntax: '',
+    syntax: '',
+    description: {
+      en: 'Box around the FOOTER, outside the table. FRAMEBOX X box around all FRAMECELL X. FRAMEBOX Y box around all FRAMECELL Y. FRAMECELL X box around individual data elements of the frame columns (elements of the X axis). FRAMECELL Y box around individual data elements of the frame rows (elements of the Y axis)',
+      de: 'Kasten um den FOOTER, außerhalb der Tabelle FRAMEBOX X Kasten um alle FRAMECELL X FRAMEBOX Y Kasten um alle FRAMECELL Y FRAMECELL X Kasten um einzelne Datenelemente der Rahmenspalten (Elemente der X-Achse) FRAMECELL Y Kasten um einzelne Datenelemente der Rahmenzeilen (Elemente der Y-Achse)',
     },
   },
   {
     name: 'FORCELABELINPUT',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'FORCOUNTS',
-    de: {
-      description:
-        'Variable ist vorrangig zur Häufigkeitsauszählung (Tabellenaufriss) sinnvoll.',
-      syntax:
-        'FORCOUNTS <varname> = [ YES | NO ];\nFORHEADER <varname> = [ YES | NO ];\nFORMEANS <varname> = [ YES | NO ];',
-    },
-    en: {
-      description:
-        'Variable is primarily useful for frequency counts (table breakdown).',
-      syntax:
-        'FORCOUNTS <varname> = [ YES | NO ];\nFORHEADER <varname> = [ YES | NO ];\nFORMEANS <varname> = [ YES | NO ];',
+    syntax:
+      'FORCOUNTS <varname> = [ YES | NO ];\nFORHEADER <varname> = [ YES | NO ];\nFORMEANS <varname> = [ YES | NO ];',
+    description: {
+      en: 'Variable is primarily useful for frequency counts (table breakdown).',
+      de: 'Variable ist vorrangig zur Häufigkeitsauszählung (Tabellenaufriss) sinnvoll.',
     },
   },
   {
     name: 'FOREGROUND',
-    de: {
-      description:
-        'Farbinformation 557 für Vordergrund (Schrift) und Hintergrund',
-    },
-    en: {
-      description:
-        'Analogue to BACKGROUND and is used to shade the foreground which normally means the colour of the text.',
+    syntax: '',
+    description: {
+      en: 'Analogue to BACKGROUND and is used to shade the foreground which normally means the colour of the text.',
+      de: 'Farbinformation 557 für Vordergrund (Schrift) und Hintergrund',
     },
   },
   {
     name: 'FOREHEADER',
-    de: {
-      description:
-        'Variable soll bevorzugt im Tabellenkopf dargestellt werden.',
-    },
-    en: {
-      description: 'Variable should preferably be shown in the table header.',
-      syntax: '',
+    syntax: '',
+    description: {
+      en: 'Variable should preferably be shown in the table header.',
+      de: 'Variable soll bevorzugt im Tabellenkopf dargestellt werden.',
     },
   },
   {
     name: 'FORHEADER',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'FORM',
-    de: {
-      description:
-        'verwendet werden. [ RECTANGLE | LINE | RECTLINE | TRIANGLE1 | TRIANGLE1O | | TRIANGLE2 | TRIANGLE2O | SQUARE1 | SQUARE1O | SQUARE2 | SQUARE2O | CIRCLE | CIRCLEO | ELLIPSIS | GAUSS | GAUSSO ] ] [ PIE | PIE100 ] [ XYPLOT ] }*n [ DIRECTION [ RISING | Kombination RISING/FALLING',
-      syntax: 'FORM : [BARS | COLUMNS | LINES | PIE]',
-    },
-    en: {
-      description:
-        'can be used. [ RECTANGLE | LINE | RECTLINE | TRIANGLE1 | TRIANGLE1O | | TRIANGLE2 | TRIANGLE2O | SQUARE1 | SQUARE1O | SQUARE2 | SQUARE2O | CIRCLE | CIRCLEO | ELLIPSIS | GAUSS | GAUSSO ] ] [ PIE | PIE100 ] [ XYPLOT ] }*n [ DIRECTION [ RISING | combination RISING/FALLING',
-      syntax: 'FORM : [BARS | COLUMNS | LINES | PIE]',
+    syntax: 'FORM : [BARS | COLUMNS | LINES | PIE]',
+    description: {
+      en: '',
+      de: '',
     },
   },
   {
     name: 'FORMAT',
-    de: { description: '', syntax: 'FORMAT = "<formatstring>";' },
-    en: {
-      description:
-        'Defines a format for the representation of a particular cell content. If for example a mean is to be a scale with an algebraic sign, a comma as decimal separator and two decimal places then the following would be written (formats should always be written in quotation marks (") ): FORMAT MEAN = "+#,##"; FORMAT recognises the following control characters:…',
-      syntax: 'FORMAT = "<formatstring>";',
+    syntax: 'FORMAT = "<formatstring>";',
+    description: {
+      en: 'Defines a format for the representation of a particular cell content. If for example a mean is to be a scale with an algebraic sign, a comma as decimal separator and two decimal places then the following would be written (formats should always be written in quotation marks (") ): FORMAT MEAN = "+#,##"; FORMAT recognises the following control characters:…',
+      de: '',
     },
   },
   {
     name: 'FORMATIFLESS',
-    de: {
-      description: '',
-      syntax:
-        'FORMATIFLESS <cellelement> [ IN <place> ] BY <typ> <number> = <formatstring>;\ntyp ::= < ABSOLUTE | PHYSICALRECORDS | VALIDN | ESS >\nplace ::= < DATACELL | FRAMECELL X | FRAMECELL Y >',
-    },
-    en: {
-      description: '',
-      syntax:
-        'FORMATIFLESS <cellelement> [ IN <place> ] BY <type> <number> = <formatstring>;\ntype ::= < ABSOLUTE | PHYSICALRECORDS | VALIDN | ESS >\nplace ::= < DATACELL | FRAMECELL X | FRAMECELL Y >',
+    syntax:
+      'FORMATIFLESS <cellelement> [ IN <place> ] BY <type> <number> = <formatstring>;\ntype ::= < ABSOLUTE | PHYSICALRECORDS | VALIDN | ESS >\nplace ::= < DATACELL | FRAMECELL X | FRAMECELL Y >',
+    description: {
+      en: '',
+      de: '',
     },
   },
   {
     name: 'FORMEAN',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'FORMEANS',
-    de: {
-      description:
-        'Variable eignet sich für numerische Statistiken. Syntax LiveTabs Für die Weiterverarbeitung von Datensätzen in GESS LiveTabs ist es notwendig, dass die speziellen Variableneigenschaften für GESS LiveTabs auch im SYNTAX-Include-File weitergegeben werden. Hierzu dient das LIVETABS-Argument für das SYNTAX 42 -Statement.',
-    },
-    en: {
-      description:
-        'Variable is suitable for numeric statistics. Syntax LiveTabs: for further processing of data records in GESS LiveTabs it is necessary that the special variable properties for GESS LiveTabs are also passed on in the SYNTAX include file. The LIVETABS argument for the SYNTAX 42 statement serves this purpose.',
-      syntax: '',
+    syntax: '',
+    description: {
+      en: 'Variable is suitable for numeric statistics. Syntax LiveTabs: for further processing of data records in GESS LiveTabs it is necessary that the special variable properties for GESS LiveTabs are also passed on in the SYNTAX include file. The LIVETABS argument for the SYNTAX 42 statement serves this purpose.',
+      de: 'Variable eignet sich für numerische Statistiken. Syntax LiveTabs Für die Weiterverarbeitung von Datensätzen in GESS LiveTabs ist es notwendig, dass die speziellen Variableneigenschaften für GESS LiveTabs auch im SYNTAX-Include-File weitergegeben werden. Hierzu dient das LIVETABS-Argument für das SYNTAX 42 -Statement.',
     },
   },
   {
     name: 'FORMS',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'FRAMEBOX',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'FRAMECELL',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'FRAMECELL X',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'FRAMECELL Y',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'FRAMECOLOR',
-    de: { description: '', syntax: 'FRAMECOLOR : <color>' },
-    en: {
-      description:
-        'The colour of the frames can also be defined using HSB or RGB as above. COLOR FOREGROUND or COLOR BACKGROUND With the COLOR statement DATACELLS and FRAMECELLS can be coloured depending on the value, e.g. all mean above a certain value are printed in red etc.',
-      syntax: 'FRAMECOLOR : <color>',
+    syntax: 'FRAMECOLOR : <color>',
+    description: {
+      en: 'The colour of the frames can also be defined using HSB or RGB as above. COLOR FOREGROUND or COLOR BACKGROUND With the COLOR statement DATACELLS and FRAMECELLS can be coloured depending on the value, e.g. all mean above a certain value are printed in red etc.',
+      de: '',
     },
   },
   {
     name: 'FRAMECROSS',
-    de: {
-      description:
-        'Der Schnittpunkt von FRAMEBOX X und FRAMEBOX Y FRAMETITLE X Kasten um Bezeichnung von FRAMEELEMENTS der X-Achse (z.B. Insgesamt) FRAMETITLE Y Kasten um Bezeichnung von FRAMEELEMENTS der Y-Achse (z.B. Insgesamt) FRAMETITLEBOX X Kasten um alle FRAMETITLE-Boxes der X-Achse FRAMETITLEBOX Y Kasten um alle FRAMETITLE-Boxes der Y-Achse',
-    },
-    en: {
-      description:
-        'The intersection of FRAMEBOX X and FRAMEBOX Y. FRAMETITLE X box around the label of FRAMEELEMENTS of the X axis (e.g. Total). FRAMETITLE Y box around the label of FRAMEELEMENTS of the Y axis (e.g. Total). FRAMETITLEBOX X box around all FRAMETITLE boxes of the X axis. FRAMETITLEBOX Y box around all FRAMETITLE boxes of the Y axis',
-      syntax: '',
+    syntax: '',
+    description: {
+      en: 'The intersection of FRAMEBOX X and FRAMEBOX Y. FRAMETITLE X box around the label of FRAMEELEMENTS of the X axis (e.g. Total). FRAMETITLE Y box around the label of FRAMEELEMENTS of the Y axis (e.g. Total). FRAMETITLEBOX X box around all FRAMETITLE boxes of the X axis. FRAMETITLEBOX Y box around all FRAMETITLE boxes of the Y axis',
+      de: 'Der Schnittpunkt von FRAMEBOX X und FRAMEBOX Y FRAMETITLE X Kasten um Bezeichnung von FRAMEELEMENTS der X-Achse (z.B. Insgesamt) FRAMETITLE Y Kasten um Bezeichnung von FRAMEELEMENTS der Y-Achse (z.B. Insgesamt) FRAMETITLEBOX X Kasten um alle FRAMETITLE-Boxes der X-Achse FRAMETITLEBOX Y Kasten um alle FRAMETITLE-Boxes der Y-Achse',
     },
   },
   {
     name: 'FRAMEELEMENTS',
-    de: {
-      description: '',
-      syntax:
-        'FRAMEELEMENTS = [ ABSCOLUMN | ABSROW | PHYSICALCOLUMN\n| PHYSICALROW | TOTALCOLUMN | TOTALROW ] ;',
-    },
-    en: {
-      description:
-        'TABLETYPEs are allocated to specific frame elements of a table; thus e.g. a table with row percentages (TABLETYPE = ROWPERCENT;) has by default an absolute column ("No. of Cases") and a total row ("Total"). With the specification FRAMEELEMENTS frame elements can be specifically requested. The key words necessary are:',
-      syntax:
-        'FRAMEELEMENTS = [ ABSCOLUMN | ABSROW | PHYSICALCOLUMN\n| PHYSICALROW | TOTALCOLUMN | TOTALROW ] ;',
+    syntax:
+      'FRAMEELEMENTS = [ ABSCOLUMN | ABSROW | PHYSICALCOLUMN\n| PHYSICALROW | TOTALCOLUMN | TOTALROW ] ;',
+    description: {
+      en: 'TABLETYPEs are allocated to specific frame elements of a table; thus e.g. a table with row percentages (TABLETYPE = ROWPERCENT;) has by default an absolute column ("No. of Cases") and a total row ("Total"). With the specification FRAMEELEMENTS frame elements can be specifically requested. The key words necessary are:',
+      de: '',
     },
   },
   {
     name: 'FRAMEPOSITION',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'FRAMETITLE',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'FRAMETITLE X',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'FRAMETITLE Y',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'FRAMETITLEBOX',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'FREEZEALL',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'FREEZEFILE',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'FREEZESWITCH',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'FROZEN',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'FROZENCODE',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'GAMMA',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'GAUSS',
-    de: {
-      description: 'Konfidenzintervall als stilisierte Gausskurve anzeigen',
-    },
-    en: {
-      description: 'Show the confidence interval as a stylised Gauss curve',
-      syntax: '',
+    syntax: '',
+    description: {
+      en: 'Show the confidence interval as a stylised Gauss curve',
+      de: 'Konfidenzintervall als stilisierte Gausskurve anzeigen',
     },
   },
   {
     name: 'GAUSSO',
-    de: {
-      description:
-        'Konfidenzintervall als stilisierte Gausskurve anzeigen (outline)',
-    },
-    en: {
-      description:
-        'Show the confidence interval as a stylised Gauss curve (outline)',
-      syntax: '',
+    syntax: '',
+    description: {
+      en: 'Show the confidence interval as a stylised Gauss curve (outline)',
+      de: 'Konfidenzintervall als stilisierte Gausskurve anzeigen (outline)',
     },
   },
   {
     name: 'GE',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'GENERATELABELS',
-    de: { description: '', syntax: 'GENERATELABELS <varname>;' },
-    en: { description: '', syntax: 'GENERATELABELS <varlist>;' },
+    syntax: 'GENERATELABELS <varlist>;',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'GEO',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'GEOMETRICMEAN',
     argsHint: '( Var )',
-    de: {
-      description:
-        'Das geometrische Mittel ist die n.-Wurzel aus dem Produkt aller Einzelwerte (nur für positive Zahlen definiert)',
-    },
-    en: {
-      description:
-        'The geometric mean is the n-th root of the product of all individual values (defined only for positive numbers)',
-      syntax: '',
+    syntax: '',
+    description: {
+      en: 'The geometric mean is the n-th root of the product of all individual values (defined only for positive numbers)',
+      de: 'Das geometrische Mittel ist die n.-Wurzel aus dem Produkt aller Einzelwerte (nur für positive Zahlen definiert)',
     },
   },
   {
     name: 'GEORESTRICT',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'GESS',
-    en: {
-      description: '',
-      syntax:
-        'GESS [ INCLUDE ] <qualifier> = <filename> [ COLSFROMNAME ]\n[ COLUMN <number> ]\n[ VARIABLES <varlist> ]\n[ CARD <number> ]\n[ BITGROUP <number> ]\n;',
+    syntax:
+      'GESS [ INCLUDE ] <qualifier> = <filename> [ COLSFROMNAME ]\n[ COLUMN <number> ]\n[ VARIABLES <varlist> ]\n[ CARD <number> ]\n[ BITGROUP <number> ]\n;',
+    description: {
+      en: '',
+      de: '',
     },
   },
   {
     name: 'GESSCHART',
-    de: {
-      description:
-        'GESStabs Artist ist ab Version 4.3.0.0 integrierter Bestandteil von GESStabs. Das Schlüsselwort zum Aufruf lautet GESSCHART. Syntaktisch ist GESSCHART eine Option zum TABLE-Statement. Mit GESSCHART-Statements kann man im Anschluss an ein TABLE-Statement die Anfertigung von Charts anfordern, die sich inhaltlich aus ausgewählten Werten und Texten der Tabelle zusammensetzen.…',
-    },
-    en: {
-      description:
-        'GESStabs Artist has been an integrated part of GESStabs since version 4.3.0.0. The keyword to invoke it is GESSCHART. Syntactically, GESSCHART is an option of the TABLE statement. With GESSCHART statements you can, following a TABLE statement, request the creation of charts whose content is assembled from selected values and texts of the table.…',
-      syntax: '',
+    syntax: '',
+    description: {
+      en: 'GESStabs Artist has been an integrated part of GESStabs since version 4.3.0.0. The keyword to invoke it is GESSCHART. Syntactically, GESSCHART is an option of the TABLE statement. With GESSCHART statements you can, following a TABLE statement, request the creation of charts whose content is assembled from selected values and texts of the table.…',
+      de: 'GESStabs Artist ist ab Version 4.3.0.0 integrierter Bestandteil von GESStabs. Das Schlüsselwort zum Aufruf lautet GESSCHART. Syntaktisch ist GESSCHART eine Option zum TABLE-Statement. Mit GESSCHART-Statements kann man im Anschluss an ein TABLE-Statement die Anfertigung von Charts anfordern, die sich inhaltlich aus ausgewählten Werten und Texten der Tabelle zusammensetzen.…',
     },
   },
   {
     name: 'GESSCHARTCOLORS',
-    de: {
-      description:
-        'der erste Farbwert der definierten ausgewählt werden. Anstelle eines Grüntons sollen die Säulen blau eingefärbt werden, die erste Position des bestehenden Farbschemas wird | ausgetauscht    | und anschließend |              | das Chart angefordert:…',
-      syntax: 'GESSCHARTCOLORS = { <colorvalue> }*n ;\n<colorvalue> = $rrggbb',
-    },
-    en: {
-      description:
-        'the first colour value of the ones defined is selected. Instead of a green tone the bars are to be coloured blue; the first position of the existing colour scheme is replaced and then the chart is requested:…',
-      syntax: 'GESSCHARTCOLORS = { <colorvalue> }*n ;\n<colorvalue> = $rrggbb',
+    syntax: 'GESSCHARTCOLORS = { <colorvalue> }*n ;\n<colorvalue> = $rrggbb',
+    description: {
+      en: '',
+      de: '',
     },
   },
   {
     name: 'GESSCHARTDATA',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'GESSCHARTFONT',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'GESSCHARTFORMAT',
-    de: { description: '', syntax: 'GESSCHARTFORMAT = { + | - <option> }*n ;' },
-    en: { description: '', syntax: 'GESSCHARTFORMAT = { + | - <option> }*n ;' },
+    syntax: 'GESSCHARTFORMAT = { + | - <option> }*n ;',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'GESSCHARTNUMFORMAT',
-    de: {
-      description: '',
-      syntax:
-        "GESSCHARTNUMFORMAT = <formatstring>;\nDefault: GESSCHARTNUMFORMAT =' (#)';",
-    },
-    en: {
-      description: '',
-      syntax:
-        "GESSCHARTNUMFORMAT = <formatstring>;\nDefault: GESSCHARTNUMFORMAT =' (#)';",
+    syntax:
+      "GESSCHARTNUMFORMAT = <formatstring>;\nDefault: GESSCHARTNUMFORMAT =' (#)';",
+    description: {
+      en: '',
+      de: '',
     },
   },
   {
     name: 'GESSCHARTPRINTFILE',
-    de: {
-      description: '',
-      syntax: 'GESSCHARTPRINTFILE [ PS | PDF ] = <filename>;',
-    },
-    en: {
-      description: '',
-      syntax: 'GESSCHARTPRINTFILE [ PS | PDF ] = <filename>;',
+    syntax: 'GESSCHARTPRINTFILE [ PS | PDF ] = <filename>;',
+    description: {
+      en: '',
+      de: '',
     },
   },
   {
     name: 'GETPRTSETUP',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'GETQUOTA',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'GETTABSETUP',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'GLOBALASALPHA',
-    de: {
-      description: '',
-      syntax:
-        'GLOBALASALPHA = [ YES | NO ];\nGLOBALOPENASALPHA = [ YES | NO ];',
-    },
-    en: {
-      description: '',
-      syntax:
-        'GLOBALASALPHA = [ YES | NO ];\nGLOBALOPENASALPHA = [ YES | NO ];',
+    syntax: 'GLOBALASALPHA = [ YES | NO ];\nGLOBALOPENASALPHA = [ YES | NO ];',
+    description: {
+      en: '',
+      de: '',
     },
   },
   {
     name: 'GLOBALCELLMINIMUM',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'GLOBALCOLMINIMUM',
-    en: {
-      description: 'Global preset for COLMINIMUM for all the following tables.',
+    syntax: '',
+    description: {
+      en: 'Global preset for COLMINIMUM for all the following tables.',
+      de: '',
     },
   },
   {
     name: 'GLOBALOPENASALPHA',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'GLOBALPHYSCELLMINIMUM',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'GLOBALPRINTALL',
-    en: {
-      description:
-        'These options steer the output of unlabelled values. Usually unlabelled values are printed with a label generated from the numerical value. It can however be required to suppress outliers in the tables: unlabelled values are to be treated as outliers where necessary and not be printed. This is achieved using PRINTALL = NO or GLOBALPRINTALL = NO.…',
+    syntax: '',
+    description: {
+      en: 'These options steer the output of unlabelled values. Usually unlabelled values are printed with a label generated from the numerical value. It can however be required to suppress outliers in the tables: unlabelled values are to be treated as outliers where necessary and not be printed. This is achieved using PRINTALL = NO or GLOBALPRINTALL = NO.…',
+      de: '',
     },
   },
   {
     name: 'GLOBALROWMINIMUM',
-    en: {
-      description: 'Global preset for ROWMINIMUM for all following tables.',
+    syntax: '',
+    description: {
+      en: 'Global preset for ROWMINIMUM for all following tables.',
+      de: '',
     },
   },
   {
     name: 'GLOBALSORT',
-    de: {
-      description:
-        'Normalerweise wirkt ein SORT 462-Schlüsselwort im TABLE 355- Statement nur auf die direkt vorangehende Dimension einer Tabelle angewandt, also z.B. nur die Ausprägungen einer Variable.Mit GLOBALSORT wird der Wirkungsbereich von SORT auf die gesamte Tabelle ausgedehnt. Dies ist vor allem bei Mittelwerttabellen etc. sinnvoll.',
-    },
-    en: {
-      description:
-        'Normally a SORT key word in a TABLE statement effects only the directly preceding dimension of a table: TABLE = #kopf by a b sort absolute descend',
+    syntax: '',
+    description: {
+      en: 'Normally a SORT key word in a TABLE statement effects only the directly preceding dimension of a table: TABLE = #kopf by a b sort absolute descend',
+      de: 'Normalerweise wirkt ein SORT-Schlüsselwort im TABLE-Statement nur auf die direkt vorangehende Dimension einer Tabelle angewandt, also z.B. nur die Ausprägungen einer Variable.Mit GLOBALSORT wird der Wirkungsbereich von SORT auf die gesamte Tabelle ausgedehnt. Dies ist vor allem bei Mittelwerttabellen etc. sinnvoll.',
     },
   },
   {
     name: 'GLOBALTABLEMINIMUM',
-    en: {
-      description:
-        'There was a bug that caused the sub tables in TABLE ADD constructs to be individually tested against the TABLEMINIMUM. Now only the start table is tested. As the tally results of all the tables (incl. ADD) should really be taken the sum of all the FRAMECELLS is taken into account for the resultant table. More precisely:…',
-      syntax: 'GLOBALTABLEMINIMUM = <number>;',
+    syntax: 'GLOBALTABLEMINIMUM = <number>;',
+    description: {
+      en: 'There was a bug that caused the sub tables in TABLE ADD constructs to be individually tested against the TABLEMINIMUM. Now only the start table is tested. As the tally results of all the tables (incl. ADD) should really be taken the sum of all the FRAMECELLS is taken into account for the resultant table. More precisely:…',
+      de: '',
     },
   },
   {
     name: 'GOTO',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'GRAPHAREA',
-    de: { description: '', syntax: 'GRAPHAREA = <x> <y> <width> <height> ;' },
-    en: { description: '', syntax: 'GRAPHAREA = <x> <y> <width> <height> ;' },
+    syntax: 'GRAPHAREA = <x> <y> <width> <height> ;',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'GRAPHBOX',
-    de: {
-      description:
-        'Kasten mit der Liniengraphik in PROFILE 637-Tabellen | HEADERBOX | Kasten um den HEADER |     |     |     | | --------- | -------------------- | --- | --- | --- | 516, außerhalb der Tabelle | INSTITUTION | Kasten um die INSTITUTION |     | 520-Angabe |     | | ----------- | ------------------------- | --- | ---------- | --- | LABELS X |     | VALUELABELS | 211 auf der X-Achse |     |     | | ---…',
-    },
-    en: {
-      description:
-        'Box with the line graphic in PROFILE 637 tables | HEADERBOX | box around the HEADER 516, outside the table | INSTITUTION | box around the INSTITUTION 520 line | LABELS X | box around VALUELABELS 211 on the X axis |…',
-      syntax: '',
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
     },
   },
   {
     name: 'GRAPHLABELS',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'GRAPHLEGEND',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'GRAPHNUMBERS',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'GRAPHPROJECT',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'GRAPHTITLE',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'GRAPHTYPE',
-    en: { description: '', syntax: 'GRAPHTYPE = <xlGraphname>;' },
+    syntax: 'GRAPHTYPE = <xlGraphname>;',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'GRATAB',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'GREATER',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'GROUP',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'GROUPCOUNTS',
-    de: { description: '', syntax: 'GROUPCOUNTS <Varlist> = [ YES | NO ];' },
-    en: { description: '', syntax: 'GROUPCOUNTS <Varlist> = [ YES | NO ];' },
+    syntax: 'GROUPCOUNTS <varlist> = [ YES | NO ];',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'GROUPEDBARS',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'GROUPEDBARS3D',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'GROUPEDBARSH',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'GROUPRECODE',
-    de: {
-      description: '',
-      syntax:
-        'GROUPRECODE <recode> { / <recode> }*n [ ELSE = <number> ] ;\n<recode> ::= <valuelist> = < number >\n< valuelist > ::= [ <number> | <number> : <number> | <valuelist>',
-    },
-    en: {
-      description:
-        'Using GROUPRECODE group variables can also be recoded. Example: GROUPRECODE GRR 3=5; checks in the third variable of the group whether it is relevant and if yes the value of this variable is deleted and the fifth variable is set to TRUE. Instead of the constant RECODE value after the equals sign there can also be a variable name of a nuclear variable (see above).',
-      syntax:
-        'GROUPRECODE <recode> { / <recode> }*n [ ELSE = <number> ] ;\n<recode> ::= <valuelist> = < number >\n< valuelist > ::= [ <number> | <number> : <number> | <valuelist>',
+    syntax:
+      'GROUPRECODE <recode> { / <recode> }*n [ ELSE = <number> ] ;\n<recode> ::= <valuelist> = <number>\n<valuelist> ::= [ <number> | <number> : <number> | <valuelist>',
+    description: {
+      en: 'Using GROUPRECODE group variables can also be recoded. Example: GROUPRECODE GRR 3=5; checks in the third variable of the group whether it is relevant and if yes the value of this variable is deleted and the fifth variable is set to TRUE. Instead of the constant RECODE value after the equals sign there can also be a variable name of a nuclear variable (see above).',
+      de: '',
     },
   },
   {
     name: 'GROUPS',
-    de: {
-      description: '',
-      syntax:
-        'GROUPS <Varname> = { | "Labeltext ..."\n[ LEVELLEVEL <number> ]\n[ USEFONT <Fontname> [ SIZE <number> ] ]\n[ CELLELEMENTS ( { <cellelement> }*n ) ]\n: <log. Bedingung> }*n ;',
-    },
-    en: {
-      description:
-        'If the individual (nuclear) variables from which the variable groups are to be formed are not yet present then the GROUPS command is often the more practical alternative as the naming and the more complex rules for forming groups can be formulated more clearly in the GROUPS command.…',
-      syntax:
-        'GROUPS <Varname> =\n{ | "Labeltext ..." [ LEVEL <number> ] [ USEFONT <Fontname> [ SIZE\n<number> ] ] : <log. Bedingung> }*n ;',
+    syntax:
+      'GROUPS <varname> =\n{ | "label text ..." [ LEVEL <number> ] [ USEFONT <fontname> [ SIZE\n<number> ] ] : <logical condition> }*n ;',
+    description: {
+      en: 'If the individual (nuclear) variables from which the variable groups are to be formed are not yet present then the GROUPS command is often the more practical alternative as the naming and the more complex rules for forming groups can be formulated more clearly in the GROUPS command.…',
+      de: '',
     },
   },
   {
     name: 'GROUPVAR',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'GT',
-    de: { description: 'Greater Then, größer als' },
-    en: { description: 'Greater Than', syntax: '' },
+    syntax: '',
+    description: {
+      en: 'Greater Than',
+      de: 'Greater Then, größer als',
+    },
   },
   {
     name: 'HARMONICMEAN',
     argsHint: '( Var )',
-    de: {
-      description:
-        'Das harmonische Mittel: Kehrwert aus dem Mittelwert der Kehrwerte (nur für positive Zahlen definiert). Findet in Name Beschreibung speziellen Fällen Anwendung, z.B. als Mittelwert über Geschwindigkeiten etc.',
-    },
-    en: {
-      description:
-        'The harmonic mean: the reciprocal of the mean of the reciprocals (defined only for positive numbers). Used in special cases, e.g. as a mean over speeds, etc.',
-      syntax: '',
+    syntax: '',
+    description: {
+      en: 'The harmonic mean: the reciprocal of the mean of the reciprocals (defined only for positive numbers). Used in special cases, e.g. as a mean over speeds, etc.',
+      de: 'Das harmonische Mittel: Kehrwert aus dem Mittelwert der Kehrwerte (nur für positive Zahlen definiert). Findet in speziellen Fällen Anwendung, z.B. als Mittelwert über Geschwindigkeiten etc.',
     },
   },
   {
     name: 'HCENTER',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'HEADER',
-    de: {
-      description:
-        'VARIABLE a1 : v1 = a2 ; ist die XTAB-Version des ganz einfachen TABLE-Statements: TABLE = a1 BY a2; Die Anweisung sieht vor allem deshalb etwas umständlich aus, weil die Variable a2 über ein internes Konstrukt, eine lokale Tabellenvariable (v1), übergeben wird, die vorher am Anschluss an das ROWS-Schlüsselwort vereinbart wird.…',
-      syntax: 'HEADER = "<text>" [ LEFT | HCENTER | RIGHT ] ;',
-    },
-    en: {
-      description:
-        'VARIABLE a1 : v1 = a2 ; It is the XTAB version of a very simple TABLE statement: TABLE = a1 BY a2; The command looks cumbersome mainly because the variable a2 is passed on using an internal construct (a local table variable v1) which already has been allocated after the ROW key word.…',
-      syntax: 'HEADER = "<text>" [ LEFT | HCENTER | RIGHT ] ;',
+    syntax: 'HEADER = "<text>" [ LEFT | HCENTER | RIGHT ] ;',
+    description: {
+      en: 'VARIABLE a1 : v1 = a2 ; It is the XTAB version of a very simple TABLE statement: TABLE = a1 BY a2; The command looks cumbersome mainly because the variable a2 is passed on using an internal construct (a local table variable v1) which already has been allocated after the ROW key word.…',
+      de: 'VARIABLE a1 : v1 = a2 ; ist die XTAB-Version des ganz einfachen TABLE-Statements: TABLE = a1 BY a2; Die Anweisung sieht vor allem deshalb etwas umständlich aus, weil die Variable a2 über ein internes Konstrukt, eine lokale Tabellenvariable (v1), übergeben wird, die vorher am Anschluss an das ROWS-Schlüsselwort vereinbart wird.…',
     },
   },
   {
     name: 'HEADERBOX',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'HEADERS',
-    en: {
-      description: '',
-      syntax: 'HEADERS = <tablepart> { / <tablepart> }*n;',
+    syntax: 'HEADERS = <tablepart> { / <tablepart> }*n;',
+    description: {
+      en: '',
+      de: '',
     },
   },
   {
     name: 'HEIGHT',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'HELPTEXT',
-    en: {
-      description: '',
-      syntax:
-        'HELPTEXT <VarList> = "text text ";\nDefines a help text which can be called up during CATI/CAPI or Data Entry (F1 = help button).',
+    syntax:
+      'HELPTEXT <VarList> = "text text ";\nDefines a help text which can be called up during CATI/CAPI or Data Entry (F1 = help button).',
+    description: {
+      en: '',
+      de: '',
     },
   },
   {
     name: 'HG',
     argsHint: '(out-dated)',
-    en: {
-      description: '(is also carried out in Postscript output)',
-      syntax: 'HG = [ <HGFileName> | "" ];',
+    syntax: 'HG = [ <HGFileName> | "" ];',
+    description: {
+      en: '(is also carried out in Postscript output)',
+      de: '',
     },
   },
   {
     name: 'HGASPRINT',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'HGDECIMALCHAR',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'HGDELIMCHAR',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'HGINVERSE',
-    en: {
-      description:
-        'Preset: HGINVERSE = NO; The data rows for all tables are transferred to HG in the same form as they are in the table, apart from with COMPARE. COMPARE tables are the exception. In order to organise the values in a STACKED BAR the data matrix in the standard case is inverted before the transfer to HG.…',
+    syntax: '',
+    description: {
+      en: 'Preset: HGINVERSE = NO; The data rows for all tables are transferred to HG in the same form as they are in the table, apart from with COMPARE. COMPARE tables are the exception. In order to organise the values in a STACKED BAR the data matrix in the standard case is inverted before the transfer to HG.…',
+      de: '',
     },
   },
   {
     name: 'HIDDEN',
     argsHint: '( <medium> )',
-    de: {
-      description:
-        '] parts ::= part { part }*n part ::= content [ filter ] [ option ] content ::= [ <constant> | <varname> | <cellelement> ( <varname> [ <varname> ] ) | <cellelement> ( <varname> [ <varname> ] BY <varname> ) :DESCRIPTION :USEVARTITLE :FORMAT ] filter ::= FILTER <bedingung> | option ::= SORT sortcontent [ sortpane ] [ cut ] sortcontent ::= [ DESCEND ] sorttype sorttype ::= [ POSITION | ALPHA | CODE |…',
-    },
-    en: {
-      description:
-        '] parts ::= part { part }*n part ::= content [ filter ] [ option ] content ::= [ <constant> | <varname> | <cellelement> ( <varname> [ <varname> ] ) | <cellelement> ( <varname> [ <varname> ] BY <varname> ) :DESCRIPTION :USEVARTITLE :FORMAT ] filter ::= FILTER <condition> | option ::= SORT sortcontent [ sortpane ] [ cut ] sortcontent ::= [ DESCEND ] sorttype sorttype ::= [ POSITION | ALPHA | CODE |…',
-      syntax: '',
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
     },
   },
   {
     name: 'HIDDENTOVARLIST',
-    de: { description: '', syntax: 'HIDDENTOVARLIST = [ YES | NO ];' },
-    en: { description: '', syntax: 'HIDDENTOVARLIST = [ YES | NO ];' },
+    syntax: 'HIDDENTOVARLIST = [ YES | NO ];',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'HIGHSIGNIFICANCE',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'HISTORY',
-    de: {
-      description: '',
-      syntax:
-        'HISTORY =[ DATABOX <x> <y> ] FORMAT ( <Formatliste> )\nDATA [ Absliste ] { <number> : <Datenliste> }*n ;\nFormatliste ::= [ ABSROW | ABSCOLUMN | PHYSROW PHYSCOLUMN TOTALROW ]\n{ <number> }*n\nAbsliste ::= { <number> }*n\nDatenliste ::= [ <number> | ] { <string> }*n',
-    },
-    en: {
-      description: '',
-      syntax:
-        'HISTORY =\n[ DATABOX <x> <y> ] FORMAT ( <Formatliste> ) DATA [ Absliste ] {\n<number> : <Dataliste> }*n;\nFormatliste ::= [ ABSROW | ABSCOLUMN |\nPHYSROW PHYSCOLUMN TOTALROW ] { <number> }*n\nAbsliste ::= { <number> }*n',
+    syntax:
+      'HISTORY =\n[ DATABOX <x> <y> ] FORMAT ( <formatlist> ) DATA [ abslist ] {\n<number> : <datalist> }*n;\nformatlist ::= [ ABSROW | ABSCOLUMN |\nPHYSROW PHYSCOLUMN TOTALROW ] { <number> }*n\nabslist ::= { <number> }*n',
+    description: {
+      en: '',
+      de: '',
     },
   },
   {
     name: 'HMTL',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'HORIZONTAL',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'HORIZONTALALIGN',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'HOTIMPORT',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'HOTKEY',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'HSB',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'HTML',
-    de: {
-      description: '',
-      syntax:
-        'HTML = [ <filename> | "" ];\nEs wird eine HTML-Version der betreffenden Tabellen in der Datei <filename>.html abgelegt.',
-    },
-    en: {
-      description: '',
-      syntax:
-        'HTML = [ <filename> | "" ];\nA HTML version of the relevant tables is stored in the file <filename>.html. Additionally a file called\n<filename>_frames.html is produced. If this is represented in a browser the browser interface is',
+    syntax:
+      'HTML = [ <filename> | "" ];\nA HTML version of the relevant tables is stored in the file <filename>.html. Additionally a file called\n<filename>_frames.html is produced. If this is represented in a browser the browser interface is',
+    description: {
+      en: '',
+      de: '',
     },
   },
   {
     name: 'HTML2EXCELDECCHAR',
-    de: {
-      description: '',
-      syntax: "HTML2EXCELDECCHAR = <char>;\n<char> = '.' | ','",
-    },
-    en: {
-      description: '',
-      syntax: "HTML2EXCELDECCHAR = <char>;\n<char> = '.' | ','",
+    syntax: "HTML2EXCELDECCHAR = <char>;\n<char> = '.' | ','",
+    description: {
+      en: '',
+      de: '',
     },
   },
   {
     name: 'HTML2EXCELFLOWTEXT',
-    de: {
-      description: '',
-      syntax: 'HTML2EXCELFLOWTEXT <boxtype> = [ YES | NO ];',
-    },
-    en: {
-      description: '',
-      syntax: 'HTML2EXCELFLOWTEXT <boxtype> = [ YES | NO ];',
+    syntax: 'HTML2EXCELFLOWTEXT <boxtype> = [ YES | NO ];',
+    description: {
+      en: '',
+      de: '',
     },
   },
   {
     name: 'HTMLBACKGROUND',
-    en: {
-      description:
-        'The background and foreground colours of tables in HTML can be influenced in the script using the two HTML-specific representation elements: Example: RGB = YES; HTMLBACKGROUND TABLE = <red> <green> <blue>; HTMLBACKGROUND DEFAULTBOX = <red> <green> <blue>; The RGB values are, as is usual in GESS, designated in figure ranges from 0 - 1.…',
+    syntax: '',
+    description: {
+      en: 'The background and foreground colours of tables in HTML can be influenced in the script using the two HTML-specific representation elements: Example: RGB = YES; HTMLBACKGROUND TABLE = <red> <green> <blue>; HTMLBACKGROUND DEFAULTBOX = <red> <green> <blue>; The RGB values are, as is usual in GESS, designated in figure ranges from 0 - 1.…',
+      de: '',
     },
   },
   {
     name: 'HTMLCHART',
-    de: {
-      description:
-        'TITLE "alle zellen ohne overcodes, absolute" FORM COLUMNS OPTION STACKED CELLELEMENT ABSOLUTE = | COLUMNS 2/1:5 3/1:5 | ROWS POSITION 1:5 ; Technische Voraussetzung Die Charts in der GESStabs HTML-Ausgabe beruhen auf der externen Bibliothek \'Charts.min.js\'. Diese kann über die URL https://cdn.jsdelivr.net/npm/chart.js@2.8.0 im Internet eingebunden werden. Dies ist bislang das Standard-Verhalten.…',
-      syntax:
-        'HTMLCHART <options> = <cells>;\n<options> ::= [ TITLE <string> | FORM <form> | OPTION STACKED\n| LINETENSION <number> | HTMLCHARTWIDTH = <number>;\n| WIDTH <number> | CELLELEMENT <cellelement>\n| LEGENDPOSITION [ LEFT | RIGHT | TOP | BOTTOM ] ] [ INVERSE ]\n<cells> ::= [ | ROWS <rows> ] [ | COLUMNS <columns> ]',
-    },
-    en: {
-      description:
-        'TITLE "all cells without overcodes, absolute" FORM COLUMNS OPTION STACKED CELLELEMENT ABSOLUTE = | COLUMNS 2/1:5 3/1:5 | ROWS POSITION 1:5 ; Technical prerequisite: the charts in the GESStabs HTML output are based on the external library \'Charts.min.js\'. This can be embedded from the internet via the URL https://cdn.jsdelivr.net/npm/chart.js@2.8.0. This has been the standard behaviour so far.…',
-      syntax:
-        'HTMLCHART <options> = <cells>;\n<options> ::= [ TITLE <string> | FORM <form> | OPTION STACKED\n| LINETENSION <number> | HTMLCHARTWIDTH = <number>;\n| WIDTH <number> | CELLELEMENT <cellelement>\n| LEGENDPOSITION [ LEFT | RIGHT | TOP | BOTTOM ] ] [ INVERSE ]\n<cells> ::= [ | ROWS <rows> ] [ | COLUMNS <columns> ]',
+    syntax:
+      'HTMLCHART <options> = <cells>;\n<options> ::= [ TITLE <string> | FORM <form> | OPTION STACKED\n| LINETENSION <number> | HTMLCHARTWIDTH = <number>;\n| WIDTH <number> | CELLELEMENT <cellelement>\n| LEGENDPOSITION [ LEFT | RIGHT | TOP | BOTTOM ] ] [ INVERSE ]\n<cells> ::= [ | ROWS <rows> ] [ | COLUMNS <columns> ]',
+    description: {
+      en: '',
+      de: '',
     },
   },
   {
     name: 'HTMLCHARTWIDTH',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'HTMLDOCUMENT',
-    de: {
-      description:
-        'überträgt die Informationen der DOCUMENT 521-Box in die HTML-Ausgabe.',
-    },
-    en: {
-      description:
-        'transfers the information of the DOCUMENT 521 box into the HTML output.',
-      syntax: '',
+    syntax: '',
+    description: {
+      en: 'transfers the information of the DOCUMENT box into the HTML output.',
+      de: 'überträgt die Informationen der DOCUMENT-Box in die HTML-Ausgabe.',
     },
   },
   {
     name: 'HTMLFLOWTEXT',
-    de: { description: '', syntax: 'HTMLFLOWTEXT <boxtype> = [ YES | NO ];' },
-    en: { description: '', syntax: 'HTMLFLOWTEXT <boxtype> = [ YES | NO ];' },
+    syntax: 'HTMLFLOWTEXT <boxtype> = [ YES | NO ];',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'HTMLFOOTER',
-    de: {
-      description:
-        'überträgt die Informationen der FOOTER 522-Box in die HTML- Ausgabe.',
-    },
-    en: {
-      description:
-        'With these TABLEFORMATs the relevant information can be fed into the HTML output.',
+    syntax: '',
+    description: {
+      en: 'With these TABLEFORMATs the relevant information can be fed into the HTML output.',
+      de: 'überträgt die Informationen der FOOTER-Box in die HTML- Ausgabe.',
     },
   },
   {
     name: 'HTMLFOREGROUND',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'HTMLHEADER',
-    de: {
-      description:
-        'überträgt die Informationen der HEADER 516-Box in die HTML- Ausgabe.',
-    },
-    en: {
-      description:
-        'transfers the information of the HEADER 516 box into the HTML output.',
-      syntax: '',
+    syntax: '',
+    description: {
+      en: 'transfers the information of the HEADER box into the HTML output.',
+      de: 'überträgt die Informationen der HEADER-Box in die HTML- Ausgabe.',
     },
   },
   {
     name: 'HYCOLCHIQU',
-    de: { description: 'Hybrider 447 Chi²-Test (gewichtet und ungewichtet)' },
-    en: {
-      description: 'Hybrid 447 chi-square test (weighted and unweighted)',
-      syntax: '',
+    syntax: '',
+    description: {
+      en: 'Hybrid chi-square test (weighted and unweighted)',
+      de: 'Hybrider Chi²-Test (gewichtet und ungewichtet)',
     },
   },
   {
     name: 'HYCOLDEPTTEST',
-    de: {
-      description:
-        'Hybrid 447 ausgestalteter t-Test für abhängige Daten. Der t- ( Var ) Wert wird auf der Basis der gewichteten Daten ermittelt, der t- Test erfolgt auf der Basis der ungewichteten Freiheitsgrade',
-    },
-    en: {
-      description:
-        'Hybrid 447 t-test for dependent data. The t-value ( Var ) is determined on the basis of the weighted data; the t-test is carried out on the basis of the unweighted degrees of freedom',
-      syntax: '',
+    syntax: '',
+    description: {
+      en: 'Hybrid t-test for dependent data. The t-value ( Var ) is determined on the basis of the weighted data; the t-test is carried out on the basis of the unweighted degrees of freedom',
+      de: 'Hybrid ausgestalteter t-Test für abhängige Daten. Der t- ( Var ) Wert wird auf der Basis der gewichteten Daten ermittelt, der t- Test erfolgt auf der Basis der ungewichteten Freiheitsgrade',
     },
   },
   {
     name: 'HYCOLZ',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'HYMCNEMAR',
-    de: {
-      description:
-        'McNemar 449 hybrid: aus den gewichteten Daten wird der Anteil der diskordanten Paare ermittelt. Aus dem gewichtet ermittelten Anteil der diskordanten Paare werden hypothetische ungewichtete Häufigkeiten für diese ermittelt. Diese bilden dann die Grundlage des McNemar-Tests.',
-    },
-    en: {
-      description:
-        'McNemar 449 hybrid: the proportion of discordant pairs is determined from the weighted data. From the weighted proportion of discordant pairs, hypothetical unweighted frequencies are derived for them. These then form the basis of the McNemar test.',
-      syntax: '',
+    syntax: '',
+    description: {
+      en: 'McNemar hybrid: the proportion of discordant pairs is determined from the weighted data. From the weighted proportion of discordant pairs, hypothetical unweighted frequencies are derived for them. These then form the basis of the McNemar test.',
+      de: 'McNemar hybrid: aus den gewichteten Daten wird der Anteil der diskordanten Paare ermittelt. Aus dem gewichtet ermittelten Anteil der diskordanten Paare werden hypothetische ungewichtete Häufigkeiten für diese ermittelt. Diese bilden dann die Grundlage des McNemar-Tests.',
     },
   },
   {
     name: 'HYMEANCOLDEPT',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'HYMEANTEST',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'HYMEANWELCH',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'HYPERLINK',
-    de: { description: '', syntax: 'HYPERLINK = <URI> <text> ;' },
-    en: { description: '', syntax: 'HYPERLINK = <URI> <text> ;' },
+    syntax: 'HYPERLINK = <URI> <text> ;',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'HYROWCHIQU',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'HYROWMEANTEST',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'HYROWTTEST',
-    de: {
-      description:
-        'Hybrider 447, zeilenweiser t-Test: Die t-Werte werden auf Basis der gewichteten Daten errechnet, die Freiheitsgrade zur Name Beschreibung Berechnung der p-Werte der t-Verteilung ergeben sich aus den ungewichteten Häufigkeiten.',
-    },
-    en: {
-      description:
-        'Hybrid 447, row-wise t-test: the t-values are computed on the basis of the weighted data; the degrees of freedom for computing the p-values of the t-distribution are derived from the unweighted frequencies.',
-      syntax: '',
+    syntax: '',
+    description: {
+      en: 'Hybrid, row-wise t-test: the t-values are computed on the basis of the weighted data; the degrees of freedom for computing the p-values of the t-distribution are derived from the unweighted frequencies.',
+      de: 'Hybrider, zeilenweiser t-Test: Die t-Werte werden auf Basis der gewichteten Daten errechnet, die Freiheitsgrade zur Berechnung der p-Werte der t-Verteilung ergeben sich aus den ungewichteten Häufigkeiten.',
     },
   },
   {
     name: 'HYROWZ',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'HYTTEST',
     argsHint: '(Var )',
-    de: {
-      description:
-        'Hybrider 447 t-Test: Die t-Werte werden auf Basis der gewichteten Daten errechnet, die Freiheitsgrade zur Berechnung der p-Werte der t-Verteilung ergeben sich aus den ungewichteten Häufigkeiten.',
-    },
-    en: {
-      description:
-        'Hybrid 447 t-test: the t-values are computed on the basis of the weighted data; the degrees of freedom for computing the p-values of the t-distribution are derived from the unweighted frequencies.',
-      syntax: '',
+    syntax: '',
+    description: {
+      en: 'Hybrid t-test: the t-values are computed on the basis of the weighted data; the degrees of freedom for computing the p-values of the t-distribution are derived from the unweighted frequencies.',
+      de: 'Hybrider t-Test: Die t-Werte werden auf Basis der gewichteten Daten errechnet, die Freiheitsgrade zur Berechnung der p-Werte der t-Verteilung ergeben sich aus den ungewichteten Häufigkeiten.',
     },
   },
   {
     name: 'HYWELCHTEST',
-    de: {
-      description:
-        'Hybrider 447 t-Test auf Mittelwerteunterschiede nach Welch 450 auf Basis der gewichteten Daten',
-    },
-    en: {
-      description:
-        'Hybrid 447 t-test on mean differences per Welch 450 on the basis of the weighted data',
-      syntax: '',
+    syntax: '',
+    description: {
+      en: 'Hybrid t-test on mean differences per Welch on the basis of the weighted data',
+      de: 'Hybrider t-Test auf Mittelwerteunterschiede nach Welch auf Basis der gewichteten Daten',
     },
   },
   {
     name: 'IBMGRAPHICS',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'IDENT',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'IDENTCHIQNOSIGNIF',
-    de: {
-      description:
-        'Wenn man eine Variable gegen sich selbst tabelliert, sind die Besetzungen natürlich hochsignifikant, aber aussageleer. Die Ausgabe der Signifikanzkennzeichnung kann hiermit unterdrückt werden.',
-    },
-    en: {
-      description:
-        'When a variable is tabulated against itself, the counts are of course highly significant but meaningless. This suppresses the output of the significance marking.',
-      syntax: '',
+    syntax: '',
+    description: {
+      en: 'When a variable is tabulated against itself, the counts are of course highly significant but meaningless. This suppresses the output of the significance marking.',
+      de: 'Wenn man eine Variable gegen sich selbst tabelliert, sind die Besetzungen natürlich hochsignifikant, aber aussageleer. Die Ausgabe der Signifikanzkennzeichnung kann hiermit unterdrückt werden.',
     },
   },
   {
     name: 'IF',
-    de: {
-      description: '',
-      syntax:
-        'IF <log. Bedingung> PRINT "ErrorText" <Varlist> [ GOTO <varname> ];',
-    },
-    en: {
-      description: '',
-      syntax:
-        'IF <log. Bedingung> PRINT "ErrorText" <Varlist> [ GOTO <varname> ];',
+    syntax:
+      'IF <logical condition> PRINT "ErrorText" <varlist> [ GOTO <varname> ];',
+    description: {
+      en: '',
+      de: '',
     },
   },
   {
     name: 'IFASFIF',
-    de: { description: '', syntax: 'IFASFIF = [ YES | NO ];' },
-    en: { description: '', syntax: 'IFASFIF = [ YES | NO ];' },
+    syntax: 'IFASFIF = [ YES | NO ];',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'IFBLOCK',
-    de: { description: '', syntax: 'IFBLOCK <bedingung> THEN' },
-    en: { description: '', syntax: 'IFBLOCK <condition> THEN' },
+    syntax: 'IFBLOCK <condition> THEN',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'IGNOREASCOUTDUPL',
-    de: { description: '', syntax: 'IGNOREASCOUTDUPL = [ YES | NO ];' },
-    en: { description: '', syntax: 'IGNOREASCOUTDUPL = [ YES | NO ];' },
+    syntax: 'IGNOREASCOUTDUPL = [ YES | NO ];',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'IGNORECASEINCOMPARE',
-    de: { description: '', syntax: 'IGNORECASEINCOMPARE = [ YES | NO ];' },
-    en: { description: '', syntax: 'IGNORECASEINCOMPARE = [ YES | NO ];' },
+    syntax: 'IGNORECASEINCOMPARE = [ YES | NO ];',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'IGNOREDOUBLECASENO',
-    en: { description: '', syntax: 'IGNOREDOUBLECASENO = [ YES | NO ];' },
+    syntax: 'IGNOREDOUBLECASENO = [ YES | NO ];',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'IGNOREMISSING',
-    de: {
-      description: '',
-      syntax:
-        'IGNOREMISSING = [ YES | NO ];\nVoreinstellung: IGNOREMISSING = NO;',
-    },
-    en: {
-      description: '',
-      syntax: 'IGNOREMISSING = [ YES | NO ];\nPreset: IGNOREMISSING = NO;',
+    syntax: 'IGNOREMISSING = [ YES | NO ];\nPreset: IGNOREMISSING = NO;',
+    description: {
+      en: '',
+      de: '',
     },
   },
   {
     name: 'IGNOREMULTIQOVERFLOW',
-    de: { description: '', syntax: 'IGNOREMULTIQOVERFLOW = [ YES | NO ];' },
-    en: { description: '', syntax: 'IGNOREMULTIQOVERFLOW = [ YES | NO ];' },
+    syntax: 'IGNOREMULTIQOVERFLOW = [ YES | NO ];',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'IGNOREPREQUOTAIFAPPO',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'IGNOREPREQUOTAIFFROZEN',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'IGNORESETFILTER',
-    de: { description: '', syntax: 'IGNORESETFILTER = [ YES | NO ];' },
-    en: { description: '', syntax: 'IGNORESETFILTER = [ YES | NO ];' },
+    syntax: 'IGNORESETFILTER = [ YES | NO ];',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'IGNORESPSSMISSINGVALUES',
-    de: { description: '', syntax: 'IGNORESPSSMISSINGVALUES = [ YES | NO ];' },
-    en: { description: '', syntax: 'IGNORESPSSMISSINGVALUES = [ YES | NO ];' },
+    syntax: 'IGNORESPSSMISSINGVALUES = [ YES | NO ];',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'IGNORESPSSSYSMISVAL',
-    de: { description: '', syntax: 'IGNORESPSSSYSMISVAL = [ YES | NO ];' },
-    en: { description: '', syntax: 'IGNORESPSSSYSMISVAL = [ YES | NO ];' },
+    syntax: 'IGNORESPSSSYSMISVAL = [ YES | NO ];',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'IGNORETABINTEXT',
-    de: { description: '', syntax: 'IGNORETABINTEXT = [ yes | no ];' },
-    en: { description: '', syntax: 'IGNORETABINTEXT = [ yes | no ];' },
+    syntax: 'IGNORETABINTEXT = [ yes | no ];',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'IMAGEBUTTONS',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'IMAGESCALE',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'IN',
-    de: {
-      description:
-        'Einschluss von Wertemengen/-bereichen Logische Verknüpfungen sind möglich mit:',
-    },
-    en: {
-      description:
-        'Inclusion of value sets / ranges. Logical connectives are possible with:',
-      syntax: '',
+    syntax: '',
+    description: {
+      en: 'Inclusion of value sets / ranges. Logical connectives are possible with:',
+      de: 'Einschluss von Wertemengen/-bereichen Logische Verknüpfungen sind möglich mit:',
     },
   },
   {
     name: 'INCH',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'INCLUDE',
-    de: { description: '', syntax: 'INCLUDE = <filename.inc>;' },
-    en: {
-      description:
-        'Defines an INCLUDE file. Commands from the INCLUDE file are interpreted as if they were in place of the INCLUDE commands. Example: INCLUDE = VARNAME.def; INCLUDE = Labels.def; This can be used for example to administrate the variable definitions and the VALUELABELS in different files so that changes in the column positions etc only have to be changed in the definition part. In the',
-      syntax: 'INCLUDE = <filename.inc>;',
+    syntax: 'INCLUDE = <filename.inc>;',
+    description: {
+      en: 'Defines an INCLUDE file. Commands from the INCLUDE file are interpreted as if they were in place of the INCLUDE commands. Example: INCLUDE = VARNAME.def; INCLUDE = Labels.def; This can be used for example to administrate the variable definitions and the VALUELABELS in different files so that changes in the column positions etc only have to be changed in the definition part. In the',
+      de: '',
     },
   },
   {
     name: 'INCLUDETITLEINTEXT',
-    de: {
-      description: '',
-      syntax:
-        'INCLUDETITLEINTEXT <varlist> = [ YES | NO ];\nFür alle Variablen, die in <varlist> aufgeführt sind, wird der VARTEXT um den Inhalt von',
-    },
-    en: {
-      description: '',
-      syntax:
-        'INCLUDETITLEINTEXT <varlist> = [ YES | NO ];\nFor all variables listed in <varlist>, the VARTEXT is extended by the content of',
+    syntax:
+      'INCLUDETITLEINTEXT <varlist> = [ YES | NO ];\nFor all variables listed in <varlist>, the VARTEXT is extended by the content of',
+    description: {
+      en: '',
+      de: '',
     },
   },
   {
     name: 'INCLUDEVALUES',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'INDENTAUTOOVERSORT',
-    de: { description: '', syntax: 'INDENTAUTOOVERSORT = [ YES | NO ];' },
-    en: { description: '', syntax: 'INDENTAUTOOVERSORT = [ YES | NO ];' },
+    syntax: 'INDENTAUTOOVERSORT = [ YES | NO ];',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'INDEPENDENT',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'INDEXCHARS',
-    de: { description: '', syntax: 'INDEXCHARS = "<Buchstaben | Zeichen>";' },
-    en: {
-      description:
-        'e.g. INDEXCHARS = "GEHT"; allocates a (small or large) G to the first test column, an E to the second, an H to the third and a T to the fourth. The letters A – Z are preset. TESTCOLUMNS are taken into account. The letters A – Z can initially be used as INDEXCHARS to deal with 26 columns.…',
-      syntax: 'INDEXCHARS = "<letters | characters>";',
+    syntax: 'INDEXCHARS = "<letters | characters>";',
+    description: {
+      en: 'e.g. INDEXCHARS = "GEHT"; allocates a (small or large) G to the first test column, an E to the second, an H to the third and a T to the fourth. The letters A – Z are preset. TESTCOLUMNS are taken into account. The letters A – Z can initially be used as INDEXCHARS to deal with 26 columns.…',
+      de: '',
     },
   },
   {
     name: 'INDEXSTYEFILE',
-    de: { description: '', syntax: 'INDEXSTYEFILE = <name>;' },
-    en: { description: '', syntax: 'INDEXSTYEFILE = <name>;' },
+    syntax: 'INDEXSTYEFILE = <name>;',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'INDEXSTYLEFILE',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'INDEXVAR',
-    de: {
-      description: '',
-      syntax: 'INDEXVAR <name> = <varlist> BY <variable>;',
-    },
-    en: {
-      description: '',
-      syntax: 'INDEXVAR <name> = <varlist> BY <variable>;',
+    syntax: 'INDEXVAR <name> = <varlist> BY <variable>;',
+    description: {
+      en: '',
+      de: '',
     },
   },
   {
     name: 'INFILE',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'INFOBOX',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'INHERITBACKGROUND',
-    de: {
-      description: '',
-      syntax:
-        'INHERITBACKGROUND [ X | Y ] = [ YES | NO ];\nINHERITFOREGROUND [ X | Y ] = [ YES | NO ];',
-    },
-    en: {
-      description: '',
-      syntax:
-        'INHERITBACKGROUND [ X | Y ] = [ YES | NO ];\nINHERITFOREGROUND [ X | Y ] = [ YES | NO ];',
+    syntax:
+      'INHERITBACKGROUND [ X | Y ] = [ YES | NO ];\nINHERITFOREGROUND [ X | Y ] = [ YES | NO ];',
+    description: {
+      en: '',
+      de: '',
     },
   },
   {
     name: 'INHERITFONT',
-    de: { description: '', syntax: 'INHERITFONT [ X | Y ] = [ YES | NO ];' },
-    en: { description: '', syntax: 'INHERITFONT [ X | Y ] = [ YES | NO ];' },
+    syntax: 'INHERITFONT [ X | Y ] = [ YES | NO ];',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'INHERITFOREGROUND',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'INIT',
-    en: { description: '', syntax: 'INIT <varlist> = <value list>;' },
+    syntax: 'INIT <varlist> = <value list>;',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'INPUTTASK',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'INSERT',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'INSTANTEXCEL',
-    de: { description: '', syntax: 'INSTANTEXCEL = [ YES | NO ];' },
-    en: { description: '', syntax: 'INSTANTEXCEL = [ YES | NO ];' },
+    syntax: 'INSTANTEXCEL = [ YES | NO ];',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'INSTANTPDF',
-    de: { description: '', syntax: 'INSTANTPDF = [ YES | NO ];' },
-    en: { description: '', syntax: 'INSTANTPDF = [ YES | NO ];' },
+    syntax: 'INSTANTPDF = [ YES | NO ];',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'INSTITUTION',
-    de: {
-      description:
-        'Angabe einer Textergänzung für den links unten eingedruckten Instituts- Namen',
-      syntax: 'INSTITUTION = "<text>";',
-    },
-    en: {
-      description:
-        'Specifies the printing of the name of the institute added at the bottom left edge. The valid text is expanded to the right. Repeated use of the INSTITUTION statements can lead to meaningless results. (PS): this text can have more than one line in output from Postscript printers with the backslash marking the end of a row.',
-      syntax: 'INSTITUTION = "<text>";',
+    syntax: 'INSTITUTION = "<text>";',
+    description: {
+      en: 'Specifies the printing of the name of the institute added at the bottom left edge. The valid text is expanded to the right. Repeated use of the INSTITUTION statements can lead to meaningless results. (PS): this text can have more than one line in output from Postscript printers with the backslash marking the end of a row.',
+      de: 'Angabe einer Textergänzung für den links unten eingedruckten Instituts- Namen',
     },
   },
   {
     name: 'INTERBOX',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'INTERCELL',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'INTERVALS',
-    de: {
-      description: '',
-      syntax:
-        'INTERVALS <newvar> = <sourcevar> { | <labeltext> :\n<comparison> <comparevalue> }*n;\n<comparison> ::= [ LT | GT | LE | GE ]',
-    },
-    en: {
-      description: '',
-      syntax:
-        'INTERVALS <newvar> = <sourcevar> { | <labeltext> :\n<comparison> <comparevalue> }*n;\n<comparison> ::= [ LT | GT | LE | GE ]',
+    syntax:
+      'INTERVALS <newvar> = <sourcevar> { | <labeltext> :\n<comparison> <comparevalue> }*n;\n<comparison> ::= [ LT | GT | LE | GE ]',
+    description: {
+      en: '',
+      de: '',
     },
   },
   {
     name: 'INTERVIEWER',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'INTRO',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'INUSECODE',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'INVERSE',
-    de: {
-      description:
-        'CHARTTITLE "Eine GESStabsArtist Graphik auf der Basis der Mittelwerte aus der OVERVIEW-Tabelle\\CELLELEMENT MEAN" CELLELEMENT MEAN',
-      syntax: 'INVERSE : [YES | NO]',
-    },
-    en: {
-      description:
-        'CHARTTITLE "A GESStabs Artist graphic based on the means from the OVERVIEW table\\CELLELEMENT MEAN" CELLELEMENT MEAN',
-      syntax: 'INVERSE : [YES | NO]',
+    syntax: 'INVERSE : [YES | NO]',
+    description: {
+      en: '',
+      de: 'CHARTTITLE "Eine GESStabsArtist Graphik auf der Basis der Mittelwerte aus der OVERVIEW-Tabelle\\CELLELEMENT MEAN" CELLELEMENT MEAN',
     },
   },
   {
     name: 'INVERTFILEWEIGHTOUT',
-    de: { description: '', syntax: 'INVERTFILEWEIGHTOUT = <variable>;' },
-    en: { description: '', syntax: 'INVERTFILEWEIGHTOUT = <variable>;' },
+    syntax: 'INVERTFILEWEIGHTOUT = <variable>;',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'INVERTIN',
-    de: { description: '', syntax: 'INVERTIN = <path>;' },
-    en: { description: '', syntax: 'INVERTIN = <path>;' },
+    syntax: 'INVERTIN = <path>;',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'INVERTOUT',
-    de: { description: '', syntax: 'INVERTOUT = <path>;' },
-    en: { description: '', syntax: 'INVERTOUT = <path>;' },
+    syntax: 'INVERTOUT = <path>;',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'INVERTOUTMAX',
-    de: { description: '', syntax: 'INVERTOUTMAX = <number>;' },
-    en: { description: '', syntax: 'INVERTOUTMAX = <number>;' },
+    syntax: 'INVERTOUTMAX = <number>;',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'INVERTOUTVARS',
-    de: {
-      description: '',
-      syntax: 'INVERTOUTVARS [ KEEPVARS | DELETEVARS ] = <varlist>;',
-    },
-    en: {
-      description: '',
-      syntax: 'INVERTOUTVARS [ KEEPVARS | DELETEVARS ] = <varlist>;',
+    syntax: 'INVERTOUTVARS [ KEEPVARS | DELETEVARS ] = <varlist>;',
+    description: {
+      en: '',
+      de: '',
     },
   },
   {
     name: 'INVINDEXVAR',
-    de: {
-      description: '',
-      syntax: 'INVINDEXVAR <name> = <varlist> BY <variable>;',
-    },
-    en: {
-      description: '',
-      syntax: 'INVINDEXVAR <name> = <varlist> BY <variable>;',
+    syntax: 'INVINDEXVAR <name> = <varlist> BY <variable>;',
+    description: {
+      en: '',
+      de: '',
     },
   },
   {
     name: 'IOCHECK',
-    de: {
-      description: '',
-      syntax: 'IOCHECK = [ ASCIIIN | ASCIIOUT | COLBININ | COLBINOUT ] ;',
-    },
-    en: {
-      description: '',
-      syntax: 'IOCHECK = [ ASCIIIN | ASCIIOUT | COLBININ | COLBINOUT ] ;',
+    syntax: 'IOCHECK = [ ASCIIIN | ASCIIOUT | COLBININ | COLBINOUT ] ;',
+    description: {
+      en: '',
+      de: '',
     },
   },
   {
     name: 'IS',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'ITALIC',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'ITEM',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'JSON',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'KEEP',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'KEEPVARS',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'KEY',
-    de: {
-      description: '',
-      syntax:
-        'KEY OPENQFILE = <varname> ;\nIn der Regel wird hierzu die CASENUMBER verwendet; man kann aber beliebige Variablen als\nSchlüssel in OpenQFiles verwenden. Diese Variable muss atomar sein; darf aber auch vom Typ',
-    },
-    en: {
-      description: '',
-      syntax:
-        'KEY OPENQFILE = <varname> ;\nAs a rule the CASENUMBER is used for this; but you can use any variable as a\nkey in OpenQFiles. This variable must be atomic; it may, however, also be of type',
+    syntax:
+      'KEY OPENQFILE = <varname> ;\nAs a rule the CASENUMBER is used for this; but you can use any variable as a\nkey in OpenQFiles. This variable must be atomic; it may, however, also be of type',
+    description: {
+      en: '',
+      de: '',
     },
   },
   {
     name: 'KEYDUMP',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'KEYWORD',
-    de: {
-      description:
-        'Syntaxstrukturen werden so aufgeführt: Dies ist die grundsätzliche Syntaxstruktur einer GESStabs-Funktionalität. Beispielhafte Syntaxausschnitte sehen entsprechend aus: Dies ist ein beispielhafter Syntaxabschnitt Einführung in die Tabellierung',
-    },
-    en: {
-      description:
-        'Syntax structures are presented as follows: this is the basic syntax structure of a GESStabs feature. Example syntax excerpts look accordingly: this is an example syntax section. Introduction to tabulation',
-      syntax: '',
+    syntax: '',
+    description: {
+      en: 'Syntax structures are presented as follows: this is the basic syntax structure of a GESStabs feature. Example syntax excerpts look accordingly: this is an example syntax section. Introduction to tabulation',
+      de: 'Syntaxstrukturen werden so aufgeführt: Dies ist die grundsätzliche Syntaxstruktur einer GESStabs-Funktionalität. Beispielhafte Syntaxausschnitte sehen entsprechend aus: Dies ist ein beispielhafter Syntaxabschnitt Einführung in die Tabellierung',
     },
   },
   {
     name: 'KNOWN',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'LABELFORMAT',
-    de: { description: '', syntax: 'LABELFORMAT <varlist> = <formatstring>;' },
-    en: { description: '', syntax: 'LABELFORMAT <varlist> = <string>;' },
+    syntax: 'LABELFORMAT <varlist> = <string>;',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'LABELFROMFILE',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'LABELRECODE',
-    de: { description: '', syntax: 'LABELRECODE = [ YES | NO ];' },
-    en: { description: '', syntax: 'LABELRECODE = [ YES | NO ];' },
+    syntax: 'LABELRECODE = [ YES | NO ];',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'LABELS',
-    de: { description: '', syntax: 'LABELS : [0 | 1 | 2]' },
-    en: {
-      description:
-        '1 "18#24" 2 "25#30" 3 "31#45" 4 "46#60" 5 "61 and älter"; SINGLEQ Bezirk = 43',
-      syntax: 'LABELS : [0 | 1 | 2]',
+    syntax: 'LABELS : [0 | 1 | 2]',
+    description: {
+      en: '',
+      de: '',
     },
   },
   {
     name: 'LABELS AS',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'LABELS COPY',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'LABELS X',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'LABELS Y',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'LABELSET',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'LABELSPACE',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'LABELSTOTITLE',
-    de: { description: '', syntax: 'LABELSTOTITLE <labelcode> = <varlist>;' },
-    en: { description: '', syntax: 'LABELSTOTITLE <labelcode> = <varlist>;' },
+    syntax: 'LABELSTOTITLE <labelcode> = <varlist>;',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'LABELVALUE',
-    de: { description: '', syntax: 'LABELVALUE <numvariable> = <variable>;' },
-    en: { description: '', syntax: 'LABELVALUE <numvariable> = <variable>;' },
+    syntax: 'LABELVALUE <numvariable> = <variable>;',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'LABELWIDTH',
-    de: {
-      description: '',
-      syntax: 'LABELWIDTH : <number>\nCOLUMNWIDTH : <number>',
-    },
-    en: {
-      description: '',
-      syntax: 'LABELWIDTH : <number>\nCOLUMNWIDTH : <number>',
+    syntax: 'LABELWIDTH : <number>\nCOLUMNWIDTH : <number>',
+    description: {
+      en: '',
+      de: '',
     },
   },
   {
     name: 'LANDSCAPE',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'LANGUAGES',
-    de: { description: '', syntax: 'LANGUAGES = <csv-file-name>;' },
-    en: { description: '', syntax: 'LANGUAGES = <csv-file-name>;' },
+    syntax: 'LANGUAGES = <csv-file-name>;',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'LASTVERSION',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'LATIN1',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'LE',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'LEADINGZEROS',
-    de: { description: '', syntax: 'LEADINGZEROS = [ YES | NO ];' },
-    en: { description: '', syntax: 'LEADINGZEROS = [ YES | NO ];' },
+    syntax: 'LEADINGZEROS = [ YES | NO ];',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'LEFT',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'LEFTMARGIN',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'LEGENDPOSITION',
-    de: {
-      description: '',
-      syntax: 'LEGENDPOSITION : [TOP | BOTTOM | LEFT | RIGHT]',
-    },
-    en: {
-      description: '',
-      syntax: 'LEGENDPOSITION : [TOP | BOTTOM | LEFT | RIGHT]',
+    syntax: 'LEGENDPOSITION : [TOP | BOTTOM | LEFT | RIGHT]',
+    description: {
+      en: '',
+      de: '',
     },
   },
   {
     name: 'LESS',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'LEVEL',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'LINE',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'LINEBUFFER',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'LINECOLOR',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'LINEDASH',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'LINEFEEDCHAR',
-    de: {
-      description:
-        'Erzwingt in VALUELABELS 211 oder VARTITLE 210s einen Zeilenumbruch. Voreinstellung: \\',
-    },
-    en: {
-      description:
-        'Forces a line break in VALUELABELS 211 or VARTITLE 210. Default: \\',
-      syntax: '',
+    syntax: '',
+    description: {
+      en: 'Forces a line break in VALUELABELS or VARTITLE. Default: \\',
+      de: 'Erzwingt in VALUELABELS oder VARTITLEs einen Zeilenumbruch. Voreinstellung: \\',
     },
   },
   {
     name: 'LINEFEEDFACTOR',
-    de: { description: '', syntax: 'LINEFEEDFACTOR = <number>;' },
-    en: { description: '', syntax: 'LINEFEEDFACTOR = <number>;' },
+    syntax: 'LINEFEEDFACTOR = <number>;',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'LINES',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'LINES3D',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'LINESWITHSYMBOLS',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'LINETENSION',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'LINEWIDTH',
-    de: {
-      description: 'Die Dicke des Umrandungsstrichs. 0.0 = keine Umrandung.',
-    },
-    en: {
-      description: 'The thickness of the border line. 0.0 = no border.',
-      syntax: '',
+    syntax: '',
+    description: {
+      en: 'The thickness of the border line. 0.0 = no border.',
+      de: 'Die Dicke des Umrandungsstrichs. 0.0 = keine Umrandung.',
     },
   },
   {
     name: 'LIST',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'LISTFILE',
-    de: { description: '', syntax: 'LISTFILE = <filename>;' },
-    en: {
-      description:
-        'Normally the interpretation of the commands is logged on the screen. This log or parts of it can be directed into a file which is declared as a LISTFILE. Example: LISTFILE = Tables.Err; If the interpretation is to appear back on the screen as of a certain point this can be achieved using: LISTFILE = con;',
-      syntax: 'LISTFILE = <filename>;',
+    syntax: 'LISTFILE = <filename>;',
+    description: {
+      en: 'Normally the interpretation of the commands is logged on the screen. This log or parts of it can be directed into a file which is declared as a LISTFILE. Example: LISTFILE = Tables.Err; If the interpretation is to appear back on the screen as of a certain point this can be achieved using: LISTFILE = con;',
+      de: '',
     },
   },
   {
     name: 'LISTON',
-    de: { description: '', syntax: 'LISTON = [ YES | NO ];' },
-    en: {
-      description: '',
-      syntax:
-        'LISTON = NO;\nSwitches the log for the interpretation of commands off completely, LISTON = YES; (preset) switches it',
+    syntax:
+      'LISTON = NO;\nSwitches the log for the interpretation of commands off completely, LISTON = YES; (preset) switches it',
+    description: {
+      en: '',
+      de: '',
     },
   },
   {
     name: 'LISTVARS',
-    de: {
-      description: '',
-      syntax:
-        'LISTVARS= <filename> [ options ];\noption ::= ASCIIOUT | COLBINOUT | ALL | SPSS | LABELS',
+    syntax: 'LISTVARS= <filename> [ options ];',
+    description: {
+      en: '',
+      de: '',
     },
-    en: { description: '', syntax: 'LISTVARS= <filename> [ options ];' },
   },
   {
     name: 'LITERAL',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'LIVETABS',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'LN',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'LOAD',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'LOCAL',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'LOCALCONTENT',
-    de: {
-      description:
-        'Bei der Druckausgabe wird nicht die Information aus dem FRAME, sondern der lokal ermittelte Zelleninhalt berücksichtigt.',
-    },
-    en: {
-      description:
-        'During printing the information is taken from the locally set cell contents and not from FRAME.',
+    syntax: '',
+    description: {
+      en: 'During printing the information is taken from the locally set cell contents and not from FRAME.',
+      de: 'Bei der Druckausgabe wird nicht die Information aus dem FRAME, sondern der lokal ermittelte Zelleninhalt berücksichtigt.',
     },
   },
   {
     name: 'LOCALTEXTFORMAT',
-    de: {
-      description: '',
-      syntax:
-        'LOCALTEXTFORMAT <#<char> <option> ;\n<char> ::= frei zu wählender Char (case-sensitive)\n<option> ::= [ FOREGROUND <color> | USEFONT <fontname> SIZE\n<size> ]',
-    },
-    en: {
-      description: '',
-      syntax:
-        'LOCALTEXTFORMAT <#<char> <option> ;\n<char> ::= freely chosen char (case-sensitive)\n<option> ::= [ FOREGROUND <color> | USEFONT <fontname> SIZE\n<size> ]',
+    syntax:
+      'LOCALTEXTFORMAT <#<char> <option> ;\n<char> ::= freely chosen char (case-sensitive)\n<option> ::= [ FOREGROUND <color> | USEFONT <fontname> SIZE\n<size> ]',
+    description: {
+      en: '',
+      de: '',
     },
   },
   {
     name: 'LOCKMETHOD',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'LONGVARTITLE',
-    de: {
-      description:
-        'Sorgt dafür, dass VARTITLE 210 in Tabellen in der Y-Achse nicht umgebrochen werden. Sollte man nur anwenden, wenn keine DRAWBOX für VARTITLE Y definiert ist - kann sonst blöd aussehen. (Hat nur bei Postscript-Ausgabe Effekt).',
-    },
-    en: {
-      description:
-        'Ensures that the VARTITLE in the table Y-Axis is not broken up. Should only be used if no DRAWBOX for VARTITLE Y has been defined. Otherwise it looks stupid! (Only PS)',
+    syntax: '',
+    description: {
+      en: 'Ensures that the VARTITLE in the table Y-Axis is not broken up. Should only be used if no DRAWBOX for VARTITLE Y has been defined. Otherwise it looks stupid! (Only PS)',
+      de: 'Sorgt dafür, dass VARTITLE in Tabellen in der Y-Achse nicht umgebrochen werden. Sollte man nur anwenden, wenn keine DRAWBOX für VARTITLE Y definiert ist - kann sonst blöd aussehen. (Hat nur bei Postscript-Ausgabe Effekt).',
     },
   },
   {
     name: 'LOWERCASE',
-    de: {
-      description: '',
-      syntax:
-        'LOWERCASE <char> = <char>;\n<char> ::= [ x | \'x\' | "x" | <number> ]\nx ::= A .. Z, a .. z\nnumber ::= 1 .. 255',
-    },
-    en: {
-      description: '',
-      syntax:
-        'LOWERCASE <char> = <char>;\n<char> ::= [ x | \'x\' | "x" | <number> ]\nx ::= A .. Z, a .. z\nnumber ::= 1 .. 255\nNormally only the letters A – Z can be used in INDEXCHARS, as there are only signs (ASCII Code < 128)',
+    syntax:
+      'LOWERCASE <char> = <char>;\n<char> ::= [ x | \'x\' | "x" | <number> ]\nx ::= A .. Z, a .. z\nnumber ::= 1 .. 255\nNormally only the letters A – Z can be used in INDEXCHARS, as there are only signs (ASCII Code < 128)',
+    description: {
+      en: '',
+      de: '',
     },
   },
   {
     name: 'LOWSIGNIFICANCE',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'LPI',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'LSLICE',
-    de: {
-      description:
-        'von Einzeltabellen zerlegen. TABLE = a BY b SORT ABSOLUTE DESCEND SLICE 15; Hiermit wird eine Tabelle mit z.B. 55 Einzelitems in der Variablen b in 4 Seiten zerlegt. Falls eine Zerlegung eine Restseite mit nur einer Nennung ergeben würde, wird diese Nennung mit auf die Vorseite gedruckt. Eine Tabelle mit 61 Items würde also auf 4 und nicht auf 5 Seiten gedruckt.',
-    },
-    en: {
-      description:
-        'split into individual tables. TABLE = a BY b SORT ABSOLUTE DESCEND SLICE 15; This splits a table with e.g. 55 individual items in the variable b into 4 pages. If a split would produce a leftover page with only one response, this response is printed on the previous page. A table with 61 items would thus be printed on 4 and not on 5 pages.',
-      syntax: '',
+    syntax: '',
+    description: {
+      en: 'split into individual tables. TABLE = a BY b SORT ABSOLUTE DESCEND SLICE 15; This splits a table with e.g. 55 individual items in the variable b into 4 pages. If a split would produce a leftover page with only one response, this response is printed on the previous page. A table with 61 items would thus be printed on 4 and not on 5 pages.',
+      de: 'von Einzeltabellen zerlegen. TABLE = a BY b SORT ABSOLUTE DESCEND SLICE 15; Hiermit wird eine Tabelle mit z.B. 55 Einzelitems in der Variablen b in 4 Seiten zerlegt. Falls eine Zerlegung eine Restseite mit nur einer Nennung ergeben würde, wird diese Nennung mit auf die Vorseite gedruckt. Eine Tabelle mit 61 Items würde also auf 4 und nicht auf 5 Seiten gedruckt.',
     },
   },
   {
     name: 'LT',
-    de: { description: 'Lower Then, kleiner als' },
-    en: { description: 'Lower Than', syntax: '' },
+    syntax: '',
+    description: {
+      en: 'Lower Than',
+      de: 'Lower Then, kleiner als',
+    },
   },
   {
     name: 'MACRO',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'MACROPROTOCOL',
-    de: {
-      description: '',
-      syntax: 'MACROPROTOCOL = <dateiname> [ DOMACRO ] ;',
-    },
-    en: {
-      description:
-        'Sometimes it is not so easy to find the cause of a syntax error when working with complex macros; only the macro commands can be seen in the source text and not the expanded product. For this reason it is possible to export the expanded macros into a text file where it is easier to check them.',
-      syntax: 'MACROPROTOCOL = <filename> [ DOMACRO ] ;',
+    syntax: 'MACROPROTOCOL = <filename> [ DOMACRO ] ;',
+    description: {
+      en: 'Sometimes it is not so easy to find the cause of a syntax error when working with complex macros; only the macro commands can be seen in the source text and not the expanded product. For this reason it is possible to export the expanded macros into a text file where it is easier to check them.',
+      de: '',
     },
   },
   {
     name: 'MACROPROTOKOLL',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'MAKE',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'MAKEFAMILY',
-    de: {
-      description: '',
-      syntax:
-        'MAKEFAMILY <name> = <value>;\nMit MAKEFAMILY generiert man eine leere VARFAMILY bzw. MultiQ mit n (<value>)',
+    syntax: 'MAKEFAMILY <name> = <value>;',
+    description: {
+      en: '',
+      de: '',
     },
-    en: { description: '', syntax: 'MAKEFAMILY <name> = <value>;' },
   },
   {
     name: 'MAKEFILTER',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'MAKEGROUP',
-    de: {
-      description: '',
-      syntax:
-        'MAKEGROUP <name> = <value>;\nMit MAKEGROUP wird eine leere Gruppenvariable mit n (<value>) Einzelvariablen generiert, die',
+    syntax: 'MAKEGROUP <name> = <value>;',
+    description: {
+      en: '',
+      de: '',
     },
-    en: { description: '', syntax: 'MAKEGROUP <name> = <value>;' },
   },
   {
     name: 'MAKESELECT',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'MAKESINGLE',
-    de: {
-      description: '',
-      syntax: 'MAKESINGLE <newvar> [ = <arithm.expression> ];',
-    },
-    en: {
-      description: '',
-      syntax: 'MAKESINGLE <newvar> [ = <arithm.expression> ];',
+    syntax: 'MAKESINGLE <newvar> [ = <arithm.expression> ];',
+    description: {
+      en: '',
+      de: '',
     },
   },
   {
     name: 'MAKESINGLES',
-    de: {
-      description: '',
-      syntax: 'MAKESINGLES <newvarlist> [ = <sourcelist> ] ;',
-    },
-    en: {
-      description: '',
-      syntax: 'MAKESINGLES <newvarlist> [ = <sourcelist> ] ;',
+    syntax: 'MAKESINGLES <newvarlist> [ = <sourcelist> ] ;',
+    description: {
+      en: '',
+      de: '',
     },
   },
   {
     name: 'MAKETABFILE',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'MARGINS',
-    de: {
-      description: '',
-      syntax:
-        'MARGINS = LEFT <number> RIGHT <number> TOP <number> BOTTOM <number> ;',
-    },
-    en: {
-      description: '',
-      syntax:
-        'MARGINS = LEFT <number> RIGHT <number> TOP <number> BOTTOM <number> ;',
+    syntax:
+      'MARGINS = LEFT <number> RIGHT <number> TOP <number> BOTTOM <number> ;',
+    description: {
+      en: '',
+      de: '',
     },
   },
   {
     name: 'MARKCELLEXCELSPECIAL',
-    de: { description: '', syntax: 'MARKCELLEXCELSPECIAL = [ YES | NO ];' },
-    en: { description: '', syntax: 'MARKCELLEXCELSPECIAL = [ YES | NO ];' },
+    syntax: 'MARKCELLEXCELSPECIAL = [ YES | NO ];',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'MARKCELLS',
-    de: {
-      description: '',
-      syntax:
-        'MARKCELLS = YES\nSIGNIFLEVEL { | [ SIGNIF90 | SIGNIF95 | SIGNIF99 | SIGNIF999 ]\n[ GT | LT ] <color> }*n ;\nAusschalten: MARKCELLS = NO;',
-    },
-    en: {
-      description: '',
-      syntax:
-        'MARKCELLS = [ YES | NO ] [ COLOR {colors}*6 | CELLELEMENTS\n<cellelement> ];',
+    syntax:
+      'MARKCELLS = [ YES | NO ] [ COLOR {colors}*6 | CELLELEMENTS\n<cellelement> ];',
+    description: {
+      en: '',
+      de: '',
     },
   },
   {
     name: 'MARKCELLSLEVEL',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'MARKCELLSMETHOD',
-    de: {
-      description: '',
-      syntax:
-        'MARKCELLSMETHOD = [ CLASSIC | COLCHIQU | ROWCHIQU\n| HYCOLCHIQU | HYROWCHIQU ];',
-    },
-    en: {
-      description: '',
-      syntax:
-        'MARKCELLSMETHOD = [ CLASSIC | COLCHIQU | ROWCHIQU\n| HYCOLCHIQU | HYROWCHIQU ];',
+    syntax:
+      'MARKCELLSMETHOD = [ CLASSIC | COLCHIQU | ROWCHIQU\n| HYCOLCHIQU | HYROWCHIQU ];',
+    description: {
+      en: '',
+      de: '',
     },
   },
   {
     name: 'MARKMEANCOL',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'MARKMEANROW',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'MAX',
-    de: {
-      description:
-        'Max-Wert In der einfachsten Form lautet ein DATA-Statement z.B.: DATA MEAN GlobMeanQ1 = Q1; Die Variable Q1 in dem Beispiel muss existieren. Als Resultat steht dann im Tabellierungsprozess die neue atomare Variable "GlobMeanQ1" zur Verfügung. Ihr Wert ist der globale Mittelwert von Q1 über alle eingelesenen Fälle.…',
-    },
-    en: {
-      description:
-        'Max value. In its simplest form a DATA statement reads e.g.: DATA MEAN GlobMeanQ1 = Q1; The variable Q1 in the example must exist. As a result, the new atomic variable "GlobMeanQ1" is then available in the tabulation process. Its value is the global mean of Q1 over all cases read in.…',
-      syntax: 'MAX <varname> = <Varlist>;',
+    syntax: 'MAX <varname> = <varlist>;',
+    description: {
+      en: 'Max value. In its simplest form a DATA statement reads e.g.: DATA MEAN GlobMeanQ1 = Q1; The variable Q1 in the example must exist. As a result, the new atomic variable "GlobMeanQ1" is then available in the tabulation process. Its value is the global mean of Q1 over all cases read in.…',
+      de: 'Max-Wert In der einfachsten Form lautet ein DATA-Statement z.B.: DATA MEAN GlobMeanQ1 = Q1; Die Variable Q1 in dem Beispiel muss existieren. Als Resultat steht dann im Tabellierungsprozess die neue atomare Variable "GlobMeanQ1" zur Verfügung. Ihr Wert ist der globale Mittelwert von Q1 über alle eingelesenen Fälle.…',
     },
   },
   {
     name: 'MAXCODEBOOKLINES',
-    de: {
-      description: '',
-      syntax:
-        'MAXCODEBOOKLINES = <number>;\nVoreinstellung: MAXCODEBOOKLINES = 50;',
-    },
-    en: {
-      description:
-        'Determines the maximum number of rows per page in a CODEBOOK table. Preset: MAXCODEBOOKLINES = 50; The following TABLEFORMATs are valid for CODEBOOK tables:',
-      syntax: 'MAXCODEBOOKLINES = <number>;\nDefault: MAXCODEBOOKLINES = 50;',
+    syntax: 'MAXCODEBOOKLINES = <number>;\nDefault: MAXCODEBOOKLINES = 50;',
+    description: {
+      en: 'Determines the maximum number of rows per page in a CODEBOOK table. Preset: MAXCODEBOOKLINES = 50; The following TABLEFORMATs are valid for CODEBOOK tables:',
+      de: '',
     },
   },
   {
     name: 'MAXCOLSPERTABLEPAGE',
-    de: {
-      description: '',
-      syntax:
-        'MAXCOLSPERTABLEPAGE = <number>;\nMAXROWSPERTABLEPAGE = <number>;',
-    },
-    en: {
-      description: '',
-      syntax:
-        'MAXCOLSPERTABLEPAGE = <number>;\nMAXROWSPERTABLEPAGE = <number>;',
+    syntax: 'MAXCOLSPERTABLEPAGE = <number>;\nMAXROWSPERTABLEPAGE = <number>;',
+    description: {
+      en: '',
+      de: '',
     },
   },
   {
     name: 'MAXIMUMWEIGHT',
-    de: {
-      description: '',
-      syntax: 'MAXIMUMWEIGHT = <number>;\nMINIMUMWEIGHT = <number>;',
-    },
-    en: {
-      description: '',
-      syntax: 'MAXIMUMWEIGHT = <number>;\nMINIMUMWEIGHT = <number>;',
+    syntax: 'MAXIMUMWEIGHT = <number>;\nMINIMUMWEIGHT = <number>;',
+    description: {
+      en: '',
+      de: '',
     },
   },
   {
     name: 'MAXIMUMWFACT',
-    de: {
-      description: '',
-      syntax: 'MAXIMUMWFACT = <number>;\nMINIMUMWFACT = <number>;',
-    },
-    en: {
-      description:
-        'Preset for the control of weighting. MINIMUMWEIGHT and MAXIMUMWEIGHT set the minimum or maximum weight of a case. MINIMUMWFACT and MAXIMUMWFACT set a limit for the factorial alteration of the weight per iteration cycle. Preset: MAXIMUMWEIGHT = 1E+20; MINIMUMWEIGHT = 0; MAXIMUMWFACT = 1E+20; MINIMUMWFACT = 0; (usually no limitations)',
-      syntax: 'MAXIMUMWFACT = <number>;\nMINIMUMWFACT = <number>;',
+    syntax: 'MAXIMUMWFACT = <number>;\nMINIMUMWFACT = <number>;',
+    description: {
+      en: 'Preset for the control of weighting. MINIMUMWEIGHT and MAXIMUMWEIGHT set the minimum or maximum weight of a case. MINIMUMWFACT and MAXIMUMWFACT set a limit for the factorial alteration of the weight per iteration cycle. Preset: MAXIMUMWEIGHT = 1E+20; MINIMUMWEIGHT = 0; MAXIMUMWFACT = 1E+20; MINIMUMWFACT = 0; (usually no limitations)',
+      de: '',
     },
   },
   {
     name: 'MAXINDEX',
-    de: {
-      description: '',
-      syntax:
-        'MAXINDEX <resultvar> = <varlist>;\nMININDEX <resultvar> = <varlist>;',
-    },
-    en: {
-      description: '',
-      syntax:
-        'MAXINDEX <resultvar> = <varlist>;\nMININDEX <resultvar> = <varlist>;',
+    syntax:
+      'MAXINDEX <resultvar> = <varlist>;\nMININDEX <resultvar> = <varlist>;',
+    description: {
+      en: '',
+      de: '',
     },
   },
   {
     name: 'MAXLABELWIDTH',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'MAXLINELENGTH',
-    en: {
-      description:
-        '<historisch> Defines the maximum length of a row in the input file. Maximum: 50000. Preset: 3000. By designating a lower MAXLINELENGTH storage memory can be saved which can be used for other purposes e.g. for tables. This is particularly relevant if there is a data set in which the cases are made up of many short rows (see CARDS).…',
+    syntax: '',
+    description: {
+      en: '<historisch> Defines the maximum length of a row in the input file. Maximum: 50000. Preset: 3000. By designating a lower MAXLINELENGTH storage memory can be saved which can be used for other purposes e.g. for tables. This is particularly relevant if there is a data set in which the cases are made up of many short rows (see CARDS).…',
+      de: '',
     },
   },
   {
     name: 'MAXPREQUOTATRIES',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'MAXROWSPERTABLEPAGE',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'MAXTABLEWIDTH',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'MAXWEIGHTITERATIONS',
-    de: { description: '', syntax: 'MAXWEIGHTITERATIONS = <number>;' },
-    en: { description: '', syntax: 'MAXWEIGHTITERATIONS = <number>;' },
+    syntax: 'MAXWEIGHTITERATIONS = <number>;',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'MCNEMAR',
-    de: {
-      description:
-        'Abhängiger Test auf Prozentwertunterschiede nach McNemar 449',
-    },
-    en: {
-      description: 'Dependent test on percentage differences per McNemar 449',
-      syntax: '',
+    syntax: '',
+    description: {
+      en: 'Dependent test on percentage differences per McNemar',
+      de: 'Abhängiger Test auf Prozentwertunterschiede nach McNemar',
     },
   },
   {
     name: 'MEAN',
     argsHint: '( … )',
-    de: {
-      description:
-        'Die Auswahl der Zeile in der obenstehenden Matrix wird sich in der Regel aus der Art der zu testenden Daten ergeben. Für einen abhängigen Test des Unterschieds von Prozentwerten bietet sich bspw. McNemar an; für einen unabhängigen Test der X²-Test. Vergleichbar gibt es zwei Varianten des t-Tests für Mittelwerte, den abhängigen und den unabhängigen.…',
-      syntax: 'MEAN <varname> = <Varlist>;',
-    },
-    en: {
-      description:
-        'are permitted. Additionally the key word RANGE can be used to generate whatever areas are necessary to break down a table with many characteristics:',
-      syntax: 'MEAN <varname> = <Varlist>;',
+    syntax: 'MEAN <varname> = <varlist>;',
+    description: {
+      en: '',
+      de: '',
     },
   },
   {
     name: 'MEAN_PHYS',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'MEANCOLDEPT',
-    en: {
-      description:
-        'Printing of mean and the dependant t-test in one cell (per column) For all these CELLELEMENTS described in the above table the following options are available: SIGNIFLEVEL, SIGNIFTEXT, SHOWSIGNIF, TESTCOLUMNS and INDEXCHARS. Furthermore using a special variant of the COLOR statements a cell which has been appointed a letter due to significance can also be colour-coded.',
+    syntax: '',
+    description: {
+      en: 'Printing of mean and the dependant t-test in one cell (per column) For all these CELLELEMENTS described in the above table the following options are available: SIGNIFLEVEL, SIGNIFTEXT, SHOWSIGNIF, TESTCOLUMNS and INDEXCHARS. Furthermore using a special variant of the COLOR statements a cell which has been appointed a letter due to significance can also be colour-coded.',
+      de: '',
     },
   },
   {
     name: 'MEANCOLINDEX',
     argsHint: '( Var )',
-    de: {
-      description:
-        'Spaltenweise Darstellung des Mittelwertes als Index auf der Basis 100, jeweils auf den Mittelwert in der Totalspalte bezogen',
-    },
-    en: {
-      description:
-        'Column-wise display of the mean as an index on the base of 100, each relative to the mean in the total column',
-      syntax: '',
+    syntax: '',
+    description: {
+      en: 'Column-wise display of the mean as an index on the base of 100, each relative to the mean in the total column',
+      de: 'Spaltenweise Darstellung des Mittelwertes als Index auf der Basis 100, jeweils auf den Mittelwert in der Totalspalte bezogen',
     },
   },
   {
     name: 'MEANCUT',
     argsHint: '( Var )',
-    de: {
-      description:
-        'Spezieller Mittelwerte: MEANCUT schneidet am unteren und oberen Ende der Verteilung die Extremwerte ab, und berechnet den Mittelwert auf der Basis der verbleibenden Verteilung je Zelle. Kann die Extremgruppe nicht aus ganzen Fällen gebildet werden, wird anteilige Gewichtung verwendet. Die Größe Extremabschnitte wird in Prozentpunkten definiert:…',
-    },
-    en: {
-      description:
-        'Special mean: MEANCUT cuts off the extreme values at the lower and upper end of the distribution and computes the mean on the basis of the remaining distribution per cell. If the extreme group cannot be formed from whole cases, proportional weighting is used. The size of the extreme sections is defined in percentage points:…',
-      syntax: '',
+    syntax: '',
+    description: {
+      en: 'Special mean: MEANCUT cuts off the extreme values at the lower and upper end of the distribution and computes the mean on the basis of the remaining distribution per cell. If the extreme group cannot be formed from whole cases, proportional weighting is used. The size of the extreme sections is defined in percentage points:…',
+      de: 'Spezieller Mittelwerte: MEANCUT schneidet am unteren und oberen Ende der Verteilung die Extremwerte ab, und berechnet den Mittelwert auf der Basis der verbleibenden Verteilung je Zelle. Kann die Extremgruppe nicht aus ganzen Fällen gebildet werden, wird anteilige Gewichtung verwendet. Die Größe Extremabschnitte wird in Prozentpunkten definiert:…',
     },
   },
   {
     name: 'MEANDESCRIPTION',
-    de: {
-      description:
-        'Ersetzt bei Spalten und Zeilen mit dritten Variablen (z.B. MEAN etc) den Variablennamen durch den DESCRIPTION 550-String, z.B. "Mittelwert".',
-    },
-    en: {
-      description:
-        'Replaces the variable name with a description string e.g. "mean" in columns and rows with third variables.',
+    syntax: '',
+    description: {
+      en: 'Replaces the variable name with a description string e.g. "mean" in columns and rows with third variables.',
+      de: 'Ersetzt bei Spalten und Zeilen mit dritten Variablen (z.B. MEAN etc) den Variablennamen durch den DESCRIPTION-String, z.B. "Mittelwert".',
     },
   },
   {
     name: 'MEANINCOMPARE',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'MEANP',
     argsHint: '( Var )',
-    de: {
-      description:
-        "Von der Berechnung her ist MEANP (vorgesehen als: MEAN für Prozentwerte) exakt dasselbe wie MEAN 423. Der zweite Bezeichner dient nur dazu, dass man diesem CELLELEMENT ein abweichendes FORMAT 566 oder DESCRIPTION geben kann. Als Default hat dieses CELLELEMENT die DESCRIPTION 385 'fake%'. Für die Tabellenausgabe wird man dies ggf. besser in '%' ändern.",
-    },
-    en: {
-      description:
-        "In terms of calculation, MEANP (intended as: MEAN for percentage values) is exactly the same as MEAN 423. The second identifier only serves to allow this CELLELEMENT to be given a different FORMAT 566 or DESCRIPTION. By default this CELLELEMENT has the DESCRIPTION 385 'fake%'. For table output it is often better to change this to '%'.",
-      syntax: '',
+    syntax: '',
+    description: {
+      en: "In terms of calculation, MEANP (intended as: MEAN for percentage values) is exactly the same as MEAN. The second identifier only serves to allow this CELLELEMENT to be given a different FORMAT or DESCRIPTION. By default this CELLELEMENT has the DESCRIPTION 'fake%'. For table output it is often better to change this to '%'.",
+      de: "Von der Berechnung her ist MEANP (vorgesehen als: MEAN für Prozentwerte) exakt dasselbe wie MEAN. Der zweite Bezeichner dient nur dazu, dass man diesem CELLELEMENT ein abweichendes FORMAT oder DESCRIPTION geben kann. Als Default hat dieses CELLELEMENT die DESCRIPTION 'fake%'. Für die Tabellenausgabe wird man dies ggf. besser in '%' ändern.",
     },
   },
   {
     name: 'MEANPHYSTTEST',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'MEANQP',
-    de: {
-      description:
-        'Ergänzend zu MEANP (also im Kern: MEAN) gibt noch eine kleine',
-    },
-    en: {
-      description:
-        'In addition to MEANP (at its core: MEAN) there is also a small',
-      syntax: '',
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
     },
   },
   {
     name: 'MEANQP100',
-    de: {
-      description:
-        'Erweiterung: MEANQP. Parallel zur Summe und zur Basis (Summe der Gewichte) wird eine Summe aller negativen Werte und der dazugehörigen Gewichte geführt. Als Resultat liefert dieses CELLELEMENT den Quotienten der Mittelwerte der positiven und der negativen Werte. MEANQP100 ist von der Berechnung her identisch, der Wert wird lediglich mit 100 multipliziert.',
-    },
-    en: {
-      description:
-        'extension: MEANQP. In parallel with the sum and the base (sum of weights), a sum of all negative values and their weights is kept. As a result, this CELLELEMENT returns the quotient of the means of the positive and the negative values. MEANQP100 is identical in calculation; the value is simply multiplied by 100.',
-      syntax: '',
+    syntax: '',
+    description: {
+      en: 'In parallel with the sum and the base (sum of weights), a sum of all negative values and their weights is kept. As a result, this CELLELEMENT returns the quotient of the means of the positive and the negative values. MEANQP100 is identical in calculation; the value is simply multiplied by 100.',
+      de: 'Erweiterung: MEANQP. Parallel zur Summe und zur Basis (Summe der Gewichte) wird eine Summe aller negativen Werte und der dazugehörigen Gewichte geführt. Als Resultat liefert dieses CELLELEMENT den Quotienten der Mittelwerte der positiven und der negativen Werte. MEANQP100 ist von der Berechnung her identisch, der Wert wird lediglich mit 100 multipliziert.',
     },
   },
   {
     name: 'MEANROWINDEX',
     argsHint: '( Var )',
-    de: {
-      description:
-        'Zeilenweise Darstellung des Mittelwertes als Index, jeweils auf den Mittelwert in der Totalzeile bezogen',
-    },
-    en: {
-      description:
-        'Row-wise display of the mean as an index, each relative to the mean in the total row',
-      syntax: '',
+    syntax: '',
+    description: {
+      en: 'Row-wise display of the mean as an index, each relative to the mean in the total row',
+      de: 'Zeilenweise Darstellung des Mittelwertes als Index, jeweils auf den Mittelwert in der Totalzeile bezogen',
     },
   },
   {
     name: 'MEANTEST',
-    de: {
-      description:
-        ': DESCRIPTION "Mittelwert" ( item_5 ); Es entsteht die gewünschte Tabelle: Bestandteile einer Tabelle können durch Filter bestimmt werden Makros Nun kann man natürlich auch den Wunsch haben, die Männer und die Frauen nicht nebeneinander darzustellen, sondern übereinander. Ein Weg dahin ist, für die fünf Items jeweils nach dem Geschlecht gefilterte Variablen zu erstellen.…',
-    },
-    en: {
-      description:
-        ': DESCRIPTION "Mean" ( item_5 ); The desired table results. Parts of a table can be determined by filters. Macros: now you may of course also wish not to show the men and the women side by side but one above the other. One way to do this is to create variables filtered by sex for each of the five items.…',
-      syntax: '',
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
     },
   },
   {
     name: 'MEANTESTCUT',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'MEANWELCH',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'MEDIAN',
     argsHint: '( Var )',
-    de: {
-      description:
-        'Der Median einer dritten Variable in allen Zellen. Bei Median wie bei allen Perzentilen wird innerhalb von GESStabs dann interpoliert, wenn es mit dem TABLEFORMAT PERCENTILEINTERPOL verlangt wird. MEDIAN und PCNTL1 bis PCNTL4 424 sind in einer Zelle kombinierbar; dabei wird untereinander erst PCNTL1, dann MEDIAN und zuletzt PCNTL2 ausgegeben.',
-    },
-    en: {
-      description:
-        'The median of a third variable in all cells. As with the median and all percentiles, GESStabs interpolates when this is requested with the TABLEFORMAT PERCENTILEINTERPOL. MEDIAN and PCNTL1 to PCNTL4 424 can be combined in one cell; PCNTL1 is then output first, then MEDIAN and finally PCNTL2.',
-      syntax: '',
+    syntax: '',
+    description: {
+      en: 'The median of a third variable in all cells. As with the median and all percentiles, GESStabs interpolates when this is requested with the TABLEFORMAT PERCENTILEINTERPOL. MEDIAN and PCNTL1 to PCNTL4 can be combined in one cell; PCNTL1 is then output first, then MEDIAN and finally PCNTL2.',
+      de: 'Der Median einer dritten Variable in allen Zellen. Bei Median wie bei allen Perzentilen wird innerhalb von GESStabs dann interpoliert, wenn es mit dem TABLEFORMAT PERCENTILEINTERPOL verlangt wird. MEDIAN und PCNTL1 bis PCNTL4 sind in einer Zelle kombinierbar; dabei wird untereinander erst PCNTL1, dann MEDIAN und zuletzt PCNTL2 ausgegeben.',
     },
   },
   {
     name: 'MEDIUM',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'MENUFILTER',
-    en: { description: '', syntax: 'MENUFILTER <varlist> = [ YES | NO ];' },
+    syntax: 'MENUFILTER <varlist> = [ YES | NO ];',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'MENUHEADER',
-    en: { description: '', syntax: 'MENUHEADER <varlist> = [ YES | NO ];' },
+    syntax: 'MENUHEADER <varlist> = [ YES | NO ];',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'MENUINCLUDE',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'MENUMEAN',
-    en: { description: '', syntax: 'MENUMEAN <varlist> = [ YES | NO ];' },
+    syntax: 'MENUMEAN <varlist> = [ YES | NO ];',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'MENUTITLE',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'MIN',
-    de: { description: '', syntax: 'MIN <varname> = <Varlist>;' },
-    en: { description: '', syntax: 'MIN <varname> = <Varlist>;' },
+    syntax: 'MIN <varname> = <varlist>;',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'MINCOLBASE',
-    en: {
-      description: '',
-      syntax: 'MINCOLBASE = <number>;\nPreset at MINCOLBASE = 0',
+    syntax: 'MINCOLBASE = <number>;\nPreset at MINCOLBASE = 0',
+    description: {
+      en: '',
+      de: '',
     },
   },
   {
     name: 'MINCOLUMNS',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'MINCOLWIDTH',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'MINFRAMECOLWIDTH',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'MINIMUM',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'MINIMUMWEIGHT',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'MINIMUMWFACT',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'MININDEX',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'MINLABELWIDTH',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'MINLINEHEIGHT',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'MINMAX',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'MINROWBASE',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'MINTABLEHEIGHT',
     argsHint: '(PS)',
-    en: {
-      description:
-        'For line-orientated printers the width of the letters or the number of rows must be defined as the basic unit of measurement. The following syntax is valid: UNITS = CPI <number> LPI <number>; CPI means Characters Per Inch (Pitch); LPI means Lines Per Inch. Example: UNITS = CPI 10 LPI 6; During output with USEFONT GESS tabs ensures that the fonts match the chosen settings for UNITS.',
+    syntax: '',
+    description: {
+      en: 'For line-orientated printers the width of the letters or the number of rows must be defined as the basic unit of measurement. The following syntax is valid: UNITS = CPI <number> LPI <number>; CPI means Characters Per Inch (Pitch); LPI means Lines Per Inch. Example: UNITS = CPI 10 LPI 6; During output with USEFONT GESS tabs ensures that the fonts match the chosen settings for UNITS.',
+      de: '',
     },
   },
   {
     name: 'MINTABLEWIDTH',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'MINTEXTHEIGHT',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'MINUTESASHOURSMEAN',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'MINVALUES',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'MISSING',
-    de: { description: '', syntax: 'MISSING <Varlist> = { number }*n;' },
-    en: {
-      description:
-        'Allows the definition of individual characteristics of nuclear variables as MISSING values.',
-      syntax: 'MISSING <Varlist> = { number }*n;\n(n <= 3)',
+    syntax: 'MISSING <varlist> = { number }*n;\n(n <= 3)',
+    description: {
+      en: 'Allows the definition of individual characteristics of nuclear variables as MISSING values.',
+      de: '',
     },
   },
   {
     name: 'MISSINGCHAR',
-    de: {
-      description: '',
-      syntax: 'MISSINGCHAR = "<char>";\nVoreinstellung: MISSINGCHAR = "M";',
-    },
-    en: {
-      description:
-        'defines the character used to mark MISSING values for input and output. Preset: MISSINGCHAR = "M";',
-      syntax: 'MISSINGCHAR = "<char>";\nDefault: MISSINGCHAR = "M";',
+    syntax: 'MISSINGCHAR = "<char>";\nDefault: MISSINGCHAR = "M";',
+    description: {
+      en: 'defines the character used to mark MISSING values for input and output. Preset: MISSINGCHAR = "M";',
+      de: '',
     },
   },
   {
     name: 'MM',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'MOD',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'MODE',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'MODELABEL',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'MODIFYCSVNAMES',
-    de: { description: '', syntax: 'MODIFYCSVNAMES = [ YES | NO ];' },
-    en: { description: '', syntax: 'MODIFYCSVNAMES = [ YES | NO ];' },
+    syntax: 'MODIFYCSVNAMES = [ YES | NO ];',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'MODIFYVARNAME',
-    de: {
-      description:
-        "Drucke bei Spalten bzw. Zeilen mit dritten Variablen (z.B. 'MEAN( Einkommen)') nicht nur den Variablennamen, sondern auch die DESCRIPTION 550 des Spalten- bzw. Zeileninhalts.",
-    },
-    en: {
-      description:
-        'Prints not only the variable name but also the DESCRIPTION of the column or row content in columns or rows with third variables (e.g. MEAN ( Einkommen) ).',
+    syntax: '',
+    description: {
+      en: 'Prints not only the variable name but also the DESCRIPTION of the column or row content in columns or rows with third variables (e.g. MEAN ( Einkommen) ).',
+      de: "Drucke bei Spalten bzw. Zeilen mit dritten Variablen (z.B. 'MEAN( Einkommen)') nicht nur den Variablennamen, sondern auch die DESCRIPTION des Spalten- bzw. Zeileninhalts.",
     },
   },
   {
     name: 'MRSET',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'MULTICOLINHG',
-    en: {
-      description:
-        'Multiple cell contents (e.g. ABSCOLPERCENT) in CSV-Data files are usually represented in several rows. Alternatively they can be presented in several columns using +MULTICOLINHG. USEFORMATINHG Formats for CELLELEMENTS are also adopted for printouts in HG.…',
+    syntax: '',
+    description: {
+      en: 'Multiple cell contents (e.g. ABSCOLPERCENT) in CSV-Data files are usually represented in several rows. Alternatively they can be presented in several columns using +MULTICOLINHG. USEFORMATINHG Formats for CELLELEMENTS are also adopted for printouts in HG.…',
+      de: '',
     },
   },
   {
     name: 'MULTIDEF',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'MULTIFROMSTRING',
-    de: {
-      description: '',
-      syntax:
-        'MULTIFROMSTRING [ DELIMITED <delimiter> ] [ DECIMALS <decimalchar> ] <newvar>\n= <alfavar>;',
-    },
-    en: {
-      description: '',
-      syntax:
-        'MULTIFROMSTRING [ DELIMITED <delimiter> ] [ DECIMALS <decimalchar> ] <newvar>\n= <alfavar>;',
+    syntax:
+      'MULTIFROMSTRING [ DELIMITED <delimiter> ] [ DECIMALS <decimalchar> ] <newvar>\n= <alfavar>;',
+    description: {
+      en: '',
+      de: '',
     },
   },
   {
     name: 'MULTIQ',
-    de: {
-      description: '',
-      syntax:
-        'MULTIQ <varname> =\n[NOINPUT ] [ TITLE <titlestring> ] [ ALPHA ] [ start | * ]\nlen [width] [ LABELS { AS <varname> | { value <text> }*n }\n| LABELFROMFILE <filename> ] ];\n;',
-    },
-    en: {
-      description:
-        '(also FAMILYVAR) Alternatively the variable family can also be generated directly from the input. This makes the individual variables invisible to the user:',
-      syntax:
-        'MULTIQ <varname> = [NOINPUT ] [ TITLE <titlestring> ] [ ALPHA ] [\nstart | * ] len [width]\n[ LABELS { AS <varname> | { value <text> }*n } ] ];',
+    syntax:
+      'MULTIQ <varname> = [NOINPUT ] [ TITLE <titlestring> ] [ ALPHA ] [\nstart | * ] len [width]\n[ LABELS { AS <varname> | { value <text> }*n } ] ];',
+    description: {
+      en: '(also FAMILYVAR) Alternatively the variable family can also be generated directly from the input. This makes the individual variables invisible to the user:',
+      de: '',
     },
   },
   {
     name: 'MULTISTRING',
-    de: {
-      description:
-        'Text in CODEBOOK 346s, der auf mögliche Mehrfachnennungen verweist',
-      syntax: 'MULTISTRING = "<text>";',
-    },
-    en: {
-      description:
-        'Defines the text in CODEBOOKs which refers to possible multi-responses. Preset: MULTISTRING= "Mehrfachnennungen möglich"; This is valid for all tables until changed.',
-      syntax: 'MULTISTRING = "<text>";',
+    syntax: 'MULTISTRING = "<text>";',
+    description: {
+      en: 'Defines the text in CODEBOOKs which refers to possible multi-responses. Preset: MULTISTRING= "Mehrfachnennungen möglich"; This is valid for all tables until changed.',
+      de: 'Text in CODEBOOKs, der auf mögliche Mehrfachnennungen verweist',
     },
   },
   {
     name: 'MULTITOTALX',
-    de: {
-      description:
-        'Im Normalfall wird eine TOTALROW auf der Basis von Fällen gezählt (siehe auch TABLEBASE 388). In vielen Fällen ist es aber bei Variablen mit Mehrfachnennungen wünschenswert, die Totalzeile abweichend auf der Basis der Nennungen zu zählen. Dies kann man mit diesem TABLEFORMAT erreichen. (Z.B.…',
-    },
-    en: {
-      description:
-        'Usually the TOTALROW is counted on the basis of case numbers (see also TABLEBASE). In many cases it is required to have a total different to the number of response for variables with multi-responses. This can be done using TABLEFORMAT. (e.g. 165% in the total row of a column percentage means an average of 1,65 responses per interviewee.) In this context:…',
+    syntax: '',
+    description: {
+      en: 'Usually the TOTALROW is counted on the basis of case numbers (see also TABLEBASE). In many cases it is required to have a total different to the number of response for variables with multi-responses. This can be done using TABLEFORMAT. (e.g. 165% in the total row of a column percentage means an average of 1,65 responses per interviewee.) In this context:…',
+      de: 'Im Normalfall wird eine TOTALROW auf der Basis von Fällen gezählt (siehe auch TABLEBASE). In vielen Fällen ist es aber bei Variablen mit Mehrfachnennungen wünschenswert, die Totalzeile abweichend auf der Basis der Nennungen zu zählen. Dies kann man mit diesem TABLEFORMAT erreichen. (Z.B.…',
     },
   },
   {
     name: 'MULTITOTALY',
-    de: {
-      description:
-        'Analog zu MULTITOTALX 538 wird eine TOTALCOLUMN im Standardfall auf der Basis von Fällen gezählt. Mit MULTITOTALY kann diese Zählung auf alle Nennungen umgestellt werden.',
-    },
-    en: {
-      description:
-        'Analogue to this a TOTALCOLUMN is usually tallied on the basis of number of cases. Using MULTITOTALY this tally can be converted to all responses.',
+    syntax: '',
+    description: {
+      en: 'Analogue to this a TOTALCOLUMN is usually tallied on the basis of number of cases. Using MULTITOTALY this tally can be converted to all responses.',
+      de: 'Analog zu MULTITOTALX wird eine TOTALCOLUMN im Standardfall auf der Basis von Fällen gezählt. Mit MULTITOTALY kann diese Zählung auf alle Nennungen umgestellt werden.',
     },
   },
   {
     name: 'NAME',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'NE',
-    de: { description: 'Not Equal, ist ungleich' },
-    en: { description: 'Not Equal', syntax: '' },
+    syntax: '',
+    description: {
+      en: 'Not Equal',
+      de: 'Not Equal, ist ungleich',
+    },
   },
   {
     name: 'NEG',
-    de: {
-      description:
-        'negativer Wert Beispiel: COMPUTE x = ENTIER( NEG( b / 2 ) ); Arithmetische Operatoren für Ganze Werte Auch wenn GESStabs keine echten Ganzen Werte kennt, kann es interessant sein, den "Rest" einer Division zu kennen. Dazu stehen folgende Operatoren bereit:',
-    },
-    en: {
-      description:
-        'negative value. Example: COMPUTE x = ENTIER( NEG( b / 2 ) ); Arithmetic operators for whole numbers: even though GESStabs has no true whole-number type, it can be useful to know the "remainder" of a division. The following operators are available for this:',
-      syntax: '',
+    syntax: '',
+    description: {
+      en: 'negative value. Example: COMPUTE x = ENTIER( NEG( b / 2 ) );',
+      de: 'negativer Wert. Beispiel: COMPUTE x = ENTIER( NEG( b / 2 ) );',
     },
   },
   {
     name: 'NEVER',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'NEWOPENFORMAT',
-    de: { description: '', syntax: 'NEWOPENFORMAT = [ YES | NO ];' },
-    en: { description: '', syntax: 'NEWOPENFORMAT = [ YES | NO ];' },
+    syntax: 'NEWOPENFORMAT = [ YES | NO ];',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'NEWOPENQFORMAT',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'NEWPAGE',
-    de: {
-      description:
-        'Seitenumbruch vor dem Label (Synonym: PAGE), siehe auch Layout 543',
-    },
-    en: {
-      description:
-        'Page break before the label (synonym: PAGE), see also Layout 543',
-      syntax: '',
+    syntax: '',
+    description: {
+      en: 'Page break before the label (synonym: PAGE), see also Layout 543',
+      de: 'Seitenumbruch vor dem Label (Synonym: PAGE), siehe auch Layout 543',
     },
   },
   {
     name: 'NEXT',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'NEXTVAR',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'NIL',
-    de: {
-      description:
-        'leere Variable (praktisch z.B. bei TABLE ADD 391) Der Versuch, eigene Variablen mit diesen Namen zu generieren, führt zu einem Fehler. Mit HIDDENTOVARLIST kann gesteuert werden, ob Systemvariablen bei der Nennung von Variablenlisten 20 (mittels TO) mit erfasst werden sollen.',
-    },
-    en: {
-      description:
-        'empty variable (useful e.g. with TABLE ADD 391). Attempting to generate your own variables with these names results in an error. HIDDENTOVARLIST controls whether system variables should be included when naming variable lists 20 (via TO).',
-      syntax: '',
+    syntax: '',
+    description: {
+      en: 'empty variable (useful e.g. with TABLE ADD). Attempting to generate your own variables with these names results in an error. HIDDENTOVARLIST controls whether system variables should be included when naming variable lists 20 (via TO).',
+      de: 'leere Variable (praktisch z.B. bei TABLE ADD) Der Versuch, eigene Variablen mit diesen Namen zu generieren, führt zu einem Fehler. Mit HIDDENTOVARLIST kann gesteuert werden, ob Systemvariablen bei der Nennung von Variablenlisten 20 (mittels TO) mit erfasst werden sollen.',
     },
   },
   {
     name: 'NO',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'NOADDINFRAME',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'NOADDINFRAMETTL',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'NOADDINFRAMEX',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'NOADDINFRAMEY',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'NOADRESSSERVERALERT',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'NOASCIIEXTENSION',
-    de: { description: '', syntax: 'NOASCIIEXTENSION = [ YES | NO ];' },
-    en: {
-      description:
-        'Normally ASCII data sets which have been produced by GESS tabs are finished with a right- justified *.Should this not occur it can be achieved with a switch.',
-      syntax: 'NOASCIIEXTENSION = [ YES | NO ];',
+    syntax: 'NOASCIIEXTENSION = [ YES | NO ];',
+    description: {
+      en: 'Normally ASCII data sets which have been produced by GESS tabs are finished with a right- justified *.Should this not occur it can be achieved with a switch.',
+      de: '',
     },
   },
   {
     name: 'NOAUTOTABLETITLE',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'NOBODYBLANKS',
-    de: {
-      description:
-        'Unterdrückt Leerzeilen im Tabellenrumpf, die sonst der Lesbarkeit halber eingefügt werden. Damit passen u.U. Tabellen',
-    },
-    en: {
-      description:
-        'Suppresses blank rows in the table body that have been added to improve legibility. Tables then may for example fit on one page.',
+    syntax: '',
+    description: {
+      en: 'Suppresses blank rows in the table body that have been added to improve legibility. Tables then may for example fit on one page.',
+      de: 'Unterdrückt Leerzeilen im Tabellenrumpf, die sonst der Lesbarkeit halber eingefügt werden. Damit passen u.U. Tabellen',
     },
   },
   {
     name: 'NOBOX',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'NOCITATION',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'NOCOLCHECK',
     argsHint: '(XGI, XGC etc.)',
-    en: {
-      description:
-        'Syntax NOCOLCHECK = [ YES | NO ]; Preset: NO If using GESS input or GESS questionnaire software the allocation of columns is monitored to avoid multiple use. It can however make sense when filtering for example to use identical physical data areas repeatedly. The standard check can be switched off for this.',
+    syntax: '',
+    description: {
+      en: 'Syntax NOCOLCHECK = [ YES | NO ]; Preset: NO If using GESS input or GESS questionnaire software the allocation of columns is monitored to avoid multiple use. It can however make sense when filtering for example to use identical physical data areas repeatedly. The standard check can be switched off for this.',
+      de: '',
     },
   },
   {
     name: 'NOCONTENTBOX',
-    de: {
-      description:
-        'Unterdrückt den Erläuterungskasten bei zusätzlichen Tabellenzeilen, die z.B. Mittelwerte oder Summen enthalten etc. In diesem Fall wird vor den Werten nur der VARTITLE 210 bzw. der VARNAME 207 ausgegeben. Der/die Benutzer/in sollte dann durch eigene Texte den Tabelleninhalt erläutern. (Ohne Effekt bei Postscript-Ausgabe).',
-    },
-    en: {
-      description:
-        'Suppresses the explanation box in additional table rows which for example contain mean or sum etc. In this case only the VARTITLE or the VARNAME are printed in front of the value. The user should then include other texts to explain the content. (no effect on Postscript-printouts). (NON-PS)',
+    syntax: '',
+    description: {
+      en: 'Suppresses the explanation box in additional table rows which for example contain mean or sum etc. In this case only the VARTITLE or the VARNAME are printed in front of the value. The user should then include other texts to explain the content. (no effect on Postscript-printouts). (NON-PS)',
+      de: 'Unterdrückt den Erläuterungskasten bei zusätzlichen Tabellenzeilen, die z.B. Mittelwerte oder Summen enthalten etc. In diesem Fall wird vor den Werten nur der VARTITLE bzw. der VARNAME ausgegeben. Der/die Benutzer/in sollte dann durch eigene Texte den Tabelleninhalt erläutern. (Ohne Effekt bei Postscript-Ausgabe).',
     },
   },
   {
     name: 'NOCSV',
-    de: { description: '', syntax: 'NOCSV <varlist> = YES;' },
-    en: { description: '', syntax: 'NOCSV <varlist> = YES;' },
+    syntax: 'NOCSV <varlist> = YES;',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'NODESCRIPTION',
-    de: {
-      description:
-        'Unterdrückt die Beschreibungstexte für die Zelleninhalte (siehe auch DESCRIPTION 550).',
-    },
-    en: {
-      description:
-        'Suppresses the descriptive text for the cell contents (see DESCRIPTION.',
+    syntax: '',
+    description: {
+      en: 'Suppresses the descriptive text for the cell contents (see DESCRIPTION.',
+      de: 'Unterdrückt die Beschreibungstexte für die Zelleninhalte (siehe auch DESCRIPTION).',
     },
   },
   {
     name: 'NOEMPTYELEMENT',
-    de: {
-      description:
-        'Leere CELLELEMENTS 418 (z.B. ein leerer Ergebnistext für einen Signifikanztest) werden durch den ZERODASHCHAR 529 ersetzt.',
-    },
-    en: {
-      description:
-        'Empty CELLELEMENTS 418 (e.g. an empty result text for a significance test) are replaced by the ZERODASHCHAR 529.',
-      syntax: '',
+    syntax: '',
+    description: {
+      en: 'Empty CELLELEMENTS (e.g. an empty result text for a significance test) are replaced by the ZERODASHCHAR.',
+      de: 'Leere CELLELEMENTS (z.B. ein leerer Ergebnistext für einen Signifikanztest) werden durch den ZERODASHCHAR ersetzt.',
     },
   },
   {
     name: 'NOEXPANDAT',
-    de: { description: '', syntax: 'NOEXPANDAT <varlist> = [ YES | NO ];' },
-    en: { description: '', syntax: 'NOEXPANDAT <varlist> = [ YES | NO ];' },
+    syntax: 'NOEXPANDAT <varlist> = [ YES | NO ];',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'NOFRAME',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'NOFROZEN',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'NOGRAPH',
-    de: {
-      description:
-        'Unterdrückt das, ansonsten standardmäßig dargestellte, rechtsstehende Histogramm in CODEBOOK 346s und PROFILE 637 -Tabellen.',
-    },
-    en: {
-      description:
-        'Suppresses the otherwise default right-hand histogram in CODEBOOK 346 and PROFILE 637 tables.',
-      syntax: '',
+    syntax: '',
+    description: {
+      en: 'Suppresses the otherwise default right-hand histogram in CODEBOOK and PROFILE tables.',
+      de: 'Unterdrückt das, ansonsten standardmäßig dargestellte, rechtsstehende Histogramm in CODEBOOKs und PROFILE-Tabellen.',
     },
   },
   {
     name: 'NOGRID',
-    de: {
-      description:
-        'Unterdrückt die, ansonsten standardmäßig dargestellte, Skala für Lineingrafiken in PROFILE 637-Tabellen.',
-    },
-    en: {
-      description:
-        'Suppresses the otherwise default scale for line graphics in PROFILE 637 tables.',
-      syntax: '',
+    syntax: '',
+    description: {
+      en: 'Suppresses the otherwise default scale for line graphics in PROFILE tables.',
+      de: 'Unterdrückt die, ansonsten standardmäßig dargestellte, Skala für Lineingrafiken in PROFILE-Tabellen.',
     },
   },
   {
     name: 'NOHEADERBLANKS',
-    de: { description: 'Unterdrückt Leerzeilen im Tabellenkopf. (NON-PS)' },
-    en: { description: 'Suppresses blank rows in the stub. (NON-PS)' },
+    syntax: '',
+    description: {
+      en: 'Suppresses blank rows in the stub. (NON-PS)',
+      de: 'Unterdrückt Leerzeilen im Tabellenkopf. (NON-PS)',
+    },
   },
   {
     name: 'NOINHERITTEXT',
-    de: {
-      description: '',
-      syntax: 'NOINHERITTEXT = [ YES | NO ];\nNOINHERITTITLE = [ YES | NO ];',
-    },
-    en: {
-      description: '',
-      syntax: 'NOINHERITTEXT = [ YES | NO ];\nNOINHERITTITLE = [ YES | NO ];',
+    syntax: 'NOINHERITTEXT = [ YES | NO ];\nNOINHERITTITLE = [ YES | NO ];',
+    description: {
+      en: '',
+      de: '',
     },
   },
   {
     name: 'NOINHERITTITLE',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'NOINPUT',
-    de: { description: '', syntax: 'NOINPUT <varlist> = [ YES | NO ];' },
-    en: { description: '', syntax: 'NOINPUT <varlist> = [ YES | NO ];' },
+    syntax: 'NOINPUT <varlist> = [ YES | NO ];',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'NOINSTITUTIONINCSV',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'NOINVERTADDON',
-    de: { description: '', syntax: 'NOINVERTADDON = [ YES | NO ];' },
-    en: { description: '', syntax: 'NOINVERTADDON = [ YES | NO ];' },
+    syntax: 'NOINVERTADDON = [ YES | NO ];',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'NOIOCHECK',
-    de: { description: '', syntax: 'NOIOCHECK <varlist> = [ YES | NO ];' },
-    en: { description: '', syntax: 'NOIOCHECK <varlist> = [ YES | NO ];' },
+    syntax: 'NOIOCHECK <varlist> = [ YES | NO ];',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'NOISE',
-    de: { description: '', syntax: 'NOISE = <value>;' },
-    en: {
-      description: '',
-      syntax:
-        'NOISE = <value>;\nNOISE can be used to "add noise" with random figures to all known variables of a data set. <value>\ndefines how many measurement points are to be replaced by random values. value=1 causes a',
+    syntax:
+      'NOISE = <value>;\nNOISE can be used to "add noise" with random figures to all known variables of a data set. <value>\ndefines how many measurement points are to be replaced by random values. value=1 causes a',
+    description: {
+      en: '',
+      de: '',
     },
   },
   {
     name: 'NOLABEL',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'NOLEGEND',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'NOLOGFILES',
-    de: { description: '', syntax: 'NOLOGFILES = [ YES | NO ];' },
-    en: { description: '', syntax: 'NOLOGFILES = [ YES | NO ];' },
+    syntax: 'NOLOGFILES = [ YES | NO ];',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'NOMINATIONS',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'NOMINATIONTITLE',
-    de: {
-      description:
-        'Dient zu Ersetzung des Standardtextes bei TABLEBASE = RESPONSES;.',
-      syntax: 'NOMINATIONTITLE [X|Y] = "<text>";',
-    },
-    en: {
-      description:
-        'In TABLEBASE = NOMINATIONS the standard text is "No. of responses abs.". This can be replaced. Example: NOMINATIONTITLE = "Nennungen"; Different texts are possible for the X and Y axes analogue to CASESTITLE (see above). It is valid for all tables until changed.',
-      syntax: 'NOMINATIONTITLE [X|Y] = "<text>";',
+    syntax: 'NOMINATIONTITLE [X|Y] = "<text>";',
+    description: {
+      en: 'In TABLEBASE = NOMINATIONS the standard text is "No. of responses abs.". This can be replaced. Example: NOMINATIONTITLE = "Nennungen"; Different texts are possible for the X and Y axes analogue to CASESTITLE (see above). It is valid for all tables until changed.',
+      de: 'Dient zu Ersetzung des Standardtextes bei TABLEBASE = RESPONSES;.',
     },
   },
   {
     name: 'NOMISSING',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'NOMULTILINEEXPANSION',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'NONOISE',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'NOOCINHEADER',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'NOOCINSTUB',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'NOOUTPUT',
-    de: { description: '', syntax: 'NOOUTPUT <varlist> = [ YES | NO ];' },
-    en: { description: '', syntax: 'NOOUTPUT <varlist> = [ YES | NO ];' },
+    syntax: 'NOOUTPUT <varlist> = [ YES | NO ];',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'NOQOUOTESINCSV',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'NOQUOTESINCSV',
-    de: { description: '', syntax: 'NOQUOTESINCSV = [ YES | NO ];' },
-    en: { description: '', syntax: 'NOQUOTESINCSV = [ YES | NO ];' },
+    syntax: 'NOQUOTESINCSV = [ YES | NO ];',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'NORANKING',
-    de: {
-      description:
-        'Ausschluss aus Ranking, siehe Sortierungen 468 Vergabe eines Zähllevels zur Steuerung der Ausgabe in Tabellen (relevant',
-    },
-    en: {
-      description:
-        'Exclusion from ranking, see Sortings 468. Assignment of a count level to control the output in tables (relevant',
-      syntax: '',
+    syntax: '',
+    description: {
+      en: 'Exclusion from ranking, see Sortings 468. Assignment of a count level to control the output in tables (relevant',
+      de: 'Ausschluss aus Ranking, siehe Sortierungen 468 Vergabe eines Zähllevels zur Steuerung der Ausgabe in Tabellen (relevant',
     },
   },
   {
     name: 'NOREPORT',
-    de: { description: '', syntax: 'NOREPORT <varlist> = [ YES | NO ];' },
-    en: { description: '', syntax: 'NOREPORT <varlist> = [ YES | NO ];' },
+    syntax: 'NOREPORT <varlist> = [ YES | NO ];',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'NORMAL',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'NORMALIZE',
-    de: { description: '', syntax: 'NORMALIZE;\nNORMALIZE = <varlist>;' },
-    en: { description: '', syntax: 'NORMALIZE;' },
+    syntax: 'NORMALIZE;',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'NOSCALE',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'NOSIGNIFMEANGREATER',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'NOSIGNIFMEANLESS',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'NOSPSS',
-    de: { description: '', syntax: 'NOSPSS <varlist> = [ YES | NO ];' },
-    en: { description: '', syntax: 'NOSPSS <varlist> = [ YES | NO ];' },
+    syntax: 'NOSPSS <varlist> = [ YES | NO ];',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'NOT',
-    de: {
-      description:
-        'Nicht Assoziationen müssen explizit durch Klammerung angegeben werden; ungeklammerte Reihungen von OR und AND werden von links nach rechts abgearbeitet. Die verbreitete abkürzende Schreibweise (z.B. "a EQ 1 OR 2" anstelle von "a EQ 1 OR a EQ 2" etc. ist nicht erlaubt. Hierfür gibt es die IN 303-Formulierung. Stringkonstanten sind erlaubt.…',
-    },
-    en: {
-      description:
-        'Not. Associations must be given explicitly by bracketing; unbracketed sequences of OR and AND are processed from left to right. The common abbreviated notation (e.g. "a EQ 1 OR 2" instead of "a EQ 1 OR a EQ 2" etc.) is not allowed. The IN 303 formulation exists for this. String constants are allowed.…',
-      syntax: '',
+    syntax: '',
+    description: {
+      en: 'Not. Associations must be given explicitly by bracketing; unbracketed sequences of OR and AND are processed from left to right. The common abbreviated notation (e.g. "a EQ 1 OR 2" instead of "a EQ 1 OR a EQ 2" etc.) is not allowed. The IN 303 formulation exists for this. String constants are allowed.…',
+      de: 'Nicht Assoziationen müssen explizit durch Klammerung angegeben werden; ungeklammerte Reihungen von OR und AND werden von links nach rechts abgearbeitet. Die verbreitete abkürzende Schreibweise (z.B. "a EQ 1 OR 2" anstelle von "a EQ 1 OR a EQ 2" etc. ist nicht erlaubt. Hierfür gibt es die IN 303-Formulierung. Stringkonstanten sind erlaubt.…',
     },
   },
   {
     name: 'NOTHING',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'NOTOGGLEKEY',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'NOVARTITLEBOX',
-    de: {
-      description:
-        'Unterdrückt den Kasten, der Variablen in der Y-Richtung benennt. Macht immer dann Sinn, wenn man in der Y-Richtung nur eine einzige Variable verwendet, die zudem z.B. bereits in der TOPTEXT 516-Box erläutert wurde.',
-    },
-    en: {
-      description:
-        'Suppresses the box which names the variables on the Y-axis. Always makes sense if only one variable is used on the Y-axis which for example already appears in the TOPTEXT box.',
+    syntax: '',
+    description: {
+      en: 'Suppresses the box which names the variables on the Y-axis. Always makes sense if only one variable is used on the Y-axis which for example already appears in the TOPTEXT box.',
+      de: 'Unterdrückt den Kasten, der Variablen in der Y-Richtung benennt. Macht immer dann Sinn, wenn man in der Y-Richtung nur eine einzige Variable verwendet, die zudem z.B. bereits in der TOPTEXT-Box erläutert wurde.',
     },
   },
   {
     name: 'NOVELLLOCKS',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'NOWHITEBACK',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'NOWRAPINTEXT',
-    de: { description: '', syntax: 'NOWRAPINTEXT = [ YES | NO ] ;' },
-    en: { description: '', syntax: 'NOWRAPINTEXT = [ YES | NO ] ;' },
+    syntax: 'NOWRAPINTEXT = [ YES | NO ] ;',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'NOXVARTITLEBOX',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'NOZERODASH',
-    de: {
-      description:
-        "Im Standardfall wird die echte Null in Prozenttabellen durch '-' dargestellt. Dies kann man mit NOZERODASH abschalten.",
-    },
-    en: {
-      description:
-        'Usually the real zero in percentage tables is represented by a "-". This can be switched off using NOZERODASH.',
+    syntax: '',
+    description: {
+      en: 'Usually the real zero in percentage tables is represented by a "-". This can be switched off using NOZERODASH.',
+      de: "Im Standardfall wird die echte Null in Prozenttabellen durch '-' dargestellt. Dies kann man mit NOZERODASH abschalten.",
     },
   },
   {
     name: 'NOZEROFILLINLABEL',
-    de: {
-      description:
-        'Unterdrückt die Ergänzung führender Nullen im LABELFORMAT 569-Statement.',
-    },
-    en: {
-      description:
-        'Suppresses the addition of leading zeros in the LABELFORMAT 569 statement.',
-      syntax: '',
+    syntax: '',
+    description: {
+      en: 'Suppresses the addition of leading zeros in the LABELFORMAT statement.',
+      de: 'Unterdrückt die Ergänzung führender Nullen im LABELFORMAT-Statement.',
     },
   },
   {
     name: 'NUMBERCHAR',
-    de: {
-      description:
-        'Wird in TABLETITLE 516s durch die aktuelle Tabellennummer ersetzt. Voreinstellung: #',
-    },
-    en: {
-      description:
-        'Is replaced by the current table number in TABLETITLE 516. Default: #',
-      syntax: '',
+    syntax: '',
+    description: {
+      en: 'Is replaced by the current table number in TABLETITLE. Default: #',
+      de: 'Wird in TABLETITLEs durch die aktuelle Tabellennummer ersetzt. Voreinstellung: #',
     },
   },
   {
     name: 'NUMBERSINCOLOR',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'NUMCENTERGRAPH',
-    de: {
-      description:
-        '| FORM RECTANGLE COLUMNS 1 ROWS 2 | FORM RECTANGLE COLUMNS 2 ROWS 1 2 ; Das einfachste Chart erweitert um Optionen für Form und Farbe 2a: Vier Charts auf einer Seite im Querformat Im folgenden Beispiel wurden vier Charts auf Basis derselben Tabelle auf einer Seite im Querformat abgebildet.…',
-    },
-    en: {
-      description:
-        '| FORM RECTANGLE COLUMNS 1 ROWS 2 | FORM RECTANGLE COLUMNS 2 ROWS 1 2 ; The simplest chart extended with options for shape and colour. 2a: Four charts on one page in landscape format. In the following example, four charts based on the same table were arranged on one page in landscape format.…',
-      syntax: '',
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
     },
   },
   {
     name: 'NUMERIC',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'NUMEXGRAPH',
-    de: {
-      description:
-        'CHARTTITLE "Ehemalige Parteiwähler von CDU, SPD und Grüne/GAL wählen:" = | COLUMNS POSITION 2:4 ROWS POSITION 1:8 ; GESSCHART PIE SAMEPAGE',
-    },
-    en: {
-      description:
-        'CHARTTITLE "Former party voters of CDU, SPD and Greens/GAL vote:" = | COLUMNS POSITION 2:4 ROWS POSITION 1:8 ; GESSCHART PIE SAMEPAGE',
-      syntax: '',
+    syntax: '',
+    description: {
+      en: 'CHARTTITLE "Former party voters of CDU, SPD and Greens/GAL vote:" = | COLUMNS POSITION 2:4 ROWS POSITION 1:8 ; GESSCHART PIE SAMEPAGE',
+      de: 'CHARTTITLE "Ehemalige Parteiwähler von CDU, SPD und Grüne/GAL wählen:" = | COLUMNS POSITION 2:4 ROWS POSITION 1:8 ; GESSCHART PIE SAMEPAGE',
     },
   },
   {
     name: 'NUMINGRAPH',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'OFFICECHAPTERPAGE',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'OFFICECHART',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'OFFICECHARTDEFAULTS',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'OFFICECONTENTPAGE',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'OFFICEEXPORT',
-    de: {
-      description: '',
-      syntax:
-        'OFFICEEXPORT = <filename>;\n<filename> muss eine der folgenden Extensionen haben : xlsx | xls | ods. über die Extension',
-    },
-    en: {
-      description: '',
-      syntax:
-        'OFFICEEXPORT = <filename>;\n<filename> must have one of the following extensions: xlsx | xls | ods. The output type is determined by the extension',
+    syntax:
+      'OFFICEEXPORT = <filename>;\n<filename> must have one of the following extensions: xlsx | xls | ods. The output type is determined by the extension',
+    description: {
+      en: '',
+      de: '',
     },
   },
   {
     name: 'OFFICEEXPORTOPTIONS',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'OFFICEFONT',
-    de: {
-      description: '',
-      syntax:
-        'OFFICEFONT <fontname> SIZE <number> [OPTION [BOLD|ITALIC|UNDERLINE]]',
-    },
-    en: {
-      description: '',
-      syntax:
-        'OFFICEFONT <fontname> SIZE <number> [OPTION [BOLD|ITALIC|UNDERLINE]]',
+    syntax:
+      'OFFICEFONT <fontname> SIZE <number> [OPTION [BOLD|ITALIC|UNDERLINE]]',
+    description: {
+      en: '',
+      de: '',
     },
   },
   {
     name: 'OFFICEFORMAT',
-    de: {
-      description: '',
-      syntax: 'OFFICEFORMAT <cellelement> : <formatstring>',
-    },
-    en: {
-      description: '',
-      syntax: 'OFFICEFORMAT <cellelement> : <formatstring>',
+    syntax: 'OFFICEFORMAT <cellelement> : <formatstring>',
+    description: {
+      en: '',
+      de: '',
     },
   },
   {
     name: 'OFFICEPICTURE',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'OFFICETITLEPAGE',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'OLDEXCELFORMAT',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'OLDGROUPCLEARMETHOD',
-    de: { description: '', syntax: 'OLDGROUPCLEARMETHOD = [ YES | NO ];' },
-    en: { description: '', syntax: 'OLDGROUPCLEARMETHOD = [ YES | NO ];' },
+    syntax: 'OLDGROUPCLEARMETHOD = [ YES | NO ];',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'ONQUESTIONNAIRE',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'OPEN',
-    en: {
-      description:
-        'The GESS system can also process and code the responses to open questions by designating the variables in the SINGLEQ to be OPEN. GESS questionnaire and input programmes then open a text window for the input of open responses.',
+    syntax: '',
+    description: {
+      en: 'The GESS system can also process and code the responses to open questions by designating the variables in the SINGLEQ to be OPEN. GESS questionnaire and input programmes then open a text window for the input of open responses.',
+      de: '',
     },
   },
   {
     name: 'OPENASALPHA',
-    de: {
-      description: '',
-      syntax:
-        'OPENASALPHA <varlist> = [ YES | NO ];\nGLOBALOPENASALPHA = [ YES | NO ];',
-    },
-    en: {
-      description:
-        'Usually the results of the coding are taken from the OPENQFILEs but the texts can also be used verbatim which is achieved using: OPENASALPHA <varlist> = [ YES | NO ];',
-      syntax:
-        'OPENASALPHA <varlist> = [ YES | NO ];\nGLOBALOPENASALPHA = [ YES | NO ];',
+    syntax:
+      'OPENASALPHA <varlist> = [ YES | NO ];\nGLOBALOPENASALPHA = [ YES | NO ];',
+    description: {
+      en: 'Usually the results of the coding are taken from the OPENQFILEs but the texts can also be used verbatim which is achieved using: OPENASALPHA <varlist> = [ YES | NO ];',
+      de: '',
     },
   },
   {
     name: 'OPENAUTOGENERATE',
-    de: {
-      description: '',
-      syntax:
-        'OPENAUTOGENERATE = [ YES | MULTIQ <number> [ PREFIX <text> ] ]\n| ALPHA [ PREFIX <text> ] ];\nDie einfachste Version lautet: OPENAUTOGENERATE = YES;',
-    },
-    en: {
-      description: '',
-      syntax:
-        'OPENAUTOGENERATE = [ YES | MULTIQ <number> [ PREFIX <text> ] ]\n| ALPHA [ PREFIX <text> ] ];\nThe simplest version reads: OPENAUTOGENERATE = YES;',
+    syntax:
+      'OPENAUTOGENERATE = [ YES | MULTIQ <number> [ PREFIX <text> ] ]\n| ALPHA [ PREFIX <text> ] ];\nThe simplest version reads: OPENAUTOGENERATE = YES;',
+    description: {
+      en: '',
+      de: '',
     },
   },
   {
     name: 'OPENCSV',
-    de: { description: '', syntax: 'OPENCSV = [ YES | NO ];' },
-    en: { description: '', syntax: 'OPENCSV = [ YES | NO ];' },
+    syntax: 'OPENCSV = [ YES | NO ];',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'OPENOFFICEDEVIATION',
-    de: { description: '', syntax: 'OPENOFFICEDEVIATION = YES;' },
-    en: { description: '', syntax: 'OPENOFFICEDEVIATION = YES;' },
+    syntax: 'OPENOFFICEDEVIATION = YES;',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'OPENQFILE',
-    de: { description: '', syntax: 'OPENQFILE = <name.opn>;' },
-    en: {
-      description:
-        'If open questions are to be used at least one OPENQFILE must be defined. GESS tabs reads all OPENQFILEs and creates a data bank which allocates which values belong to which case numbers. The OPENQFILE statement has the same syntax as the DATAFILE statement.…',
-      syntax: 'OPENQFILE = <name.opn>;',
+    syntax: 'OPENQFILE = <name.opn>;',
+    description: {
+      en: 'If open questions are to be used at least one OPENQFILE must be defined. GESS tabs reads all OPENQFILEs and creates a data bank which allocates which values belong to which case numbers. The OPENQFILE statement has the same syntax as the DATAFILE statement.…',
+      de: '',
     },
   },
   {
     name: 'OPENQFILES',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'OPENQFORMAT',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'OPTIMIZE',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'OPTION',
-    de: {
-      description: '',
-      syntax: 'OPTION : [CLUSTERED | STACKED | PERCENTSTACKED]',
-    },
-    en: {
-      description: '',
-      syntax: 'OPTION : [CLUSTERED | STACKED | PERCENTSTACKED]',
+    syntax: 'OPTION : [CLUSTERED | STACKED | PERCENTSTACKED]',
+    description: {
+      en: '',
+      de: '',
     },
   },
   {
     name: 'OR',
     argsHint: '( Alter LT 6 AND Schulbildung GT 0 )',
-    de: {
-      description:
-        'PRINT "Unplausibler Ausbildungsgrad" Alter Schulbildung; Die Meldungen erscheinen entweder im INPUT-DATA-ERROR-Fenster in der GESStabs- Oberfläche oder ggf. im LISTFILE 38. Die zweite Syntax-Variante erzeugt eine Ausgabe in eine eigene, zugeordnete Datei. In diesem Fall wird eine Überschriftszeile mit den Variablennamen erzeugt.…',
-    },
-    en: {
-      description:
-        'PRINT "Unplausibler Ausbildungsgrad" Alter Schulbildung; The messages either appear in the INPUT-DATA-ERROR window on screen or where applicable in the LISTFILE (see above). A summary table of all the errors can be requested using SUMMARY. During the program run in GESS input or GESS CAPI an error window appears.…',
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
     },
   },
   {
     name: 'OS',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'OUTFILE',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'OUTLINE',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'OVERCODE',
-    de: {
-      description: 'Bildung und Benennung eines Obercodes 262',
-      syntax:
-        'OVERCODE [<ocname>] { :<label> }*n "<text des OVERCODEs"\n<ocname> ::= neuer eindeutiger Name des OVERCODEs',
-    },
-    en: {
-      description: 'Formation and naming of an over-code 262',
-      syntax:
-        'OVERCODE [<ocname>] { :<label> }*n "<text of the OVERCODE>"\n<ocname> ::= new unique name of the OVERCODE',
+    syntax:
+      'OVERCODE [<ocname>] { :<label> }*n "<text of the OVERCODE>"\n<ocname> ::= new unique name of the OVERCODE',
+    description: {
+      en: 'Formation and naming of an over-code 262',
+      de: 'Bildung und Benennung eines Obercodes 262',
     },
   },
   {
     name: 'OVERCODE SUM',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'OVERLAPPED',
-    de: { description: 'Die graphischen Elemente überlappend darstellen' },
-    en: { description: 'Show the graphical elements overlapping', syntax: '' },
+    syntax: '',
+    description: {
+      en: 'Show the graphical elements overlapping',
+      de: 'Die graphischen Elemente überlappend darstellen',
+    },
   },
   {
     name: 'OVEROVERCODE',
-    de: {
-      description: '',
-      syntax:
-        'OVEROVERCODE [ SUM ] <oocname> { :<ocname> }*n\n"<text des OVEROVERCODEs"\n<oocname> ::= neuer eindeutiger Name des OVEROVERCODE\n<ocname> ::= gültiger Name eines bestehenden OVERCODE',
-    },
-    en: {
-      description: '',
-      syntax:
-        'OVEROVERCODE [ SUM ] <oocname> { :<ocname> }*n\n"<text of the OVEROVERCODE>"\n<oocname> ::= new unique name of the OVEROVERCODE\n<ocname> ::= valid name of an existing OVERCODE',
+    syntax:
+      'OVEROVERCODE [ SUM ] <oocname> { :<ocname> }*n\n"<text of the OVEROVERCODE>"\n<oocname> ::= new unique name of the OVEROVERCODE\n<ocname> ::= valid name of an existing OVERCODE',
+    description: {
+      en: '',
+      de: '',
     },
   },
   {
     name: 'OVERSLICE',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'OVERVIEW',
-    de: {
-      description:
-        'TITLE "Tabelle mit vererbter Sortierung, SORT AS „overbase“" SORT AS overbase = #k BY MEAN STDDEV( #domacro2 ( m_name 11:16; a ) ); Sortierung vererben: Basistabelle Tabelle mit vererbter Sortierung Die neue Implementierung von „SORT AS“ erlaubt auch die Vererbung von Reihenfolgen im Kopf von Tabellen. Wir wandeln unser Beispiel kurz ab, und zeigen formal dieselbe Information in einem XOVERVIEW.…',
-      syntax:
-        'OVERVIEW <tableoptions> = <kopf> BY <cellelementlist> ( <varlist> )\n[ SORT <cellelement> [ DESCEND ] [ PANE <number> CODE <number> ] ] ;\n<varlist> ::= { <variable [ <varoption> ] }*n\n<varoption> ::=\n[ SORTCLASS <number> ]\n[ LEVEL <number> ]',
-    },
-    en: {
-      description:
-        'TITLE "Table with inherited sorting, SORT AS „overbase“" SORT AS overbase = #k BY MEAN STDDEV( #domacro2 ( m_name 11:16; a ) ); Inherit sorting: base table, table with inherited sorting. The new implementation of „SORT AS“ also allows the inheritance of orders in the header of tables. We modify our example briefly and show formally the same information in an XOVERVIEW.…',
-      syntax:
-        'OVERVIEW <tableoptions> = <header> BY <cellelementlist> ( <varlist> )\n[ SORT <cellelement> [ DESCEND ] [ PANE <number> CODE <number> ] ] ;\n<varlist> ::= { <variable [ <varoption> ] }*n\n<varoption> ::=\n[ SORTCLASS <number> ]\n[ LEVEL <number> ]',
+    syntax:
+      'OVERVIEW <tableoptions> = <header> BY <cellelementlist> ( <varlist> )\n[ SORT <cellelement> [ DESCEND ] [ PANE <number> CODE <number> ] ] ;\n<varlist> ::= { <variable [ <varoption> ] }*n\n<varoption> ::=\n[ SORTCLASS <number> ]\n[ LEVEL <number> ]',
+    description: {
+      en: 'TITLE "Table with inherited sorting, SORT AS „overbase“" SORT AS overbase = #k BY MEAN STDDEV( #domacro2 ( m_name 11:16; a ) ); Inherit sorting: base table, table with inherited sorting. The new implementation of „SORT AS“ also allows the inheritance of orders in the header of tables. We modify our example briefly and show formally the same information in an XOVERVIEW.…',
+      de: 'TITLE "Tabelle mit vererbter Sortierung, SORT AS „overbase“" SORT AS overbase = #k BY MEAN STDDEV( #domacro2 ( m_name 11:16; a ) ); Sortierung vererben: Basistabelle Tabelle mit vererbter Sortierung Die neue Implementierung von „SORT AS“ erlaubt auch die Vererbung von Reihenfolgen im Kopf von Tabellen. Wir wandeln unser Beispiel kurz ab, und zeigen formal dieselbe Information in einem XOVERVIEW.…',
     },
   },
   {
     name: 'OVERVIEW ADD',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'PAGE',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'PAGELENGTH',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'PAGENUMBER',
-    de: {
-      description:
-        'Setzt die aktuelle Seitennummer neu, wird mit dem NUMBERCHAR 527 eingesetzt.',
+    syntax: '',
+    description: {
+      en: 'Resets the current page number.',
+      de: 'Setzt die aktuelle Seitennummer neu, wird mit dem NUMBERCHAR eingesetzt.',
     },
-    en: { description: 'Resets the current page number.' },
   },
   {
     name: 'PAGETOTALX',
-    de: {
-      description:
-        'Hat nur Effekt bei MULTITOTALX 538: Die Nennungen aller Variablen auf der Y-Achse werden für die Totalzeile gezählt.',
-    },
-    en: {
-      description:
-        'Only effective with MULTITOTALX: The responses of all variables on the Y-axis are tallied for the TOTALROW.',
+    syntax: '',
+    description: {
+      en: 'Only effective with MULTITOTALX: The responses of all variables on the Y-axis are tallied for the TOTALROW.',
+      de: 'Hat nur Effekt bei MULTITOTALX: Die Nennungen aller Variablen auf der Y-Achse werden für die Totalzeile gezählt.',
     },
   },
   {
     name: 'PAGETOTALY',
-    de: {
-      description:
-        'Hat nur Effekt bei MULTITOTALY 538: Die Nennungen aller Variablen auf der X-Achse werden für die Totalspalte gezählt.',
-    },
-    en: {
-      description:
-        'Only has effect with MULTITOTALY: The responses to all variables on the X-Axis are tallied for the TOTALCOLUMN.',
+    syntax: '',
+    description: {
+      en: 'Only has effect with MULTITOTALY: The responses to all variables on the X-Axis are tallied for the TOTALCOLUMN.',
+      de: 'Hat nur Effekt bei MULTITOTALY: Die Nennungen aller Variablen auf der X-Achse werden für die Totalspalte gezählt.',
     },
   },
   {
     name: 'PANE',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'PAPER',
-    de: {
-      description: '',
-      syntax:
-        "PAPER = HEIGHT <number> WIDTH <number>;\nDie Interpretation von '<number>' richtet sich nach UNITS.",
+    syntax: 'PAPER = HEIGHT <number> WIDTH <number>;',
+    description: {
+      en: '',
+      de: '',
     },
-    en: { description: '', syntax: 'PAPER = HEIGHT <number> WIDTH <number>;' },
   },
   {
     name: 'PASSWORD',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'PATTERN',
-    de: {
-      description:
-        'Pattern 1 = gepunktet.) Jede Farbe wird entweder nach dem HSB-Modell (Hue-Saturation-',
-    },
-    en: {
-      description:
-        'Pattern 1 = dotted.) Each colour is chosen either by the HSB model (Hue-Saturation-',
-      syntax: '',
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
     },
   },
   {
     name: 'PATTERNERROR',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'PCNTL1',
     argsHint: '( Var )',
-    de: {
-      description:
-        'Frei wählbare Percentil. Voreingestellt sind für PCNTL1 das',
-    },
-    en: {
-      description:
-        'Freely selectable percentile. For PCNTL1 the default is the',
-      syntax: '',
+    syntax: '',
+    description: {
+      en: 'Freely selectable percentile; the default is the 1st quartile (25%).',
+      de: 'Frei wählbare Percentile; voreingestellt ist das 1. Quartil (25%).',
     },
   },
   {
     name: 'PCNTL2',
     argsHint: '( Var )',
-    de: {
-      description: '1.Quartil und für PCNTL2 das 3. Quartil, d.h. jeweils 25%',
-    },
-    en: {
-      description:
-        '1st quartile and for PCNTL2 the 3rd quartile, i.e. 25% each',
-      syntax: '',
+    syntax: '',
+    description: {
+      en: 'Freely selectable percentile; the default is the 3rd quartile (75%).',
+      de: 'Frei wählbare Percentile; voreingestellt ist das 3. Quartil (75%).',
     },
   },
   {
     name: 'PCNTL3',
     argsHint: '( Var )',
-    de: {
-      description:
-        'PCNTL4 ( Var ) bzw. 75% der Zellenverteilung. Mit zusätzlichen Statements kann die Grenze und der Text der Percentilauswertung individuell gewählt werden, Beispiel: PCNTL1 = 33.333% "1.Drittel"; PCNTL2 = 66.667% "2.Drittel"; Es wird dann interpoliert, wenn es mit dem TABLEFORMAT PERCENTILEINTERPOL 540 verlangt wird.',
-    },
-    en: {
-      description:
-        'PCNTL4 ( Var ) or 75% of the cell distribution. With additional statements the boundary and the text of the percentile evaluation can be chosen individually, example: PCNTL1 = 33.333% "1st third"; PCNTL2 = 66.667% "2nd third"; Interpolation is done when requested with the TABLEFORMAT PERCENTILEINTERPOL 540.',
-      syntax: '',
+    syntax: '',
+    description: {
+      en: 'PCNTL4 ( Var ) or 75% of the cell distribution. With additional statements the boundary and the text of the percentile evaluation can be chosen individually, example: PCNTL1 = 33.333% "1st third"; PCNTL2 = 66.667% "2nd third"; Interpolation is done when requested with the TABLEFORMAT PERCENTILEINTERPOL.',
+      de: 'PCNTL4 ( Var ) bzw. 75% der Zellenverteilung. Mit zusätzlichen Statements kann die Grenze und der Text der Percentilauswertung individuell gewählt werden, Beispiel: PCNTL1 = 33.333% "1.Drittel"; PCNTL2 = 66.667% "2.Drittel"; Es wird dann interpoliert, wenn es mit dem TABLEFORMAT PERCENTILEINTERPOL verlangt wird.',
     },
   },
   {
     name: 'PCNTL4',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'PCNTRANGE',
     argsHint: '( Var )',
-    de: {
-      description: 'Ausgabe des 1. und 2. Perzentils als Spanne in einer Zeile',
-    },
-    en: {
-      description: 'Output of the 1st and 2nd percentile as a span on one line',
-      syntax: '',
+    syntax: '',
+    description: {
+      en: 'Output of the 1st and 2nd percentile as a span on one line',
+      de: 'Ausgabe des 1. und 2. Perzentils als Spanne in einer Zeile',
     },
   },
   {
     name: 'PDF',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'PEARSONR',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'PERCENT',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'PERCENTILEDELTA',
     argsHint: '( Var )',
-    de: {
-      description:
-        'Ausgabe der Differenz zwischen dem 1. und 2. Perzentil Name Beschreibung',
-    },
-    en: {
-      description:
-        'Output of the difference between the 1st and 2nd percentile. Name Description',
-      syntax: '',
+    syntax: '',
+    description: {
+      en: 'Output of the difference between the 1st and 2nd percentile.',
+      de: 'Ausgabe der Differenz zwischen dem 1. und 2. Perzentil',
     },
   },
   {
     name: 'PERCENTILEINTERPOL',
-    de: {
-      description:
-        'Mit diesem TABLEFORMAT wird eine Interpolation eingeschaltet.',
-    },
-    en: {
-      description:
-        'Using this TABLEFORMAT an interpolation is switched on. Interpolation used to be standard in GESS tabs. This is however unusual if anything; we have readjusted and now interpolation has to be explicitly defined.',
+    syntax: '',
+    description: {
+      en: 'Using this TABLEFORMAT an interpolation is switched on. Interpolation used to be standard in GESS tabs. This is however unusual if anything; we have readjusted and now interpolation has to be explicitly defined.',
+      de: 'Mit diesem TABLEFORMAT wird eine Interpolation eingeschaltet.',
     },
   },
   {
     name: 'PERCENTINLABEL',
-    de: {
-      description:
-        'Fügt bei CELLELEMENT = COLUMNPERCENT; 420 in die Labelboxes der X-Achse automatisch ein %-Zeichen ein.',
-    },
-    en: {
-      description:
-        'Automatically adds a % symbol with CELLELEMENT = COLUMNPERCENT to the label boxes on the X- axis. Incidentally is also used to add an additional row with percentaging in ColumnCount (PS).',
+    syntax: '',
+    description: {
+      en: 'Automatically adds a % symbol with CELLELEMENT = COLUMNPERCENT to the label boxes on the X- axis. Incidentally is also used to add an additional row with percentaging in ColumnCount (PS).',
+      de: 'Fügt bei CELLELEMENT = COLUMNPERCENT; 420 in die Labelboxes der X-Achse automatisch ein %-Zeichen ein.',
     },
   },
   {
     name: 'PERCENTSTACKED',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'PHI',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'PHONE',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'PHYSCELLMIN',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'PHYSCOLCHIQU',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'PHYSCOLDELTA',
-    de: {
-      description:
-        'Differenz zwischen gewichteten und ungewichteten Spaltenprozenten',
-    },
-    en: {
-      description:
-        'Difference between weighted and unweighted column percentages',
-      syntax: '',
+    syntax: '',
+    description: {
+      en: 'Difference between weighted and unweighted column percentages',
+      de: 'Differenz zwischen gewichteten und ungewichteten Spaltenprozenten',
     },
   },
   {
     name: 'PHYSCOLDEPTTEST',
-    de: {
-      description:
-        'Abhängiger, spaltenweiser t-Test auf Basis der gewichteten Daten',
-    },
-    en: {
-      description:
-        'Dependent, column-wise t-test on the basis of the weighted data',
-      syntax: '',
+    syntax: '',
+    description: {
+      en: 'Dependent, column-wise t-test on the basis of the weighted data',
+      de: 'Abhängiger, spaltenweiser t-Test auf Basis der gewichteten Daten',
     },
   },
   {
     name: 'PHYSCOLINHG',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'PHYSCOLPERCENT',
-    de: { description: 'Spaltenprozente, auf Basis ungewichteter Zahlen' },
-    en: {
-      description: 'Column percentages, based on unweighted figures',
-      syntax: '',
+    syntax: '',
+    description: {
+      en: 'Column percentages, based on unweighted figures',
+      de: 'Spaltenprozente, auf Basis ungewichteter Zahlen',
     },
   },
   {
     name: 'PHYSDEPTTEST',
     argsHint: '( Var )',
-    de: {
-      description:
-        'Abhängiger t-Test auf Mittelwertsunterschiede auf Basis der ungewichteten Daten',
-    },
-    en: {
-      description:
-        'Dependent t-test on mean differences on the basis of the unweighted data',
-      syntax: '',
+    syntax: '',
+    description: {
+      en: 'Dependent t-test on mean differences on the basis of the unweighted data',
+      de: 'Abhängiger t-Test auf Mittelwertsunterschiede auf Basis der ungewichteten Daten',
     },
   },
   {
     name: 'PHYSICALC',
-    de: {
-      description:
-        'Physikalische Fallzahl (ohne Berücksichtigung von Gewichten) in der Spalte',
-    },
-    en: {
-      description:
-        'Physical case count (without taking weights into account) in the column',
-      syntax: '',
+    syntax: '',
+    description: {
+      en: 'Physical case count (without taking weights into account) in the column',
+      de: 'Physikalische Fallzahl (ohne Berücksichtigung von Gewichten) in der Spalte',
     },
   },
   {
     name: 'PHYSICALCOLUMN',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'PHYSICALNTITLE',
-    de: {
-      description:
-        'Text zur Kennzeichnung der Spalten/Zeilen mit ungewichteter Fallzahl',
-      syntax: 'PHYSICALNTITLE = "<text>";',
-    },
-    en: {
-      description:
-        'Serves to replace the standard text "unweighted" with the indicator of columns or rows with "unweighted n". (See FRAMEELEMENTS, PHYSICALROW or PHYSICALCOLUMN). Example: PHYSICALNTITLE = "Zahl der Be-frag-ten"; X and Y frame texts can be set differently analogue to TOTALTITLE. This is valid for all tables until changed.',
-      syntax: 'PHYSICALNTITLE = "<text>";',
+    syntax: 'PHYSICALNTITLE = "<text>";',
+    description: {
+      en: 'Serves to replace the standard text "unweighted" with the indicator of columns or rows with "unweighted n". (See FRAMEELEMENTS, PHYSICALROW or PHYSICALCOLUMN). Example: PHYSICALNTITLE = "Zahl der Be-frag-ten"; X and Y frame texts can be set differently analogue to TOTALTITLE. This is valid for all tables until changed.',
+      de: 'Text zur Kennzeichnung der Spalten/Zeilen mit ungewichteter Fallzahl',
     },
   },
   {
     name: 'PHYSICALR',
-    de: {
-      description:
-        'Physikalische Fallzahl (ohne Berücksichtigung von Gewichten) in der Zeile',
-    },
-    en: {
-      description:
-        'Physical case count (without taking weights into account) in the row',
-      syntax: '',
+    syntax: '',
+    description: {
+      en: 'Physical case count (without taking weights into account) in the row',
+      de: 'Physikalische Fallzahl (ohne Berücksichtigung von Gewichten) in der Zeile',
     },
   },
   {
     name: 'PHYSICALRECORDS',
-    de: { description: 'ungewichtete Zahl der Fälle' },
-    en: { description: 'unweighted number of cases', syntax: '' },
+    syntax: '',
+    description: {
+      en: 'unweighted number of cases',
+      de: 'ungewichtete Zahl der Fälle',
+    },
   },
   {
     name: 'PHYSICALROW',
-    de: { description: 'und folgende drei Arten von Rahmenspalten:' },
-    en: {
-      description: 'and the following three kinds of frame columns:',
-      syntax: '',
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
     },
   },
   {
     name: 'PHYSMCNEMAR',
-    de: {
-      description:
-        'Abhängiger Test auf Prozentwertunterschied auf Basis der ungewichteten Daten nach McNemar 449',
-    },
-    en: {
-      description:
-        'Dependent test on percentage differences on the basis of the unweighted data per McNemar 449',
-      syntax: '',
+    syntax: '',
+    description: {
+      en: 'Dependent test on percentage differences on the basis of the unweighted data per McNemar',
+      de: 'Abhängiger Test auf Prozentwertunterschied auf Basis der ungewichteten Daten nach McNemar',
     },
   },
   {
     name: 'PHYSMEAN',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'PHYSMEANCOLDEPT',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'PHYSMEANTEST',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'PHYSMEANWELCH',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'PHYSMINCOLBASE',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'PHYSMINROWBASE',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'PHYSROWCHIQU',
-    de: {
-      description: 'Zeilenweiser Chi²-Test auf Basis der ungewichteten Daten',
-    },
-    en: {
-      description:
-        'Row-wise chi-square test on the basis of the unweighted data',
-      syntax: '',
+    syntax: '',
+    description: {
+      en: 'Row-wise chi-square test on the basis of the unweighted data',
+      de: 'Zeilenweiser Chi²-Test auf Basis der ungewichteten Daten',
     },
   },
   {
     name: 'PHYSROWDELTA',
-    de: {
-      description:
-        'Differenz zwischen den gewichteten und ungewichteten Zeilenprozenten.',
-    },
-    en: {
-      description:
-        'Difference between the weighted and unweighted row percentages.',
-      syntax: '',
+    syntax: '',
+    description: {
+      en: 'Difference between the weighted and unweighted row percentages.',
+      de: 'Differenz zwischen den gewichteten und ungewichteten Zeilenprozenten.',
     },
   },
   {
     name: 'PHYSROWINHG',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'PHYSROWMEANTEST',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'PHYSROWPERCENT',
-    de: {
-      description: 'Zeilenprozente, auf Basis einer ungewichteten Zählung',
-    },
-    en: {
-      description: 'Row percentages, based on an unweighted count',
-      syntax: '',
+    syntax: '',
+    description: {
+      en: 'Row percentages, based on an unweighted count',
+      de: 'Zeilenprozente, auf Basis einer ungewichteten Zählung',
     },
   },
   {
     name: 'PHYSROWTTEST',
-    de: {
-      description:
-        'Unabhängiger, zeilenweiser t-Test auf Mittelwertunterschiede auf Basis der ungewichteten Daten. Name Beschreibung',
-    },
-    en: {
-      description:
-        'Independent, row-wise t-test on mean differences on the basis of the unweighted data. Name Description',
-      syntax: '',
+    syntax: '',
+    description: {
+      en: 'Independent, row-wise t-test on mean differences on the basis of the unweighted data.',
+      de: 'Unabhängiger, zeilenweiser t-Test auf Mittelwertunterschiede auf Basis der ungewichteten Daten.',
     },
   },
   {
     name: 'PHYSTTEST',
     argsHint: '( Var )',
-    de: {
-      description:
-        'Unabhängiger t-Test auf Mittelwertsunterschiede auf Basis der ungewichteten Daten',
-    },
-    en: {
-      description:
-        'Independent t-test on mean differences on the basis of the unweighted data',
-      syntax: '',
+    syntax: '',
+    description: {
+      en: 'Independent t-test on mean differences on the basis of the unweighted data',
+      de: 'Unabhängiger t-Test auf Mittelwertsunterschiede auf Basis der ungewichteten Daten',
     },
   },
   {
     name: 'PHYSWELCHTEST',
-    de: {
-      description:
-        'Unabhängiger t-Test auf Mittelwerteunterschiede nach Welch 450 auf Basis der ungewichteten Daten',
-    },
-    en: {
-      description:
-        'Independent t-test on mean differences per Welch 450 on the basis of the unweighted data',
-      syntax: '',
+    syntax: '',
+    description: {
+      en: 'Independent t-test on mean differences per Welch on the basis of the unweighted data',
+      de: 'Unabhängiger t-Test auf Mittelwerteunterschiede nach Welch auf Basis der ungewichteten Daten',
     },
   },
   {
     name: 'PIE',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'PIE100',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'PIESTARTANGLE',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'PLAINDATAREPORT',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'PLAYBACK',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'PLUSBOX',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'POINTBOX',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'POINTS',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'POSITION',
-    de: {
-      description:
-        'Mit POSITION kann die Position vorgegeben werden, an der das neue Label (oder auch OVERCODE 262) in die Labelliste eingefügt wird. Die Zählung ist 1-basiert. Möchte man z.B. ein Label vor allen bestehenden einfügen, so schreibt man etwa: LABELS testvar = ADD POSITION 1',
-      syntax: 'POSITION "<cellrange>"',
-    },
-    en: {
-      description:
-        'With POSITION the position can be specified at which the new label (or also OVERCODE 262) is inserted into the label list. Counting is 1-based. If you want e.g. to insert a label before all existing ones, you write something like: LABELS testvar = ADD POSITION 1',
-      syntax: 'POSITION "<cellrange>"',
+    syntax: 'POSITION "<cellrange>"',
+    description: {
+      en: 'With POSITION the position can be specified at which the new label (or also OVERCODE) is inserted into the label list. Counting is 1-based. If you want e.g. to insert a label before all existing ones, you write something like: LABELS testvar = ADD POSITION 1',
+      de: 'Mit POSITION kann die Position vorgegeben werden, an der das neue Label (oder auch OVERCODE) in die Labelliste eingefügt wird. Die Zählung ist 1-basiert. Möchte man z.B. ein Label vor allen bestehenden einfügen, so schreibt man etwa: LABELS testvar = ADD POSITION 1',
     },
   },
   {
     name: 'POSTPONE',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'POSTPROCESS',
-    de: {
-      description: '',
-      syntax:
-        'POSTPROCESS <Cellelement> : [ IF-Statement | COMPUTE-Statement ];',
-    },
-    en: {
-      description: '',
-      syntax:
-        'POSTPROCESS <Cellelement> : [ IF-Statement | COMPUTE-Statement ];',
+    syntax: 'POSTPROCESS <Cellelement> : [ IF-Statement | COMPUTE-Statement ];',
+    description: {
+      en: '',
+      de: '',
     },
   },
   {
     name: 'POSTREPLACE',
-    de: {
-      description: '',
-      syntax: 'POSTREPLACE <cellelement> : <text1> = <text2> [ IF <text3> ] ;',
-    },
-    en: {
-      description: '',
-      syntax: 'POSTREPLACE <cellelement> : <text1> = <text2> [ IF <text3> ] ;',
+    syntax: 'POSTREPLACE <cellelement> : <text1> = <text2> [ IF <text3> ] ;',
+    description: {
+      en: '',
+      de: '',
     },
   },
   {
     name: 'POSTSCRIPT',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'POWERCHARTS',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'POWERPOINTFILENAME',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'PPCHART',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'PPEXCHANGE',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'PPTEMPLATES',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'PREQUOTA',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'PRETEXT',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'PRINT',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'PRINT2LINES',
-    de: {
-      description:
-        'Bei Zeilen bzw. Spalten, die mit CELLELEMENTS gebildet werden, die zwei logische Inhalte 433 haben (z.B. ABSCOLPERCENT, ABSMEAN) kann die Darstellung in zwei Zeilen innerhalb der Zelle verlangt werden. (Hat nur bei Postscript- Ausgabe Effekt.)',
-    },
-    en: {
-      description:
-        'The presentation of two rows within a cell can be achieved in rows or columns that are generated using CELLELEMENTS and have two logical contents (e.g. ABSCOLPERCENT, ABSMEAN). (Only effective with Postscript-printouts). (PS)',
+    syntax: '',
+    description: {
+      en: 'The presentation of two rows within a cell can be achieved in rows or columns that are generated using CELLELEMENTS and have two logical contents (e.g. ABSCOLPERCENT, ABSMEAN). (Only effective with Postscript-printouts). (PS)',
+      de: 'Bei Zeilen bzw. Spalten, die mit CELLELEMENTS gebildet werden, die zwei logische Inhalte 433 haben (z.B. ABSCOLPERCENT, ABSMEAN) kann die Darstellung in zwei Zeilen innerhalb der Zelle verlangt werden. (Hat nur bei Postscript- Ausgabe Effekt.)',
     },
   },
   {
     name: 'PRINT2LINES2',
-    de: {
-      description:
-        'Analog zu PRINT2LINES 540, nur in umgekehrter Reihenfolge. (Hat nur bei Postscript-Ausgabe Effekt.)',
-    },
-    en: {
-      description:
-        'Analogue to Print2Lines, only in the other order. (Only effective with Postscript-printouts). (PS)',
+    syntax: '',
+    description: {
+      en: 'Analogue to Print2Lines, only in the other order. (Only effective with Postscript-printouts). (PS)',
+      de: 'Analog zu PRINT2LINES, nur in umgekehrter Reihenfolge. (Hat nur bei Postscript-Ausgabe Effekt.)',
     },
   },
   {
     name: 'PRINTALL',
-    de: {
-      description: '',
-      syntax:
-        'PRINTALL <varlist> = [ YES | NO ];\nGLOBALPRINTALL = [ YES | NO ];',
-    },
-    en: {
-      description: '',
-      syntax:
-        'PRINTALL <varlist> = [ YES | NO ];\nGLOBALPRINTALL = [ YES | NO ];',
+    syntax:
+      'PRINTALL <varlist> = [ YES | NO ];\nGLOBALPRINTALL = [ YES | NO ];',
+    description: {
+      en: '',
+      de: '',
     },
   },
   {
     name: 'PRINTDICTIONARY',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'PRINTEREXIT',
-    en: {
-      description:
-        'Control string which is written at the end of a PRINTFILE. The individual characters are defined in either decimal or ASCII code Example: PRINTEREXIT = 12 {FormFeed} 10 {LineFeed} 13 {CR}; or ASCII codes are mixed with literal strings. Character chains which are to be passed on to the printer unchanged are set in quotation marks. Example:…',
+    syntax: '',
+    description: {
+      en: 'Control string which is written at the end of a PRINTFILE. The individual characters are defined in either decimal or ASCII code Example: PRINTEREXIT = 12 {FormFeed} 10 {LineFeed} 13 {CR}; or ASCII codes are mixed with literal strings. Character chains which are to be passed on to the printer unchanged are set in quotation marks. Example:…',
+      de: '',
     },
   },
   {
     name: 'PRINTERINIT',
-    en: {
-      description:
-        'Control string which is written at the beginning of the output of a PRINTFILE. See above for coding.',
+    syntax: '',
+    description: {
+      en: 'Control string which is written at the beginning of the output of a PRINTFILE. See above for coding.',
+      de: '',
     },
   },
   {
     name: 'PRINTFILE',
-    de: { description: '', syntax: 'PRINTFILE <Druckername> = <FileName>;' },
-    en: { description: '', syntax: 'PRINTFILE <Druckername> = <FileName>;' },
+    syntax: 'PRINTFILE <Druckername> = <FileName>;',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'PRINTSUPPRESSVALUE',
-    de: { description: '', syntax: 'PRINTSUPPRESSVALUE = <number>;' },
-    en: { description: '', syntax: 'PRINTSUPPRESSVALUE = <number>;' },
+    syntax: 'PRINTSUPPRESSVALUE = <number>;',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'PRINTWEIGHTPROTOCOL',
-    de: { description: '', syntax: 'PRINTWEIGHTPROTOCOL = [ YES | NO ];' },
-    en: { description: '', syntax: 'PRINTWEIGHTPROTOCOL = [ YES | NO ];' },
+    syntax: 'PRINTWEIGHTPROTOCOL = [ YES | NO ];',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'PROFILE',
-    en: {
-      description:
-        'PROFILE defines a mean table with an optional graphical presentation of the mean value. In certain ways PROFILE is to mean as COMPARE is to distribution. PROFILE can also be used to present many variables cohesively.…',
+    syntax: '',
+    description: {
+      en: 'PROFILE defines a mean table with an optional graphical presentation of the mean value. In certain ways PROFILE is to mean as COMPARE is to distribution. PROFILE can also be used to present many variables cohesively.…',
+      de: '',
     },
   },
   {
     name: 'PROFILEHEADERS',
-    en: {
-      description:
-        'PROFILEHEADERS is an obligatory command after a PROFILE statement and is used to define the column legends. The test elements can cover more than one row; the same hyphenation rules apply as for VALUELABELS (see above).',
+    syntax: '',
+    description: {
+      en: 'PROFILEHEADERS is an obligatory command after a PROFILE statement and is used to define the column legends. The test elements can cover more than one row; the same hyphenation rules apply as for VALUELABELS (see above).',
+      de: '',
     },
   },
   {
     name: 'PROFILELINES',
-    de: {
-      description: '',
-      syntax:
-        'PROFILELINES = { LineDef }*n ;\nLineDef ::= | <number> : { LineQualifier }*n\nLineQualifier ::=[ HIDDEN | PATTERN <number>\n| COLOR <number> <number> <number>\n| WIDTH <number> | SYMBOL <number> SYMBOLWIDTH <number> ]',
-    },
-    en: {
-      description: '',
-      syntax:
-        'PROFILELINES = { LineDef }*n ;\nLineDef ::= | <number> : { LineQualifier }*n\nLineQualifier ::=[ HIDDEN | PATTERN <number> | COLOR <number>\n<number> <number> | WIDTH <number> | SYMBOL <number> SYMBOLWIDTH\n<number> ]',
+    syntax:
+      'PROFILELINES = { LineDef }*n ;\nLineDef ::= | <number> : { LineQualifier }*n\nLineQualifier ::=[ HIDDEN | PATTERN <number> | COLOR <number>\n<number> <number> | WIDTH <number> | SYMBOL <number> SYMBOLWIDTH\n<number> ]',
+    description: {
+      en: '',
+      de: '',
     },
   },
   {
     name: 'PROFILESCALE',
-    de: {
-      description: '',
-      syntax: 'PROFILESCALE = <start> <end> <increment>;',
-    },
-    en: {
-      description: '',
-      syntax: 'PROFILESCALE = <start> <end> <increment> ;',
+    syntax: 'PROFILESCALE = <start> <end> <increment> ;',
+    description: {
+      en: '',
+      de: '',
     },
   },
   {
     name: 'PROFILESORT',
-    de: {
-      description: '',
-      syntax:
-        'PROFILESORT = [ <number> ] [ DESCEND ] ;\nDie PROFILE-Tabelle wird nach der in <number> festgelegten Datenspalte sortiert, im\nNormalfall aufsteigend; mit DESCEND kann die absteigende Variante gewählt werden. Die',
-    },
-    en: {
-      description: '',
-      syntax:
-        'PROFILESORT = [ <number> ] [ DESCEND ] ;\nThe PROFILE table is sorted according to the <number> defined in the data column, usually in\nascending order; DESCEND defines the descending order. The data column results in the case of a BY\ntable from a code of characteristic. Where there are several variables per row <number> is the first',
+    syntax:
+      'PROFILESORT = [ <number> ] [ DESCEND ] ;\nThe PROFILE table is sorted according to the <number> defined in the data column, usually in\nascending order; DESCEND defines the descending order. The data column results in the case of a BY\ntable from a code of characteristic. Where there are several variables per row <number> is the first',
+    description: {
+      en: '',
+      de: '',
     },
   },
   {
     name: 'PROJCOLPERCENT',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'PROJECT',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'PROJECTION',
-    de: {
-      description:
-        'absolute Häufigkeitswerte: Summe der Gewichte, multipliziert mit dem PROJECTIONFACTOR Hiermit kann man eine Stichprobe anhand der gewichteten Verteilung auf die Grundgesamtheit hochrechnen. Der PROJECTIONFACTOR kann mit der Anweisung PROJECTIONFACTOR = <Wert>; gesetzt werden. Voreinstellung: 1.0.',
-    },
-    en: {
-      description:
-        'absolute frequency values: sum of weights, multiplied by the PROJECTIONFACTOR. With this you can project a sample onto the population using the weighted distribution. The PROJECTIONFACTOR can be set with the instruction PROJECTIONFACTOR = <value>; Default: 1.0.',
-      syntax: '',
+    syntax: '',
+    description: {
+      en: 'absolute frequency values: sum of weights, multiplied by the PROJECTIONFACTOR. With this you can project a sample onto the population using the weighted distribution. The PROJECTIONFACTOR can be set with the instruction PROJECTIONFACTOR = <value>; Default: 1.0.',
+      de: 'absolute Häufigkeitswerte: Summe der Gewichte, multipliziert mit dem PROJECTIONFACTOR Hiermit kann man eine Stichprobe anhand der gewichteten Verteilung auf die Grundgesamtheit hochrechnen. Der PROJECTIONFACTOR kann mit der Anweisung PROJECTIONFACTOR = <Wert>; gesetzt werden. Voreinstellung: 1.0.',
     },
   },
   {
     name: 'PROJECTIONFACTOR',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'PROJECTIONSUM',
     argsHint: '( Var )',
-    de: {
-      description: "Darstellung der Summe von 'Var', multipliziert mit dem",
-    },
-    en: {
-      description: "Display of the sum of 'Var', multiplied by the",
-      syntax: '',
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
     },
   },
   {
     name: 'PROTOCOLPAGE',
-    de: { description: '', syntax: 'PROTOCOLPAGE = [ YES | NO ];' },
-    en: { description: '', syntax: 'PROTOCOLPAGE = [ YES | NO ];' },
+    syntax: 'PROTOCOLPAGE = [ YES | NO ];',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'PS',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'QBLOCK',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'QST',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'QU',
-    de: {
-      description:
-        '| kombiniert mit | COLPERCANDCHIQU |     |     |     | COLPERCANDHYCHIQU | | -------------- | --------------- | --- | --- | --- | ----------------- | % | z-Test | COLPERCZ  |     |     |     |     | | ------ | --------- | --- | --- | --- | --- |',
-    },
-    en: {
-      description:
-        '| combined with | COLPERCANDCHIQU |     |     |     | COLPERCANDHYCHIQU | | -------------- | --------------- | --- | --- | --- | ----------------- | % | z-test | COLPERCZ  |     |     |     |     | | ------ | --------- | --- | --- | --- | --- |',
-      syntax: '',
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
     },
   },
   {
     name: 'QUALITAB',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'QUANTUM',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'QUANTUMINCHARS',
-    de: { description: '', syntax: 'QUANTUMINCHARS = <filename>;' },
-    en: { description: '', syntax: 'QUANTUMINCHARS = <filename>;' },
+    syntax: 'QUANTUMINCHARS = <filename>;',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'QUESTION',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'QUOTA',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'QUOTAINFO',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'RANDOM',
-    de: {
-      description:
-        'RANDOM von einer negativen Zahl ist undefiniert. Der Aufruf COMPUTE xx = RANDOM( Max) mit einem positiven Argument "Max" liefert eine ganzzahlige Zufallszahl im Range 0 .. Max-1.',
-    },
-    en: {
-      description:
-        'RANDOM of a negative number is undefined. The call COMPUTE xx = RANDOM( Max) with a positive argument "Max" returns an integer random number in the range 0 .. Max-1.',
-      syntax: '',
+    syntax: '',
+    description: {
+      en: 'RANDOM of a negative number is undefined. The call COMPUTE xx = RANDOM( Max) with a positive argument "Max" returns an integer random number in the range 0 .. Max-1.',
+      de: 'RANDOM von einer negativen Zahl ist undefiniert. Der Aufruf COMPUTE xx = RANDOM( Max) mit einem positiven Argument "Max" liefert eine ganzzahlige Zufallszahl im Range 0 .. Max-1.',
     },
   },
   {
     name: 'RANDOMGROUP',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'RANGE',
-    de: {
-      description:
-        'Mit dem Schlüsselwort RANGE können beliebige Bereiche angefordert und so eine Tabelle mit sehr vielen Ausprägungen zerlegt werden. Zum Beispiel: TABLE = a BY b SORT ABSOLUTE DESCEND RANGE 1 20;',
-    },
-    en: {
-      description:
-        'With the keyword RANGE, arbitrary ranges can be requested and a table with a great many categories can thus be split. For example: TABLE = a BY b SORT ABSOLUTE DESCEND RANGE 1 20;',
-      syntax: '',
+    syntax: '',
+    description: {
+      en: 'With the keyword RANGE, arbitrary ranges can be requested and a table with a great many categories can thus be split. For example: TABLE = a BY b SORT ABSOLUTE DESCEND RANGE 1 20;',
+      de: 'Mit dem Schlüsselwort RANGE können beliebige Bereiche angefordert und so eine Tabelle mit sehr vielen Ausprägungen zerlegt werden. Zum Beispiel: TABLE = a BY b SORT ABSOLUTE DESCEND RANGE 1 20;',
     },
   },
   {
     name: 'RANGES',
-    de: { description: '', syntax: 'RANGES [<VarList>] <ValueList> ;' },
-    en: { description: '', syntax: 'RANGES <VarList> <ValueList> ;' },
+    syntax: 'RANGES <VarList> <ValueList> ;',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'RANK',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'RAWDATASTRING',
-    de: {
-      description:
-        'Kennzeichnung, um ungewichtete Tabellen von gewichteten zu unterscheiden. Wird direkt vor dem DOCUMENT ausgegeben.',
-      syntax:
-        'RAWDATASTRING = "<Symbol>";\nVoreinstellung: RAWDATASTRING = "*";',
-    },
-    en: {
-      description:
-        'Indicator to differentiate between unweighted and weighted tables. Comes directly before DOCUMENT. Preset: RAWDATASTRING = "*"; This is valid for all tables until changed. Options for Printing and Layout of Tables',
-      syntax: 'RAWDATASTRING = "<symbol>";\nDefault: RAWDATASTRING = "*";',
+    syntax: 'RAWDATASTRING = "<symbol>";\nDefault: RAWDATASTRING = "*";',
+    description: {
+      en: 'Indicator to differentiate between unweighted and weighted tables. Comes directly before DOCUMENT. Preset: RAWDATASTRING = "*"; This is valid for all tables until changed. Options for Printing and Layout of Tables',
+      de: 'Kennzeichnung, um ungewichtete Tabellen von gewichteten zu unterscheiden. Wird direkt vor dem DOCUMENT ausgegeben.',
     },
   },
   {
     name: 'READONLY',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'RECHIPREFIX',
-    de: { description: '', syntax: 'RECHIPREFIX = "<Zeichenfolge>";' },
-    en: { description: '', syntax: 'RECHIPREFIX = "<string>";' },
+    syntax: 'RECHIPREFIX = "<string>";',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'RECODE',
-    de: {
-      description:
-        'Umkodierung 255 (Voraussetzung: LABELRECODE 256 = YES;), wird bei LABELS COPY bzw. LABELS AS vererbt Beispiel für eine gültiges VALUELABELS-Statement mit LabelProperties: VALUELABELS V1 = OVERCODE 1:3 "Norden" SORTCLASS 1',
-      syntax:
-        'RECODE <recode> { / <recode> }*n [ ELSE = <number> ] ;\n<recode> ::= <valuelist> = < number >\n< valuelist > ::= [ <number> | <number> : <number> | <valuelist>',
-    },
-    en: {
-      description:
-        'allows the reprogramming of of individual variable characteristics of the variable defined last or a list of explicitly named variables. Example: RECODE 1 2 3 = 3; summarises the characteristics 1,2 and 3 of the variable defined last to 3. RECODE item1 item2 item3 1 = 4; recodes the characteristics of item1, item2 and item3 of the variable. also possible:…',
-      syntax:
-        'RECODE <recode> { / <recode> }*n [ ELSE = <number> ] ;\n<recode> ::= <valuelist> = < number >\n< valuelist > ::= [ <number> | <number> : <number> | <valuelist>',
+    syntax:
+      'RECODE <recode> { / <recode> }*n [ ELSE = <number> ] ;\n<recode> ::= <valuelist> = <number>\n<valuelist> ::= [ <number> | <number> : <number> | <valuelist>',
+    description: {
+      en: 'allows the reprogramming of of individual variable characteristics of the variable defined last or a list of explicitly named variables. Example: RECODE 1 2 3 = 3; summarises the characteristics 1,2 and 3 of the variable defined last to 3. RECODE item1 item2 item3 1 = 4; recodes the characteristics of item1, item2 and item3 of the variable. also possible:…',
+      de: 'Umkodierung (Voraussetzung: LABELRECODE = YES;), wird bei LABELS COPY bzw. LABELS AS vererbt.',
     },
   },
   {
     name: 'RECODELASTWINS',
-    de: { description: '', syntax: 'RECODELASTWINS = [ YES | NO ];' },
-    en: { description: '', syntax: 'RECODELASTWINS = [ YES | NO ];' },
+    syntax: 'RECODELASTWINS = [ YES | NO ];',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'RECODESMALL',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'RECODETASKS',
-    en: {
-      description:
-        'The effect of RECODE statements can be restricted to particular task types. Using: RECODETASKS = tabtask; recodes are only carried out by GESS tabs, and all RECODE statements from GESS input or CATI etc. are ignored.',
+    syntax: '',
+    description: {
+      en: 'The effect of RECODE statements can be restricted to particular task types. Using: RECODETASKS = tabtask; recodes are only carried out by GESS tabs, and all RECODE statements from GESS input or CATI etc. are ignored.',
+      de: '',
     },
   },
   {
     name: 'RECORDING',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'RECTANGLE',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'RECTLINE',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'REDEFINEVARS',
-    en: {
-      description:
-        'YES or NO. Preset: NO. If REDEFINEVARS is set to YES all command rows in the INFILE appear which redefine the input definition of variables already defined. Command rows in the INFILE are identified using a dollar sign ($) in the first column of a row in the INFILE. Commands conforming to the syntax of the VARNAME or RECODE commands are permitted.…',
+    syntax: '',
+    description: {
+      en: 'YES or NO. Preset: NO. If REDEFINEVARS is set to YES all command rows in the INFILE appear which redefine the input definition of variables already defined. Command rows in the INFILE are identified using a dollar sign ($) in the first column of a row in the INFILE. Commands conforming to the syntax of the VARNAME or RECODE commands are permitted.…',
+      de: '',
     },
   },
   {
     name: 'REMOVELINEFEEDSFORCONTENT',
-    de: {
-      description: '',
-      syntax: 'REMOVELINEFEEDSFORCONTENT = [ YES | NO ];',
-    },
-    en: {
-      description: '',
-      syntax: 'REMOVELINEFEEDSFORCONTENT = [ YES | NO ];',
+    syntax: 'REMOVELINEFEEDSFORCONTENT = [ YES | NO ];',
+    description: {
+      en: '',
+      de: '',
     },
   },
   {
     name: 'REPLACE',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'REPORT',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'REPRINT',
-    de: { description: '', syntax: 'REPRINT TABLE = <tablename>;' },
-    en: { description: '', syntax: 'REPRINT TABLE = <tablename>;' },
+    syntax: 'REPRINT TABLE = <tablename>;',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'REPRINT TABLE',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'REQ',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'RESETREDEFINEVARS',
-    en: { description: '', syntax: 'RESETREDEFINEVARS = [ YES | NO ] ;' },
+    syntax: 'RESETREDEFINEVARS = [ YES | NO ] ;',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'RESPONSES',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'RESPONSESTITLE',
-    de: {
-      description:
-        'Bezeichnung der RESPONSES-Spalte/-zeile (wenn TABLEBASE = RESPONSES; 388 gesetzt)',
-      syntax: 'RESPONSESTITLE [ X | Y ] = "<text>";',
-    },
-    en: {
-      description:
-        'Label of the RESPONSES column/row (when TABLEBASE = RESPONSES; 388 is set)',
-      syntax: 'RESPONSESTITLE [ X | Y ] = "<text>";',
+    syntax: 'RESPONSESTITLE [ X | Y ] = "<text>";',
+    description: {
+      en: 'Label of the RESPONSES column/row (when TABLEBASE = RESPONSES; 388 is set)',
+      de: 'Bezeichnung der RESPONSES-Spalte/-zeile (wenn TABLEBASE = RESPONSES; 388 gesetzt)',
     },
   },
   {
     name: 'RESTARTFROZEN',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'RESTRICT',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'RESTRICTVALUES',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'RESULT',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'RESULTCODE',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'RETAINOPENVERBATIMS',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'REUSE',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'RGB',
-    de: {
-      description: '',
-      syntax:
-        'RGB = [ YES | NO ];\nBei RGB = NO; wertet GESStabs die numerische Farbinformation nach dem Hue-Saturation-\nBrightness-Modell 560. Setzt man RGB = YES;, werden die Zahlenwerte als Rot-/Grün-/Blau-',
-    },
-    en: {
-      description: '',
-      syntax:
-        'RGB = [ YES | NO ];\nIf RGB = NO GESS tabs calculates the numerical colour information according to the HSB model. If RGB\n= YES the numerical values are interpreted according to the Red-Green-Blue model.',
+    syntax:
+      'RGB = [ YES | NO ];\nIf RGB = NO GESS tabs calculates the numerical colour information according to the HSB model. If RGB\n= YES the numerical values are interpreted according to the Red-Green-Blue model.',
+    description: {
+      en: '',
+      de: '',
     },
   },
   {
     name: 'RIGH',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'RIGHT',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'RISING',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'ROTATE',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'ROUND',
-    de: {
-      description:
-        '1alter 1000 1.Frage "1.Frage" alter+1 2000.1 Variablenlisten Viele Anweisungen operieren mit einer Liste von Variablen, kurz Varlist. Dies ist in der Syntaxbeschreibung der jeweiligen Anweisung durch <Varlist> gekennzeichnet. Eine Variablenliste besteht im einfachsten Fall aus einer Auflistung von Variablen, z.b: var1 var2 var3 var4 Oft ist es ökonomischer, mit TO zu arbeiten.…',
-    },
-    en: {
-      description:
-        '1 alter 1000 1.Frage "1.Frage" alter+1 2000.1 Variable lists: many instructions operate with a list of variables, Varlist for short. In the syntax description of the respective instruction this is marked by <Varlist>. In the simplest case a variable list consists of an enumeration of variables, e.g.: var1 var2 var3 var4. Often it is more economical to work with TO.…',
-      syntax: '',
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
     },
   },
   {
     name: 'ROUNDMODE',
-    de: {
-      description: '',
-      syntax: 'ROUNDMODE = [ CLASSIC | BANKERSROUNDMODE | SIMPLE ];',
-    },
-    en: {
-      description: '',
-      syntax: 'ROUNDMODE = [ CLASSIC | BANKERSROUNDMODE | SIMPLE ];',
+    syntax: 'ROUNDMODE = [ CLASSIC | BANKERSROUNDMODE | SIMPLE ];',
+    description: {
+      en: '',
+      de: '',
     },
   },
   {
     name: 'ROWCELLMINIMUM',
-    de: { description: '', syntax: 'ROWCELLMINIMUM = <value>;' },
-    en: { description: '', syntax: 'ROWCELLMINIMUM = <number>;' },
+    syntax: 'ROWCELLMINIMUM = <number>;',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'ROWCHIQ',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'ROWCHIQU',
-    de: {
-      description:
-        'Zeilenweise 4-Felder-Chiquadrattest auf Prozentwertunterschiede. Die Kennzeichnung erfolgt analog zu COLCHIQU 428 mit alphabetischer Zeilenkennzeichnung, A ist die erste Zeile, B die zweite, usw. Man kann mit INDEXCHARS 529 eigene Kennzeichen und Reihenfolgen definieren.',
-    },
-    en: {
-      description:
-        'Row-wise 4-field chi-square test on percentage differences. The marking is done analogously to COLCHIQU 428 with alphabetic row marking, A is the first row, B the second, etc. With INDEXCHARS 529 you can define your own markers and orders.',
-      syntax: '',
+    syntax: '',
+    description: {
+      en: 'Row-wise 4-field chi-square test on percentage differences. The marking is done analogously to COLCHIQU with alphabetic row marking, A is the first row, B the second, etc. With INDEXCHARS you can define your own markers and orders.',
+      de: 'Zeilenweise 4-Felder-Chiquadrattest auf Prozentwertunterschiede. Die Kennzeichnung erfolgt analog zu COLCHIQU mit alphabetischer Zeilenkennzeichnung, A ist die erste Zeile, B die zweite, usw. Man kann mit INDEXCHARS eigene Kennzeichen und Reihenfolgen definieren.',
     },
   },
   {
     name: 'ROWELEMENTWINS',
-    de: {
-      description:
-        'Dies beeinflusst die Auswahl der CELLELEMENTS an Kreuzungspunkten, an denen sowohl für Zeilen als auch für Spalten explizite CELLELEMENTS definiert sind. a) In einer Tabelle werden zwei Variablen gekreuzt, bei denen jeweils labels mit eigenen CELLELEMENTS versehen sind, z.B.: LABELS A =',
-    },
-    en: {
-      description:
-        'This affects the selection of the CELLELEMENTS at intersection points where explicit CELLELEMENTS are defined for both rows and columns. a) In a table two variables are crossed whose labels are each provided with their own CELLELEMENTS, e.g.: LABELS A =',
-      syntax: '',
+    syntax: '',
+    description: {
+      en: 'This affects the selection of the CELLELEMENTS at intersection points where explicit CELLELEMENTS are defined for both rows and columns. a) In a table two variables are crossed whose labels are each provided with their own CELLELEMENTS, e.g.: LABELS A =',
+      de: 'Dies beeinflusst die Auswahl der CELLELEMENTS an Kreuzungspunkten, an denen sowohl für Zeilen als auch für Spalten explizite CELLELEMENTS definiert sind. a) In einer Tabelle werden zwei Variablen gekreuzt, bei denen jeweils labels mit eigenen CELLELEMENTS versehen sind, z.B.: LABELS A =',
     },
   },
   {
     name: 'ROWMEANTEST',
     argsHint: '( Var )',
-    de: {
-      description:
-        'Wie MEANTEST 430, nur werden die Werte in den Zeilen gegeneinander getestet',
-    },
-    en: {
-      description:
-        'Like MEANTEST 430, only the values in the rows are tested against each other',
-      syntax: '',
+    syntax: '',
+    description: {
+      en: 'Like MEANTEST, only the values in the rows are tested against each other',
+      de: 'Wie MEANTEST, nur werden die Werte in den Zeilen gegeneinander getestet',
     },
   },
   {
     name: 'ROWMINIMUM',
-    en: {
-      description:
-        'Option for TABLE statement. Only those rows are printed which contain at least ROWMINIMUM cases, i.e., characteristics with very low case numbers in side group variables are suppressed. Preset at 0.0001.',
+    syntax: '',
+    description: {
+      en: 'Option for TABLE statement. Only those rows are printed which contain at least ROWMINIMUM cases, i.e., characteristics with very low case numbers in side group variables are suppressed. Preset at 0.0001.',
+      de: '',
     },
   },
   {
     name: 'ROWPERCENT',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'ROWPERCENT100',
-    de: {
-      description:
-        'Nach Hare-Niemeyer-Modell modifizierte Zeilenprozentwerte (Summe ergibt 100), Achtung: nicht geeignet bspw. für Mehrfachnennungsvariablen und OVERCODEs, Tabellen mit unterdrückten MISSING VALUES und selektiv gebildete Variablen',
-    },
-    en: {
-      description:
-        'Row percentages modified by the Hare-Niemeyer method (sum equals 100). Note: not suitable e.g. for multiple-response variables and OVERCODEs, tables with suppressed MISSING VALUES and selectively built variables',
-      syntax: '',
+    syntax: '',
+    description: {
+      en: 'Row percentages modified by the Hare-Niemeyer method (sum equals 100). Note: not suitable e.g. for multiple-response variables and OVERCODEs, tables with suppressed MISSING VALUES and selectively built variables',
+      de: 'Nach Hare-Niemeyer-Modell modifizierte Zeilenprozentwerte (Summe ergibt 100), Achtung: nicht geeignet bspw. für Mehrfachnennungsvariablen und OVERCODEs, Tabellen mit unterdrückten MISSING VALUES und selektiv gebildete Variablen',
     },
   },
   {
     name: 'ROWPERCENTINDEX',
-    de: {
-      description:
-        'Indexwerte zu den Zeilenprozenten (100 entspricht dem Wert in der Totalzeile)',
-    },
-    en: {
-      description:
-        'Index values for the row percentages (100 corresponds to the value in the total row)',
-      syntax: '',
+    syntax: '',
+    description: {
+      en: 'Index values for the row percentages (100 corresponds to the value in the total row)',
+      de: 'Indexwerte zu den Zeilenprozenten (100 entspricht dem Wert in der Totalzeile)',
     },
   },
   {
     name: 'ROWPERCENTRANGE',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'ROWPERCENTRANGELOWER',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'ROWPERCENTRANGEUPPER',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'ROWPERCEQUAL',
-    de: {
-      description:
-        'Testet alle Zeilenprozente in der Zeile auf Gleichheit; d.h. alle Abweichungen von der Ungleichverteilung werden als signifikant betrachtet. Hier besteht natürlich die Möglichkeit, sehr viele unsinnige Signifikanzen zu produzieren. Bitte mit Bedacht verwenden.',
-    },
-    en: {
-      description:
-        'Tests all row percentages in the row for equality; i.e. all deviations from the equal distribution are considered significant. This can of course produce a great many meaningless significances. Please use with care.',
-      syntax: '',
+    syntax: '',
+    description: {
+      en: 'Tests all row percentages in the row for equality; i.e. all deviations from the equal distribution are considered significant. This can of course produce a great many meaningless significances. Please use with care.',
+      de: 'Testet alle Zeilenprozente in der Zeile auf Gleichheit; d.h. alle Abweichungen von der Ungleichverteilung werden als signifikant betrachtet. Hier besteht natürlich die Möglichkeit, sehr viele unsinnige Signifikanzen zu produzieren. Bitte mit Bedacht verwenden.',
     },
   },
   {
     name: 'ROWPERCSTDERR',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'ROWPERCZ',
-    de: {
-      description:
-        'Signifikanztest (zeilenweise) für Prozentwertsunterschiede. ROWPERCZ basiert auf dem Z-Test für Prozentwerte. Erweiterter Z-Test mit Arcus-Sinus-Korrektur.',
-    },
-    en: {
-      description:
-        'Significance test (row-wise) for percentage differences. ROWPERCZ is based on the Z-test for percentage values. Extended Z-test with arcsine correction.',
-      syntax: '',
+    syntax: '',
+    description: {
+      en: 'Significance test (row-wise) for percentage differences. ROWPERCZ is based on the Z-test for percentage values. Extended Z-test with arcsine correction.',
+      de: 'Signifikanztest (zeilenweise) für Prozentwertsunterschiede. ROWPERCZ basiert auf dem Z-Test für Prozentwerte. Erweiterter Z-Test mit Arcus-Sinus-Korrektur.',
     },
   },
   {
     name: 'ROWS',
-    de: {
-      description: '',
-      syntax:
-        'ROWS : [TOTALROW | <startrow>[: <endrow>]]\nCOLUMNS : [TOTALCOLUMN | <startcol>[: <endcol>]]',
-    },
-    en: {
-      description: '',
-      syntax:
-        'ROWS : [TOTALROW | <startrow>[: <endrow>]]\nCOLUMNS : [TOTALCOLUMN | <startcol>[: <endcol>]]',
+    syntax:
+      'ROWS : [TOTALROW | <startrow>[: <endrow>]]\nCOLUMNS : [TOTALCOLUMN | <startcol>[: <endcol>]]',
+    description: {
+      en: '',
+      de: '',
     },
   },
   {
     name: 'ROWSTRIPES',
-    de: {
-      description:
-        'Ist dieses TABLEFORMAT gesetzt, werden die Zeilen von TABLE- Tabellen farblich hinterlegt, und zwar abwechselnd mit den Farben, die in STRIPECOLORS 559 vereinbart wurde.',
-    },
-    en: {
-      description:
-        'If this TABLEFORMAT is set, the rows of TABLE tables are shaded, alternately with the colours declared in STRIPECOLORS 559.',
-      syntax: '',
+    syntax: '',
+    description: {
+      en: 'If this TABLEFORMAT is set, the rows of TABLE tables are shaded, alternately with the colours declared in STRIPECOLORS.',
+      de: 'Ist dieses TABLEFORMAT gesetzt, werden die Zeilen von TABLE- Tabellen farblich hinterlegt, und zwar abwechselnd mit den Farben, die in STRIPECOLORS vereinbart wurde.',
     },
   },
   {
     name: 'ROWSUM',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'ROWSUMPERCENT',
     argsHint: '( Var )',
-    de: {
-      description:
-        'Ausgabe der Zeilenprozentuierung der Summe einer dritten Variablen, z.B. die Summe von Name Beschreibung Ausgaben für einen bestimmten Zweck in bestimmten Stadtteilen etc.',
-    },
-    en: {
-      description:
-        'Output of the row percentaging of the sum of a third variable, e.g. the sum of expenditures for a particular purpose in particular city districts, etc. Name Description',
-      syntax: '',
+    syntax: '',
+    description: {
+      en: 'Output of the row percentaging of the sum of a third variable, e.g. the sum of expenditures for a particular purpose in particular city districts, etc.',
+      de: 'Ausgabe der Zeilenprozentuierung der Summe einer dritten Variablen, z.B. die Summe von Ausgaben für einen bestimmten Zweck in bestimmten Stadtteilen etc.',
     },
   },
   {
     name: 'ROWTTEST',
-    de: {
-      description:
-        'Unabhängiger t-Test auf Mittelwertunterschiede auf Basis der gewichteten Daten, zeilenweise',
-    },
-    en: {
-      description:
-        'Independent t-test on mean differences on the basis of the weighted data, row-wise',
-      syntax: '',
+    syntax: '',
+    description: {
+      en: 'Independent t-test on mean differences on the basis of the weighted data, row-wise',
+      de: 'Unabhängiger t-Test auf Mittelwertunterschiede auf Basis der gewichteten Daten, zeilenweise',
     },
   },
   {
     name: 'SAMEPAGE',
-    de: {
-      description:
-        '= | COLUMNS 1:5 ROWS 65002 65003 ; GESSCHARTFORMAT = STROKERECT; GESSCHARTCOLORS = $AAFFAA $FFAAAA $AAAAFF $FFFFAA $AAFFFF; GESSCHART CHARTTITLE "Skalenmittelwerte Bewertung nach Modellen (vertikal)" INVERSE CHARTAREA 195 15 87 90 SAMEPAGE VERTICAL = | COLUMNS 1:5 ROWS 2/1 AXISMINMAX 0 4 ; GESSCHART CHARTTITLE "Anteil von \'sehr schlecht\'" INVERSE CHARTAREA 195 107 87 88 SAMEPAGE VERTICAL = |…',
-    },
-    en: {
-      description:
-        '= | COLUMNS 1:5 ROWS 65002 65003 ; GESSCHARTFORMAT = STROKERECT; GESSCHARTCOLORS = $AAFFAA $FFAAAA $AAAAFF $FFFFAA $AAFFFF; GESSCHART CHARTTITLE "Scale means rating by models (vertical)" INVERSE CHARTAREA 195 15 87 90 SAMEPAGE VERTICAL = | COLUMNS 1:5 ROWS 2/1 AXISMINMAX 0 4 ; GESSCHART CHARTTITLE "Share of \'very poor\'" INVERSE CHARTAREA 195 107 87 88 SAMEPAGE VERTICAL = |…',
-      syntax: '',
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
     },
   },
   {
     name: 'SAVEPRTSETUP',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'SAVETABSETUP',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'SCALENUMBERS',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'SCORETAB',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'SCREEN',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'SCRIPTEXPORTFILE',
-    de: {
-      description: '',
-      syntax: 'SCRIPTEXPORTFILE = [ APPEND ] <filename>;',
-    },
-    en: {
-      description:
-        'These can be used to define parts of the script as a "foreign code" to be exported. If the name of a SCRIPTEXPORTFILE is set all parts of the script between #STARTEXPORT and #ENDEXPORT are carried over into this file. These texts are also processed and modified by the Macro Expander which is the appeal of this construction. Thus it is possible to output variable names produced by nested macros.…',
-      syntax: 'SCRIPTEXPORTFILE = [ APPEND ] <filename>;',
+    syntax: 'SCRIPTEXPORTFILE = [ APPEND ] <filename>;',
+    description: {
+      en: 'These can be used to define parts of the script as a "foreign code" to be exported. If the name of a SCRIPTEXPORTFILE is set all parts of the script between #STARTEXPORT and #ENDEXPORT are carried over into this file. These texts are also processed and modified by the Macro Expander which is the appeal of this construction. Thus it is possible to output variable names produced by nested macros.…',
+      de: '',
     },
   },
   {
     name: 'SEARCHRANGE',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'SECONDMEAN',
     argsHint: '( Var )',
-    de: {
-      description:
-        'Zweiter Mittelwert. Wenn in einer Zelle die Mittelwerte von zwei verschiedenen Variablen ausgegeben werden sollen, muss die zweite Variable über SECONDMEAN angefordert werden.',
-    },
-    en: {
-      description:
-        'Second mean. If the means of two different variables are to be output in one cell, the second variable must be requested via SECONDMEAN.',
-      syntax: '',
+    syntax: '',
+    description: {
+      en: 'Second mean. If the means of two different variables are to be output in one cell, the second variable must be requested via SECONDMEAN.',
+      de: 'Zweiter Mittelwert. Wenn in einer Zelle die Mittelwerte von zwei verschiedenen Variablen ausgegeben werden sollen, muss die zweite Variable über SECONDMEAN angefordert werden.',
     },
   },
   {
     name: 'SECONDSUM',
     argsHint: '( Var )',
-    de: {
-      description:
-        '2. Summe. Wenn in einer Zelle die Summen von zwei verschiedenen Variablen ausgegeben werden sollen, muss die zweite Variable über SECONDSUM angefordert werden.',
-    },
-    en: {
-      description:
-        '2nd sum. If the sums of two different variables are to be output in one cell, the second variable must be requested via SECONDSUM.',
-      syntax: '',
+    syntax: '',
+    description: {
+      en: '2nd sum. If the sums of two different variables are to be output in one cell, the second variable must be requested via SECONDSUM.',
+      de: '2. Summe. Wenn in einer Zelle die Summen von zwei verschiedenen Variablen ausgegeben werden sollen, muss die zweite Variable über SECONDSUM angefordert werden.',
     },
   },
   {
     name: 'SELECT',
-    de: {
-      description: '',
-      syntax:
-        'SELECT <Bedingung>;\nAlle RECODE-, RANGES-, COMPUTE- oder IF-Anweisungen werden vor SELECT durchgeführt;',
-    },
-    en: {
-      description:
-        'defines an import filter: only those cases which conform to this filter are processed further, i.e. all tables are produced only on the basis of this data; SELECT is a permanent filter as opposed to TABSELECT (see below). SELECT also acts on the output according to COPYFILE or SYSTEMOUT. An iterative weighting also only refers to the selected cases.…',
-      syntax:
-        'SELECT <condition>;\nAll RECODE, RANGES, COMPUTE or IF instructions are carried out before SELECT;',
+    syntax:
+      'SELECT <condition>;\nAll RECODE, RANGES, COMPUTE or IF instructions are carried out before SELECT;',
+    description: {
+      en: 'defines an import filter: only those cases which conform to this filter are processed further, i.e. all tables are produced only on the basis of this data; SELECT is a permanent filter as opposed to TABSELECT (see below). SELECT also acts on the output according to COPYFILE or SYSTEMOUT. An iterative weighting also only refers to the selected cases.…',
+      de: '',
     },
   },
   {
     name: 'SETBLOCK',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'SETDECIMALS',
-    de: { description: '', syntax: 'SETDECIMALS < Varlist > = <number>;' },
-    en: {
-      description:
-        'Serves to explicitly set the decimal point for variables which have already been defined.',
-      syntax: 'SETDECIMALS < Varlist > = number ;',
+    syntax: 'SETDECIMALS <varlist> = number ;',
+    description: {
+      en: 'Serves to explicitly set the decimal point for variables which have already been defined.',
+      de: '',
     },
   },
   {
     name: 'SETEPS',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'SETFILTER',
-    de: {
-      description: '',
-      syntax:
-        'SETFILTER [ <filtername> ] [ TEXT "filtertext" ] = < log. Bedingung > ;\nENDFILTER [ <filtername> ] ;\nCOPYFILTER <varname> = <varname>;',
-    },
-    en: {
-      description: '',
-      syntax:
-        'SETFILTER [ <filtername> ] [ TEXT "filtertext" ] = < log. Bedingung >\n;\nENDFILTER [ <filtername> ] ;\nCOPYFILTER <varname> = <varname>;',
+    syntax:
+      'SETFILTER [ <filtername> ] [ TEXT "filtertext" ] = < logical condition >\n;\nENDFILTER [ <filtername> ] ;\nCOPYFILTER <varname> = <varname>;',
+    description: {
+      en: '',
+      de: '',
     },
   },
   {
     name: 'SETMISSING',
-    de: { description: '', syntax: 'SETMISSING <Varlist> = { number }*n;' },
-    en: {
-      description:
-        "A MISSING value is automatically inherited on to variables which emanate from the calculation of other variables. If MISSING values go into a calculation or an 'M' is found in the input then the result is a MISSING value. The variable then receives the characteristic allocated by the user with SETMISSING. Example: SETMISSING = 9999;",
-      syntax: 'SETMISSING <varlist> = { number }*n;',
+    syntax: 'SETMISSING <varlist> = { number }*n;',
+    description: {
+      en: "A MISSING value is automatically inherited on to variables which emanate from the calculation of other variables. If MISSING values go into a calculation or an 'M' is found in the input then the result is a MISSING value. The variable then receives the characteristic allocated by the user with SETMISSING. Example: SETMISSING = 9999;",
+      de: '',
     },
   },
   {
     name: 'SHADE',
-    de: { description: '', syntax: 'SHADE <boxname> = <number> ;' },
-    en: {
-      description: '(PS): is ignored by line printers.',
-      syntax: 'SHADE <boxname> = <number> ;',
+    syntax: 'SHADE <boxname> = <number> ;',
+    description: {
+      en: '(PS): is ignored by line printers.',
+      de: '',
     },
   },
   {
     name: 'SHADOW',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'SHARE',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'SHEETNAME',
-    de: {
-      description:
-        'die folgende Tabelle erscheint Allen Elementen kann man einen Office-Font und Farben zuordnen. NoAutoTableTitle NOAUTOTABLETITLE nimmt Einfluss auf die Voreinstellung, die jede Tabelle in eine OFFICECONTENTPAGE einträgt. Hierfür wird der CONTENTKEY verwendet, und wenn dieser nicht vorhanden ist, wird als Default der TABLETITLE verwendet.…',
-    },
-    en: {
-      description:
-        'the following table appears. All elements can be assigned an Office font and colours. NoAutoTableTitle: NOAUTOTABLETITLE influences the default that enters each table into an OFFICECONTENTPAGE. The CONTENTKEY is used for this, and if it is not present, the TABLETITLE is used as the default.…',
-      syntax: '',
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
     },
   },
   {
     name: 'SHEETNUMBERCHAR',
-    de: { description: '', syntax: 'SHEETNUMBERCHAR = <char>;' },
-    en: { description: '', syntax: 'SHEETNUMBERCHAR = <char>;' },
+    syntax: 'SHEETNUMBERCHAR = <char>;',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'SHOWHELPINTEXT',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'SHOWSHEETNAME',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'SHOWSIGNIF',
-    en: {
-      description:
-        'Be it that a test resulted in a significant difference between column A and column D, then naturally the test between column D and column A would also show a significant difference. The identification of "A" in column D and of "D" in column A is technically correct but nonetheless redundant. In many cases it is preferable to show the significance only once for each pair.…',
+    syntax: '',
+    description: {
+      en: 'Be it that a test resulted in a significant difference between column A and column D, then naturally the test between column D and column A would also show a significant difference. The identification of "A" in column D and of "D" in column A is technically correct but nonetheless redundant. In many cases it is preferable to show the significance only once for each pair.…',
+      de: '',
     },
   },
   {
     name: 'SHOWSIGNIFONCE',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'SHOWTTMEAN',
-    en: {
-      description:
-        'Prints the mean of test variable additional to the indication of significance levels.',
+    syntax: '',
+    description: {
+      en: 'Prints the mean of test variable additional to the indication of significance levels.',
+      de: '',
     },
   },
   {
     name: 'SHRINKDATAFONT',
-    de: {
-      description:
-        'Die Ausgaben von CELLELEMENTS in Tabellen werden grundsätzlich in einer Zeile dargestellt und nicht umgebrochen. Bei sehr ausgiebigen Signifikanztests mit niedrigem Signifikanzniveau können in Abhängigkeit vo der Größe des eingestellten Fonts Aneinanderreihungen von Buchstaben entstehen, die bei schmalen Spalten den verfügbaren Platz überschreiten.…',
-    },
-    en: {
-      description:
-        'The output of CELLELEMENTS in tables is generally shown on one line and not wrapped. With very extensive significance tests at a low significance level, depending on the size of the chosen font, strings of letters can arise that exceed the available space in narrow columns.…',
-      syntax: '',
+    syntax: '',
+    description: {
+      en: 'The output of CELLELEMENTS in tables is generally shown on one line and not wrapped. With very extensive significance tests at a low significance level, depending on the size of the chosen font, strings of letters can arise that exceed the available space in narrow columns.…',
+      de: 'Die Ausgaben von CELLELEMENTS in Tabellen werden grundsätzlich in einer Zeile dargestellt und nicht umgebrochen. Bei sehr ausgiebigen Signifikanztests mit niedrigem Signifikanzniveau können in Abhängigkeit vo der Größe des eingestellten Fonts Aneinanderreihungen von Buchstaben entstehen, die bei schmalen Spalten den verfügbaren Platz überschreiten.…',
     },
   },
   {
     name: 'SHUFFLE',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'SIGN3LEVELS',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'SIGN3LOWLEVELS',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'SIGNIF20AND10',
-    de: {
-      description:
-        'ABC... für 10%-Niveau, abc.... für 20%-Niveau Beschreibung der Signifikanzen Für alle oben benannten Optionen (Signifikanzniveaus) existieren Standardtexte, die das jeweilige Signifikanznivau beschreiben. SignifText Die SIGNIFTEXT-Anweisung dient dazu, diesen Standardtext anzupassen.…',
-    },
-    en: {
-      description:
-        'ABC... for the 10% level, abc.... for the 20% level. Description of the significances: for all the options named above (significance levels) there are default texts that describe the respective significance level. SignifText: the SIGNIFTEXT instruction serves to adjust this default text.…',
-      syntax: '',
+    syntax: '',
+    description: {
+      en: 'ABC... for the 10% level, abc.... for the 20% level. Description of the significances: for all the options named above (significance levels) there are default texts that describe the respective significance level. SignifText: the SIGNIFTEXT instruction serves to adjust this default text.…',
+      de: 'ABC... für 10%-Niveau, abc.... für 20%-Niveau Beschreibung der Signifikanzen Für alle oben benannten Optionen (Signifikanzniveaus) existieren Standardtexte, die das jeweilige Signifikanznivau beschreiben. SignifText Die SIGNIFTEXT-Anweisung dient dazu, diesen Standardtext anzupassen.…',
     },
   },
   {
     name: 'SIGNIF20AND5',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'SIGNIF32AND10',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'SIGNIF3LEVELS',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'SIGNIF68',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'SIGNIF90',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'SIGNIF95',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'SIGNIF99',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'SIGNIF999',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'SIGNIFLEVEL',
-    de: { description: '', syntax: 'SIGNIFLEVEL = <option>;' },
-    en: { description: '', syntax: 'SIGNIFLEVEL = <option>;' },
+    syntax: 'SIGNIFLEVEL = <option>;',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'SIGNIFMINEFFECTCHIQ',
-    de: {
-      description: '',
-      syntax: 'SIGNIFMINEFFECTCHIQ = <value>;\nSIGNIFMINEFFECTTTEST = <value>;',
-    },
-    en: {
-      description: '',
-      syntax: 'SIGNIFMINEFFECTCHIQ = <value>;\nSIGNIFMINEFFECTTTEST = <value>;',
+    syntax: 'SIGNIFMINEFFECTCHIQ = <value>;\nSIGNIFMINEFFECTTTEST = <value>;',
+    description: {
+      en: '',
+      de: '',
     },
   },
   {
     name: 'SIGNIFMINEFFECTTTEST',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'SIGNIFTEXT',
-    de: {
-      description:
-        'Anpassung des Standardtextes zur Beschreibung der SIGNIFLEVEL 454-',
-      syntax: 'SIGNIFTEXT <option> = "Text zur Kennzeichnung";',
-    },
-    en: {
-      description:
-        'Adjustment of the default text describing the SIGNIFLEVEL 454',
-      syntax: 'SIGNIFTEXT <option> = "marking text";',
+    syntax: 'SIGNIFTEXT <option> = "marking text";',
+    description: {
+      en: 'Adjustment of the default text describing the SIGNIFLEVEL',
+      de: 'Anpassung des Standardtextes zur Beschreibung der SIGNIFLEVEL',
     },
   },
   {
     name: 'SIGNPERCENTALWAYS',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'SIGNPERCENTGREATER',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'SIMPLE',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'SIMPLEPERCENTILE',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'SIMPLEVAR',
-    en: { description: '', syntax: 'SIMPLEVAR <variable> = <vargroup> ;' },
+    syntax: 'SIMPLEVAR <variable> = <vargroup> ;',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'SIN',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'SINGLE',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'SINGLEFROMSTRING',
-    de: {
-      description: '',
-      syntax: 'SINGLEFROMSTRING = <newvar> = <alphavar>;',
-    },
-    en: {
-      description: '',
-      syntax: 'SINGLEFROMSTRING = <newvar> = <alphavar>;',
+    syntax: 'SINGLEFROMSTRING = <newvar> = <alphavar>;',
+    description: {
+      en: '',
+      de: '',
     },
   },
   {
     name: 'SINGLEQ',
-    de: {
-      description: '',
-      syntax: 'SINGLEQ <varname> = [ TITLE "Titelstring" ] OPEN;',
-    },
-    en: {
-      description:
-        '(also: VARIABLE) The simplest way to build a question/variable is using the SINGLEQ statement.',
-      syntax:
-        'SINGLEQ <varname> = [ TITLE <titletext> ] [ ALPHA ] [ [ start | * ] [\nwidth | BINARY ] ]\n[ LABELS [ AS <varname > | COPY <varname> | MAKE <number> | {\nLabelEntry }*n } ]\n;\nLabelEntry ::=',
+    syntax:
+      'SINGLEQ <varname> = [ TITLE <titletext> ] [ ALPHA ] [ [ start | * ] [\nwidth | BINARY ] ]\n[ LABELS [ AS <varname > | COPY <varname> | MAKE <number> | {\nLabelEntry }*n } ]\n;\nLabelEntry ::=',
+    description: {
+      en: '(also: VARIABLE) The simplest way to build a question/variable is using the SINGLEQ statement.',
+      de: '',
     },
   },
   {
     name: 'SINGLESCOREFILES',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'SIZE',
-    de: {
-      description:
-        '; Ist die Option MISSING definiert, werden alle Variablen mit MISSING VALUES ausgegeben. Bei EXCLUDEVALUES und RESTRICTVALUES wird eine Liste der betroffenen Variablen mit den vorgefundenen EXCLUDEVALUES bzw. RESTRICTVALUES ausgegeben. POSTPONE ist ein Spezial-Option im Zusammenhang mit INVERTOUT 94 :…',
-      syntax: 'SIZE X/Y <points>',
-    },
-    en: {
-      description:
-        '; If the option MISSING is defined, all variables with MISSING VALUES are output. With EXCLUDEVALUES and RESTRICTVALUES a list of the affected variables with the EXCLUDEVALUES or RESTRICTVALUES found is output. POSTPONE is a special option in connection with INVERTOUT 94 :…',
-      syntax: 'SIZE X/Y <points>',
+    syntax: 'SIZE X/Y <points>',
+    description: {
+      en: '; If the option MISSING is defined, all variables with MISSING VALUES are output. With EXCLUDEVALUES and RESTRICTVALUES a list of the affected variables with the EXCLUDEVALUES or RESTRICTVALUES found is output. POSTPONE is a special option in connection with INVERTOUT 94 :…',
+      de: '; Ist die Option MISSING definiert, werden alle Variablen mit MISSING VALUES ausgegeben. Bei EXCLUDEVALUES und RESTRICTVALUES wird eine Liste der betroffenen Variablen mit den vorgefundenen EXCLUDEVALUES bzw. RESTRICTVALUES ausgegeben. POSTPONE ist ein Spezial-Option im Zusammenhang mit INVERTOUT 94 :…',
     },
   },
   {
     name: 'SLICE',
-    de: {
-      description:
-        'Mit SLICE kann man eine Tabelle in der Y-Richtung in die erforderliche Anzahl',
-    },
-    en: {
-      description:
-        'With SLICE you can split a table in the Y direction into the required number',
-      syntax: '',
+    syntax: '',
+    description: {
+      en: 'With SLICE you can split a table in the Y direction into the required number of pages.',
+      de: 'Mit SLICE kann man eine Tabelle in der Y-Richtung in die erforderliche Anzahl Seiten zerlegen.',
     },
   },
   {
     name: 'SLICEHEADERFIRST',
-    de: {
-      description: '',
-      syntax:
-        'SLICEHEADERFIRST = [ YES | NO ];\nBei SLICEHEADERFIRST=YES; werden zunächst alle Teile des Kopfes (in der X-Richtung',
-    },
-    en: {
-      description: '',
-      syntax:
-        'SLICEHEADERFIRST = [ YES | NO ];\nWith SLICEHEADERFIRST=YES; first all parts of the header (in the X direction',
+    syntax:
+      'SLICEHEADERFIRST = [ YES | NO ];\nWith SLICEHEADERFIRST=YES; first all parts of the header (in the X direction',
+    description: {
+      en: '',
+      de: '',
     },
   },
   {
     name: 'SLICELASTPAGE',
-    de: {
-      description:
-        'Bei auf der Y-Achse zusammengesetzten Tabellen mit SLICE 543 bzw. LINESLICE wird im Standardfall der Mittelwert (oder andere Werte) auf jeder Seite ausgegeben. Mit diesem',
-    },
-    en: {
-      description:
-        'Tables generated on the Y-Axis SLICE or LINESLICE (e.g. TABLE = y by b SORT POSITION SLICE 10 MEAN( b );) usually have the mean (or other value) on each page. This TABLEFORMAT ensures the printout only on the last page.',
+    syntax: '',
+    description: {
+      en: 'Tables generated on the Y-Axis SLICE or LINESLICE (e.g. TABLE = y by b SORT POSITION SLICE 10 MEAN( b );) usually have the mean (or other value) on each page. This TABLEFORMAT ensures the printout only on the last page.',
+      de: 'Bei auf der Y-Achse zusammengesetzten Tabellen mit SLICE bzw. LINESLICE wird im Standardfall der Mittelwert (oder andere Werte) auf jeder Seite ausgegeben. Mit diesem',
     },
   },
   {
     name: 'SLICESTATISTICS',
-    de: { description: '', syntax: 'SLICESTATISTICS = <number>;' },
-    en: {
-      description:
-        'Summary tables of the type: TABLE = #k by Mean( v1 ) Mean( v2 ) Mean( v3 ) Mean( v4 ) Mean( v5 ) Mean( v6 ) Mean( v7 ) Mean( v8 ) … Mean( v99 ) ; can be spread across several pages using the key word SLICESTATISTICS. After setting SLICESTATISTICS = 35; all the following tables of this type are always divided after 35 such rows.',
-      syntax: 'SLICESTATISTICS = <number>;',
+    syntax: 'SLICESTATISTICS = <number>;',
+    description: {
+      en: 'Summary tables of the type: TABLE = #k by Mean( v1 ) Mean( v2 ) Mean( v3 ) Mean( v4 ) Mean( v5 ) Mean( v6 ) Mean( v7 ) Mean( v8 ) … Mean( v99 ) ; can be spread across several pages using the key word SLICESTATISTICS. After setting SLICESTATISTICS = 35; all the following tables of this type are always divided after 35 such rows.',
+      de: '',
     },
   },
   {
     name: 'SOMERSDCOL',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'SOMERSDROW',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'SOMERSDSYM',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'SORT',
-    de: { description: '', syntax: 'SORT AS = [ XVALID | YVALID ];' },
-    en: {
-      description:
-        'Normally the variable characteristics are printed in the order they are defined in VALUELABELS statement. The variable characteristics in the X or Y-Axis can however also be sorted according to other criteria. The key word SORT is written after the variable name followed by the sort criterion which are as follows: ABSOLUTE acc. to absolute cell content MEAN acc. to arithmetical mean SUM acc.…',
-      syntax: 'SORT AS = [ XVALID | YVALID ];',
+    syntax: 'SORT AS = [ XVALID | YVALID ];',
+    description: {
+      en: 'Normally the variable characteristics are printed in the order they are defined in VALUELABELS statement. The variable characteristics in the X or Y-Axis can however also be sorted according to other criteria. The key word SORT is written after the variable name followed by the sort criterion which are as follows: ABSOLUTE acc. to absolute cell content MEAN acc. to arithmetical mean SUM acc.…',
+      de: '',
     },
   },
   {
     name: 'SORT AS',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'SORTCLASS',
-    de: {
-      description: 'Vergabe einer Sortierklasse, siehe Sortierungen 466',
-      syntax:
-        'SORTCLASS <varname> LABELS <number> [ <number> ... ] = <number> ;',
-    },
-    en: {
-      description:
-        'Usually the SORTCLASS information is given to labels and overcodes in the VALUELABELS statement or the LABELS part of the SINGLEQ, DICHOQ or MULTIQ statement. There are however cases where it makes sense to provide the SORTCLASS information later in the text.…',
-      syntax:
-        'SORTCLASS <varname> OVERCODE <name> = <number>;\nHere the OVERCODE is allocated the SORTCLASS <number> and all labels belonging to the OVERCODE\nreceive the SORTCLASS <number> + 1. In this way OVERCODEs and the relevant label positions can be',
+    syntax:
+      'SORTCLASS <varname> OVERCODE <name> = <number>;\nHere the OVERCODE is allocated the SORTCLASS <number> and all labels belonging to the OVERCODE\nreceive the SORTCLASS <number> + 1. In this way OVERCODEs and the relevant label positions can be',
+    description: {
+      en: 'Usually the SORTCLASS information is given to labels and overcodes in the VALUELABELS statement or the LABELS part of the SINGLEQ, DICHOQ or MULTIQ statement. There are however cases where it makes sense to provide the SORTCLASS information later in the text.…',
+      de: 'Vergabe einer Sortierklasse, siehe Sortierungen 466',
     },
   },
   {
     name: 'SORTCODEOVERCODE',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'SORTMEMORY',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'SORTPOSITION',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'SORTSUMMARYALPHA',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'SORTSUMMARYFREQ',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'SPACE',
-    de: {
-      description:
-        'leere Zelle (wird z.B. benötigt, um leere Zeilen bzw. Spalten in Tabellen für Name Beschreibung PowerPoint 202 zu erzeugen) Inkompatibilitäten unter Zellinhalten Aufgrund der internen Speicherstrukturen gibt es einige Inkompatibilitäten unter Zellinhalten:…',
-    },
-    en: {
-      description:
-        'empty cell (needed e.g. to create empty rows or columns in tables for PowerPoint 202). Incompatibilities among cell contents: due to the internal storage structures there are some incompatibilities among cell contents:…',
-      syntax: '',
+    syntax: '',
+    description: {
+      en: 'empty cell (needed e.g. to create empty rows or columns in tables for PowerPoint).',
+      de: 'leere Zelle (wird z.B. benötigt, um leere Zeilen bzw. Spalten in Tabellen für PowerPoint zu erzeugen)',
     },
   },
   {
     name: 'SPLITCHAR',
-    de: {
-      description:
-        'Erlaubt an der Stelle eine Worttrennung (flexibel). Voreinstellung: -',
-    },
-    en: {
-      description:
-        'Allows a word break at this position (flexible). Default: -',
-      syntax: '',
+    syntax: '',
+    description: {
+      en: 'Allows a word break at this position (flexible). Default: -',
+      de: 'Erlaubt an der Stelle eine Worttrennung (flexibel). Voreinstellung: -',
     },
   },
   {
     name: 'SPLITCHARSTAY',
-    de: {
-      description:
-        "Erlaubt ebenfalls eine Worttrennung, wird aber auch dann als Bindestrich gedruckt, wenn er nicht am Zeilenende steht (fest). Voreinstellung: # Diese Zeichen können umdefiniert werden. Es ist allerdings zu bedenken, dass man dann ggf. auch Systemstandardtexte ändern muss. Zum Beispiel den TOTALTITLE: 'Ins-ge-samt':…",
-    },
-    en: {
-      description:
-        'Preset: Linefeedchar: \\ Numberchar: # Splitchar: - Splitcharstay: # Certain symbols have a special meaning for string output. The LINEFEEDCHAR causes a return in labels or variable titles. The NUMBERCHAR is replaced in table titles by the current table number.…',
+    syntax: '',
+    description: {
+      en: 'Preset: Linefeedchar: \\ Numberchar: # Splitchar: - Splitcharstay: # Certain symbols have a special meaning for string output. The LINEFEEDCHAR causes a return in labels or variable titles. The NUMBERCHAR is replaced in table titles by the current table number.…',
+      de: "Erlaubt ebenfalls eine Worttrennung, wird aber auch dann als Bindestrich gedruckt, wenn er nicht am Zeilenende steht (fest). Voreinstellung: # Diese Zeichen können umdefiniert werden. Es ist allerdings zu bedenken, dass man dann ggf. auch Systemstandardtexte ändern muss. Zum Beispiel den TOTALTITLE: 'Ins-ge-samt':…",
     },
   },
   {
     name: 'SPLITDICTIONARY',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'SPLITENTRIES',
-    en: {
-      description:
-        'SPLITENTRIES = <filename>; It is very easy to produce a "dividing" dictionary. If a list is constructed like so Nie~der~sachsen Bundes~land Wahl~ab~sicht Weiterfüh~ren~de Polytech~ni~sche Hoch~schul~reife Selbst~ständige Aus~zu~bil~den~de wahr~schein~lich',
+    syntax: '',
+    description: {
+      en: 'SPLITENTRIES = <filename>; It is very easy to produce a "dividing" dictionary. If a list is constructed like so Nie~der~sachsen Bundes~land Wahl~ab~sicht Weiterfüh~ren~de Polytech~ni~sche Hoch~schul~reife Selbst~ständige Aus~zu~bil~den~de wahr~schein~lich',
+      de: '',
     },
   },
   {
     name: 'SPSS',
-    de: { description: '', syntax: 'SPSS [ ASCIIOUT ] = <filename>;' },
-    en: { description: '', syntax: 'SPSS [ ASCIIOUT ] = <filename>;' },
+    syntax: 'SPSS [ ASCIIOUT ] = <filename>;',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'SPSS VARSTOCASES',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'SPSS__',
-    en: { description: '', syntax: 'SPSS__ = [ YES | NO ];' },
+    syntax: 'SPSS__ = [ YES | NO ];',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'SPSSALPHALENGTH',
-    de: { description: '', syntax: 'SPSSALPHALENGTH = <number>;' },
-    en: { description: '', syntax: 'SPSSALPHALENGTH = <number>;' },
+    syntax: 'SPSSALPHALENGTH = <number>;',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'SPSSFILTERMISSING',
-    de: { description: '', syntax: 'SPSSFILTERMISSING = <number>;' },
-    en: { description: '', syntax: 'SPSSFILTERMISSING = <number>;' },
+    syntax: 'SPSSFILTERMISSING = <number>;',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'SPSSGLOBALSEQUENCE',
-    de: { description: '', syntax: 'SPSSGLOBALSEQUENCE = [ YES | NO ];' },
-    en: { description: '', syntax: 'SPSSGLOBALSEQUENCE = [ YES | NO ];' },
+    syntax: 'SPSSGLOBALSEQUENCE = [ YES | NO ];',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'SPSSGROUP',
-    de: { description: '', syntax: 'SPSSGROUP <name> = <familyvarname>;' },
-    en: { description: '', syntax: 'SPSSGROUP <name> = <familyvarname>;' },
+    syntax: 'SPSSGROUP <name> = <familyvarname>;',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'SPSSGROUPLABEL0',
-    en: {
-      description:
-        'A SPSSGROUP comprises a row of nuclear variables where the Code 0 or 1 shows whether the relevant value is "set". The SPSSGROUP statement has now (as of Version 4.0.2) been expanded so that these nuclear variables can be allocated information from the label of the relevant code of the source variable (MULTIQ).',
+    syntax: '',
+    description: {
+      en: 'A SPSSGROUP comprises a row of nuclear variables where the Code 0 or 1 shows whether the relevant value is "set". The SPSSGROUP statement has now (as of Version 4.0.2) been expanded so that these nuclear variables can be allocated information from the label of the relevant code of the source variable (MULTIQ).',
+      de: '',
     },
   },
   {
     name: 'SPSSGROUPLABEL1',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'SPSSGROUPLABELS',
-    de: {
-      description: '',
-      syntax:
-        'SPSSGROUPLABELS = [ YES | NO ];\nSPSSGROUPLABEL1 = <TEXT>;\nSPSSGROUPLABEL0 = <TEXT>;',
-    },
-    en: {
-      description: '',
-      syntax:
-        'SPSSGROUPLABELS = [ YES | NO ];\nSPSSGROUPLABEL1 = <TEXT>;\nSPSSGROUPLABEL0 = <TEXT>;',
+    syntax:
+      'SPSSGROUPLABELS = [ YES | NO ];\nSPSSGROUPLABEL1 = <TEXT>;\nSPSSGROUPLABEL0 = <TEXT>;',
+    description: {
+      en: '',
+      de: '',
     },
   },
   {
     name: 'SPSSINFILE',
-    de: {
-      description: '',
-      syntax:
-        'SPSSINFILE [ FILEKEY <key> ] = <filepath>;\nCSVINFILE [ FILEKEY <key> ] [ <delimchar> ] = <filepath>;\nDATAFILE [ FILEKEY <key> ] = <filepath>;\nOPENQFILE [ FILEKEY <key> ] [ ALLOWEMPTY ] = <filepath>;\nASSOCFILE [ FILEKEY <filekey> ] [ BIG DBASEIN SPSS ] =\n<filename> KEY <keyvar> [ <start> <len> ] | [ keyField ] ;',
+    syntax: 'SPSSINFILE = <filename>;',
+    description: {
+      en: '',
+      de: '',
     },
-    en: { description: '', syntax: 'SPSSINFILE = <filename>;' },
   },
   {
     name: 'SPSSIO',
-    de: {
-      description:
-        'Dynamic Link Library-Dateien (DLL), die IBM zum Lesen, Verarbeiten und Schreiben von SPSS- Dateien bereitstellt. 3. Laden Sie die Dateien aus dem Ordner „SPSSIO“ in der 32- oder 64-bit-Version aus unserem Download-Center herunter. 4. Speichern Sie die Dateien in Ihrem GESS\\tabs-Verzeichnis. Lizenzierung 5.…',
-    },
-    en: {
-      description:
-        'Dynamic Link Library files (DLL) that IBM provides for reading, processing and writing SPSS files. 3. Download the files from the „SPSSIO“ folder in the 32- or 64-bit version from our download centre. 4. Save the files in your GESS\\tabs directory. Licensing 5.…',
-      syntax: '',
+    syntax: '',
+    description: {
+      en: 'Dynamic Link Library files (DLL) that IBM provides for reading, processing and writing SPSS files. 3. Download the files from the „SPSSIO“ folder in the 32- or 64-bit version from our download centre. 4. Save the files in your GESS\\tabs directory. Licensing 5.…',
+      de: 'Dynamic Link Library-Dateien (DLL), die IBM zum Lesen, Verarbeiten und Schreiben von SPSS- Dateien bereitstellt. 3. Laden Sie die Dateien aus dem Ordner „SPSSIO“ in der 32- oder 64-bit-Version aus unserem Download-Center herunter. 4. Speichern Sie die Dateien in Ihrem GESS\\tabs-Verzeichnis. Lizenzierung 5.…',
     },
   },
   {
     name: 'SPSSLARGEFILELENGTH',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'SPSSLONGNAMES',
-    de: { description: '', syntax: 'SPSSLONGNAMES = [ YES | NO ];' },
-    en: {
-      description: '',
-      syntax:
-        'SPSSLONGNAMES = [ yes | no ];\nOld versions of SPSS could not use long variable names; GESS tabs shortened the names where',
+    syntax:
+      'SPSSLONGNAMES = [ yes | no ];\nOld versions of SPSS could not use long variable names; GESS tabs shortened the names where',
+    description: {
+      en: '',
+      de: '',
     },
   },
   {
     name: 'SPSSNORECODEDLABELS',
-    de: { description: '', syntax: 'SPSSNORECODEDLABELS = [ YES | NO ]:' },
-    en: { description: '', syntax: 'SPSSNORECODEDLABELS = [ YES | NO ]:' },
+    syntax: 'SPSSNORECODEDLABELS = [ YES | NO ]:',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'SPSSOUTFILE',
-    de: { description: '', syntax: 'SPSSOUTFILE = <filename>;' },
-    en: { description: '', syntax: 'SPSSOUTFILE = <filename>;' },
+    syntax: 'SPSSOUTFILE = <filename>;',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'SPSSOUTSUBFILE',
-    de: {
-      description: '',
-      syntax:
-        'SPSSOUTSUBFILE <internal_name> <varnamelist> = <spss_filename> ;\nSTORESPSSSUBFILE = <internal_name> ;',
-    },
-    en: {
-      description: '',
-      syntax:
-        'SPSSOUTSUBFILE <internal_name> <varnamelist> = <spss_filename> ;\nSTORESPSSSUBFILE = <internal_name> ;',
+    syntax:
+      'SPSSOUTSUBFILE <internal_name> <varnamelist> = <spss_filename> ;\nSTORESPSSSUBFILE = <internal_name> ;',
+    description: {
+      en: '',
+      de: '',
     },
   },
   {
     name: 'SPSSPRINTFORMAT',
-    de: {
-      description: '',
-      syntax: 'SPSSPRINTFORMAT = <spss-formatcode> <width> <decimals> ;',
-    },
-    en: {
-      description: '',
-      syntax: 'SPSSPRINTFORMAT = <spss-formatcode> <width> <decimals> ;',
+    syntax: 'SPSSPRINTFORMAT = <spss-formatcode> <width> <decimals> ;',
+    description: {
+      en: '',
+      de: '',
     },
   },
   {
     name: 'SPSSREADMULT',
-    de: { description: '', syntax: 'SPSSREADMULT = [ YES | NO ];' },
-    en: { description: '', syntax: 'SPSSREADMULT = [ YES | NO ];' },
+    syntax: 'SPSSREADMULT = [ YES | NO ];',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'SPSSSOUTFILE',
-    en: { description: '', syntax: 'SPSSSOUTFILE = <filename>;' },
+    syntax: 'SPSSSOUTFILE = <filename>;',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'SPSSVARLABTOTEXT',
-    de: { description: '', syntax: 'SPSSVARLABTOTEXT = [ YES | NO | COPY ];' },
-    en: { description: '', syntax: 'SPSSVARLABTOTEXT = [ YES | NO ];' },
+    syntax: 'SPSSVARLABTOTEXT = [ YES | NO ];',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'SPSSWEIGHTOUT',
-    de: { description: '', syntax: 'SPSSWEIGHTOUT = <varname>;' },
-    en: { description: '', syntax: 'SPSSWEIGHTOUT = <varname>;' },
+    syntax: 'SPSSWEIGHTOUT = <varname>;',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'SPSSWRITEMULT',
-    de: { description: '', syntax: 'SPSSWRITEMULT = [ YES | NO ];' },
-    en: { description: '', syntax: 'SPSSWRITEMULT = [ YES | NO ];' },
+    syntax: 'SPSSWRITEMULT = [ YES | NO ];',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'SQRT',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'SQUARE1',
-    de: { description: 'Quadrat (auf der Basis stehend)' },
-    en: { description: 'Square (standing on its base)', syntax: '' },
+    syntax: '',
+    description: {
+      en: 'Square (standing on its base)',
+      de: 'Quadrat (auf der Basis stehend)',
+    },
   },
   {
     name: 'SQUARE1O',
-    de: { description: 'Quadrat (auf der Basis stehend) als Outline' },
-    en: { description: 'Square (standing on its base) as outline', syntax: '' },
+    syntax: '',
+    description: {
+      en: 'Square (standing on its base) as outline',
+      de: 'Quadrat (auf der Basis stehend) als Outline',
+    },
   },
   {
     name: 'SQUARE2',
-    de: { description: 'Quadrat (auf der Spitze stehend)' },
-    en: { description: 'Square (standing on its point)', syntax: '' },
+    syntax: '',
+    description: {
+      en: 'Square (standing on its point)',
+      de: 'Quadrat (auf der Spitze stehend)',
+    },
   },
   {
     name: 'SQUARE2O',
-    de: { description: 'Quadrat (auf der Spitze stehend) als Outline' },
-    en: {
-      description: 'Square (standing on its point) as outline',
-      syntax: '',
+    syntax: '',
+    description: {
+      en: 'Square (standing on its point) as outline',
+      de: 'Quadrat (auf der Spitze stehend) als Outline',
     },
   },
   {
     name: 'STACKED',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'STACKEDAREAS',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'STACKEDAREAS100',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'STACKEDAREAS3D',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'STACKEDAREAS3D100',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'STACKEDBARS',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'STACKEDBARS100',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'STACKEDBARS100H',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'STACKEDBARS3D',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'STACKEDBARS3D100',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'STACKEDBARS3D100H',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'STACKEDBARSH',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'STACKEDLINES',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'STACKEDLINES100',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'STACKEDLINES100WITHSYMBOLS',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'STACKEDLINESWITHSYMBOLS',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'STANDARD',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'STARBOX',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'START',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'STARTCOLUMN',
-    en: {
-      description: '',
-      syntax:
-        'STARTCOLUMN = <number>;\nThe automatic designation of columns using * presumes that there is a previous variable; from this the',
+    syntax:
+      'STARTCOLUMN = <number>;\nThe automatic designation of columns using * presumes that there is a previous variable; from this the',
+    description: {
+      en: '',
+      de: '',
     },
   },
   {
     name: 'STARTEXPORT',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'STARTLINE',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'STATIC',
-    de: { description: '', syntax: 'STATIC <varlist> = [ YES | NO ];' },
-    en: { description: '', syntax: 'STATIC <varlist> = [ YES | NO ];' },
+    syntax: 'STATIC <varlist> = [ YES | NO ];',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'STATISTICS',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'STATTESTDUMP',
-    de: { description: '', syntax: 'STATTESTDUMP = <filename> ;' },
-    en: { description: '', syntax: 'STATTESTDUMP = <filename> ;' },
+    syntax: 'STATTESTDUMP = <filename> ;',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'STATUSVARIABLE',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'STDDEV',
-    de: {
-      description:
-        'STDDEV errechnet die Standardabweichung einer Variable oder Variablenliste über alle Fälle des Datensatzes.',
-      syntax: 'STDDEV <varname> = <varlist>;',
-    },
-    en: {
-      description:
-        'STDDEV computes the standard deviation of a variable or variable list over all cases of the data set.',
-      syntax: 'STDDEV <varname> = <varlist>;',
+    syntax: 'STDDEV <varname> = <varlist>;',
+    description: {
+      en: 'STDDEV computes the standard deviation of a variable or variable list over all cases of the data set.',
+      de: 'STDDEV errechnet die Standardabweichung einer Variable oder Variablenliste über alle Fälle des Datensatzes.',
     },
   },
   {
     name: 'STDERR',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'STDSIGNIFICANCE',
-    de: {
-      description:
-        '454 Steht dieser Schalter auf YES, dann wird immer dann, wenn ein SIGNIFLEVEL 454 gesetzt ist und ein spaltenweiser Signifikanztest vorliegt, im BOTTOMTEXT 520 der entsprechende Signifikanztext ausgegeben. Gibt es keinen BOTTOMTEXT, wird einer erzeugt.…',
-    },
-    en: {
-      description:
-        '454 If this switch is set to YES, then whenever a SIGNIFLEVEL 454 is set and a column-wise significance test is present, the corresponding significance text is output in the BOTTOMTEXT 520. If there is no BOTTOMTEXT, one is generated.…',
-      syntax: '',
+    syntax: '',
+    description: {
+      en: 'If this switch is set to YES, then whenever a SIGNIFLEVEL is set and a column-wise significance test is present, the corresponding significance text is output in the BOTTOMTEXT. If there is no BOTTOMTEXT, one is generated.…',
+      de: 'Steht dieser Schalter auf YES, dann wird immer dann, wenn ein SIGNIFLEVEL gesetzt ist und ein spaltenweiser Signifikanztest vorliegt, im BOTTOMTEXT der entsprechende Signifikanztext ausgegeben. Gibt es keinen BOTTOMTEXT, wird einer erzeugt.…',
     },
   },
   {
     name: 'STOPONFIRSTERROR',
-    en: {
-      description:
-        'YES or NO. Preset: YES. If NO the input stream continues to be interpreted even if errors occur in as far as the parser can synchronise itself again; possibly the subsequent errors will gain the upper hand. It is recommended to produce a LISTFILE in any case in order to log the error and the erroneous input. Stays valid until the next STOPONFIRSTERROR command.…',
+    syntax: '',
+    description: {
+      en: 'YES or NO. Preset: YES. If NO the input stream continues to be interpreted even if errors occur in as far as the parser can synchronise itself again; possibly the subsequent errors will gain the upper hand. It is recommended to produce a LISTFILE in any case in order to log the error and the erroneous input. Stays valid until the next STOPONFIRSTERROR command.…',
+      de: '',
     },
   },
   {
     name: 'STOREALPHA',
-    de: { description: '', syntax: 'STOREALPHA <varlist> = [ YES | NO ];' },
-    en: { description: '', syntax: 'STOREALPHA <varlist> = [ YES | NO ];' },
+    syntax: 'STOREALPHA <varlist> = [ YES | NO ];',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'STORELANGUAGE',
-    de: { description: '', syntax: 'STORELANGUAGE <sprache> = <filename>;' },
-    en: { description: '', syntax: 'STORELANGUAGE <language> = <filename>;' },
+    syntax: 'STORELANGUAGE <language> = <filename>;',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'STORESPSSSUBFILE',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'STORETOBASE',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'STORETOCSV',
-    de: {
-      description: '',
-      syntax:
-        'STORETOCSV = [ ALL | <varlist> ];\nDie als <varlist> deklarierten Variablen werden in der Reihenfolge ihrer Angabe in den',
-    },
-    en: {
-      description: '',
-      syntax:
-        'STORETOCSV = [ ALL | <varlist> ];\nThe variables declared as <varlist> are written in the order given into the',
+    syntax:
+      'STORETOCSV = [ ALL | <varlist> ];\nThe variables declared as <varlist> are written in the order given into the',
+    description: {
+      en: '',
+      de: '',
     },
   },
   {
     name: 'STORETOSPSS',
-    de: { description: '', syntax: 'STORETOSPSS = <varlist>;' },
-    en: { description: '', syntax: 'STORETOSPSS = <varlist>;' },
+    syntax: 'STORETOSPSS = <varlist>;',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'STRICTINPUTCHECK',
-    de: { description: '', syntax: 'STRICTINPUTCHECK = [ YES | NO ];' },
-    en: { description: '', syntax: 'STRICTINPUTCHECK = [ YES | NO ];' },
+    syntax: 'STRICTINPUTCHECK = [ YES | NO ];',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'STRICTINPUTHECK',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'STRICTVARLIST',
-    de: { description: '', syntax: 'STRICTVARLIST = [ YES | NO ];' },
-    en: { description: '', syntax: 'STRICTVARLIST = [ YES | NO ];' },
+    syntax: 'STRICTVARLIST = [ YES | NO ];',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'STRIPECOLORS',
-    de: {
-      description: '',
-      syntax:
-        "STRIPECOLORS = <color> <color> ;\nMit '<color>' definiert man die Farben, in denen die Zeilen bzw. Spalten in Tabellen vom Typ",
-    },
-    en: {
-      description: '',
-      syntax:
-        "STRIPECOLORS = <color> <color> ;\nWith '<color>' you define the colours in which the rows or columns in tables of type",
+    syntax:
+      "STRIPECOLORS = <color> <color> ;\nWith '<color>' you define the colours in which the rows or columns in tables of type",
+    description: {
+      en: '',
+      de: '',
     },
   },
   {
     name: 'STROKERECT',
-    de: { description: 'Umrandung zu RETANGLES zeichnen' },
-    en: { description: 'Draw a border for RECTANGLES', syntax: '' },
+    syntax: '',
+    description: {
+      en: 'Draw a border for RECTANGLES',
+      de: 'Umrandung zu RETANGLES zeichnen',
+    },
   },
   {
     name: 'STRUCTURE',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'STYLE',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'STYLEFILE',
-    de: { description: '', syntax: 'STYLEFILE = <filename>;' },
-    en: {
-      description: '',
-      syntax:
-        'STYLEFILE = <filename>;\nUsing the STYLEFILE individual CSS styles can be included. The contents of <filename> are included',
+    syntax:
+      'STYLEFILE = <filename>;\nUsing the STYLEFILE individual CSS styles can be included. The contents of <filename> are included',
+    description: {
+      en: '',
+      de: '',
     },
   },
   {
     name: 'SUBTITLE',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'SUM',
     argsHint: '( Var )',
-    de: {
-      description: "Darstellung der Summe von 'Var'",
-      syntax: 'SUM <varname> = <Varlist>;',
-    },
-    en: {
-      description: "Display of the sum of 'Var'",
-      syntax: 'SUM <varname> = <Varlist>;',
+    syntax: 'SUM <varname> = <varlist>;',
+    description: {
+      en: "Display of the sum of 'Var'",
+      de: "Darstellung der Summe von 'Var'",
     },
   },
   {
     name: 'SUMMARY',
-    en: {
-      description:
-        'The IF ... PRINT ... command in GESS tabs allows comfortable error searches and documentation. It is however often useful to use statistics for error frequency and SUMMARY tables provide just such statistics:',
-      syntax: 'SUMMARY;',
+    syntax: 'SUMMARY;',
+    description: {
+      en: 'The IF ... PRINT ... command in GESS tabs allows comfortable error searches and documentation. It is however often useful to use statistics for error frequency and SUMMARY tables provide just such statistics:',
+      de: '',
     },
   },
   {
     name: 'SUMMISSING',
-    de: {
-      description:
-        'MIN, MAX 314Minimal-/ Maximalwert + Option zur Angabe der Variable mit Minimal-/Maximalwert mittels MININDEX/ MAXINDEX 314 STDDEV 315 Standardabweichung VARIANCE 315Varianz Mean MEAN erlaubt eine einfache Berechnung des Mittelwerts aus mehreren Variablen innerhalb eines Falles.',
-      syntax: 'SUMMISSING = [ YES | NO ];',
-    },
-    en: {
-      description:
-        'MIN, MAX 314 minimum/maximum value + option to specify the variable with the minimum/maximum value via MININDEX/ MAXINDEX 314. STDDEV 315 standard deviation. VARIANCE 315 variance. Mean: MEAN allows a simple calculation of the mean from several variables within one case.',
-      syntax: 'SUMMISSING = [ YES | NO ];',
+    syntax: 'SUMMISSING = [ YES | NO ];',
+    description: {
+      en: '',
+      de: '',
     },
   },
   {
     name: 'SUMPERCENT',
     argsHint: '( Var, BasisVar )',
-    de: {
-      description:
-        "Aus 'Var' und 'BasisVar' werden die Summen berechnet. Die Summe von 'Var' wird als prozentualer Anteil an der Summe von 'BasisVar' ausgegeben.",
-    },
-    en: {
-      description:
-        "The sums are calculated from 'Var' and 'BasisVar'. The sum of 'Var' is output as a percentage share of the sum of 'BasisVar'.",
-      syntax: '',
+    syntax: '',
+    description: {
+      en: "The sums are calculated from 'Var' and 'BasisVar'. The sum of 'Var' is output as a percentage share of the sum of 'BasisVar'.",
+      de: "Aus 'Var' und 'BasisVar' werden die Summen berechnet. Die Summe von 'Var' wird als prozentualer Anteil an der Summe von 'BasisVar' ausgegeben.",
     },
   },
   {
     name: 'SUMQUOTIENT',
     argsHint: '( Var, BasisVar )',
-    de: {
-      description:
-        "Aus 'Var' und 'BasisVar' werden die Summen berechnet. Die Summe von 'Var' wird als Anteil an der Summe von 'BasisVar' ausgegeben.",
-    },
-    en: {
-      description:
-        "The sums are calculated from 'Var' and 'BasisVar'. The sum of 'Var' is output as a share of the sum of 'BasisVar'.",
-      syntax: '',
+    syntax: '',
+    description: {
+      en: "The sums are calculated from 'Var' and 'BasisVar'. The sum of 'Var' is output as a share of the sum of 'BasisVar'.",
+      de: "Aus 'Var' und 'BasisVar' werden die Summen berechnet. Die Summe von 'Var' wird als Anteil an der Summe von 'BasisVar' ausgegeben.",
     },
   },
   {
     name: 'SUMSUMPERCENT',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'SUPPRESSEMPTYSHEET',
-    de: { description: '', syntax: 'SUPPRESSEMPTYSHEET = [ YES | NO ];' },
-    en: { description: '', syntax: 'SUPPRESSEMPTYSHEET = [ YES | NO ];' },
+    syntax: 'SUPPRESSEMPTYSHEET = [ YES | NO ];',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'SUPPRESSEMPTYTABLE',
-    de: {
-      description: '',
-      syntax: 'SUPPRESSEMPTYTABLE = [ NO | YES | STRUCTURE ];',
-    },
-    en: {
-      description:
-        'Usually a table where no cases are relevant is printed as an empty table. Using SUPPRESSEMPTYTABLE = YES this page is suppressed.',
-      syntax: 'SUPPRESSEMPTYTABLE = [ NO | YES | STRUCTURE ];',
+    syntax: 'SUPPRESSEMPTYTABLE = [ NO | YES | STRUCTURE ];',
+    description: {
+      en: 'Usually a table where no cases are relevant is printed as an empty table. Using SUPPRESSEMPTYTABLE = YES this page is suppressed.',
+      de: '',
     },
   },
   {
     name: 'SUPPRESSGRIDLINES',
-    de: { description: '', syntax: 'SUPPRESSGRIDLINES : [YES|NO]' },
-    en: { description: '', syntax: 'SUPPRESSGRIDLINES : [YES|NO]' },
+    syntax: 'SUPPRESSGRIDLINES : [YES|NO]',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'SUPPRESSIFLESS',
-    de: {
-      description: '',
-      syntax:
-        'SUPPRESSIFLESS < cellelement> <place> <typ> = <value>;\nplace ::= < DATACELL | FRAMECELL X | FRAMECELL Y >\ntyp ::= < ABSOLUTE | PHYSICALRECORDS | VALIDN | VALIDPHYS | ESS >\nMan kann sich mit "<place>" dabei auf die Tabellenzelle selbst beziehen, oder auf die',
-    },
-    en: {
-      description: '',
-      syntax:
-        'SUPPRESSIFLESS < cellelement> <place> <type> = <value>;\nplace ::= < DATACELL | FRAMECELL X | FRAMECELL Y >\ntype ::= < ABSOLUTE | PHYSICALRECORDS | VALIDN | VALIDPHYS | ESS >\nWith "<place>" you can refer to the table cell itself, or to the',
+    syntax:
+      'SUPPRESSIFLESS < cellelement> <place> <type> = <value>;\nplace ::= < DATACELL | FRAMECELL X | FRAMECELL Y >\ntype ::= < ABSOLUTE | PHYSICALRECORDS | VALIDN | VALIDPHYS | ESS >\nWith "<place>" you can refer to the table cell itself, or to the',
+    description: {
+      en: '',
+      de: '',
     },
   },
   {
     name: 'SUPPRESSLABEL',
-    de: {
-      description:
-        'Wenn eine Variable eine Konstante ist (d.h. sie hat empirisch nur eine Ausprägung), kann es aus optischen Gründen sinnvoll sein, den Labeltext zu unterdrücken. Dies kann man mit SUPPRESSLABEL erreichen. (Hat nur bei Postscript-Ausgabe Effekt.)',
-    },
-    en: {
-      description:
-        'If a variable is a constant (i.e. it has empirically only one characteristic), it can make sense for appearances sake to suppress the label text. This can be achieved with SUPPRESSLABEL. (Only effective with Postscript-printouts). (PS)',
+    syntax: '',
+    description: {
+      en: 'If a variable is a constant (i.e. it has empirically only one characteristic), it can make sense for appearances sake to suppress the label text. This can be achieved with SUPPRESSLABEL. (Only effective with Postscript-printouts). (PS)',
+      de: 'Wenn eine Variable eine Konstante ist (d.h. sie hat empirisch nur eine Ausprägung), kann es aus optischen Gründen sinnvoll sein, den Labeltext zu unterdrücken. Dies kann man mit SUPPRESSLABEL erreichen. (Hat nur bei Postscript-Ausgabe Effekt.)',
     },
   },
   {
     name: 'SUPPRESSOVERCODE',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'SUPPRESSSPSSWARNINGS',
-    de: {
-      description: '',
-      syntax: 'SUPPRESSSPSSWARNINGS = [ ALPHA | VARLABEL | VALUELABELS ] ;',
-    },
-    en: {
-      description: '',
-      syntax: 'SUPPRESSSPSSWARNINGS = [ ALPHA | VARLABEL | VALUELABELS ] ;',
+    syntax: 'SUPPRESSSPSSWARNINGS = [ ALPHA | VARLABEL | VALUELABELS ] ;',
+    description: {
+      en: '',
+      de: '',
     },
   },
   {
     name: 'SUPRESSEMPTYTABLE',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'SWAP',
-    de: { description: 'Reihenfolge der graphischen Darstellung invertieren' },
-    en: {
-      description: 'Invert the order of the graphical display',
-      syntax: '',
+    syntax: '',
+    description: {
+      en: 'Invert the order of the graphical display',
+      de: 'Reihenfolge der graphischen Darstellung invertieren',
     },
   },
   {
     name: 'SWAPLEGEND',
-    de: {
-      description:
-        'Reihenfolge der Legendentexte invertieren <alle GESSCHARTFORMAT- Alle Argumente des Argumente> GESSCHARTFORMAT 198-Statements können an dieser Stelle auch als Optionen für das aktuelle Chart angegeben werden. = {',
-    },
-    en: {
-      description:
-        'Invert the order of the legend texts. <all GESSCHARTFORMAT arguments> all arguments of the GESSCHARTFORMAT 198 statement can also be given here as options for the current chart. = {',
-      syntax: '',
+    syntax: '',
+    description: {
+      en: 'Invert the order of the legend texts.',
+      de: 'Reihenfolge der Legendentexte invertieren',
     },
   },
   {
     name: 'SWITCHLANGUAGE',
-    de: { description: '', syntax: 'SWITCHLANGUAGE = <Sprachbezeichnung>;' },
-    en: { description: '', syntax: 'SWITCHLANGUAGE = <language name>;' },
+    syntax: 'SWITCHLANGUAGE = <language name>;',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'SYMBOL',
-    de: { description: 'Die Linie wird nicht gezeigt' },
-    en: { description: 'The line is not shown', syntax: '' },
+    syntax: '',
+    description: {
+      en: 'The line is not shown',
+      de: 'Die Linie wird nicht gezeigt',
+    },
   },
   {
     name: 'SYMBOLS',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'SYMBOLSIZE',
-    de: {
-      description:
-        '; GESSCHARTFONT CHARTNUMBERS = "Helvetica-Bold" SIZE 8; GESSCHARTFORMAT = NUMCENTERGRAPH NOFRAME NOSCALE OVERLAPPED WHITENUMBERS; GESSCHARTCOLORS = $229955 AA5577; GESSCHART CHARTTITLE "Gegenläufige Linien: Top-2-Box nach links + grün, Bottom-2-Box nach rechts + rot, Zahlen in weiß zentral in den Kreisen bzw.…',
-    },
-    en: {
-      description:
-        '; GESSCHARTFONT CHARTNUMBERS = "Helvetica-Bold" SIZE 8; GESSCHARTFORMAT = NUMCENTERGRAPH NOFRAME NOSCALE OVERLAPPED WHITENUMBERS; GESSCHARTCOLORS = $229955 AA5577; GESSCHART CHARTTITLE "Opposing lines: Top-2 box to the left + green, Bottom-2 box to the right + red, numbers in white centred in the circles or…',
-      syntax: '',
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
     },
   },
   {
     name: 'SYMBOLWIDTH',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'SYNOPSIS',
-    de: { description: '', syntax: 'SYNOPSIS = <filename>;' },
-    en: { description: '', syntax: 'SYNOPSIS = <filename>;' },
+    syntax: 'SYNOPSIS = <filename>;',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'SYNTAX',
-    de: {
-      description: '',
-      syntax:
-        'SYNTAX { [ POSTPONE ] [ VARIABLES | LABELS | VARTITLE\n| VALUELABELS | MISSING | EXCLUDEVALUES | RESTRICTVALUES|\nMULTIDEF | FORMAT ]}*n = <filename>;\nSYNTAXVARNAMENOQUOTES = [ YES | NO ];',
-    },
-    en: {
-      description: '',
-      syntax:
-        'SYNTAX { [ POSTPONE ] [ VARIABLES | LABELS | VARTITLE\n| VALUELABELS | MISSING | EXCLUDEVALUES | RESTRICTVALUES|\nMULTIDEF | FORMAT ]}*n = <filename>;\nSYNTAXVARNAMENOQUOTES = [ YES | NO ];',
+    syntax:
+      'SYNTAX { [ POSTPONE ] [ VARIABLES | LABELS | VARTITLE\n| VALUELABELS | MISSING | EXCLUDEVALUES | RESTRICTVALUES|\nMULTIDEF | FORMAT ]}*n = <filename>;\nSYNTAXVARNAMENOQUOTES = [ YES | NO ];',
+    description: {
+      en: '',
+      de: '',
     },
   },
   {
     name: 'SYNTAXVARNAMENOQUOTES',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'SYSMISS',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'SYSTEMCASENO',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'SYSTEMFILENO',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'SYSTEMGROUP',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'SYSTEMIN',
-    en: {
-      description:
-        'Output of a system fileto be read. It has to refer to a valid name in the system software. System files are generated with the statement SYSTEMOUT. DATAFILE, COLBININFILE and SYSTEMIN statements can not be used together in a GESS tabs run. The suffix (.TS) is generated automatically.',
+    syntax: '',
+    description: {
+      en: 'Output of a system fileto be read. It has to refer to a valid name in the system software. System files are generated with the statement SYSTEMOUT. DATAFILE, COLBININFILE and SYSTEMIN statements can not be used together in a GESS tabs run. The suffix (.TS) is generated automatically.',
+      de: '',
     },
   },
   {
     name: 'SYSTEMOUT',
-    en: {
-      description: '',
-      syntax:
-        'SYSTEMOUT = <filename> [ [ KEEPVARS | DELETEVARS ] <varlist> ] ;',
+    syntax: 'SYSTEMOUT = <filename> [ [ KEEPVARS | DELETEVARS ] <varlist> ] ;',
+    description: {
+      en: '',
+      de: '',
     },
   },
   {
     name: 'SYSTEMWEIGHT',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'TABLE',
-    de: {
-      description: '',
-      syntax:
-        'TABLE [ taboptions ] = <parts> BY <parts>;\ntaboptions ::=\n[\nADD\nNAME <tablename>\nTITLE <tabletitle>\nCELLELEMENTS ( <cellelements> )\nFRAMEELEMENTS ( <frameelements> )\nTABLEFORMATS ( <tableformats> )\nCONTENTKEY <contentkey>\nHIDDEN ( <medium> )\n]\n\nparts ::= part { part }*n\npart ::= content [ filter ] [ option ]\n\ncontent ::=\n[\n<constant> |\n<varname> |\n<cellelement> ( <varname> [ <varname> ] ) |\n<cellelement> ( <varname> [ <varname> ] BY <varname> )\n:DESCRIPTION\n:USEVARTITLE\n:FORMAT\n] \n\nfilter ::= FILTER <bedingung> |\n\noption ::= SORT sortcontent [ sortpane ] [ cut ]\n\nsortcontent ::= sorttype [ DESCEND ]\nsorttype ::= [ POSITION | ALPHA | CODE | Cellelement ]\nsortpane ::= PANE <value> CODE <value>\n\ncut ::=\n[\nTOP <value > [ SLICE <value> ] |\nBOTTOM <value> |\nEXTREME <value> |\nSLICE <value> |\nLSLICE <value> |\nRANGE <value> <value>\n]',
-    },
-    en: {
-      description:
-        'The main keyword for cross tables. In its simplest form: TABLE = <var1> BY <var2>; where <var1> is the header variable and <var2> is the variable for the side breakdown.',
-      syntax:
-        'TABLE [ taboptions ] = <parts> BY <parts>;\ntaboptions ::=\n[\nADD\nNAME <tablename>\nTITLE <tabletitle>\nCELLELEMENTS ( <cellelements> )\nFRAMEELEMENTS ( <frameelements> )\nTABLEFORMATS ( <tableformats> )\nCONTENTKEY <contentkey>\nHIDDEN ( <medium> )\n]\n\nparts ::= part { part }*n\npart ::= content [ filter ] [ option ]\n\ncontent ::=\n[\n<constant> |\n<varname> |\n<cellelement> ( <varname> [ <varname> ] ) |\n<cellelement> ( <varname> [ <varname> ] BY <varname> )\n:DESCRIPTION\n:USEVARTITLE\n:FORMAT\n] \n\nfilter ::= FILTER <condition> |\n\noption ::= SORT sortcontent [ sortpane ] [ cut ]\n\nsortcontent ::= sorttype [ DESCEND ]\nsorttype ::= [ POSITION | ALPHA | CODE | Cellelement ]\nsortpane ::= PANE <value> CODE <value>\n\ncut ::=\n[\nTOP <value > [ SLICE <value> ] |\nBOTTOM <value> |\nEXTREME <value> |\nSLICE <value> |\nLSLICE <value> |\nRANGE <value> <value>\n]',
+    syntax:
+      'TABLE [ taboptions ] = <parts> BY <parts>;\ntaboptions ::=\n[\nADD\nNAME <tablename>\nTITLE <tabletitle>\nCELLELEMENTS ( <cellelements> )\nFRAMEELEMENTS ( <frameelements> )\nTABLEFORMATS ( <tableformats> )\nCONTENTKEY <contentkey>\nHIDDEN ( <medium> )\n]\n\nparts ::= part { part }*n\npart ::= content [ filter ] [ option ]\n\ncontent ::=\n[\n<constant> |\n<varname> |\n<cellelement> ( <varname> [ <varname> ] ) |\n<cellelement> ( <varname> [ <varname> ] BY <varname> )\n:DESCRIPTION\n:USEVARTITLE\n:FORMAT\n] \n\nfilter ::= FILTER <condition> |\n\noption ::= SORT sortcontent [ sortpane ] [ cut ]\n\nsortcontent ::= sorttype [ DESCEND ]\nsorttype ::= [ POSITION | ALPHA | CODE | Cellelement ]\nsortpane ::= PANE <value> CODE <value>\n\ncut ::=\n[\nTOP <value > [ SLICE <value> ] |\nBOTTOM <value> |\nEXTREME <value> |\nSLICE <value> |\nLSLICE <value> |\nRANGE <value> <value>\n]',
+    description: {
+      en: 'The main keyword for cross tables. In its simplest form: TABLE = <var1> BY <var2>; where <var1> is the header variable and <var2> is the variable for the side breakdown.',
+      de: '',
     },
   },
   {
     name: 'TABLE ADD',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'TABLE SORT AS',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'TABLE STRUCTURE',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'TABLEBASE',
-    de: { description: '', syntax: 'TABLEBASE = [ CASES | RESPONSES ];' },
-    en: {
-      description:
-        'This controls the basis of percentaging in the TABLE printout. The following is preset: TABLEBASE = CASES ; i.e. usually percentaging is on the basis of the number of interviewees. Using TABLEBASE = NOMINATIONS ; the alternative of percentaging on the basis of the number of mentions can be achieved (only relevant for multiple responses).…',
-      syntax: 'TABLEBASE = [ CASES | RESPONSES ];',
+    syntax: 'TABLEBASE = [ CASES | RESPONSES ];',
+    description: {
+      en: 'This controls the basis of percentaging in the TABLE printout. The following is preset: TABLEBASE = CASES ; i.e. usually percentaging is on the basis of the number of interviewees. Using TABLEBASE = NOMINATIONS ; the alternative of percentaging on the basis of the number of mentions can be achieved (only relevant for multiple responses).…',
+      de: '',
     },
   },
   {
     name: 'TABLECOUNTSWITCH',
-    de: {
-      description: '',
-      syntax:
-        'TABLECOUNTSWITCH = [ NOADDINFRAMEX | NOADDINFRAMEY | NOADDINFRAMETTL ];',
-    },
-    en: {
-      description: '',
-      syntax:
-        'TABLECOUNTSWITCH = [ NOADDINFRAMEX | NOADDINFRAMEY | NOADDINFRAMETTL ];',
+    syntax:
+      'TABLECOUNTSWITCH = [ NOADDINFRAMEX | NOADDINFRAMEY | NOADDINFRAMETTL ];',
+    description: {
+      en: '',
+      de: '',
     },
   },
   {
     name: 'TABLEFILTER',
-    de: {
-      description: '',
-      syntax: 'TABLEFILTER <number> = TEXT "<text>" <Bedingung>;',
-    },
-    en: {
-      description: '',
-      syntax: 'TABLEFILTER <number> = TEXT "<text>" <condition>;',
+    syntax: 'TABLEFILTER <number> = TEXT "<text>" <condition>;',
+    description: {
+      en: '',
+      de: '',
     },
   },
   {
     name: 'TABLEFILTERBYCODE',
-    de: {
-      description: '',
-      syntax:
-        'TABLEFILTERBYCODE <NUMBER> = [ <options> ] <VARIABLE> ( <CODE> ) ;\n<options> ::= [ VARTITLE | NOMISSING | SUPPRESSOVERCODES | USELABELS ] <options>',
-    },
-    en: {
-      description: '',
-      syntax:
-        'TABLEFILTERBYCODE <NUMBER> = [ <options> ] <VARIABLE> ( <CODE> ) ;\n<options> ::= [ VARTITLE | NOMISSING | SUPPRESSOVERCODES | USELABELS ] <options>',
+    syntax:
+      'TABLEFILTERBYCODE <NUMBER> = [ <options> ] <VARIABLE> ( <CODE> ) ;\n<options> ::= [ VARTITLE | NOMISSING | SUPPRESSOVERCODES | USELABELS ] <options>',
+    description: {
+      en: '',
+      de: '',
     },
   },
   {
     name: 'TABLEFORMAT',
-    de: { description: '', syntax: 'TABLEFORMAT +/- AUTOSORTTREE;' },
-    en: {
-      description:
-        'The table appearance can further be controlled using TABLEFORMAT.',
-      syntax: 'TABLEFORMAT = [ + | - | ] { Formatoption ... }*n ;',
+    syntax: 'TABLEFORMAT = [ + | - | ] { Formatoption ... }*n ;',
+    description: {
+      en: 'The table appearance can further be controlled using TABLEFORMAT.',
+      de: '',
     },
   },
   {
     name: 'TABLEFORMATS',
     argsHint: '( <tableformats> )',
-    de: {
-      description:
-        'CONTENTKEY <text> ] rowdescriptor ::= [ VARIABLE <localvarname> [ <sortoptions> [ : <condition> ] | OVERCODE <localvarname> [ <values> ] <labeltext> | STATISTICS <text> <cellelement> ( <localvarname> ) [ <printoptions> ] ] sortoptions ::= siehe die SORT Optionen des TABLE-statements condition ::= jede nach GESS Syntax korrekte Bedingung printoptions ::= [ : USEFONT <fontname> [ SIZE <size> ] | :…',
-    },
-    en: {
-      description:
-        'CONTENTKEY <contentkey> ] parts ::= part { part }*n part ::= content [ filter ] [ option ] content ::= [ <constant> | <varname> | <cellelement> ( <varname> [ <varname> ) | <cellelement> ( <varname> [ <varname> ] BY <varname> ) ] filter ::= FILTER <bedingung> | option ::= SORT sortcontent [ sortpane ] [ cut ] sortcontent ::= [ DESCEND ] sorttype sortpane ::= PANE <value> CODE <value> cut ::= [ TOP…',
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
     },
   },
   {
     name: 'TABLEMINIMUM',
-    en: { description: '', syntax: 'TABLEMINIMUM = <number>;' },
+    syntax: 'TABLEMINIMUM = <number>;',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'TABLENUMBER',
-    de: {
-      description:
-        'Definiert die Anfangsnummer einer Tabellennumerierungsfolge.',
-      syntax: 'TABLENUMBER = <number>;\nVoreinstellung: TABLENUMBER = 1;',
-    },
-    en: {
-      description:
-        'Defines the first number for the tables. Preset: TABLENUMBER = 1; All tables share the same number range. The tables are only counted if there is a hash in the TABLETITLE. This is valid for all tables until changed.',
-      syntax: 'TABLENUMBER = <number>;\nDefault: TABLENUMBER = 1;',
+    syntax: 'TABLENUMBER = <number>;\nDefault: TABLENUMBER = 1;',
+    description: {
+      en: 'Defines the first number for the tables. Preset: TABLENUMBER = 1; All tables share the same number range. The tables are only counted if there is a hash in the TABLETITLE. This is valid for all tables until changed.',
+      de: 'Definiert die Anfangsnummer einer Tabellennumerierungsfolge.',
     },
   },
   {
     name: 'TABLESASJSON',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'TABLESTATISTICS',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'TABLETITLE',
-    de: { description: '', syntax: 'TABLETITLE = "<text>";' },
-    en: {
-      description:
-        'If the standard text "Table #:" is to be replaced it can be done as follows: TABLETITLE = "Summary Table"; If the test is not to appear at all, then: TABLETITLE = ""; If the program finds a hash "#" (more precisely: the NUMBERCHAR) in the string this character is replaced by the current table number. This is valid for all tables until it is changed.',
-      syntax: 'TABLETITLE = "<text>";',
+    syntax: 'TABLETITLE = "<text>";',
+    description: {
+      en: 'If the standard text "Table #:" is to be replaced it can be done as follows: TABLETITLE = "Summary Table"; If the test is not to appear at all, then: TABLETITLE = ""; If the program finds a hash "#" (more precisely: the NUMBERCHAR) in the string this character is replaced by the current table number. This is valid for all tables until it is changed.',
+      de: '',
     },
   },
   {
     name: 'TABLETITLEINHG',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'TABLETYPE',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'TABSELECT',
-    de: { description: '', syntax: 'TABSELECT <Bedingung>;' },
-    en: {
-      description:
-        'defines a selection of cases for the following tables. TABSELECT remains valid until a new TABSELECT is defined. Should all cases be processed in the following tables then simply: TABSELECT; is written. (This condition is always true.) The syntax equates to SELECT (non permanent filter).…',
-      syntax: 'TABSELECT <condition>;',
+    syntax: 'TABSELECT <condition>;',
+    description: {
+      en: 'defines a selection of cases for the following tables. TABSELECT remains valid until a new TABSELECT is defined. Should all cases be processed in the following tables then simply: TABSELECT; is written. (This condition is always true.) The syntax equates to SELECT (non permanent filter).…',
+      de: '',
     },
   },
   {
     name: 'TABSELECTBYCODE',
-    de: {
-      description: '',
-      syntax:
-        'TABSELECTBYCODE [ <options> ] <VARIABLE> ( <CODE> );\n<options> ::= [ VARTITLE | NOMISSING | SUPPRESSOVERCODES\n| USELABELS ] <options>',
-    },
-    en: {
-      description: '',
-      syntax:
-        'TABSELECTBYCODE [ <options> ] <VARIABLE> ( <CODE> );\n<options> ::= [ VARTITLE | NOMISSING | SUPPRESSOVERCODES\n| USELABELS ] <options>',
+    syntax:
+      'TABSELECTBYCODE [ <options> ] <VARIABLE> ( <CODE> );\n<options> ::= [ VARTITLE | NOMISSING | SUPPRESSOVERCODES\n| USELABELS ] <options>',
+    description: {
+      en: '',
+      de: '',
     },
   },
   {
     name: 'TABTASK',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'TABULATE',
-    de: {
-      description: '',
-      syntax:
-        'TABULATE [ INVERSE ] = <tablepart> { / <tablepart> }*n;\nHEADERS = <tablepart> { / <tablepart> }*n;\nAlle Elemente aus TABULATE werden gegen alle Köpfe in HEADERS tabelliert; dabei erscheinen',
-    },
-    en: {
-      description: '',
-      syntax: 'TABULATE [ INVERSE ] = <tablepart> { / <tablepart> }*n;',
+    syntax: 'TABULATE [ INVERSE ] = <tablepart> { / <tablepart> }*n;',
+    description: {
+      en: '',
+      de: '',
     },
   },
   {
     name: 'TABULATOR',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'TAN',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'TAPI',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'TAUB',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'TAUC',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'TEMPLATE',
-    en: { description: '', syntax: 'TEMPLATE = <templatename>;' },
+    syntax: 'TEMPLATE = <templatename>;',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'TERMINATED',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'TESTCOLUMNS',
-    de: {
-      description: '',
-      syntax:
-        'TESTCOLUMNS = { Testdefinition }*n;\nTestdefinition ::= | VARIABLE <varno> CODE <code>\n: VARIABLE <varno> CODE <code>',
-    },
-    en: {
-      description: '',
-      syntax:
-        'TESTCOLUMNS = { test definition }*n;\ntest definition ::= | VARIABLE <varno> CODE <code>\n: VARIABLE <varno> CODE <code>',
+    syntax:
+      'TESTCOLUMNS = { test definition }*n;\ntest definition ::= | VARIABLE <varno> CODE <code>\n: VARIABLE <varno> CODE <code>',
+    description: {
+      en: '',
+      de: '',
     },
   },
   {
     name: 'TESTCOLUMNSX',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'TEXT',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'TEXTBOX',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'TEXTBOXFORMAT',
-    de: {
-      description:
-        'Dieses TABLEFORMAT schaltet die Funktionen des LOCALTEXTFORMAT 564s ein/aus.',
-    },
-    en: {
-      description:
-        'This TABLEFORMAT switches the functions of LOCALTEXTFORMAT 564 on/off.',
-      syntax: '',
+    syntax: '',
+    description: {
+      en: 'This TABLEFORMAT switches the functions of LOCALTEXTFORMAT on/off.',
+      de: 'Dieses TABLEFORMAT schaltet die Funktionen des LOCALTEXTFORMATs ein/aus.',
     },
   },
   {
     name: 'TEXTBOXINHG',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'TEXTROWHEIGHT',
-    de: {
-      description: '',
-      syntax: 'TEXTROWHEIGHT <box> : <pixels>\n<box> ::= eine Box',
-    },
-    en: {
-      description: '',
-      syntax: 'TEXTROWHEIGHT <box> : <pixels>\n<box> ::= a box',
+    syntax: 'TEXTROWHEIGHT <box> : <pixels>\n<box> ::= a box',
+    description: {
+      en: '',
+      de: '',
     },
   },
   {
     name: 'TEXTTABLE',
-    de: { description: '', syntax: 'TEXTTABLE;' },
-    en: { description: '', syntax: 'TEXTTABLE ;' },
+    syntax: 'TEXTTABLE ;',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'TEXTTOPDISTANCE',
-    de: {
-      description: '',
-      syntax: "TEXTTOPDISTANCE = <number>;\n'<number>' = typographische Punkte",
-    },
-    en: {
-      description: '',
-      syntax: "TEXTTOPDISTANCE = <number>;\n'<number>' = typographic points",
+    syntax: "TEXTTOPDISTANCE = <number>;\n'<number>' = typographic points",
+    description: {
+      en: '',
+      de: '',
     },
   },
   {
     name: 'TEXTTOSPSSVARLAB',
-    de: { description: '', syntax: 'TEXTTOSPSSVARLAB = [ YES | NO ];' },
-    en: { description: '', syntax: 'TEXTTOSPSSVARLAB = [ YES | NO ];' },
+    syntax: 'TEXTTOSPSSVARLAB = [ YES | NO ];',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'TEXTWRAP',
-    de: {
-      description:
-        'Im Standardfall werden die Texte von Variablen in Tabellen genauso ausgegeben, wie man sie definiert hat. Mit TEXTWRAP kann man anfordern, dass die Zeilen in den Textboxes umgebrochen werden.',
-    },
-    en: {
-      description:
-        'Usually the variable texts are presented exactly as they have been defined. TEXTWRAP is used to break up the lines in text boxes.',
+    syntax: '',
+    description: {
+      en: 'Usually the variable texts are presented exactly as they have been defined. TEXTWRAP is used to break up the lines in text boxes.',
+      de: 'Im Standardfall werden die Texte von Variablen in Tabellen genauso ausgegeben, wie man sie definiert hat. Mit TEXTWRAP kann man anfordern, dass die Zeilen in den Textboxes umgebrochen werden.',
     },
   },
   {
     name: 'THEN',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'THICK',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'THIN',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'THOUSANDS',
-    de: { description: '', syntax: 'THOUSANDS <cellelement> : [ YES | NO ]' },
-    en: { description: '', syntax: 'THOUSANDS <cellelement> : [ YES | NO ]' },
+    syntax: 'THOUSANDS <cellelement> : [ YES | NO ]',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'TIME',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'TIMER',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'TITLE',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'TITLEBOX',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'TITLEPAGE',
-    de: {
-      description: '',
-      syntax:
-        'TITLEPAGE ::= { | element }*n ;\nCHAPTERPAGE::= { | element }*n ;\nelement ::= { text | line | drawbox | titlebox | eps }\ntext ::= TEXT { textoption }*n x y <text>\ntextoption ::= : [ font | color ]\nfont ::= USEFONT <fontname> SIZE <number>',
-    },
-    en: {
-      description: '',
-      syntax:
-        'TITLEPAGE ::= { | element }*n ;\nCHAPTERPAGE::= { | element }*n ;\nelement ::= { text | line | drawbox | titlebox | eps }\ntext ::= TEXT { textoption }*n x y <text>\ntextoption ::= : [ font | color ]\nfont ::= USEFONT <fontname> SIZE <number>',
+    syntax:
+      'TITLEPAGE ::= { | element }*n ;\nCHAPTERPAGE::= { | element }*n ;\nelement ::= { text | line | drawbox | titlebox | eps }\ntext ::= TEXT { textoption }*n x y <text>\ntextoption ::= : [ font | color ]\nfont ::= USEFONT <fontname> SIZE <number>',
+    description: {
+      en: '',
+      de: '',
     },
   },
   {
     name: 'TO',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'TOP',
-    de: {
-      description:
-        'Die Tabellenausgabe kann auf bestimmte Teile beschränkt werden: Es können',
-    },
-    en: {
-      description:
-        'The table output can be restricted to certain parts: it is possible to',
-      syntax: '',
+    syntax: '',
+    description: {
+      en: 'The table output can be restricted to certain parts.',
+      de: 'Die Tabellenausgabe kann auf bestimmte Teile beschränkt werden.',
     },
   },
   {
     name: 'TOPCUT',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'TOPMARGIN',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'TOPTEXT',
-    de: {
-      description: 'Textbox am oberen Rumpf der Tabelle',
-      syntax: 'TOPTEXT = "<text>";',
-    },
-    en: {
-      description: 'Text box at the top of the table body',
-      syntax: 'TOPTEXT = "<text>";',
+    syntax: 'TOPTEXT = "<text>";',
+    description: {
+      en: 'Text box at the top of the table body',
+      de: 'Textbox am oberen Rumpf der Tabelle',
     },
   },
   {
     name: 'TOTALCOLINHG',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'TOTALCOLU',
-    de: {
-      description:
-        'Ausgewertete Fälle aller Werte (wie in CELLELELEMENTS 418 definiert) in der',
-    },
-    en: {
-      description:
-        'Evaluated cases of all values (as defined in CELLELEMENTS 418) in the',
-      syntax: '',
+    syntax: '',
+    description: {
+      en: 'Evaluated cases of all values (as defined in CELLELEMENTS) in the',
+      de: 'Ausgewertete Fälle aller Werte (wie in CELLELELEMENTS definiert) in der',
     },
   },
   {
     name: 'TOTALCOLUMN',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'TOTALCOLUMNTABLE',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'TOTALPERCENT',
-    de: {
-      description: 'Prozentuierung aller Zellen auf das Tabellen- Gesamt-N.',
-    },
-    en: {
-      description: "Percentaging of all cells on the table's total N.",
-      syntax: '',
+    syntax: '',
+    description: {
+      en: "Percentaging of all cells on the table's total N.",
+      de: 'Prozentuierung aller Zellen auf das Tabellen- Gesamt-N.',
     },
   },
   {
     name: 'TOTALPERCSTDERR',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'TOTALROW',
-    de: {
-      description:
-        'Ausgewertete Fälle aller Werte (wie in CELLELELEMENTS 418 definiert) in der Zeile Beispiel: FRAMEELEMENTS = ABSCOLUMN ABSROW TOTALCOLUMN; Mit FRAMEELEMENTS =; CELLELEMENTS = ABSOLUTE; wird z.B. eine Tabelle erzeugt, die zwar die absoluten Häufigkeiten in den Zellen zeigt, die aber keinerlei Randverteilungen enthält.…',
-    },
-    en: {
-      description:
-        'ABSROW and ABSCOLUMN stand for rows (ROW) or columns (COLUMN) with absolute values of the cases or punches where relevant after weighting. PHYSICALROW or PHYSICALCOLUMN refer to the physical case number, i.e. without weighting. In TOTALROW or TOTALCOLUMN all the values for all the cases evaluated are printed as they have been defined in CELLELEMENTS. Example:…',
+    syntax: '',
+    description: {
+      en: 'ABSROW and ABSCOLUMN stand for rows (ROW) or columns (COLUMN) with absolute values of the cases or punches where relevant after weighting. PHYSICALROW or PHYSICALCOLUMN refer to the physical case number, i.e. without weighting. In TOTALROW or TOTALCOLUMN all the values for all the cases evaluated are printed as they have been defined in CELLELEMENTS. Example:…',
+      de: 'Ausgewertete Fälle aller Werte (wie in CELLELELEMENTS definiert) in der Zeile Beispiel: FRAMEELEMENTS = ABSCOLUMN ABSROW TOTALCOLUMN; Mit FRAMEELEMENTS =; CELLELEMENTS = ABSOLUTE; wird z.B. eine Tabelle erzeugt, die zwar die absoluten Häufigkeiten in den Zellen zeigt, die aber keinerlei Randverteilungen enthält.…',
     },
   },
   {
     name: 'TOTALROWINHG',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'TOTALSUMPERCENT',
     argsHint: '( Var )',
-    de: {
-      description:
-        'Ausgabe der Prozentuierung der Summe einer dritten Variablen auf die Gesamtsumme in der Tabelle',
-    },
-    en: {
-      description:
-        'Output of the percentaging of the sum of a third variable on the total sum in the table',
-      syntax: '',
+    syntax: '',
+    description: {
+      en: 'Output of the percentaging of the sum of a third variable on the total sum in the table',
+      de: 'Ausgabe der Prozentuierung der Summe einer dritten Variablen auf die Gesamtsumme in der Tabelle',
     },
   },
   {
     name: 'TOTALTITLE',
-    de: {
-      description: 'Bezeichnung der Totalspalte-/zeile',
-      syntax: 'TOTALTITLE [ X | Y ] = "<text>";',
-    },
-    en: {
-      description:
-        'If the standard text "Insgesamt" is to be replaced then: TOTALTITLE = Total; The TOTALTITLE can be set differently for the X or Y axes: Example: TOTALTITLE X = "Total"; TOTALTITLE Y = "Insgesamt"; This is valid for all tables until changed.',
-      syntax: 'TOTALTITLE [ X | Y ] = "<text>";',
+    syntax: 'TOTALTITLE [ X | Y ] = "<text>";',
+    description: {
+      en: 'If the standard text "Insgesamt" is to be replaced then: TOTALTITLE = Total; The TOTALTITLE can be set differently for the X or Y axes: Example: TOTALTITLE X = "Total"; TOTALTITLE Y = "Insgesamt"; This is valid for all tables until changed.',
+      de: 'Bezeichnung der Totalspalte-/zeile',
     },
   },
   {
     name: 'TRANSFERSUPPRESSEDCONTENTKEY',
-    de: {
-      description: '',
-      syntax: 'TRANSFERSUPPRESSEDCONTENTKEY = [ YES | NO ];',
-    },
-    en: {
-      description: '',
-      syntax: 'TRANSFERSUPPRESSEDCONTENTKEY = [ YES | NO ];',
+    syntax: 'TRANSFERSUPPRESSEDCONTENTKEY = [ YES | NO ];',
+    description: {
+      en: '',
+      de: '',
     },
   },
   {
     name: 'TRANSLATE',
-    de: {
-      description:
-        '| TRANSLATE |                          | <postcriptfontname> |     |     | :   | <excelfontname> |     |     |     |     |     |     | | --------- | ------------------------ | ------------------- | --- | --- | --- | --------------- | --- | --- | --- | --- | --- | --- | | [OPTION   | [BOLD|ITALIC|UNDERLINE]] |                     |     |     |     |                 |     |     |     |     |     |…',
-      syntax:
-        'TRANSLATE <postcriptfontname> : <excelfontname>\n[OPTION [BOLD|ITALIC|UNDERLINE]]',
-    },
-    en: {
-      description:
-        '| TRANSLATE |                          | <postcriptfontname> |     |     | :   | <excelfontname> |     |     |     |     |     |     | | --------- | ------------------------ | ------------------- | --- | --- | --- | --------------- | --- | --- | --- | --- | --- | --- | | [OPTION   | [BOLD|ITALIC|UNDERLINE]] |                     |     |     |     |                 |     |     |     |     |     |…',
-      syntax:
-        'TRANSLATE <postcriptfontname> : <excelfontname>\n[OPTION [BOLD|ITALIC|UNDERLINE]]',
+    syntax:
+      'TRANSLATE <postcriptfontname> : <excelfontname>\n[OPTION [BOLD|ITALIC|UNDERLINE]]',
+    description: {
+      en: '',
+      de: '',
     },
   },
   {
     name: 'TRIANGLE1',
-    de: {
-      description:
-        'Skalenwert mit einem Dreieck markieren (auf der Basis stehend)',
-    },
-    en: {
-      description:
-        'Mark the scale value with a triangle (standing on its base)',
-      syntax: '',
+    syntax: '',
+    description: {
+      en: 'Mark the scale value with a triangle (standing on its base)',
+      de: 'Skalenwert mit einem Dreieck markieren (auf der Basis stehend)',
     },
   },
   {
     name: 'TRIANGLE1O',
-    de: { description: 'Dreieck (auf der Basis stehend) als Outline' },
-    en: {
-      description: 'Triangle (standing on its base) as outline',
-      syntax: '',
+    syntax: '',
+    description: {
+      en: 'Triangle (standing on its base) as outline',
+      de: 'Dreieck (auf der Basis stehend) als Outline',
     },
   },
   {
     name: 'TRIANGLE2',
-    de: {
-      description:
-        'Skalenwert mit einem Dreieck markieren (auf der Spitze stehend)',
-    },
-    en: {
-      description:
-        'Mark the scale value with a triangle (standing on its point)',
-      syntax: '',
+    syntax: '',
+    description: {
+      en: 'Mark the scale value with a triangle (standing on its point)',
+      de: 'Skalenwert mit einem Dreieck markieren (auf der Spitze stehend)',
     },
   },
   {
     name: 'TRIANGLE2O',
-    de: { description: 'Dreieck (auf der Spitze stehend) als Outline' },
-    en: {
-      description: 'Triangle (standing on its point) as outline',
-      syntax: '',
+    syntax: '',
+    description: {
+      en: 'Triangle (standing on its point) as outline',
+      de: 'Dreieck (auf der Spitze stehend) als Outline',
     },
   },
   {
     name: 'TRIMSTRINGS',
-    de: { description: '', syntax: 'TRIMSTRINGS = [ YES | NO ];' },
-    en: { description: '', syntax: 'TRIMSTRINGS = [ YES | NO ];' },
+    syntax: 'TRIMSTRINGS = [ YES | NO ];',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'TROWTEST',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'TRUNC',
-    de: {
-      description:
-        'Vor der Berechnung werden beide Argumente mittels TRUNC in Ganze Werte gewandelt. D.h.',
-    },
-    en: {
-      description:
-        'Before the calculation, both arguments are converted to whole numbers via TRUNC. That is,',
-      syntax: '',
+    syntax: '',
+    description: {
+      en: 'Before the calculation, both arguments are converted to whole numbers via TRUNC.',
+      de: 'Vor der Berechnung werden beide Argumente mittels TRUNC in Ganze Werte gewandelt. D.h.',
     },
   },
   {
     name: 'TRUNCATEDECIMALS',
-    de: {
-      description: '',
-      syntax: 'TRUNCATEDECIMALS <varlist> = <number>;\n<number> ::= -9 .. 9;',
-    },
-    en: {
-      description: '',
-      syntax: 'TRUNCATEDECIMALS <varlist> = <number>;\n<number> ::= -9 .. 9;',
+    syntax: 'TRUNCATEDECIMALS <varlist> = <number>;\n<number> ::= -9 .. 9;',
+    description: {
+      en: '',
+      de: '',
     },
   },
   {
     name: 'TRYCOUNT',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'TRYCOUNTCODE',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'TTEST',
-    de: {
-      description:
-        'Unabhängiger t-Test auf Mittelwertunterschiede auf Basis der gewichteten Daten, spaltenweise Name Beschreibung',
-    },
-    en: {
-      description:
-        'Independent t-test (per column) MEANTEST ROWMEANTEST Printing of mean value and t-test per column in one Printing of mean value and t-test per row in one cell. cell.',
-      syntax: 'TTEST = [ INDEPENDENT ]\nTTESTINDEX <number>',
+    syntax: 'TTEST = [ INDEPENDENT ]\nTTESTINDEX <number>',
+    description: {
+      en: 'Independent t-test (per column) MEANTEST ROWMEANTEST Printing of mean value and t-test per column in one Printing of mean value and t-test per row in one cell. cell.',
+      de: 'Unabhängiger t-Test auf Mittelwertunterschiede auf Basis der gewichteten Daten, spaltenweise',
     },
   },
   {
     name: 'TTESTABSMIN',
-    de: {
-      description: '',
-      syntax: 'TTESTABSMIN = <number>;\nTTESTPHYSMIN = <number>;',
-    },
-    en: {
-      description: '',
-      syntax: 'TTESTABSMIN = <number>;\nTTESTPHYSMIN = <number>;',
+    syntax: 'TTESTABSMIN = <number>;\nTTESTPHYSMIN = <number>;',
+    description: {
+      en: '',
+      de: '',
     },
   },
   {
     name: 'TTESTCUT',
     argsHint: '( Var )',
-    de: {
-      description:
-        'Unabhängiger t-Test auf Mittelwertsunterschiede, berechnet auf Basis der Datenreduktion wie bei MEANCUT 423',
-    },
-    en: {
-      description:
-        'Independent t-test on mean differences, computed on the basis of the data reduction as with MEANCUT 423',
-      syntax: '',
+    syntax: '',
+    description: {
+      en: 'Independent t-test on mean differences, computed on the basis of the data reduction as with MEANCUT',
+      de: 'Unabhängiger t-Test auf Mittelwertsunterschiede, berechnet auf Basis der Datenreduktion wie bei MEANCUT',
     },
   },
   {
     name: 'TTESTGREATERCHAR',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'TTESTHEADERS',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'TTESTINCOMPARE',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'TTESTINDEX',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'TTESTLESSCHAR',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'TTESTPHYSMIN',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'TWOCAMEMBERTS',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'UNDEFINED',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'UNDERLINE',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'UNITS',
-    de: { description: '', syntax: 'UNITS = [ MM | POINTS | INCH ];' },
-    en: { description: '', syntax: 'UNITS = [ MM | POINTS | INCH ];' },
+    syntax: 'UNITS = [ MM | POINTS | INCH ];',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'UNIXTIME',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'UPDATEINVERT',
-    de: { description: '', syntax: 'UPDATEINVERT;' },
-    en: { description: '', syntax: 'UPDATEINVERT;' },
+    syntax: 'UPDATEINVERT;',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'UPPERCASE',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'USE',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'USE3D',
-    de: { description: '', syntax: 'USE3D : [YES | NO]' },
-    en: { description: '', syntax: 'USE3D : [YES | NO]' },
+    syntax: 'USE3D : [YES | NO]',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'USECASES',
-    de: {
-      description: '',
-      syntax:
-        'USECASES = [ ANYCASE | XANDYVALID | XORYVALID | XVALID | YVALID ] ;',
-    },
-    en: {
-      description:
-        'USECASES controls the treatment of MISSING values in cross tables. Usually the rows and columns of cross tables are suppressed if either no VALUELABEL has been defined or if the relevant characteristic in a MISSING command has been declared a MISSING value, or if a characteristic is recognised as a MISSING value due to explicit coding (see MISSINGCHAR).…',
-      syntax:
-        'USECASES = [ ANYCASE | XANDYVALID | XORYVALID | XVALID | YVALID ] ;',
+    syntax:
+      'USECASES = [ ANYCASE | XANDYVALID | XORYVALID | XVALID | YVALID ] ;',
+    description: {
+      en: 'USECASES controls the treatment of MISSING values in cross tables. Usually the rows and columns of cross tables are suppressed if either no VALUELABEL has been defined or if the relevant characteristic in a MISSING command has been declared a MISSING value, or if a characteristic is recognised as a MISSING value due to explicit coding (see MISSINGCHAR).…',
+      de: '',
     },
   },
   {
     name: 'USECOLMAPFILE',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'USEEPS',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'USEFILTER',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'USEFONT',
-    de: {
-      description:
-        'Der zu verwendende Font LEFT | RIGHT | HCENTER Horizontale Ausrichtung des Textes TOP | BOTTOM | VCENTER Vertikale Ausrichtung des Textes Jede dieser Optionen hat eine eigene Syntax: Nach einer USEFONT-Option z.B. müssen Name und Größe eines gültigen Fonts stehen, nach dem Schlüsselwort LINEWIDTH muss zwingend eine Zahl stehen usw..…',
-      syntax:
-        'USEFONT <Zielname> = <Fontname> SIZE <number>; (PS)\nUSEFONT <Zielname> = <Fontname>; (Non-PS)',
-    },
-    en: {
-      description:
-        'The font to be used. LEFT | RIGHT | HCENTER horizontal alignment of the text. TOP | BOTTOM | VCENTER vertical alignment of the text. Each of these options has its own syntax: after a USEFONT option, for example, the name and size of a valid font must follow; after the keyword LINEWIDTH a number must necessarily follow, etc.…',
-      syntax:
-        'USEFONT <targetname> = <fontname> SIZE <number>; (PS)\nUSEFONT <targetname> = <fontname>; (Non-PS)',
+    syntax:
+      'USEFONT <targetname> = <fontname> SIZE <number>; (PS)\nUSEFONT <targetname> = <fontname>; (Non-PS)',
+    description: {
+      en: 'The font to be used. LEFT | RIGHT | HCENTER horizontal alignment of the text. TOP | BOTTOM | VCENTER vertical alignment of the text. Each of these options has its own syntax: after a USEFONT option, for example, the name and size of a valid font must follow; after the keyword LINEWIDTH a number must necessarily follow, etc.…',
+      de: 'Der zu verwendende Font LEFT | RIGHT | HCENTER Horizontale Ausrichtung des Textes TOP | BOTTOM | VCENTER Vertikale Ausrichtung des Textes Jede dieser Optionen hat eine eigene Syntax: Nach einer USEFONT-Option z.B. müssen Name und Größe eines gültigen Fonts stehen, nach dem Schlüsselwort LINEWIDTH muss zwingend eine Zahl stehen usw..…',
     },
   },
   {
     name: 'USEFORMATINHG',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'USELABELS',
-    de: {
-      description:
-        "unterdrückt Werte von '<code>', denen kein Labeltext entspricht",
-    },
-    en: {
-      description:
-        'Using COPYLABELS and USELABELS variables can be allocated the VALUELABELS of other variables.',
+    syntax: '',
+    description: {
+      en: 'Using COPYLABELS and USELABELS variables can be allocated the VALUELABELS of other variables.',
+      de: "unterdrückt Werte von '<code>', denen kein Labeltext entspricht",
     },
   },
   {
     name: 'USEMISSING',
-    de: {
-      description: '',
-      syntax:
-        'USEMISSING = [ YES | NO ];\nVoreinstellung: USEMISSING = NO;\nDurch USEMISSING = YES; kann für alle folgenden Tabellen die Auswertung auch der',
-    },
-    en: {
-      description:
-        'steers the evaluation of MISSING characteristics in TABLE and COMPARE. USEMISSING = NO; is the preset; using USEMISSING = YES; the MISSING values can be called up for the evaluation of the following tables.',
-      syntax:
-        'USEMISSING = [ YES | NO ];\nDefault: USEMISSING = NO;\nWith USEMISSING = YES; the evaluation of the missing values as well can be enabled for all following tables',
+    syntax:
+      'USEMISSING = [ YES | NO ];\nDefault: USEMISSING = NO;\nWith USEMISSING = YES; the evaluation of the missing values as well can be enabled for all following tables',
+    description: {
+      en: 'steers the evaluation of MISSING characteristics in TABLE and COMPARE. USEMISSING = NO; is the preset; using USEMISSING = YES; the MISSING values can be called up for the evaluation of the following tables.',
+      de: '',
     },
   },
   {
     name: 'USEOPENASCODE',
-    de: {
-      description: '',
-      syntax:
-        'USEOPENASCODE <varlist> = [ YES | NO ];\nSteht dieser Schalter auf YES, dann wird versucht, die offene Antwort für die in <varlist>',
-    },
-    en: {
-      description: '',
-      syntax:
-        'USEOPENASCODE <varlist> = [ YES | NO ];\nIf this switch is set to YES, an attempt is made to use the open answer for the variables in <varlist>',
+    syntax:
+      'USEOPENASCODE <varlist> = [ YES | NO ];\nIf this switch is set to YES, an attempt is made to use the open answer for the variables in <varlist>',
+    description: {
+      en: '',
+      de: '',
     },
   },
   {
     name: 'USEPOSTSCRIPTALIGN',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'USEPOSTSCRIPTCOLORS',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'USEPOSTSCRIPTFONT',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'USEPRINTERCOLORS',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'USERAWSFORSTATS',
-    en: { description: '', syntax: 'USERAWSFORSTATS = [ YES | NO ] ;' },
+    syntax: 'USERAWSFORSTATS = [ YES | NO ] ;',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'USESCASES',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'USESELECT',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'USEVARIABLES',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'USEVARTITLE',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'USEVISIBLEDIGITSNONLY',
-    de: { description: '', syntax: 'USEVISIBLEDIGITSNONLY = [ YES | NO ];' },
-    en: { description: '', syntax: 'USEVISIBLEDIGITSNONLY = [ YES | NO ];' },
+    syntax: 'USEVISIBLEDIGITSNONLY = [ YES | NO ];',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'USEVISIBLEDIGITSONLY',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'USEWEIGHT',
-    de: { description: '', syntax: 'USEWEIGHT = [ YES | NO | <varname> ] ;' },
-    en: { description: '', syntax: 'USEWEIGHT = [ YES | NO | <varname> ] ;' },
+    syntax: 'USEWEIGHT = [ YES | NO | <varname> ] ;',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'UTF16BE',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'UTF16LE',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'UTF8',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'VALID',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'VALIDN',
-    de: {
-      description:
-        "Zahl der Fälle, für die ein gültiger Wert der '<bestehende_variable>' gefunden wurde",
-    },
-    en: {
-      description:
-        "Number of cases for which a valid value of '<existing_variable>' was found",
-      syntax: '',
+    syntax: '',
+    description: {
+      en: "Number of cases for which a valid value of '<existing_variable>' was found",
+      de: "Zahl der Fälle, für die ein gültiger Wert der '<bestehende_variable>' gefunden wurde",
     },
   },
   {
     name: 'VALIDPHYS',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'VALUE',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'VALUELABEL',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'VALUELABELS',
-    de: {
-      description:
-        'ein Fehler ausgegeben, wenn man Syntaxvarianten ohne explizite Variablennennung benutzt. Zum Beispiel: COMPUTE f222 = Q17_1; VARTITLE = "ehemals Q17_1"; Das \'=\' hinter VARTITLE würde die Fehlermeldung auslösen. Zum Hintergrund: Anweisungen wie z.B. RECODE 7:88 = 4;stehen oft nach einem COMPUTE, das die zu rekodierende Variable erzeugen soll.…',
-      syntax:
-        'VALUELABELS <VarList> =\n{<number> "Text"}*n\n;\nLABELS <VarList> =\n{<number> "Text"}*n\n;',
-    },
-    en: {
-      description:
-        'an error is output if you use syntax variants without an explicit variable name. For example: COMPUTE f222 = Q17_1; VARTITLE = "formerly Q17_1"; The \'=\' after VARTITLE would trigger the error message. Background: instructions such as RECODE 7:88 = 4; often come after a COMPUTE that is meant to create the variable to be recoded.…',
-      syntax:
-        'VALUELABELS <VarList> = [ ADD ]\n{ LabelEntry }*n ;\nLabelEntry ::=\n[<number> "String" | OVERCODE [ SUM ] [<name>] { <number> [ :<number>\n] }*n "String" ] [ LabelOption ]\nLabelOption ::=',
+    syntax:
+      'VALUELABELS <VarList> = [ ADD ]\n{ LabelEntry }*n ;\nLabelEntry ::=\n[<number> "String" | OVERCODE [ SUM ] [<name>] { <number> [ :<number>\n] }*n "String" ] [ LabelOption ]\nLabelOption ::=',
+    description: {
+      en: 'an error is output if you use syntax variants without an explicit variable name. For example: COMPUTE f222 = Q17_1; VARTITLE = "formerly Q17_1"; The \'=\' after VARTITLE would trigger the error message. Background: instructions such as RECODE 7:88 = 4; often come after a COMPUTE that is meant to create the variable to be recoded.…',
+      de: 'ein Fehler ausgegeben, wenn man Syntaxvarianten ohne explizite Variablennennung benutzt. Zum Beispiel: COMPUTE f222 = Q17_1; VARTITLE = "ehemals Q17_1"; Das \'=\' hinter VARTITLE würde die Fehlermeldung auslösen. Zum Hintergrund: Anweisungen wie z.B. RECODE 7:88 = 4;stehen oft nach einem COMPUTE, das die zu rekodierende Variable erzeugen soll.…',
     },
   },
   {
     name: 'VALUELABELS AS',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'VALUELABELS COPY',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'VARFAMILY',
-    de: {
-      description: '',
-      syntax:
-        'VARFAMILY = <varlist>;\n"<varlist>" ist eine Liste von atomaren Variablen.',
-    },
-    en: {
-      description:
-        'A family is a group of variables with a shared amount of characteristics, e.g. the first, second and third response to a question. These variables can be made into a VARFAMILY which is evaluated instead of the individual variables. Example: VARFAMILY item = item1 TO item4; TABLE = item BY alter; The VARFAMILY automatically has the same VALUELABELs as the first variable used in it.…',
-      syntax:
-        'VARFAMILY = <varlist>;\n"<varlist>" is a list of atomic variables.',
+    syntax:
+      'VARFAMILY = <varlist>;\n"<varlist>" is a list of atomic variables.',
+    description: {
+      en: 'A family is a group of variables with a shared amount of characteristics, e.g. the first, second and third response to a question. These variables can be made into a VARFAMILY which is evaluated instead of the individual variables. Example: VARFAMILY item = item1 TO item4; TABLE = item BY alter; The VARFAMILY automatically has the same VALUELABELs as the first variable used in it.…',
+      de: '',
     },
   },
   {
     name: 'VARGROUP',
-    de: {
-      description: '',
-      syntax:
-        'VARGROUP <name> = ( <varlist> ) EQ <valuelist>;\n<varlist> ::= Liste von atomaren Variablen\n<valuelist> ::= Liste von Einzelwerten',
-    },
-    en: {
-      description:
-        'defines a group of variables which are to be evaluated together. Usually VARGROUP is used to group individual variables which build a 0/1 group of multi-responses together. Example: VARGROUP Items = ( item.1 item.2 item.3 item.4 ) EQ 1; In front of the equals sign there is the name of the variable group.…',
-      syntax:
-        'VARGROUP <name> = ( <varlist> ) EQ <valuelist>;\n<varlist> ::= list of atomic variables\n<valuelist> ::= list of individual values',
+    syntax:
+      'VARGROUP <name> = ( <varlist> ) EQ <valuelist>;\n<varlist> ::= list of atomic variables\n<valuelist> ::= list of individual values',
+    description: {
+      en: 'defines a group of variables which are to be evaluated together. Usually VARGROUP is used to group individual variables which build a 0/1 group of multi-responses together. Example: VARGROUP Items = ( item.1 item.2 item.3 item.4 ) EQ 1; In front of the equals sign there is the name of the variable group.…',
+      de: '',
     },
   },
   {
     name: 'VARIABLE',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'VARIABLES',
-    de: {
-      description: '',
-      syntax:
-        'VARIABLES <varname><varnumberstart> TO <varname><varnumberend>\n= [ start | * ] [width];',
-    },
-    en: {
-      description:
-        'Using the VARIABLES statement a series of variables can be generated which are stored together in the data set:',
-      syntax:
-        'VARIABLES <varname><varnumberstart> TO <varname><varnumberend> = [\nstart | * ] [width];',
+    syntax:
+      'VARIABLES <varname><varnumberstart> TO <varname><varnumberend> = [\nstart | * ] [width];',
+    description: {
+      en: 'Using the VARIABLES statement a series of variables can be generated which are stored together in the data set:',
+      de: '',
     },
   },
   {
     name: 'VARIANCE',
-    de: { description: '', syntax: 'VARIANCE <varname> = <varlist>;' },
-    en: { description: '', syntax: 'VARIANCE <varname> = <varlist>;' },
+    syntax: 'VARIANCE <varname> = <varlist>;',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'VARIATION',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'VARKEY',
-    de: { description: '', syntax: 'VARKEY <varname> = <key>;' },
-    en: { description: '', syntax: 'VARKEY <varname> = <key>;' },
+    syntax: 'VARKEY <varname> = <key>;',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'VARLABELS',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'VARLIST',
-    de: { description: '', syntax: 'VARLIST = <dateipfad> QST;' },
-    en: { description: '', syntax: 'VARLIST = <filepath> QST;' },
+    syntax: 'VARLIST = <filepath> QST;',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'VARNAME',
-    en: {
-      description:
-        'defines a variable and its position in the DATAFILE if necessary in the COPYFILE or also in the COLBININFILE. If a variable in a particular "row" is to be referred to then it is preceded by the key word CARD or COLBININCARD (see below). Example: VARNAME = Alter 101 1; Age is coded in column 101, length = 1. Example: CARD = 3; VARNAME = ITEM37 44 2; ITEM37 is coded in column 44-45 of card 3.…',
+    syntax: '',
+    description: {
+      en: 'defines a variable and its position in the DATAFILE if necessary in the COPYFILE or also in the COLBININFILE. If a variable in a particular "row" is to be referred to then it is preceded by the key word CARD or COLBININCARD (see below). Example: VARNAME = Alter 101 1; Age is coded in column 101, length = 1. Example: CARD = 3; VARNAME = ITEM37 44 2; ITEM37 is coded in column 44-45 of card 3.…',
+      de: '',
     },
   },
   {
     name: 'VARNAMEXINHG',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'VARNAMEYINHG',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'VARSTOCASES',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'VARTEXT',
-    de: {
-      description:
-        'Variablentext 209, typischerweise der Frage- oder Erläuterungstext Wird üblicherweise mit einer CITE[...]-Anweisung im TOPTEXT 516 angefordert (siehe Anzeige von Variablentexten 523).',
-      syntax: 'VARTEXT [<VarList>] = "text";\nTEXT [<VarList>] = "text";',
-    },
-    en: {
-      description:
-        'Variable text 209, typically the question or explanation text. Usually requested with a CITE[...] instruction in the TOPTEXT 516 (see Display of variable texts 523).',
-      syntax: 'VARTEXT <VarList> = "text text ";',
+    syntax: 'VARTEXT <VarList> = "text text ";',
+    description: {
+      en: 'Variable text 209, typically the question or explanation text. Usually requested with a CITE[...] instruction in the TOPTEXT (see Display of variable texts 523).',
+      de: 'Variablentext 209, typischerweise der Frage- oder Erläuterungstext Wird üblicherweise mit einer CITE[...]-Anweisung im TOPTEXT angefordert (siehe Anzeige von Variablentexten 523).',
     },
   },
   {
     name: 'VARTITLE',
-    de: {
-      description:
-        'schreibt den VARTITLE vor den Labeltext Beispiel: TABSELECTBYCODE VARTITLE buland( 1 ) ; In diesem fall wird in der Selektionsbeschreibung vor dem Labeltext der VARTITLE ausgegeben.',
-      syntax: 'VARTITLE [<VarList>] = "text";\nTITLE [<VarList>] = "text";',
-    },
-    en: {
-      description:
-        'writes the VARTITLE in front of the label text. Example: TABSELECTBYCODE VARTITLE buland( 1 ) ; In this case the VARTITLE is output in front of the label text in the selection description.',
-      syntax: 'VARTITLE <VarList> = "String";',
+    syntax: 'VARTITLE <VarList> = "String";',
+    description: {
+      en: 'writes the VARTITLE in front of the label text. Example: TABSELECTBYCODE VARTITLE buland( 1 ) ; In this case the VARTITLE is output in front of the label text in the selection description.',
+      de: 'schreibt den VARTITLE vor den Labeltext Beispiel: TABSELECTBYCODE VARTITLE buland( 1 ) ; In diesem fall wird in der Selektionsbeschreibung vor dem Labeltext der VARTITLE ausgegeben.',
     },
   },
   {
     name: 'VARTITLE X',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'VARTITLE Y',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'VCENTER',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'VERBOSELOG',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'VERTICAL',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'VERTICALALIGN',
-    de: {
-      description: '',
-      syntax:
-        'VERTICALALIGN <boxtype> : [TOP|VCENTER|BOTTOM]\nHORIZONTALALIGN <boxtype> : [LEFT|HCENTER|RIGHT]',
-    },
-    en: {
-      description: '',
-      syntax:
-        'VERTICALALIGN <boxtype> : [TOP|VCENTER|BOTTOM]\nHORIZONTALALIGN <boxtype> : [LEFT|HCENTER|RIGHT]',
+    syntax:
+      'VERTICALALIGN <boxtype> : [TOP|VCENTER|BOTTOM]\nHORIZONTALALIGN <boxtype> : [LEFT|HCENTER|RIGHT]',
+    description: {
+      en: '',
+      de: '',
     },
   },
   {
     name: 'VIA',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'VIRGINSTART',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'VOTECOUNTS',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'VOTES',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'VT420TENOVIS',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'WEEKOFYEAR',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'WEIGHT',
-    de: {
-      description: '',
-      syntax: 'WEIGHT = <startcolumn> <width>;\nWEIGHT = <variablenname>;',
-    },
-    en: {
-      description:
-        'discloses where an externally calculated weight is in the data set: Example: WEIGHT = 62 6; (weight is in column 62, Len=6) Alternatively a known variable can be named: ... COMPUTE gewicht = ( a + c ) * 0.1; WEIGHT = Gewicht; ... Here it should be noted that the command WEIGHT= is carried out in the RunTime-Module directly before the case is fed into the tables i.e.…',
-      syntax: 'WEIGHT = <startcolumn> <width>;\nWEIGHT = <variable name>;',
+    syntax: 'WEIGHT = <startcolumn> <width>;\nWEIGHT = <variable name>;',
+    description: {
+      en: 'discloses where an externally calculated weight is in the data set: Example: WEIGHT = 62 6; (weight is in column 62, Len=6) Alternatively a known variable can be named: ... COMPUTE gewicht = ( a + c ) * 0.1; WEIGHT = Gewicht; ... Here it should be noted that the command WEIGHT= is carried out in the RunTime-Module directly before the case is fed into the tables i.e.…',
+      de: '',
     },
   },
   {
     name: 'WEIGHTACCURACY',
-    de: { description: '', syntax: 'WEIGHTACCURACY = <number>;' },
-    en: {
-      description:
-        'Defines the accuracy bound up to which iteration should occur. WEIGHTACCURACY is the natural logarithm of the maximum deviance of a weighting cell from the prerequisite as factor. Preset: WEIGHTACCURACY = 0.0001;',
-      syntax: 'WEIGHTACCURACY = <number>;',
+    syntax: 'WEIGHTACCURACY = <number>;',
+    description: {
+      en: 'Defines the accuracy bound up to which iteration should occur. WEIGHTACCURACY is the natural logarithm of the maximum deviance of a weighting cell from the prerequisite as factor. Preset: WEIGHTACCURACY = 0.0001;',
+      de: '',
     },
   },
   {
     name: 'WEIGHTCELLS',
-    de: {
-      description: '',
-      syntax:
-        'WEIGHTCELLS [ AUTOALIGN ] <varname> = { <code> : <sollwert> % }*n\n[ MISSING : <code> : <sollwert> %]\n;',
-    },
-    en: {
-      description:
-        'Requests weighting according to the variable characteristics. As soon as at least one WEIGHTCELLS statement is found in the source text the program carries out an additional reading run of the data in which the weight factors are calculated. If there are more than one WEIGHTCELLS statement present iterative weighting continues until all the weighting conditions have been fulfilled.…',
-      syntax:
-        'WEIGHTCELLS [ AUTOALIGN ] <varname> =\n{ <code> : <sollwert> % }*n\n[ MISSING : <code> : <sollwert> %\n;',
+    syntax:
+      'WEIGHTCELLS [ AUTOALIGN ] <varname> =\n{ <code> : <targetvalue> % }*n\n[ MISSING : <code> : <targetvalue> %\n;',
+    description: {
+      en: 'Requests weighting according to the variable characteristics. As soon as at least one WEIGHTCELLS statement is found in the source text the program carries out an additional reading run of the data in which the weight factors are calculated. If there are more than one WEIGHTCELLS statement present iterative weighting continues until all the weighting conditions have been fulfilled.…',
+      de: '',
     },
   },
   {
     name: 'WEIGHTEND',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'WEIGHTOUT',
-    de: { description: '', syntax: 'WEIGHTOUT = <startcolumn> <width>;' },
-    en: {
-      description:
-        'defines where a newly calculated weight is to be stored in the outfile. Syntax as above. Example: WEIGHTOUT = 68 6;',
-      syntax: 'WEIGHTOUT = <startcolumn> <width>;',
+    syntax: 'WEIGHTOUT = <startcolumn> <width>;',
+    description: {
+      en: 'defines where a newly calculated weight is to be stored in the outfile. Syntax as above. Example: WEIGHTOUT = 68 6;',
+      de: '',
     },
   },
   {
     name: 'WEIGHTSUM',
-    de: { description: '', syntax: 'WEIGHTSUM = <number>;' },
-    en: {
-      description:
-        'States the desired sum of the weights to be calculated. Normally weighting occurs to the number of the cases physically read.',
-      syntax: 'WEIGHTSUM = <number>;',
+    syntax: 'WEIGHTSUM = <number>;',
+    description: {
+      en: 'States the desired sum of the weights to be calculated. Normally weighting occurs to the number of the cases physically read.',
+      de: '',
     },
   },
   {
     name: 'WELCHTEST',
-    de: {
-      description:
-        'Unabhängiger t-Test auf Mittelwerteunterschiede nach Welch 450 auf Basis der gewichteten Daten',
-    },
-    en: {
-      description:
-        'Independent t-test on mean differences per Welch 450 on the basis of the weighted data',
-      syntax: '',
+    syntax: '',
+    description: {
+      en: 'Independent t-test on mean differences per Welch on the basis of the weighted data',
+      de: 'Unabhängiger t-Test auf Mittelwerteunterschiede nach Welch auf Basis der gewichteten Daten',
     },
   },
   {
     name: 'WHILEBLOCK',
-    de: { description: '', syntax: 'WHILEBLOCK <bedingung> DO' },
-    en: { description: '', syntax: 'WHILEBLOCK <condition> DO' },
+    syntax: 'WHILEBLOCK <condition> DO',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'WHILEBLOCK DO',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'WHITELIST',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'WHITENUMBERS',
-    de: {
-      description:
-        '= | FORM LINE FORM CIRCLE SYMBOLSIZE 12 ROWS 1:11 COLUMNS 1:5 ; Mit folgendem Output: GESStsabsArtist-Grafik auf Basis der Mittelwerte aus der OVERVIEW-Tabelle [X]Overview Add ähnlich wie TABLE ADD 390 kann man mit OVERVIEW ADD 406 und XOVERVIEW ADD 409 die Daten aus mehreren Vorlagen einfach in eine Tabelle integrieren. Overview Add Ein Beispiel:…',
-    },
-    en: {
-      description:
-        '= | FORM LINE FORM CIRCLE SYMBOLSIZE 12 ROWS 1:11 COLUMNS 1:5 ; With the following output: GESStabs Artist graphic based on the means from the OVERVIEW table. [X]Overview Add: similar to TABLE ADD 390, with OVERVIEW ADD 406 and XOVERVIEW ADD 409 you can easily integrate the data from several templates into one table. Overview Add: an example:…',
-      syntax: '',
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
     },
   },
   {
     name: 'WIDTH',
-    de: { description: 'Die Breite der TITLEBOX' },
-    en: { description: 'The width of the TITLEBOX', syntax: '' },
+    syntax: '',
+    description: {
+      en: 'The width of the TITLEBOX',
+      de: 'Die Breite der TITLEBOX',
+    },
   },
   {
     name: 'WITH',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'WORDSPLITS',
-    de: { description: '', syntax: 'WORDSPLITS= [ <filename> | "" ];' },
-    en: { description: '', syntax: 'WORDSPLITS= [ <filename> | "" ];' },
+    syntax: 'WORDSPLITS= [ <filename> | "" ];',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'WRAPTEXT',
-    de: { description: '', syntax: 'WRAPTEXT <boxtype> : [YES|NO]' },
-    en: { description: '', syntax: 'WRAPTEXT <boxtype> : [YES|NO]' },
+    syntax: 'WRAPTEXT <boxtype> : [YES|NO]',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'WRITESIGNALFILE',
-    de: { description: '', syntax: 'WRITESIGNALFILE = [ YES | NO ];' },
-    en: { description: '', syntax: 'WRITESIGNALFILE = [ YES | NO ];' },
+    syntax: 'WRITESIGNALFILE = [ YES | NO ];',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'X',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'XANDYVALID',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'XCOLCHIQU',
-    de: {
-      description:
-        'Spaltenweise 4-Felder Chiquadrat-Test auf Prozentwertunterschiede (gewichtet und ungewichtet)',
-    },
-    en: {
-      description:
-        'Column-wise 4-field chi-square test on percentage differences (weighted and unweighted)',
-      syntax: '',
+    syntax: '',
+    description: {
+      en: 'Column-wise 4-field chi-square test on percentage differences (weighted and unweighted)',
+      de: 'Spaltenweise 4-Felder Chiquadrat-Test auf Prozentwertunterschiede (gewichtet und ungewichtet)',
     },
   },
   {
     name: 'XCOLDEPTTEST',
     argsHint: '( Var )',
-    de: {
-      description:
-        'Abhängiger t-Test auf Mittelwertsunterschiede (gewichtet und ungewichtet)',
-    },
-    en: {
-      description:
-        'Dependent t-test on mean differences (weighted and unweighted)',
-      syntax: '',
+    syntax: '',
+    description: {
+      en: 'Dependent t-test on mean differences (weighted and unweighted)',
+      de: 'Abhängiger t-Test auf Mittelwertsunterschiede (gewichtet und ungewichtet)',
     },
   },
   {
     name: 'XCOMPARE',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'XGC',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'XLABELSIGNCHARBOX',
-    de: { description: '', syntax: 'XLABELSIGNCHARBOX LABELS X : [YES|NO]' },
-    en: { description: '', syntax: 'XLABELSIGNCHARBOX LABELS X : [YES|NO]' },
+    syntax: 'XLABELSIGNCHARBOX LABELS X : [YES|NO]',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'XMCNEMAR',
-    de: {
-      description:
-        'Abhängiger Test auf Prozentwertunterschied (gewichtet und ungewichtet) nach McNemar 449',
-    },
-    en: {
-      description:
-        'Dependent test on percentage differences (weighted and unweighted) per McNemar 449',
-      syntax: '',
+    syntax: '',
+    description: {
+      en: 'Dependent test on percentage differences (weighted and unweighted) per McNemar',
+      de: 'Abhängiger Test auf Prozentwertunterschied (gewichtet und ungewichtet) nach McNemar',
     },
   },
   {
     name: 'XMEANCOLDEPT',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'XMEANTEST',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'XMEANWELCH',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'XORYVALID',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'XOVERVIEW',
-    de: {
-      description: '',
-      syntax:
-        'XOVERVIEW <tableoptions> =\n<cellelementlist>( <varlist> ) [ SORT <cellelement>\n[ DESCEND ] [ PANE <number> CODE <number> ] ] BY <kopf>;\n<varlist> ::= { <variable [ <varoption> ] }*n\n<varoption> ::=\n[ SORTCLASS <number> ]',
-    },
-    en: {
-      description: '',
-      syntax:
-        'XOVERVIEW <tableoptions> =\n<cellelementlist>( <varlist> ) [ SORT <cellelement>\n[ DESCEND ] [ PANE <number> CODE <number> ] ] BY <header>;\n<varlist> ::= { <variable [ <varoption> ] }*n\n<varoption> ::=\n[ SORTCLASS <number> ]',
+    syntax:
+      'XOVERVIEW <tableoptions> =\n<cellelementlist>( <varlist> ) [ SORT <cellelement>\n[ DESCEND ] [ PANE <number> CODE <number> ] ] BY <header>;\n<varlist> ::= { <variable [ <varoption> ] }*n\n<varoption> ::=\n[ SORTCLASS <number> ]',
+    description: {
+      en: '',
+      de: '',
     },
   },
   {
     name: 'XOVERVIEW ADD',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'XROWCHIQU',
-    de: {
-      description:
-        'Zeilenweise 4-Felder Chiquadrat-Test auf Prozentwertunterschiede (gewichtet und ungewichtet)',
-    },
-    en: {
-      description:
-        'Row-wise 4-field chi-square test on percentage differences (weighted and unweighted)',
-      syntax: '',
+    syntax: '',
+    description: {
+      en: 'Row-wise 4-field chi-square test on percentage differences (weighted and unweighted)',
+      de: 'Zeilenweise 4-Felder Chiquadrat-Test auf Prozentwertunterschiede (gewichtet und ungewichtet)',
     },
   },
   {
     name: 'XROWMEANTEST',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'XROWTTEST',
-    de: {
-      description:
-        'Zeilenweiser, unabhängiger t-Test auf Mittelwerteunterschiede (gewichtet und ungewichtet)',
-    },
-    en: {
-      description:
-        'Row-wise, independent t-test on mean differences (weighted and unweighted)',
-      syntax: '',
+    syntax: '',
+    description: {
+      en: 'Row-wise, independent t-test on mean differences (weighted and unweighted)',
+      de: 'Zeilenweiser, unabhängiger t-Test auf Mittelwerteunterschiede (gewichtet und ungewichtet)',
     },
   },
   {
     name: 'XTAB',
-    en: {
-      description:
-        'There is a further possibility of describing cross tables. This second more complicated version makes it easier to tabulate variables next to each other and if necessary to use different weights in one table.',
+    syntax: '',
+    description: {
+      en: 'There is a further possibility of describing cross tables. This second more complicated version makes it easier to tabulate variables next to each other and if necessary to use different weights in one table.',
+      de: '',
     },
   },
   {
     name: 'XTTEST',
     argsHint: '(Var )',
-    de: {
-      description:
-        'Unabhängiger t-Test auf Mittelwerteunterschiede (gewichtet und ungewichtet)',
-    },
-    en: {
-      description:
-        'Independent t-test on mean differences (weighted and unweighted)',
-      syntax: '',
+    syntax: '',
+    description: {
+      en: 'Independent t-test on mean differences (weighted and unweighted)',
+      de: 'Unabhängiger t-Test auf Mittelwerteunterschiede (gewichtet und ungewichtet)',
     },
   },
   {
     name: 'XVALID',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'XWELCHTEST',
-    de: {
-      description:
-        'Unabhängiger t-Test auf Mittelwerteunterschiede (gewichtet und ungewichtet) nach Welch 450 * zu ColPercT: ColPercTMinimum Bei der Signifikanzberechnung nach COLPERCT 428 wird die Spaltenüberlappung (kann bei Mehrfachnennungsvariablen passieren) berücksichtig.…',
-    },
-    en: {
-      description:
-        'Independent t-test on mean differences (weighted and unweighted) per Welch 450. * on ColPercT: ColPercTMinimum. In the significance calculation per COLPERCT 428, column overlap (which can happen with multiple-response variables) is taken into account.…',
-      syntax: '',
+    syntax: '',
+    description: {
+      en: 'Independent t-test on mean differences (weighted and unweighted) per Welch. * on ColPercT: ColPercTMinimum. In the significance calculation per COLPERCT, column overlap (which can happen with multiple-response variables) is taken into account.…',
+      de: 'Unabhängiger t-Test auf Mittelwerteunterschiede (gewichtet und ungewichtet) nach Welch * zu ColPercT: ColPercTMinimum Bei der Signifikanzberechnung nach COLPERCT wird die Spaltenüberlappung (kann bei Mehrfachnennungsvariablen passieren) berücksichtig.…',
     },
   },
   {
     name: 'XYPLOT',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'Y',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'YDATABOXES',
-    de: {
-      description:
-        'YDATABOXES ist eine Box, die alle DATABOXes einer Tabelle senkrecht umfasst. Sie geht auch nach oben über die FRAMECELLS und die LABELCELLS hinaus. Damit kann man über alle Elemente hinweg senkrechte Spalten schaffen, die optisch zusammen hängen DrawBox Zeichnung der Boxes',
-    },
-    en: {
-      description:
-        'YDATABOXES is a box that vertically encloses all DATABOXes of a table. It also extends upwards beyond the FRAMECELLS and the LABELCELLS. With it you can create vertical columns across all elements that visually belong together. DrawBox: drawing of the boxes',
-      syntax: '',
+    syntax: '',
+    description: {
+      en: 'YDATABOXES is a box that vertically encloses all DATABOXes of a table. It also extends upwards beyond the FRAMECELLS and the LABELCELLS. With it you can create vertical columns across all elements that visually belong together. DrawBox: drawing of the boxes',
+      de: 'YDATABOXES ist eine Box, die alle DATABOXes einer Tabelle senkrecht umfasst. Sie geht auch nach oben über die FRAMECELLS und die LABELCELLS hinaus. Damit kann man über alle Elemente hinweg senkrechte Spalten schaffen, die optisch zusammen hängen DrawBox Zeichnung der Boxes',
     },
   },
   {
     name: 'YDATABOXES X',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'YES',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'YSIGNIFINFRONT',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'YVALID',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'ZEROBASED',
-    de: { description: 'Die Skala soll immer den Nullpunkt enthalten' },
-    en: {
-      description: 'The scale should always contain the zero point',
-      syntax: '',
+    syntax: '',
+    description: {
+      en: 'The scale should always contain the zero point',
+      de: 'Die Skala soll immer den Nullpunkt enthalten',
     },
   },
   {
     name: 'ZERODASHCHAR',
-    de: { description: '', syntax: 'ZERODASHCHAR = "<char>";' },
-    en: { description: '', syntax: 'ZERODASHCHAR = "<char>";' },
+    syntax: 'ZERODASHCHAR = "<char>";',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'ZEROMISSING',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'ZIPINVERTOUT',
-    de: { description: '', syntax: 'ZIPINVERTOUT = [ YES | NO ];' },
-    en: { description: '', syntax: 'ZIPINVERTOUT = [ YES | NO ];' },
+    syntax: 'ZIPINVERTOUT = [ YES | NO ];',
+    description: {
+      en: '',
+      de: '',
+    },
   },
   {
     name: 'ZONEINPUT',
-    de: {
-      description: '',
-      syntax:
-        'ZONEINPUT <varname> = [ MEAN | SUM | COUNT | MIN | MAX ]\n<start> <zonewidth> <end>\n<varoffset> <varwidth>\n{ SELECT <offset> <string> } *n ;',
-    },
-    en: {
-      description: '',
-      syntax:
-        'ZONEINPUT <varname> = [ MEAN | SUM | COUNT | MIN | MAX ]\n<start> <zonewidth> <end>\n<varoffset> <varwidth>\n{ SELECT <offset> <string> } *n ;',
+    syntax:
+      'ZONEINPUT <varname> = [ MEAN | SUM | COUNT | MIN | MAX ]\n<start> <zonewidth> <end>\n<varoffset> <varwidth>\n{ SELECT <offset> <string> } *n ;',
+    description: {
+      en: '',
+      de: '',
     },
   },
   {
     name: 'ZRANGE',
     argsHint: '( Var )',
-    de: {
-      description:
-        'Ausgabe des zentralen Bereichs einer Variablen, Mittelwert +/- Streuung * ZVALUE. Mit ZVALUE kann man diesen Faktor frei wählen, z.B. ZVALUE = 1.0; Voreinstellung: ZVALUE = 0.967; (2/3-Range um Mittelwert) * und **: Beide CELLELEMENTS reagieren auf den Schalter BINOMIALPERCENTRANGE: Exkurs: BiNomialPercentRange',
-    },
-    en: {
-      description:
-        'Output of the central range of a variable, mean +/- dispersion * ZVALUE. With ZVALUE you can freely choose this factor, e.g. ZVALUE = 1.0; Default: ZVALUE = 0.967; (2/3 range around the mean). * and **: both CELLELEMENTS respond to the switch BINOMIALPERCENTRANGE. Digression: BiNomialPercentRange',
-      syntax: '',
+    syntax: '',
+    description: {
+      en: 'Output of the central range of a variable, mean +/- dispersion * ZVALUE. With ZVALUE you can freely choose this factor, e.g. ZVALUE = 1.0; Default: ZVALUE = 0.967; (2/3 range around the mean). * and **: both CELLELEMENTS respond to the switch BINOMIALPERCENTRANGE. Digression: BiNomialPercentRange',
+      de: 'Ausgabe des zentralen Bereichs einer Variablen, Mittelwert +/- Streuung * ZVALUE. Mit ZVALUE kann man diesen Faktor frei wählen, z.B. ZVALUE = 1.0; Voreinstellung: ZVALUE = 0.967; (2/3-Range um Mittelwert) * und **: Beide CELLELEMENTS reagieren auf den Schalter BINOMIALPERCENTRANGE: Exkurs: BiNomialPercentRange',
     },
   },
   {
     name: 'ZVALUE',
-    de: { description: '', syntax: '' },
-    en: { description: '', syntax: '' },
+    syntax: '',
+    description: {
+      en: '',
+      de: '',
+    },
   },
 ];

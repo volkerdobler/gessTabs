@@ -3,8 +3,10 @@
 // The GESStabs manuals are moving online and will not be re-extracted, so
 // the keyword database (formerly src/keywordDatabase.<lang>.ts, one file
 // per language) was collapsed into a single hand-maintained
-// src/keywordData.ts (one nested { name, argsHint?, de?, en? } entry per
-// keyword) and is edited directly from there on. The `extract-keywords`
+// src/keywordData.ts (one { name, argsHint?, syntax, description } entry
+// per keyword, `description` being a per-language { de, en } map, every
+// string possibly '') and is edited directly from there on. The
+// `extract-keywords`
 // npm script and the src/keywordDatabaseOverrides.<lang>.ts files were
 // removed at the same time.
 //
@@ -321,7 +323,9 @@ function mergeEntries(candidates: KeywordEntry[]): KeywordEntry[] {
     });
   });
 
-  return Array.from(byKey.values()).sort((a, b) => a.name.localeCompare(b.name));
+  return Array.from(byKey.values()).sort((a, b) =>
+    a.name.localeCompare(b.name)
+  );
 }
 
 function serialize(entries: KeywordEntry[], language: string): string {
@@ -394,7 +398,10 @@ const GERMAN_CONFIG: LanguageConfig = {
         skip.add(j);
         j += 1;
       }
-      if (lines[j] !== undefined && /^.{1,80}\s\d{1,4}$/.test(lines[j].trim())) {
+      if (
+        lines[j] !== undefined &&
+        /^.{1,80}\s\d{1,4}$/.test(lines[j].trim())
+      ) {
         skip.add(j);
       }
     }

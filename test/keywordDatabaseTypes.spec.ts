@@ -55,7 +55,9 @@ describe('resolveKeywordLanguage', () => {
     expect(resolveKeywordLanguage('auto', 'fr')).to.equal(
       DEFAULT_KEYWORD_LANGUAGE
     );
-    expect(resolveKeywordLanguage('auto', '')).to.equal(DEFAULT_KEYWORD_LANGUAGE);
+    expect(resolveKeywordLanguage('auto', '')).to.equal(
+      DEFAULT_KEYWORD_LANGUAGE
+    );
     expect(DEFAULT_KEYWORD_LANGUAGE).to.equal('en');
   });
 });
@@ -64,12 +66,12 @@ describe('buildResolvedIndex', () => {
   const entries: KeywordEntry[] = [
     {
       name: 'TABLE',
-      de: { description: 'Deutsche Beschreibung', syntax: 'TABLE = a BY b;' },
-      en: { description: 'English description' },
+      syntax: 'TABLE = a BY b;',
+      description: { de: 'Deutsche Beschreibung', en: 'English description' },
     },
-    { name: '#MACRO', en: { description: 'only in English' } },
-    { name: 'MEAN', de: { description: 'nur auf Deutsch' } },
-    { name: 'EMPTY' },
+    { name: '#MACRO', syntax: '', description: { de: '', en: 'only in English' } },
+    { name: 'MEAN', syntax: '', description: { de: 'nur auf Deutsch', en: '' } },
+    { name: 'EMPTY', syntax: '', description: { de: '', en: '' } },
   ];
 
   it('keys entries by their lookup key, keeping # and non-# forms distinct', () => {
@@ -85,7 +87,16 @@ describe('buildResolvedIndex', () => {
     expect(table?.syntax).to.equal('TABLE = a BY b;');
   });
 
-  it('falls back to the other language block when the primary is missing', () => {
+  it('carries the language-independent syntax through regardless of primary', () => {
+    expect(buildResolvedIndex(entries, 'de').get('table')?.syntax).to.equal(
+      'TABLE = a BY b;'
+    );
+    expect(buildResolvedIndex(entries, 'en').get('table')?.syntax).to.equal(
+      'TABLE = a BY b;'
+    );
+  });
+
+  it('falls back to the other language when the primary description is missing', () => {
     const index = buildResolvedIndex(entries, 'de');
     expect(index.get('#macro')?.description).to.equal('only in English');
   });
@@ -96,14 +107,23 @@ describe('buildResolvedIndex', () => {
     expect(index.get('mean')?.description).to.equal('nur auf Deutsch');
   });
 
-  it('skips an entry that carries neither language block', () => {
+  it('indexes an all-empty entry with an empty resolved description and syntax', () => {
     const index = buildResolvedIndex(entries, 'de');
-    expect(index.has('empty')).to.equal(false);
+    expect(index.has('empty')).to.equal(true);
+    expect(index.get('empty')?.description).to.equal('');
+    expect(index.get('empty')?.syntax).to.equal('');
   });
 
   it('carries argsHint through to the resolved entry', () => {
     const index = buildResolvedIndex(
-      [{ name: 'COLSUMPERCENT', argsHint: '( a b )', de: { description: 'x' } }],
+      [
+        {
+          name: 'COLSUMPERCENT',
+          argsHint: '( a b )',
+          syntax: '',
+          description: { de: 'x', en: '' },
+        },
+      ],
       'de'
     );
     expect(index.get('colsumpercent')?.argsHint).to.equal('( a b )');

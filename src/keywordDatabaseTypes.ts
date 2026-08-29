@@ -2,37 +2,28 @@
 // consumed by the hover / keyword-completion providers in
 // src/keywordProviders.ts.
 //
-// Keyword *names* are language-independent (GESStabs syntax doesn't
-// translate); only the per-language doc blocks (description + syntax prose)
-// differ. An entry may carry only one language's block — buildResolvedIndex
-// below falls back to another so a keyword documented in just one manual
-// still gets a hover/completion entry rather than none.
+// Keyword *names* and *syntax* are language-independent (GESStabs syntax
+// doesn't translate); only the prose `description` differs per language.
+// Every entry always carries `syntax` and a `description` for every
+// KEYWORD_LANGUAGES tag, but any of those strings may be '' when that piece
+// isn't documented yet — buildResolvedIndex below treats '' as "missing"
+// and falls back to another language so a keyword documented in just one
+// manual still gets a hover/completion entry rather than none.
 
-// The keyword-doc languages, in fallback preference order. Single source of
-// truth: the KeywordLanguage type and the per-language keys on KeywordEntry
-// are derived from it, and every function below iterates it rather than
-// naming 'de'/'en' literally. To add a language: add its tag here, add a
-// block for it to the entries in src/keywordData.ts, and add an enum value
-// to package.json's gesstabs.hover.language — the resolver, the fallback,
-// and the entry type then pick it up with no further code changes. The
-// first entry is the default when nothing else matches.
+// The keyword-description languages, in fallback preference order. Single
+// source of truth: the KeywordLanguage type and the keys of a
+// KeywordEntry's `description` map are derived from it, and every function
+// below iterates it rather than naming 'de'/'en' literally. To add a
+// language: add its tag here, add its text to the `description` maps in
+// src/keywordData.ts, and add an enum value to package.json's
+// gesstabs.hover.language — the resolver, the fallback, and the entry type
+// then pick it up with no further code changes. The first entry is the
+// default when nothing else matches.
 export const KEYWORD_LANGUAGES = ['en', 'de'] as const;
 
 export type KeywordLanguage = (typeof KEYWORD_LANGUAGES)[number];
 
 export const DEFAULT_KEYWORD_LANGUAGE: KeywordLanguage = KEYWORD_LANGUAGES[0];
-
-// One language's prose for a keyword.
-export interface KeywordDoc {
-  // Prose description. May be '' when only a syntax block is known. Older
-  // entries still carry PDF-to-markdown extraction artifacts (the "�"
-  // replacement character where umlauts/ß were, page-reference numbers
-  // embedded mid-sentence, the odd truncated sentence) — fixed in place as
-  // noticed, not by re-running any extraction.
-  description: string;
-  // A "Syntax:"-anchored grammar block, when one is known.
-  syntax?: string;
-}
 
 export type KeywordEntry = {
   // Canonical display form, e.g. "TABLEFORMAT", "#MACRO", "COLSUMPERCENT" —
@@ -43,10 +34,19 @@ export type KeywordEntry = {
   // A "( Var, BasisVar )"-style argument hint from the heading line, when
   // present (e.g. COLSUMPERCENT, DELTAPERCENT).
   argsHint?: string;
-  // One optional KeywordDoc per KEYWORD_LANGUAGES tag (`de?`, `en?`, ...).
-} & Partial<Record<KeywordLanguage, KeywordDoc>>;
+  // A "Syntax:"-anchored grammar block. Language-independent — the same
+  // string for every KEYWORD_LANGUAGES tag. '' when none is known yet.
+  syntax: string;
+  // Prose description, one entry per KEYWORD_LANGUAGES tag (`de`, `en`,
+  // ...), each '' when that language isn't documented yet. Some older texts
+  // still carry PDF-to-markdown extraction artifacts (the "�" replacement
+  // character where umlauts/ß were, page-reference numbers embedded mid-
+  // sentence, the odd truncated sentence) — fixed in place as noticed, not
+  // by re-running any extraction.
+  description: Record<KeywordLanguage, string>;
+};
 
-// A keyword resolved to one language for display: the doc fields flattened
+// A keyword resolved to one language for display: the description flattened
 // onto the name, so providers don't each re-implement the fallback.
 export interface ResolvedKeyword {
   name: string;
@@ -108,10 +108,12 @@ export function resolveKeywordLanguage(
 }
 
 // Builds the lookup index for one display language: each entry flattened to
-// its `primary`-language doc, or — when the primary one is missing — the
-// first other language it does have, tried in KEYWORD_LANGUAGES order
-// (whole-block fallback, so a keyword documented in only one manual still
-// shows something). An entry with no language block at all is skipped.
+// its `primary`-language description, or — when that one is '' — the first
+// other language with a non-empty one, tried in KEYWORD_LANGUAGES order (so
+// a keyword documented in only one manual still shows something). `syntax`
+// is language-independent and passes straight through. Every entry is
+// indexed, even one whose syntax and every description are still '' — it's
+// still a valid keyword to complete.
 export function buildResolvedIndex(
   entries: KeywordEntry[],
   primary: KeywordLanguage
@@ -122,13 +124,13 @@ export function buildResolvedIndex(
   ];
   const index = new Map<string, ResolvedKeyword>();
   entries.forEach((entry) => {
-    const doc = order.map((lang) => entry[lang]).find((d) => d !== undefined);
-    if (!doc) return;
+    const description =
+      order.map((lang) => entry.description[lang]).find((d) => d) ?? '';
     index.set(keywordLookupKey(entry.name), {
       name: entry.name,
       argsHint: entry.argsHint,
-      description: doc.description,
-      syntax: doc.syntax,
+      description,
+      syntax: entry.syntax,
     });
   });
   return index;
