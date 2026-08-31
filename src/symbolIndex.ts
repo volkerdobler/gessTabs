@@ -108,14 +108,32 @@ export function findAllUsages(
   );
 }
 
+// Every word-boundary occurrence of `word` within `text` — a line can
+// mention the same variable more than once (`IF (… in f24) THEN f24 = …`)
+// and rename has to touch all of them, not just the first.
+export function findAllWordRangesInLine(
+  text: string,
+  word: string
+): [number, number][] {
+  const escaped = word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  // Same shape as regex.ts' usageRe: a bare token, not a `.`/`#`/`&`
+  // qualified name and not part of a longer identifier.
+  const re = new RegExp(`(?<![\\w.#&])${escaped}(?![\\w.])`, 'gi');
+  const ranges: [number, number][] = [];
+  let m = re.exec(text);
+  while (m !== null) {
+    ranges.push([m.index, m.index + m[0].length]);
+    if (m.index === re.lastIndex) re.lastIndex++;
+    m = re.exec(text);
+  }
+  return ranges;
+}
+
 // Locates the first word-boundary occurrence of `word` within `text`,
 // for turning a matched line into a precise, renameable character range.
 export function findWordRangeInLine(
   text: string,
   word: string
 ): [number, number] | undefined {
-  const escaped = word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-  const match = text.match(new RegExp(`\\b${escaped}\\b`, 'i'));
-  if (!match || match.index === undefined) return undefined;
-  return [match.index, match.index + match[0].length];
+  return findAllWordRangesInLine(text, word)[0];
 }

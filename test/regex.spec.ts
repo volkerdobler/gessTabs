@@ -11,6 +11,7 @@ import {
   expandRe,
   tableHeadRe,
   tableAxisRe,
+  usageRe,
 } from '../src/regex';
 
 describe('regex factories', () => {
@@ -126,5 +127,26 @@ describe('regex factories', () => {
   it('tableAxisRe with empty word matches any axis variable list', () => {
     const r = tableAxisRe('');
     expect(r.test('table = group by a b')).to.be.true;
+  });
+
+  it('usageRe matches a bare token occurrence anywhere on the line', () => {
+    const r = usageRe('f24');
+    expect(r.test('if (not ([1:2] in f24)) then f24 = 2;')).to.be.true;
+    expect(r.test('compute add x = f24 + 1;')).to.be.true;
+    expect(r.test('(f24)')).to.be.true;
+    expect(r.test('f24')).to.be.true;
+  });
+
+  it('usageRe is case-insensitive', () => {
+    expect(usageRe('f24').test('if (F24 gt 0) then x = 1;')).to.be.true;
+  });
+
+  it('usageRe does not match a longer identifier or a qualified/macro name', () => {
+    const r = usageRe('f24');
+    expect(r.test('if (f240 gt 0) then x = 1;')).to.be.false;
+    expect(r.test('if (xf24 gt 0) then x = 1;')).to.be.false;
+    expect(r.test('region.f24 = 1;')).to.be.false;
+    expect(r.test('#f24(a b)')).to.be.false;
+    expect(r.test('&f24')).to.be.false;
   });
 });

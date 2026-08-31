@@ -72,6 +72,45 @@ describe('lineMatchesUsage', () => {
       lineMatchesUsage('table t = other by another', 'myVar', alwaysVisible)
     ).to.equal(false);
   });
+
+  it('matches a bare reference in an IF condition / THEN assignment', () => {
+    expect(
+      lineMatchesUsage(
+        'if (not ([1:2] in f24)) then f24 = 2;',
+        'f24',
+        alwaysVisible
+      )
+    ).to.equal(true);
+  });
+
+  it('matches a bare reference used as an expression operand', () => {
+    expect(
+      lineMatchesUsage('compute add x = f24 + 1;', 'f24', alwaysVisible)
+    ).to.equal(true);
+  });
+
+  it('does not match the word as part of a longer identifier', () => {
+    expect(
+      lineMatchesUsage('if (f240 gt 0) then x = 1;', 'f24', alwaysVisible)
+    ).to.equal(false);
+  });
+
+  it('does not match a `.`-qualified member with the same tail', () => {
+    expect(
+      lineMatchesUsage('if (region.f24 gt 0) then x = 1;', 'f24', alwaysVisible)
+    ).to.equal(false);
+  });
+
+  it('respects the isNotInComment callback for a bare reference', () => {
+    const alwaysInComment = () => false;
+    expect(
+      lineMatchesUsage(
+        'if (not ([1:2] in f24)) then f24 = 2;',
+        'f24',
+        alwaysInComment
+      )
+    ).to.equal(false);
+  });
 });
 
 describe('matchInScope', () => {

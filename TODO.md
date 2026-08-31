@@ -7,7 +7,7 @@ The full implementation history (what was built, why, and the bugs found along t
 - **Merging `origin/master` into `rewrite` will likely re-drop the dev-tooling dependencies again.** This has already happened once (see `docs/HISTORY.md`'s P0 regression entry) — master's own `package.json` still has a leaner `devDependencies`/`eslint` version than `rewrite`. Stays a live risk until master's toolchain choices are reconciled with (or `rewrite`'s are upstreamed to) master.
 - **F2 diagnostics were never visually verified in a running Extension Development Host** — no project skill exists for launching this VS Code extension, and there's no way to drive one from a plain shell. Only unit-tested against the pure check logic. Worth a manual pass once installed.
 - **`GesstabsReferenceProvider.provideReferences` doesn't honor `context.includeDeclaration`** — always returns every match, declaration included.
-- **`GesstabsRenameProvider` only replaces the first word-boundary occurrence per matched line** — multiple mentions of the same variable on one line (rare in practice) won't all be renamed.
+- **`GesstabsReferenceProvider` / `GesstabsRenameProvider` highlight the whole matched line, not the exact token span.** `provideReferences` returns `resolvedLineRange(usage)` for every hit; the per-occurrence spans from `findAllWordRangesInLine` are only used by rename. Narrowing the reference results to the token would be a nicer peek view.
 
 ## Possible future improvements
 

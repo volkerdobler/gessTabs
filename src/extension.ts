@@ -23,7 +23,7 @@ import {
   buildWorkspaceIndex,
   findDefinitionLine,
   findAllUsages,
-  findWordRangeInLine,
+  findAllWordRangesInLine,
 } from './symbolIndex';
 import {
   fixDriveCasingInWindows,
@@ -474,17 +474,20 @@ class GesstabsRenameProvider implements vscode.RenameProvider {
 
     const edit = new vscode.WorkspaceEdit();
     usages.forEach((usage) => {
-      const wordRange = findWordRangeInLine(usage.text, word);
-      if (!wordRange) return;
-      const [start, end] = wordRange;
-      edit.replace(
-        vscode.Uri.file(usage.file),
-        new vscode.Range(
-          new vscode.Position(usage.line, start),
-          new vscode.Position(usage.line, end)
-        ),
-        newName
-      );
+      const scope = index.scopes.get(usage.file);
+      // Rename every occurrence on the line, not just the first — a line
+      // like `IF (… in f24) THEN f24 = 2;` mentions the variable twice.
+      findAllWordRangesInLine(usage.text, word).forEach(([start, end]) => {
+        if (scope && !scope.isNotInComment(usage.line, start)) return;
+        edit.replace(
+          vscode.Uri.file(usage.file),
+          new vscode.Range(
+            new vscode.Position(usage.line, start),
+            new vscode.Position(usage.line, end)
+          ),
+          newName
+        );
+      });
     });
     return edit;
   }

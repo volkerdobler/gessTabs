@@ -6,6 +6,7 @@ import {
   findDefinitionLine,
   findAllUsages,
   findWordRangeInLine,
+  findAllWordRangesInLine,
 } from '../src/symbolIndex';
 
 const ROOT = path.resolve('/gesstabs-symbolindex-test');
@@ -126,6 +127,48 @@ describe('findAllUsages', () => {
     expect(texts).to.include('variable a = 1;');
     expect(texts).to.include('table t1 = #k by a;');
     expect(texts).to.include('table t2 = #k by a;');
+  });
+
+  it('finds a bare reference in an IF condition / THEN assignment', () => {
+    const files = {
+      [p('main.tab')]: [
+        'variable f24 = 1;',
+        'if (not ([1:2] in f24)) then f24 = 2;',
+        '// f24 mentioned only in a comment here',
+      ].join('\n'),
+    };
+    const index = buildWorkspaceIndex([p('main.tab')], makeReader(files));
+    const texts = findAllUsages(index, 'f24').map((u) => u.text);
+    expect(texts).to.include('variable f24 = 1;');
+    expect(texts).to.include('if (not ([1:2] in f24)) then f24 = 2;');
+    expect(texts).to.not.include('// f24 mentioned only in a comment here');
+  });
+});
+
+describe('findAllWordRangesInLine', () => {
+  it('returns every occurrence of the word on the line', () => {
+    expect(
+      findAllWordRangesInLine('if (not ([1:2] in f24)) then f24 = 2;', 'f24')
+    ).to.deep.equal([
+      [18, 21],
+      [29, 32],
+    ]);
+  });
+
+  it('ignores longer identifiers and `.`-qualified members', () => {
+    expect(
+      findAllWordRangesInLine('f24 f240 region.f24 xf24 f24;', 'f24')
+    ).to.deep.equal([
+      [0, 3],
+      [25, 28],
+    ]);
+  });
+
+  it('is case-insensitive and returns [] when absent', () => {
+    expect(findAllWordRangesInLine('IN F24 THEN', 'f24')).to.deep.equal([
+      [3, 6],
+    ]);
+    expect(findAllWordRangesInLine('nothing here', 'f24')).to.deep.equal([]);
   });
 });
 

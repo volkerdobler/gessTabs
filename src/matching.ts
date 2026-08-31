@@ -14,6 +14,7 @@ import {
   expandRe,
   tableHeadRe,
   tableAxisRe,
+  usageRe,
 } from './regex';
 
 export type IsNotInComment = (searchIndex: number) => boolean;
@@ -56,7 +57,13 @@ export function lineMatchesDefinition(
 }
 
 // mirrors the broader usage matching used by getAllLocationsInDocument:
-// any definition of "word" plus its use in tables (head/axis).
+// every real reference to "word" — its definitions, its use on a table
+// head/axis, a `#name` expand reference, and (usageRe) any bare token
+// occurrence in a condition, an `IF … THEN <var> = …` assignment or an
+// arbitrary expression. The specific factories are still consulted first
+// so a line that only matches, say, `multiVarRe` (`text word = …`, where
+// usageRe would also fire) is unaffected; usageRe just widens the net to
+// the plain-reference lines none of them cover.
 export function lineMatchesUsage(
   lineText: string,
   word: string,
@@ -72,6 +79,7 @@ export function lineMatchesUsage(
   const expandRegExp = expandRe(word);
   const tableHeadRegExp = tableHeadRe(word);
   const tableAxisRegExp = tableAxisRe(word);
+  const usageRegExp = usageRe(word);
 
   return (
     isNotInComment(lineText.search(singleVarRegExp)) ||
@@ -83,6 +91,7 @@ export function lineMatchesUsage(
     isNotInComment(lineText.search(expandRegExp)) ||
     isNotInComment(lineText.search(tableHeadRegExp)) ||
     isNotInComment(lineText.search(tableAxisRegExp)) ||
-    isNotInComment(lineText.search(multiVarDefRegExp))
+    isNotInComment(lineText.search(multiVarDefRegExp)) ||
+    isNotInComment(lineText.search(usageRegExp))
   );
 }

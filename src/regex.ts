@@ -43,6 +43,23 @@ export function wordDefRe(word: string): RegExp {
   return buildRe('wordDefRe', word, getWordDefinition(word));
 }
 
+// A bare occurrence of `word` used as a token anywhere on a line — the
+// generic "reference" case that the definition-/table-specific factories
+// above don't cover (conditions, `IF … THEN <var> = …` assignments,
+// expression operands, argument lists, …). Deliberately excludes:
+//   - a longer identifier that merely contains `word` (`f24` in `f240`)
+//   - a `.`-qualified member (`region.f24`)
+//   - a `#macro` / `#expand` call (`#f24`) — handled by expandRe
+//   - a `&param` reference inside a macro body (`&f24`)
+export function usageRe(word: string): RegExp {
+  const escaped =
+    word.length > 0
+      ? word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+      : constTokenVarName;
+  const pattern = `(?<![\\w.#&])(${escaped})(?![\\w.])`;
+  return buildRe('usageRe', word, pattern);
+}
+
 export function singleVarDefRe(word: string): RegExp {
   const singleVarConst =
     '(alphafamily|assocvar|bcdvar|bitgroup|clonevar|combinedvar|count|dichoq|familyvar|groups|groupvar|indexvar|init|invindexvar|makefamily|makegroup|makesingle|max|mean|min|multiq|simplevar|singleq|spssgroup|static|stddev|sum|varfamily|vargroup|variable|variance)';
