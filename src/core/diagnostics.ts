@@ -112,6 +112,27 @@ export function findLastDeclaredVariableBefore(
   return lastName;
 }
 
+// F5's *other* fix for the empty-varlist trap — a source action (not a
+// diagnostic-attached quick fix; see GesstabsStrictVarlistCodeActionProvider
+// in src/providers/diagnosticsProvider.ts) that forbids the pattern
+// outright by adding STRICTVARLIST = YES; near the top of the file. This
+// just answers "is that setting already on", so the action can stay a
+// one-shot suggestion — offered only while the document both has the risky
+// pattern (checkEmptyVarlist) and doesn't already opt out of it.
+const strictVarlistEnabledRe = /^\s*strictvarlist\s*=\s*yes\s*;/i;
+
+export function hasStrictVarlistEnabled(
+  lines: string[],
+  isNotInComment: IsNotInComment
+): boolean {
+  return lines.some(
+    (lineText, i) =>
+      lineText.length > 0 &&
+      isNotInComment(i, firstNonWs(lineText)) &&
+      strictVarlistEnabledRe.test(lineText)
+  );
+}
+
 // --- 2. Unmatched #MACRO/#ENDMACRO and #IFDEF-family/#END blocks ---------
 // Directive recognition (single-line `#ifnempty … #else … #end`, and
 // directives sitting in a trailing `// …` comment / string) lives in

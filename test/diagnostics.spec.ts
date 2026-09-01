@@ -2,6 +2,7 @@ import { expect } from 'chai';
 import {
   checkEmptyVarlist,
   findLastDeclaredVariableBefore,
+  hasStrictVarlistEnabled,
   checkUnmatchedBlocks,
   checkDuplicateDeclarations,
   checkRecodeBounds,
@@ -77,6 +78,34 @@ describe('findLastDeclaredVariableBefore', () => {
     expect(findLastDeclaredVariableBefore(lines, 2, isNotInComment)).to.equal(
       'x'
     );
+  });
+});
+
+describe('hasStrictVarlistEnabled', () => {
+  it('finds STRICTVARLIST = YES; anywhere in the document', () => {
+    const lines = ['variable x = 1;', 'STRICTVARLIST = YES;', 'VARTITLE = "x";'];
+    expect(hasStrictVarlistEnabled(lines, alwaysNotInComment)).to.be.true;
+  });
+
+  it('is case-insensitive and tolerant of whitespace', () => {
+    expect(
+      hasStrictVarlistEnabled(['  strictvarlist  =  yes ;'], alwaysNotInComment)
+    ).to.be.true;
+  });
+
+  it('does not match STRICTVARLIST = NO;', () => {
+    expect(hasStrictVarlistEnabled(['STRICTVARLIST = NO;'], alwaysNotInComment))
+      .to.be.false;
+  });
+
+  it('ignores a match inside a comment', () => {
+    expect(hasStrictVarlistEnabled(['STRICTVARLIST = YES;'], () => false)).to
+      .be.false;
+  });
+
+  it('returns false when never set', () => {
+    expect(hasStrictVarlistEnabled(['variable x = 1;'], alwaysNotInComment)).to
+      .be.false;
   });
 });
 

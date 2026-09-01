@@ -12,6 +12,8 @@ import { Scope } from '../core/scope';
 import {
   computeDiagnostics,
   findLastDeclaredVariableBefore,
+  checkEmptyVarlist,
+  hasStrictVarlistEnabled,
   DiagnosticSeverity,
 } from '../core/diagnostics';
 import { printDebugMessage } from '../util/workspaceFiles';
@@ -132,6 +134,62 @@ export class GesstabsEmptyVarlistCodeActionProvider
       return actions;
     } catch (e) {
       printDebugMessage(`gesstabs: empty-varlist quick fix failed: ${e}`);
+      return [];
+    }
+  }
+}
+
+// The empty-varlist diagnostic's *other* suggested fix: forbid the whole
+// error-prone pattern outright by adding STRICTVARLIST = YES; near the top
+// of the file, rather than fixing one occurrence at a time. Deliberately
+// NOT built on `context.diagnostics` like GesstabsEmptyVarlistCodeActionProvider
+// above — that only fires when the cursor/selection is on one specific
+// diagnostic's squiggle, which is the wrong trigger for a document-wide
+// "turn this off everywhere" suggestion. Registered as a Source action
+// instead (shown via the lightbulb regardless of cursor position, and
+// under the "Source Action..." command), and decides relevance itself by
+// scanning the whole document. One-shot: stops offering itself once
+// STRICTVARLIST = YES; is already present anywhere in the file.
+export class GesstabsStrictVarlistCodeActionProvider
+  implements vscode.CodeActionProvider
+{
+  public static readonly providedCodeActionKinds = [
+    vscode.CodeActionKind.Source,
+  ];
+
+  public provideCodeActions(
+    document: vscode.TextDocument
+  ): vscode.CodeAction[] {
+    try {
+      const config = vscode.workspace.getConfiguration('gesstabs');
+      if (config.get<boolean>('diagnostics.enabled', true) === false) {
+        return [];
+      }
+
+      const scope = new Scope(document);
+      const lines: string[] = [];
+      for (let i = 0; i < document.lineCount; i += 1) {
+        lines.push(document.lineAt(i).text);
+      }
+      const isNotInComment = (line: number, char: number) =>
+        scope.isNotInComment(line, char);
+
+      if (hasStrictVarlistEnabled(lines, isNotInComment)) return [];
+      if (checkEmptyVarlist(lines, isNotInComment).length === 0) return [];
+
+      const action = new vscode.CodeAction(
+        'Add STRICTVARLIST = YES; to forbid empty-varlist statements',
+        vscode.CodeActionKind.Source
+      );
+      action.edit = new vscode.WorkspaceEdit();
+      action.edit.insert(
+        document.uri,
+        new vscode.Position(0, 0),
+        'STRICTVARLIST = YES;\n'
+      );
+      return [action];
+    } catch (e) {
+      printDebugMessage(`gesstabs: STRICTVARLIST source action failed: ${e}`);
       return [];
     }
   }

@@ -61,6 +61,7 @@ import { GesstabsSymbolCompletionProvider } from './providers/completionProvider
 import {
   GesstabsDiagnosticsManager,
   GesstabsEmptyVarlistCodeActionProvider,
+  GesstabsStrictVarlistCodeActionProvider,
 } from './providers/diagnosticsProvider';
 
 // this method is called when your extension is activated
@@ -242,6 +243,17 @@ export function activate(context: vscode.ExtensionContext) {
       {
         providedCodeActionKinds:
           GesstabsEmptyVarlistCodeActionProvider.providedCodeActionKinds,
+      }
+    )
+  );
+
+  context.subscriptions.push(
+    vscode.languages.registerCodeActionsProvider(
+      { language: 'gesstabs', scheme: 'file' },
+      new GesstabsStrictVarlistCodeActionProvider(),
+      {
+        providedCodeActionKinds:
+          GesstabsStrictVarlistCodeActionProvider.providedCodeActionKinds,
       }
     )
   );
