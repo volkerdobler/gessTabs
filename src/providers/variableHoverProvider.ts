@@ -1,9 +1,16 @@
 // "What is this variable" hover: for a plain identifier under the cursor,
 // shows its declaration line (when the script actually defines it) and,
 // optionally, the VARTITLE / VARTEXT / VALUELABELS statements that annotate
-// it. A separate HoverProvider from the macro / keyword / effective-
-// elements ones (vscode merges every registered provider's result) since
-// it's an unrelated concern.
+// it. Three "don't just echo what's already on screen" rules: hovering the
+// variable name at the exact spot it's declared shows no declaration echo
+// (see hoveringOwnDeclaration below); hovering it inside one of its own
+// VARTITLE/VARTEXT/VALUELABELS (& synonyms) statements shows no hover at
+// all unless the variable has a real declaration elsewhere to point to;
+// and hovering a COPYTITLE/COPYTEXT/COPYLABELS target name shows only the
+// one corresponding annotation copied from the source variable — see
+// matchCopyAnnotationTarget. A separate HoverProvider from the macro /
+// keyword / effective-elements ones (vscode merges every registered
+// provider's result) since it's an unrelated concern.
 //
 // Thin vscode wiring only — the annotation matching lives in
 // src/core/variableInfo.ts (pure, unit-tested); the declaration lookup
@@ -18,6 +25,9 @@ import { buildWorkspaceIndex, findDefinitionLine } from '../core/symbolIndex';
 import {
   findVariableAnnotations,
   collectStatement,
+  isVariableAnnotationStatementLine,
+  matchCopyAnnotationTarget,
+  IsNotInCommentAt,
 } from '../core/variableInfo';
 import { keywordData } from '../keywords/keywordData';
 import { keywordLookupKey } from '../keywords/keywordDatabaseTypes';
@@ -99,22 +109,69 @@ export class GesstabsVariableHoverProvider implements vscode.HoverProvider {
       if (token && token.isCancellationRequested) return null;
 
       const currentFile = normalizePath(document.uri.fsPath);
+      const annotationsEnabled =
+        config.get<boolean>('hover.variableAnnotations', true) !== false;
+      const isNotInCommentAt: IsNotInCommentAt = (rl, searchIndex) => {
+        const s = index.scopes.get(rl.file);
+        return !s || s.isNotInComment(rl.line, searchIndex);
+      };
+
+      // COPYTITLE/COPYTEXT/COPYLABELS <varlist> = <variable>; doesn't give
+      // `word` its own VARTITLE/VARTEXT/VALUELABELS — it aliases it to
+      // <variable>'s. Hovering a target name shows only that one copied
+      // piece (nothing about `word` itself), so this is handled entirely
+      // separately from the declaration/annotation logic below.
+      const copyTarget = matchCopyAnnotationTarget(lineText, word);
+      if (copyTarget) {
+        if (!annotationsEnabled) return null;
+        const sourceAnnotations = findVariableAnnotations(
+          index.order,
+          copyTarget.sourceVar,
+          isNotInCommentAt
+        ).filter((a) => a.kind === copyTarget.kind);
+        if (sourceAnnotations.length === 0) return null;
+
+        const md = new vscode.MarkdownString();
+        md.isTrusted = { enabledCommands: ['vscode.open'] };
+        md.appendMarkdown(`**VARIABLE** \`${word}\`\n`);
+        sourceAnnotations.forEach((a) => {
+          md.appendCodeblock(a.statement, 'gesstabs');
+          md.appendMarkdown(`\n${jumpLink(a.file, a.line)}\n`);
+        });
+        return new vscode.Hover(md, wordRange);
+      }
+
       // Position-aware first (no-forward-reference, matches Go to
-      // Definition), then a position-independent fallback so hovering the
-      // variable *on* its own declaration line — which the backward scan
-      // excludes — still resolves. `-1` isn't a real line, so
-      // findDefinitionLine searches the whole resolved order.
-      const def =
+      // Definition), then a position-independent fallback (`-1` isn't a
+      // real line, so findDefinitionLine searches the whole resolved
+      // order) to also find a declaration on the very line under the
+      // cursor — the backward scan alone excludes the current line.
+      const rawDef =
         findDefinitionLine(index, currentFile, position.line, word) ??
         findDefinitionLine(index, currentFile, -1, word);
 
-      const annotationsEnabled =
-        config.get<boolean>('hover.variableAnnotations', true) !== false;
+      // Hovering the variable name at the exact spot it's declared (e.g.
+      // `groups foo = ...;`, cursor on `foo`) would just echo that same
+      // statement back in the hover — already right there on screen — so
+      // treat it as "no declaration to show" rather than repeat it.
+      const hoveringOwnDeclaration =
+        rawDef !== undefined &&
+        rawDef.file === currentFile &&
+        rawDef.line === position.line;
+      const def = hoveringOwnDeclaration ? undefined : rawDef;
+
+      // Hovering the variable name inside one of its own annotation
+      // statements (VARTITLE/VARTEXT/VALUELABELS & synonyms, or
+      // COPYTITLE/COPYTEXT/COPYLABELS) is only useful when it can point to
+      // where the variable is actually declared elsewhere — genuinely new
+      // information. With no declaration anywhere in the document, there's
+      // nothing left to add beyond what's already on screen.
+      if (isVariableAnnotationStatementLine(lineText) && !def) return null;
+
       const annotations = annotationsEnabled
-        ? findVariableAnnotations(index.order, word, (rl, searchIndex) => {
-            const s = index.scopes.get(rl.file);
-            return !s || s.isNotInComment(rl.line, searchIndex);
-          })
+        ? findVariableAnnotations(index.order, word, isNotInCommentAt).filter(
+            (a) => !(a.file === currentFile && a.line === position.line)
+          )
         : [];
 
       // Nothing concrete to say — stay quiet rather than show an empty card.
@@ -135,7 +192,7 @@ export class GesstabsVariableHoverProvider implements vscode.HoverProvider {
           'gesstabs'
         );
         md.appendMarkdown(`\n${jumpLink(def.file, def.line)}\n`);
-      } else {
+      } else if (!hoveringOwnDeclaration) {
         md.appendMarkdown(
           '\n_not declared in the script — probably a dataset variable_\n'
         );

@@ -1,5 +1,10 @@
 import { expect } from 'chai';
-import { findVariableAnnotations, collectStatement } from '../src/core/variableInfo';
+import {
+  findVariableAnnotations,
+  collectStatement,
+  isVariableAnnotationStatementLine,
+  matchCopyAnnotationTarget,
+} from '../src/core/variableInfo';
 import { ResolvedLine } from '../src/core/includeGraph';
 
 function order(lines: string[], file = '/main.tab'): ResolvedLine[] {
@@ -79,6 +84,79 @@ describe('findVariableAnnotations', () => {
   it('ignores an empty-varlist annotation (no variable named)', () => {
     const lines = order(['vartitle = "binds to last variable";']);
     expect(findVariableAnnotations(lines, 'f1')).to.have.length(0);
+  });
+});
+
+describe('isVariableAnnotationStatementLine', () => {
+  it('recognizes VARTITLE/VARTEXT/VALUELABELS and their bare synonyms', () => {
+    expect(isVariableAnnotationStatementLine('vartitle f1 = "T";')).to.be.true;
+    expect(isVariableAnnotationStatementLine('vartext f1 = "T";')).to.be.true;
+    expect(isVariableAnnotationStatementLine('valuelabels f1 = 1 "a";')).to.be
+      .true;
+    expect(isVariableAnnotationStatementLine('title f1 = "T";')).to.be.true;
+    expect(isVariableAnnotationStatementLine('text f1 = "T";')).to.be.true;
+    expect(isVariableAnnotationStatementLine('labels f1 = 1 "a";')).to.be.true;
+  });
+
+  it('recognizes the COPYTITLE/COPYTEXT/COPYLABELS variants', () => {
+    expect(isVariableAnnotationStatementLine('copytitle f1 = f2;')).to.be.true;
+    expect(isVariableAnnotationStatementLine('copytext f1 = f2;')).to.be.true;
+    expect(isVariableAnnotationStatementLine('copylabels f1 = f2;')).to.be.true;
+  });
+
+  it('is case-insensitive and tolerates leading whitespace', () => {
+    expect(isVariableAnnotationStatementLine('  VARTITLE f1 = "T";')).to.be
+      .true;
+  });
+
+  it('does not match an unrelated statement or a longer identifier', () => {
+    expect(isVariableAnnotationStatementLine('groups f1 = a b c;')).to.be.false;
+    expect(isVariableAnnotationStatementLine('vartitleish f1 = "T";')).to.be
+      .false;
+  });
+});
+
+describe('matchCopyAnnotationTarget', () => {
+  it('maps COPYTITLE/COPYTEXT/COPYLABELS to their annotation kind and source variable', () => {
+    expect(matchCopyAnnotationTarget('copytitle f1 = f2;', 'f1')).to.deep.equal(
+      { kind: 'vartitle', sourceVar: 'f2' }
+    );
+    expect(matchCopyAnnotationTarget('copytext f1 = f2;', 'f1')).to.deep.equal({
+      kind: 'vartext',
+      sourceVar: 'f2',
+    });
+    expect(
+      matchCopyAnnotationTarget('copylabels f1 = f2;', 'f1')
+    ).to.deep.equal({ kind: 'valuelabels', sourceVar: 'f2' });
+  });
+
+  it('matches any name in a multi-variable target list', () => {
+    expect(
+      matchCopyAnnotationTarget('copytitle f1 f2 f3 = source;', 'f2')
+    ).to.deep.equal({ kind: 'vartitle', sourceVar: 'source' });
+  });
+
+  it('does not match the source variable itself', () => {
+    expect(matchCopyAnnotationTarget('copytitle f1 = f2;', 'f2')).to.be
+      .undefined;
+  });
+
+  it('strips quotes from the source variable name', () => {
+    expect(
+      matchCopyAnnotationTarget('copytitle f1 = "my var";', 'f1')
+    ).to.deep.equal({ kind: 'vartitle', sourceVar: 'my var' });
+  });
+
+  it('returns undefined for an unrelated statement', () => {
+    expect(matchCopyAnnotationTarget('vartitle f1 = "T";', 'f1')).to.be
+      .undefined;
+    expect(matchCopyAnnotationTarget('groups f1 = a b c;', 'f1')).to.be
+      .undefined;
+  });
+
+  it('returns undefined when word is not in the target varlist', () => {
+    expect(matchCopyAnnotationTarget('copytitle f1 = f2;', 'other')).to.be
+      .undefined;
   });
 });
 
