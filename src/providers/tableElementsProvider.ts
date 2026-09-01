@@ -37,8 +37,12 @@ export class GesstabsEffectiveElementsHoverProvider
         return null;
       }
 
+      // The TABLE/OVERVIEW/XOVERVIEW statement keyword this hover reports
+      // on is always a bare code token — never legitimately written inside
+      // a string literal — so both comment AND string scope are excluded
+      // (isNormalScope).
       const scope = new Scope(document);
-      if (!scope.isNotInComment(position.line, position.character)) {
+      if (!scope.isNormalScope(position.line, position.character)) {
         return null;
       }
 

@@ -2,6 +2,7 @@ import { expect } from 'chai';
 import {
   lineMatchesDefinition,
   lineMatchesUsage,
+  lineHasQuotedVariableReference,
   matchInScope,
 } from '../src/core/matching';
 
@@ -107,6 +108,78 @@ describe('lineMatchesUsage', () => {
       lineMatchesUsage(
         'if (not ([1:2] in f24)) then f24 = 2;',
         'f24',
+        alwaysInComment
+      )
+    ).to.equal(false);
+  });
+});
+
+describe('lineHasQuotedVariableReference', () => {
+  it('recognizes a quoted name in a declaration varlist', () => {
+    expect(
+      lineHasQuotedVariableReference(
+        'variable "my var" = 1;',
+        'my var',
+        alwaysVisible
+      )
+    ).to.equal(true);
+  });
+
+  it('recognizes a quoted name in a VARTITLE/VALUELABELS own varlist', () => {
+    expect(
+      lineHasQuotedVariableReference(
+        'VARTITLE "myvar" = "Title";',
+        'myvar',
+        alwaysVisible
+      )
+    ).to.equal(true);
+  });
+
+  it('recognizes a quoted name in a TABLE head/axis', () => {
+    expect(
+      lineHasQuotedVariableReference(
+        'table t = "my var" by other;',
+        'my var',
+        alwaysVisible
+      )
+    ).to.equal(true);
+    expect(
+      lineHasQuotedVariableReference(
+        'table t = other by "my var";',
+        'my var',
+        alwaysVisible
+      )
+    ).to.equal(true);
+  });
+
+  it('does not treat quoted label/title text as a variable reference', () => {
+    // "region" happens to read like a real variable name elsewhere, but
+    // here it is VALUELABELS's own label text, not a name reference.
+    expect(
+      lineHasQuotedVariableReference(
+        'VALUELABELS status = 1 "region";',
+        'region',
+        alwaysVisible
+      )
+    ).to.equal(false);
+  });
+
+  it('does not match an unrelated line', () => {
+    expect(
+      lineHasQuotedVariableReference(
+        'TABLETITLE = "my var";',
+        'my var',
+        alwaysVisible
+      )
+    ).to.equal(false);
+  });
+
+  it('respects the isNotInComment callback', () => {
+    const alwaysInComment = () => false;
+    expect(
+      lineHasQuotedVariableReference(
+        'variable "my var" = 1;',
+        'my var',
         alwaysInComment
       )
     ).to.equal(false);

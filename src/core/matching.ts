@@ -64,6 +64,42 @@ export function lineMatchesDefinition(
 // so a line that only matches, say, `multiVarRe` (`text word = …`, where
 // usageRe would also fire) is unaffected; usageRe just widens the net to
 // the plain-reference lines none of them cover.
+// Whether a *quoted* occurrence of `word` on this line sits in a position
+// gessTabs actually accepts a quoted variable name — a declaration's own
+// varlist, an annotation statement's (VARTITLE/VARTEXT/VALUELABELS and
+// synonyms) own varlist, or a TABLE head/axis. Used by the variable hover
+// to gate showing anything for a quoted token: unlike lineMatchesUsage,
+// this deliberately excludes usageRe, which matches `word` as a bare
+// substring anywhere on the line regardless of quoting — exactly what
+// would also match arbitrary quoted label/title *text* that happens to
+// read the same as a real variable name (e.g. `VALUELABELS status = 1
+// "region";`, where "region" is also a real variable elsewhere; hovering
+// that label text must not show region's declaration). A bare,
+// non-quoted `word` is always a genuine reference in this grammar — free
+// text must be quoted — so callers only need this check for quoted
+// tokens.
+export function lineHasQuotedVariableReference(
+  lineText: string,
+  word: string,
+  isNotInComment: IsNotInComment
+): boolean {
+  const singleVarRegExp = singleVarDefRe(word);
+  const multiVarDefRegExp = multiVarDefRe(word);
+  const multiVarRegExp = multiVarRe(word);
+  const computeRegExp = computeDefRe(word);
+  const tableHeadRegExp = tableHeadRe(word);
+  const tableAxisRegExp = tableAxisRe(word);
+
+  return (
+    isNotInComment(lineText.search(singleVarRegExp)) ||
+    isNotInComment(lineText.search(multiVarDefRegExp)) ||
+    isNotInComment(lineText.search(multiVarRegExp)) ||
+    isNotInComment(lineText.search(computeRegExp)) ||
+    isNotInComment(lineText.search(tableHeadRegExp)) ||
+    isNotInComment(lineText.search(tableAxisRegExp))
+  );
+}
+
 export function lineMatchesUsage(
   lineText: string,
   word: string,

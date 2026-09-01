@@ -21,6 +21,7 @@ import * as vscode from 'vscode';
 import * as path from 'path';
 import { Scope } from '../core/scope';
 import { constVarName } from '../core/regex';
+import { lineHasQuotedVariableReference } from '../core/matching';
 import {
   buildWorkspaceIndex,
   findDefinitionLine,
@@ -84,7 +85,9 @@ export class GesstabsVariableHoverProvider implements vscode.HoverProvider {
         new RegExp(constVarName, 'i')
       );
       if (!wordRange) return null;
-      const word = document.getText(wordRange).replace(/["']/g, '');
+      const rawWordText = document.getText(wordRange);
+      const isQuoted = /^["'][\s\S]*["']$/.test(rawWordText);
+      const word = rawWordText.replace(/["']/g, '');
       if (!word || word.startsWith('#')) return null;
 
       // A token written `#name` or `&name` is a macro / #EXPAND reference
@@ -143,6 +146,23 @@ export class GesstabsVariableHoverProvider implements vscode.HoverProvider {
           md.appendMarkdown(`\n${jumpLink(a.file, a.line)}\n`);
         });
         return new vscode.Hover(md, wordRange);
+      }
+
+      // A hover over a quoted string only makes sense when the string is
+      // itself a variable-name reference — never for arbitrary quoted
+      // label/title text, even when that text happens to read the same as
+      // a real variable name elsewhere in the script (e.g. `VALUELABELS
+      // status = 1 "region";`, where "region" is also declared as a real
+      // variable — hovering that label text must not show region's
+      // declaration). A bare, unquoted word is always a genuine reference
+      // in this grammar, so this only gates quoted tokens.
+      if (
+        isQuoted &&
+        !lineHasQuotedVariableReference(lineText, word, (searchIndex) =>
+          scope.isNotInComment(position.line, searchIndex)
+        )
+      ) {
+        return null;
       }
 
       // Position-aware first (no-forward-reference, matches Go to

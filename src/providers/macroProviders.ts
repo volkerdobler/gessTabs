@@ -193,10 +193,14 @@ export class GesstabsMacroHoverProvider implements vscode.HoverProvider {
       // Something that merely *looks* like a macro call or #expand
       // reference inside a comment/string isn't one — check the scope at
       // the cursor position itself before treating the text as real code.
+      // Unlike the variable hover, a string can never legitimately contain
+      // a macro call (always a column-1, code-level construct) or an
+      // #EXPAND reference, so both comment AND string scope are excluded
+      // here (isNormalScope), not just comments.
       const scope = new Scope(document);
-      if (!scope.isNotInComment(position.line, position.character)) {
+      if (!scope.isNormalScope(position.line, position.character)) {
         printDebugMessage(
-          `gesstabs: hover - ${position.line}:${position.character} is inside a comment, skipping`
+          `gesstabs: hover - ${position.line}:${position.character} is inside a comment or string, skipping`
         );
         return null;
       }
