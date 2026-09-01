@@ -21,7 +21,11 @@ import * as vscode from 'vscode';
 import * as path from 'path';
 import { Scope } from '../core/scope';
 import { constVarName } from '../core/regex';
-import { buildWorkspaceIndex, findDefinitionLine } from '../core/symbolIndex';
+import {
+  buildWorkspaceIndex,
+  findDefinitionLine,
+  findMacroProducedDefinition,
+} from '../core/symbolIndex';
 import {
   findVariableAnnotations,
   collectStatement,
@@ -160,13 +164,28 @@ export class GesstabsVariableHoverProvider implements vscode.HoverProvider {
         rawDef.line === position.line;
       const def = hoveringOwnDeclaration ? undefined : rawDef;
 
+      // No literal declaration — `word` might still be produced by a
+      // #MACRO call passing it as the argument for a body statement like
+      // `compute &fr = 2;`. Same position-aware-then-whole-index fallback
+      // shape as rawDef above.
+      const macroDef = def
+        ? undefined
+        : findMacroProducedDefinition(
+            index,
+            currentFile,
+            position.line,
+            word
+          ) ?? findMacroProducedDefinition(index, currentFile, -1, word);
+
       // Hovering the variable name inside one of its own annotation
       // statements (VARTITLE/VARTEXT/VALUELABELS & synonyms, or
       // COPYTITLE/COPYTEXT/COPYLABELS) is only useful when it can point to
       // where the variable is actually declared elsewhere — genuinely new
       // information. With no declaration anywhere in the document, there's
       // nothing left to add beyond what's already on screen.
-      if (isVariableAnnotationStatementLine(lineText) && !def) return null;
+      if (isVariableAnnotationStatementLine(lineText) && !def && !macroDef) {
+        return null;
+      }
 
       const annotations = annotationsEnabled
         ? findVariableAnnotations(index.order, word, isNotInCommentAt).filter(
@@ -175,7 +194,7 @@ export class GesstabsVariableHoverProvider implements vscode.HoverProvider {
         : [];
 
       // Nothing concrete to say — stay quiet rather than show an empty card.
-      if (!def && annotations.length === 0) return null;
+      if (!def && !macroDef && annotations.length === 0) return null;
 
       // One header, then the raw statements (each self-identifying via its
       // own `VARTITLE …`/`VALUELABELS …` leading keyword — no separate
@@ -192,6 +211,18 @@ export class GesstabsVariableHoverProvider implements vscode.HoverProvider {
           'gesstabs'
         );
         md.appendMarkdown(`\n${jumpLink(def.file, def.line)}\n`);
+      } else if (macroDef) {
+        md.appendMarkdown(
+          `\n_produced by a \`#${macroDef.macro.name}\` macro call — not written literally in the script_\n`
+        );
+        md.appendCodeblock(macroDef.bodyLine.text.trim(), 'gesstabs');
+        md.appendMarkdown(
+          `\n${jumpLink(macroDef.bodyLine.file, macroDef.bodyLine.line)}\n`
+        );
+        md.appendCodeblock(macroDef.callSite.text.trim(), 'gesstabs');
+        md.appendMarkdown(
+          `\n${jumpLink(macroDef.callSite.file, macroDef.callSite.line)}\n`
+        );
       } else if (!hoveringOwnDeclaration) {
         md.appendMarkdown(
           '\n_not declared in the script — probably a dataset variable_\n'

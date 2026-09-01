@@ -21,6 +21,13 @@ import {
 } from './includeGraph';
 import { Scope } from './scope';
 import { lineMatchesDefinition, lineMatchesUsage } from './matching';
+import {
+  findMacroDefinitions,
+  findMacroCalls,
+  buildMacroIndex,
+  expandLines,
+  MacroDefinition,
+} from './macroExpansion';
 
 export interface WorkspaceIndex {
   // Every active line, across every root's resolved include graph.
@@ -94,6 +101,72 @@ export function findDefinitionLine(
     const rl = searchSpace[i];
     if (lineMatchesDefinition(rl.text, word, isNotInCommentAt(index, rl))) {
       return rl;
+    }
+  }
+  return undefined;
+}
+
+export interface MacroProducedDefinition {
+  macro: MacroDefinition;
+  // The macro body line, with the call's arguments already substituted
+  // into its &params — this is what actually declares `word` once the
+  // macro is expanded.
+  bodyLine: ResolvedLine;
+  // Where the macro was called with the argument that produced `word`.
+  callSite: ResolvedLine;
+}
+
+// Cheap fallback for when findDefinitionLine finds nothing: `word` may not
+// be declared literally anywhere, but be produced by a #MACRO call that
+// passes it as the argument for a body statement like `compute &fr = 2;`
+// (see the "Variables created inside a #MACRO body" TODO). Rather than
+// running a full macro-expansion pass over the whole workspace, this only
+// expands a candidate macro's body — using the same substitution the macro
+// hover already does — when a call to it is actually encountered, and
+// checks whether the *expanded* line now defines `word`. Mirrors
+// findDefinitionLine's backward, no-forward-reference scan so the two
+// agree on which call site is "the" one when a macro is called more than
+// once with the same argument.
+export function findMacroProducedDefinition(
+  index: WorkspaceIndex,
+  fromFile: string,
+  fromLine: number,
+  word: string
+): MacroProducedDefinition | undefined {
+  const macroIndex = buildMacroIndex(findMacroDefinitions(index.order));
+  if (macroIndex.size === 0) return undefined;
+
+  const pos = index.order.findIndex(
+    (l) => l.file === fromFile && l.line === fromLine
+  );
+  const searchSpace = pos === -1 ? index.order : index.order.slice(0, pos);
+
+  for (let i = searchSpace.length - 1; i >= 0; i--) {
+    const rl = searchSpace[i];
+    const call = findMacroCalls(rl.text)[0];
+    if (!call) continue;
+    const macro = macroIndex.get(call.name.toLowerCase());
+    if (!macro) continue;
+
+    const bodyLines = index.order.filter(
+      (l) =>
+        l.file === macro.file &&
+        l.line > macro.defLine &&
+        l.line < macro.endLine
+    );
+    const substituted = expandLines(
+      bodyLines.map((l) => l.text),
+      macro.params,
+      call.args
+    );
+    for (let j = 0; j < bodyLines.length; j++) {
+      if (lineMatchesDefinition(substituted[j], word, () => true)) {
+        return {
+          macro,
+          bodyLine: { ...bodyLines[j], text: substituted[j] },
+          callSite: rl,
+        };
+      }
     }
   }
   return undefined;

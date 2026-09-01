@@ -4,6 +4,7 @@ import { FileReader } from '../src/core/includeGraph';
 import {
   buildWorkspaceIndex,
   findDefinitionLine,
+  findMacroProducedDefinition,
   findAllUsages,
   findWordRangeInLine,
   findAllWordRangesInLine,
@@ -108,6 +109,65 @@ describe('findDefinitionLine', () => {
     const index = buildWorkspaceIndex([p('main.tab')], makeReader(files));
     const def = findDefinitionLine(index, p('main.tab'), 1, 'a');
     expect(def).to.be.undefined;
+  });
+});
+
+describe('findMacroProducedDefinition', () => {
+  it('finds a variable defined via a macro-call-substituted &param', () => {
+    const files = {
+      [p('main.tab')]: [
+        '#macro #x( &fr )',
+        'compute &fr = 2;',
+        '#endmacro',
+        '#x( alter )',
+        'table t = #k by alter;',
+      ].join('\n'),
+    };
+    const index = buildWorkspaceIndex([p('main.tab')], makeReader(files));
+    // No literal declaration of "alter" is found the normal way.
+    expect(findDefinitionLine(index, p('main.tab'), 4, 'alter')).to.be
+      .undefined;
+
+    const macroDef = findMacroProducedDefinition(
+      index,
+      p('main.tab'),
+      4,
+      'alter'
+    );
+    expect(macroDef?.macro.name).to.equal('x');
+    expect(macroDef?.bodyLine.text).to.equal('compute alter = 2;');
+    expect(macroDef?.bodyLine.line).to.equal(1);
+    expect(macroDef?.callSite.text).to.equal('#x( alter )');
+    expect(macroDef?.callSite.line).to.equal(3);
+  });
+
+  it('does not find a macro call that only occurs later (no forward references)', () => {
+    const files = {
+      [p('main.tab')]: [
+        'table t = #k by alter;',
+        '#macro #x( &fr )',
+        'compute &fr = 2;',
+        '#endmacro',
+        '#x( alter )',
+      ].join('\n'),
+    };
+    const index = buildWorkspaceIndex([p('main.tab')], makeReader(files));
+    expect(findMacroProducedDefinition(index, p('main.tab'), 0, 'alter')).to
+      .be.undefined;
+  });
+
+  it('returns undefined when no macro call produces the word', () => {
+    const files = {
+      [p('main.tab')]: [
+        '#macro #x( &fr )',
+        'compute &fr = 2;',
+        '#endmacro',
+        '#x( alter )',
+      ].join('\n'),
+    };
+    const index = buildWorkspaceIndex([p('main.tab')], makeReader(files));
+    expect(findMacroProducedDefinition(index, p('main.tab'), 3, 'somethingelse'))
+      .to.be.undefined;
   });
 });
 

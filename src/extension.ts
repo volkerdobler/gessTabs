@@ -22,6 +22,7 @@ import { getAllFilenamesInDirectory } from './util/fsutils';
 import {
   buildWorkspaceIndex,
   findDefinitionLine,
+  findMacroProducedDefinition,
   findAllUsages,
   findAllWordRangesInLine,
 } from './core/symbolIndex';
@@ -329,7 +330,7 @@ class GesstabsDefintionProvider implements vscode.DefinitionProvider {
     document: vscode.TextDocument,
     position: vscode.Position,
     token: vscode.CancellationToken
-  ): Promise<vscode.Location | null> {
+  ): Promise<vscode.Location | vscode.Location[] | null> {
     const paramRef = this.findParamReference(document, position);
     if (paramRef) return paramRef;
 
@@ -358,12 +359,35 @@ class GesstabsDefintionProvider implements vscode.DefinitionProvider {
     );
     const currentFile = normalizePath(document.uri.fsPath);
     const def = findDefinitionLine(index, currentFile, position.line, word);
-    if (!def) return null;
+    if (def) {
+      return new vscode.Location(
+        vscode.Uri.file(def.file),
+        resolvedLineRange(def)
+      );
+    }
 
-    return new vscode.Location(
-      vscode.Uri.file(def.file),
-      resolvedLineRange(def)
+    // No literal declaration anywhere — `word` might still be produced by
+    // a #MACRO call site passing it as the argument for a body statement
+    // like `compute &fr = 2;`. Point at both: the macro body line that
+    // actually declares it, and the call site that supplied the name.
+    const macroDef = findMacroProducedDefinition(
+      index,
+      currentFile,
+      position.line,
+      word
     );
+    if (!macroDef) return null;
+
+    return [
+      new vscode.Location(
+        vscode.Uri.file(macroDef.bodyLine.file),
+        resolvedLineRange(macroDef.bodyLine)
+      ),
+      new vscode.Location(
+        vscode.Uri.file(macroDef.callSite.file),
+        resolvedLineRange(macroDef.callSite)
+      ),
+    ];
   }
 
   // Resolves a "&paramname" reference inside a macro body back to its
