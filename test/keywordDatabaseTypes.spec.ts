@@ -7,7 +7,7 @@ import {
   keywordLookupKeyAt,
   resolveKeywordLanguage,
   buildResolvedIndex,
-} from '../src/keywordDatabaseTypes';
+} from '../src/keywords/keywordDatabaseTypes';
 
 describe('keywordLookupKey', () => {
   it('lowercases but keeps a leading # (distinct from the bare name)', () => {

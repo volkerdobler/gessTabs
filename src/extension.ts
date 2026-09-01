@@ -3,7 +3,7 @@
 import * as vscode from 'vscode';
 import * as path from 'path';
 
-import * as sc from './scope';
+import * as sc from './core/scope';
 import {
   constTokenVarName,
   constStringVarName,
@@ -16,15 +16,15 @@ import {
   expandDefRe,
   tableHeadRe,
   tableAxisRe,
-} from './regex';
-import { matchInScope } from './matching';
-import { getAllFilenamesInDirectory } from './fsutils';
+} from './core/regex';
+import { matchInScope } from './core/matching';
+import { getAllFilenamesInDirectory } from './util/fsutils';
 import {
   buildWorkspaceIndex,
   findDefinitionLine,
   findAllUsages,
   findAllWordRangesInLine,
-} from './symbolIndex';
+} from './core/symbolIndex';
 import {
   fixDriveCasingInWindows,
   getWorkspaceFolderPath,
@@ -33,33 +33,34 @@ import {
   resolvedLineRange,
   findWorkspaceFiles,
   printDebugMessage,
-} from './workspaceFiles';
+} from './util/workspaceFiles';
 import {
   GesstabsMacroHoverProvider,
   GesstabsMacroSignatureHelpProvider,
   GesstabsMacroCodeLensProvider,
-} from './macroProviders';
+} from './providers/macroProviders';
 import {
   findMacroDefinitions,
   findParamReferenceAt,
   MacroSourceLine,
-} from './macroExpansion';
-import { GesstabsEffectiveElementsHoverProvider } from './tableElementsProvider';
-import { GesstabsFoldingRangeProvider } from './foldingProvider';
+} from './core/macroExpansion';
+import { GesstabsEffectiveElementsHoverProvider } from './providers/tableElementsProvider';
+import { GesstabsVariableHoverProvider } from './providers/variableHoverProvider';
+import { GesstabsFoldingRangeProvider } from './providers/foldingProvider';
 import {
   GesstabsSemanticTokensProvider,
   gesstabsSemanticTokensLegend,
-} from './semanticTokensProvider';
-import { GesstabsFormattingProvider } from './formatterProvider';
+} from './providers/semanticTokensProvider';
+import { GesstabsFormattingProvider } from './providers/formatterProvider';
 import {
   GesstabsKeywordHoverProvider,
   GesstabsKeywordCompletionProvider,
-} from './keywordProviders';
-import { GesstabsSymbolCompletionProvider } from './completionProviders';
+} from './providers/keywordProviders';
+import { GesstabsSymbolCompletionProvider } from './providers/completionProviders';
 import {
   GesstabsDiagnosticsManager,
   GesstabsEmptyVarlistCodeActionProvider,
-} from './diagnosticsProvider';
+} from './providers/diagnosticsProvider';
 
 // this method is called when your extension is activated
 // your extension is activated the very first time the command is executed
@@ -143,6 +144,13 @@ export function activate(context: vscode.ExtensionContext) {
     vscode.languages.registerHoverProvider(
       { language: 'gesstabs', scheme: 'file' },
       new GesstabsEffectiveElementsHoverProvider()
+    )
+  );
+
+  context.subscriptions.push(
+    vscode.languages.registerHoverProvider(
+      { language: 'gesstabs', scheme: 'file' },
+      new GesstabsVariableHoverProvider()
     )
   );
 
@@ -244,9 +252,9 @@ export function deactivate() {}
 
 // fixDriveCasingInWindows/getWorkspaceFolderPath/normalizePath/
 // makeWorkspaceReader/resolvedLineRange/findWorkspaceFiles live in
-// src/workspaceFiles.ts (shared with src/macroProviders.ts).
+// src/util/workspaceFiles.ts (shared with src/providers/macroProviders.ts).
 
-// regex factories have been moved to src/regex.ts
+// regex factories have been moved to src/core/regex.ts
 
 function spush(
   kind: vscode.SymbolKind,

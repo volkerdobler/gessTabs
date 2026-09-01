@@ -232,7 +232,7 @@ export function resolveIncludeGraph(
       // sit on one line — `#ifnempty "&x" &x #else 1:99 #end` is a common
       // single-line idiom in macro bodies. Walk every conditional
       // directive on the line, in order (shared recognition with the F2
-      // diagnostic / folding / formatter via src/directives.ts), so an
+      // diagnostic / folding / formatter via src/core/directives.ts), so an
       // inline #END isn't dropped — a dropped one would leave a phantom
       // frame open and wrongly gate everything after it in the file,
       // including later #MACRO definitions.

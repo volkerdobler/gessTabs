@@ -1,10 +1,10 @@
-// Thin vscode wiring for src/formatter.ts — same "pure logic module +
-// thin provider" split as src/macroExpansion.ts/src/macroProviders.ts.
+// Thin vscode wiring for src/core/formatter.ts — same "pure logic module +
+// thin provider" split as src/core/macroExpansion.ts/./macroProviders.ts.
 
 import * as vscode from 'vscode';
-import { Scope } from './scope';
-import { formatLines } from './formatter';
-import { printDebugMessage } from './workspaceFiles';
+import { Scope } from '../core/scope';
+import { formatLines } from '../core/formatter';
+import { printDebugMessage } from '../util/workspaceFiles';
 
 export class GesstabsFormattingProvider
   implements vscode.DocumentFormattingEditProvider

@@ -1,5 +1,5 @@
 import { expect } from 'chai';
-import { scanBlockDirectives } from '../src/directives';
+import { scanBlockDirectives } from '../src/core/directives';
 
 const kinds = (line: string) => scanBlockDirectives(line).map((d) => d.kind);
 

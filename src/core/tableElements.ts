@@ -22,11 +22,23 @@
 import { ResolvedLine } from './includeGraph';
 
 const tableOrOverviewStatementRe = /\b(table|overview|xoverview)\b[^=]*=/i;
+const tableOrOverviewKeywordRe = /^(table|overview|xoverview)$/i;
 const cellElementsAssignmentRe = /^\s*cellelements\s*=\s*([^;]*);?/i;
 const frameElementsAssignmentRe = /^\s*frameelements\s*=\s*([^;]*);?/i;
 
 export function isTableOrOverviewStatement(lineText: string): boolean {
   return tableOrOverviewStatementRe.test(lineText);
+}
+
+// True only for the bare statement keyword itself (`TABLE`, `OVERVIEW`,
+// `XOVERVIEW`) — used to gate the effective-elements hover to the keyword
+// under the cursor, so hovering a *variable* or an *#EXPAND reference* on
+// the same `TABLE …` line no longer also pops the elements hover (that
+// information is only meaningful for the statement as a whole, not for an
+// operand of it). `TABLE STRUCTURE`/`TABLE ADD` still qualify — the word
+// under the cursor there is `TABLE`.
+export function isTableOrOverviewKeyword(word: string): boolean {
+  return tableOrOverviewKeywordRe.test(word.trim());
 }
 
 export function extractElementsValue(

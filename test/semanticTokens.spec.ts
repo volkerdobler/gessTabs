@@ -1,5 +1,5 @@
 import { expect } from 'chai';
-import { collectSemanticTokens, SemanticToken } from '../src/semanticTokens';
+import { collectSemanticTokens, SemanticToken } from '../src/core/semanticTokens';
 
 const alwaysCode = () => true;
 

@@ -8,7 +8,7 @@ import * as vscode from 'vscode';
 import * as path from 'path';
 import * as fs from 'fs';
 import { getAllFilenamesInDirectory } from './fsutils';
-import { FileReader, ResolvedLine } from './includeGraph';
+import { FileReader, ResolvedLine } from '../core/includeGraph';
 
 // Shared debug channel, gated behind the gesstabs.debugMode setting —
 // used by extension.ts's own providers and by macroProviders.ts so a
@@ -81,9 +81,9 @@ export function resolvedLineRange(resolved: ResolvedLine): vscode.Range {
   );
 }
 
-// Rekursive, gecachte Dateisuche lebt in src/fsutils.ts
+// Rekursive, gecachte Dateisuche lebt in src/util/fsutils.ts
 // (getAllFilenamesInDirectory) und nutzt den geteilten TTL-LRU-Cache aus
-// src/lru.ts.
+// src/util/lru.ts.
 export async function findWorkspaceFiles(
   document: vscode.TextDocument
 ): Promise<string[]> {

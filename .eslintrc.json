@@ -54,7 +54,7 @@
       }
     },
     {
-      "files": ["src/macroProviders.ts"],
+      "files": ["src/providers/macroProviders.ts"],
       "rules": {
         "max-classes-per-file": ["error", 3],
         "class-methods-use-this": "off"
@@ -62,18 +62,22 @@
     },
     {
       "files": [
-        "src/tableElementsProvider.ts",
-        "src/foldingProvider.ts",
-        "src/semanticTokensProvider.ts",
-        "src/formatterProvider.ts",
-        "src/completionProviders.ts"
+        "src/providers/tableElementsProvider.ts",
+        "src/providers/variableHoverProvider.ts",
+        "src/providers/foldingProvider.ts",
+        "src/providers/semanticTokensProvider.ts",
+        "src/providers/formatterProvider.ts",
+        "src/providers/completionProviders.ts"
       ],
       "rules": {
         "class-methods-use-this": "off"
       }
     },
     {
-      "files": ["src/keywordProviders.ts", "src/diagnosticsProvider.ts"],
+      "files": [
+        "src/providers/keywordProviders.ts",
+        "src/providers/diagnosticsProvider.ts"
+      ],
       "rules": {
         "max-classes-per-file": ["error", 2],
         "class-methods-use-this": "off"

@@ -1,9 +1,9 @@
 // Shared recognition of the block-structuring preprocessor directives —
 // #MACRO/#ENDMACRO and the #IFDEF-family/#ELSE/#END — for every consumer
 // that cares about their *nesting*: the F2 "unmatched block" diagnostic
-// (src/diagnostics.ts), F5 code folding (src/foldingRanges.ts), the F5
-// formatter's indent-by-depth pass (src/formatter.ts), and the
-// INCLUDE/#ifdef resolver (src/includeGraph.ts — for the conditional
+// (src/core/diagnostics.ts), F5 code folding (src/core/foldingRanges.ts), the F5
+// formatter's indent-by-depth pass (src/core/formatter.ts), and the
+// INCLUDE/#ifdef resolver (src/core/includeGraph.ts — for the conditional
 // directives; it still handles #define/#undefine/#ignorecase/INCLUDE with
 // its own one-per-line-at-start regexes).
 //

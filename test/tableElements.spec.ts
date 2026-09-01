@@ -1,10 +1,11 @@
 import { expect } from 'chai';
 import {
   isTableOrOverviewStatement,
+  isTableOrOverviewKeyword,
   extractElementsValue,
   findEffectiveElements,
-} from '../src/tableElements';
-import { ResolvedLine } from '../src/includeGraph';
+} from '../src/core/tableElements';
+import { ResolvedLine } from '../src/core/includeGraph';
 
 function order(lines: string[], file = '/main.tab'): ResolvedLine[] {
   return lines.map((text, i) => ({ file, line: i, text }));
@@ -36,6 +37,22 @@ describe('isTableOrOverviewStatement', () => {
   it('does not match an unrelated statement', () => {
     expect(isTableOrOverviewStatement('CELLELEMENTS = COLUMNPERCENT;')).to.be
       .false;
+  });
+});
+
+describe('isTableOrOverviewKeyword', () => {
+  it('matches only the bare statement keyword, case-insensitively', () => {
+    ['table', 'TABLE', 'Overview', 'xoverview', ' table '].forEach((w) => {
+      expect(isTableOrOverviewKeyword(w), w).to.be.true;
+    });
+  });
+
+  it('does not match operands or related keywords', () => {
+    ['structure', 'add', 'by', 'f1', 'tableformat', 'tabletitle'].forEach(
+      (w) => {
+        expect(isTableOrOverviewKeyword(w), w).to.be.false;
+      }
+    );
   });
 });
 

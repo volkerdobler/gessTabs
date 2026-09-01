@@ -1,10 +1,13 @@
-// Thin vscode wiring for src/semanticTokens.ts — same "pure logic module +
-// thin provider" split as src/macroExpansion.ts/src/macroProviders.ts.
+// Thin vscode wiring for src/core/semanticTokens.ts — same "pure logic module +
+// thin provider" split as src/core/macroExpansion.ts/./macroProviders.ts.
 
 import * as vscode from 'vscode';
-import { Scope } from './scope';
-import { collectSemanticTokens, SemanticTokenType } from './semanticTokens';
-import { printDebugMessage } from './workspaceFiles';
+import { Scope } from '../core/scope';
+import {
+  collectSemanticTokens,
+  SemanticTokenType,
+} from '../core/semanticTokens';
+import { printDebugMessage } from '../util/workspaceFiles';
 
 export const gesstabsSemanticTokensLegend = new vscode.SemanticTokensLegend([
   'variable',

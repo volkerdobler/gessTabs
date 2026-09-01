@@ -8,7 +8,7 @@
 // own style: trim trailing whitespace, collapse runs of 2+ blank lines
 // down to 1, and reindent based on #MACRO/#ENDMACRO and #IFDEF-family/
 // #END nesting depth (directive recognition shared with
-// src/foldingRanges.ts / diagnostics.ts via src/directives.ts) — the one
+// src/core/foldingRanges.ts / diagnostics.ts via src/core/directives.ts) — the one
 // structural concept this language has that maps unambiguously to
 // indentation. Statement content itself (TABLE/CELLELEMENTS/etc. bodies,
 // comments) is left completely untouched beyond trailing-whitespace
@@ -22,7 +22,7 @@ export interface FormatOptions {
 
 // `isNotInComment(line, char)` lets a caller exclude directive-looking
 // text that's actually inside a comment/string, same reasoning as
-// src/foldingRanges.ts (a `#end // #ifdef X` annotation must not count as
+// src/core/foldingRanges.ts (a `#end // #ifdef X` annotation must not count as
 // two directives). A line that *starts* inside a comment/string is
 // trailing-whitespace trimmed like any other line, but its own
 // indentation is left untouched rather than guessed at. Defaults to "no

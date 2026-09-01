@@ -3,7 +3,7 @@
 // The GESStabs manuals are moving online and will not be re-extracted, so
 // the keyword database (formerly src/keywordDatabase.<lang>.ts, one file
 // per language) was collapsed into a single hand-maintained
-// src/keywordData.ts (one { name, argsHint?, syntax, description } entry
+// src/keywords/keywordData.ts (one { name, argsHint?, syntax, description } entry
 // per keyword, `description` being a per-language { de, en } map, every
 // string possibly '') and is edited directly from there on. The
 // `extract-keywords`
@@ -14,7 +14,7 @@
 // originally mined. It still runs (`ts-node scripts/extractKeywordDatabase.ts`)
 // against a local checkout that has dokumentation/*.md and emits the OLD
 // flat per-language shape (see `serialize` / `LegacyEntry` below); folding
-// a fresh run back into src/keywordData.ts would be a manual merge.
+// a fresh run back into src/keywords/keywordData.ts would be a manual merge.
 //
 // ---------------------------------------------------------------------
 //
@@ -92,11 +92,11 @@
 
 import * as fs from 'fs';
 import * as path from 'path';
-import { keywordLookupKey } from '../src/keywordDatabaseTypes';
+import { keywordLookupKey } from '../src/keywords/keywordDatabaseTypes';
 
-// The flat shape this script produced when src/keywordData.ts was still two
-// generated per-language files. Kept local so the current, nested
-// KeywordEntry type in src/keywordDatabaseTypes.ts can evolve freely.
+// The flat shape this script produced when src/keywords/keywordData.ts was
+// still two generated per-language files. Kept local so the current, nested
+// KeywordEntry type in src/keywords/keywordDatabaseTypes.ts can evolve freely.
 interface LegacyEntry {
   name: string;
   argsHint?: string;
@@ -331,7 +331,7 @@ function mergeEntries(candidates: KeywordEntry[]): KeywordEntry[] {
 function serialize(entries: KeywordEntry[], language: string): string {
   return `// LEGACY EXTRACTION OUTPUT (${language}) — not used by the build.
 // scripts/extractKeywordDatabase.ts is deprecated (see its header). The
-// live keyword database is the hand-maintained, nested src/keywordData.ts;
+// live keyword database is the hand-maintained, nested src/keywords/keywordData.ts;
 // fold anything useful from here into that file by hand.
 
 interface LegacyKeywordEntry {

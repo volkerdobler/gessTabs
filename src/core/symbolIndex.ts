@@ -1,5 +1,5 @@
 // Builds a single, program-order-correct view across a whole workspace's
-// .tab/.inc files, by resolving the INCLUDE graph (src/includeGraph.ts)
+// .tab/.inc files, by resolving the INCLUDE graph (src/core/includeGraph.ts)
 // from every "root" file (a file never reached via another file's
 // INCLUDE) and merging their resolved line orders. This replaces treating
 // every file found on disk as independently valid: a file that exists but

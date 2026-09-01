@@ -1,18 +1,18 @@
-// Thin vscode wiring for the F1 keyword database (src/keywordData.ts): a
-// hover showing syntax + description for the keyword under the cursor, and
+// Thin vscode wiring for the F1 keyword database (src/keywords/keywordData.ts):
+// a hover showing syntax + description for the keyword under the cursor, and
 // completion items for every known keyword. Same "pure data/logic + thin
 // provider" split as the rest of this codebase's providers.
 
 import * as vscode from 'vscode';
-import { Scope } from './scope';
-import { keywordData } from './keywordData';
+import { Scope } from '../core/scope';
+import { keywordData } from '../keywords/keywordData';
 import {
   ResolvedKeyword,
   buildResolvedIndex,
   resolveKeywordLanguage,
   keywordLookupKeyAt,
-} from './keywordDatabaseTypes';
-import { printDebugMessage } from './workspaceFiles';
+} from '../keywords/keywordDatabaseTypes';
+import { printDebugMessage } from '../util/workspaceFiles';
 
 // Picks the effective keyword-doc language from gesstabs.hover.language
 // (falling back to vscode.env.language for "auto") and returns an index of
@@ -35,7 +35,7 @@ function renderHover(entry: ResolvedKeyword): vscode.MarkdownString {
   const title = entry.argsHint ? `${entry.name}${entry.argsHint}` : entry.name;
   // A "**KEYWORD** `name`" header, so every symbol hover leads with the
   // same upper-case category label: KEYWORD here, MACRO / EXPAND in
-  // src/macroProviders.ts.
+  // ./macroProviders.ts.
   md.appendMarkdown(`**KEYWORD** \`${title}\`\n`);
   if (entry.syntax) {
     md.appendCodeblock(entry.syntax, 'gesstabs');

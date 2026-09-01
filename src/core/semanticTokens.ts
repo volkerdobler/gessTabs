@@ -1,9 +1,9 @@
 // Semantic highlighting (F5): distinguishes variable/macro/table names
 // from the surrounding gessTabs keywords, layered on top of the existing
 // TextMate grammar rather than replacing it. Reuses the same regex
-// factories (src/regex.ts) the document/workspace symbol providers
+// factories (src/core/regex.ts) the document/workspace symbol providers
 // already use to recognize *which lines* are variable/macro/table
-// definitions, and src/macroExpansion.ts for macro calls and the
+// definitions, and src/core/macroExpansion.ts for macro calls and the
 // bare-#name/reserved-keyword rules F3 already established.
 //
 // Known, deliberate scope limits (documented in docs/HISTORY.md's F5 entry

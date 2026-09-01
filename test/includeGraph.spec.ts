@@ -1,7 +1,7 @@
 import { expect } from 'chai';
 import * as path from 'path';
-import { resolveIncludeGraph, FileReader } from '../src/includeGraph';
-import { findMacroDefinitions } from '../src/macroExpansion';
+import { resolveIncludeGraph, FileReader } from '../src/core/includeGraph';
+import { findMacroDefinitions } from '../src/core/macroExpansion';
 
 // Paths are derived through path.resolve/path.join (not hardcoded literal
 // strings) so they match what the module's own path.resolve/path.dirname

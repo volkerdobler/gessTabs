@@ -1,24 +1,26 @@
-// Thin vscode wiring for src/tableElements.ts — same "pure logic module +
-// thin provider" split as src/macroExpansion.ts/src/macroProviders.ts.
+// Thin vscode wiring for src/core/tableElements.ts — same "pure logic
+// module + thin provider" split as
+// src/core/macroExpansion.ts/src/providers/macroProviders.ts.
 // A separate HoverProvider from GesstabsMacroHoverProvider (vscode merges
 // results from every registered hover provider for a language), since
 // this is an unrelated concern.
 
 import * as vscode from 'vscode';
 import * as path from 'path';
-import { Scope } from './scope';
-import { buildWorkspaceIndex } from './symbolIndex';
+import { Scope } from '../core/scope';
+import { buildWorkspaceIndex } from '../core/symbolIndex';
 import {
   findEffectiveElements,
   extractElementsValue,
   isTableOrOverviewStatement,
-} from './tableElements';
+  isTableOrOverviewKeyword,
+} from '../core/tableElements';
 import {
   makeWorkspaceReader,
   findWorkspaceFiles,
   normalizePath,
   printDebugMessage,
-} from './workspaceFiles';
+} from '../util/workspaceFiles';
 
 export class GesstabsEffectiveElementsHoverProvider
   implements vscode.HoverProvider
@@ -42,6 +44,15 @@ export class GesstabsEffectiveElementsHoverProvider
 
       const lineText = document.lineAt(position.line).text;
       if (!isTableOrOverviewStatement(lineText)) return null;
+
+      // Only when the cursor is actually on the statement keyword itself.
+      // Hovering a variable or an `#EXPAND` reference that happens to sit
+      // on the same `TABLE …`/`OVERVIEW …` line must not also show the
+      // effective CELLELEMENTS/FRAMEELEMENTS — that only makes sense for
+      // the TABLE/OVERVIEW statement as a whole.
+      const wordRange = document.getWordRangeAtPosition(position);
+      if (!wordRange) return null;
+      if (!isTableOrOverviewKeyword(document.getText(wordRange))) return null;
 
       const fileNames = await findWorkspaceFiles(document);
       const index = buildWorkspaceIndex(
@@ -90,7 +101,7 @@ export class GesstabsEffectiveElementsHoverProvider
         );
       }
 
-      return new vscode.Hover(md);
+      return new vscode.Hover(md, wordRange);
     } catch (e) {
       printDebugMessage(`gesstabs: effective-elements hover failed: ${e}`);
       return null;

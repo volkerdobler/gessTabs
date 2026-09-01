@@ -11,7 +11,7 @@ import {
   checkInvertoutUpdateinvert,
   checkDefineCaseMismatch,
   computeDiagnostics,
-} from '../src/diagnostics';
+} from '../src/core/diagnostics';
 
 const alwaysNotInComment = () => true;
 

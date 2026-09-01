@@ -1,6 +1,6 @@
-// Types and lookup helpers for the F1 keyword database (src/keywordData.ts),
+// Types and lookup helpers for the F1 keyword database (src/keywords/keywordData.ts),
 // consumed by the hover / keyword-completion providers in
-// src/keywordProviders.ts.
+// src/providers/keywordProviders.ts.
 //
 // Keyword *names* and *syntax* are language-independent (GESStabs syntax
 // doesn't translate); only the prose `description` differs per language.
@@ -15,7 +15,7 @@
 // KeywordEntry's `description` map are derived from it, and every function
 // below iterates it rather than naming 'de'/'en' literally. To add a
 // language: add its tag here, add its text to the `description` maps in
-// src/keywordData.ts, and add an enum value to package.json's
+// src/keywords/keywordData.ts, and add an enum value to package.json's
 // gesstabs.hover.language — the resolver, the fallback, and the entry type
 // then pick it up with no further code changes. The first entry is the
 // default when nothing else matches.

@@ -1,5 +1,5 @@
 import { expect } from 'chai';
-import { findFoldRanges } from '../src/foldingRanges';
+import { findFoldRanges } from '../src/core/foldingRanges';
 
 describe('findFoldRanges', () => {
   it('folds a #MACRO/#ENDMACRO block', () => {

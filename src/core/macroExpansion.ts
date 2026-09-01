@@ -18,9 +18,9 @@
 // expanded body text, also confirmed directly.
 //
 // Macro names are matched case-insensitively (consistent with
-// src/regex.ts's existing macroDefRe, and with the language's general
+// src/core/regex.ts's existing macroDefRe, and with the language's general
 // case-insensitivity — unlike #define/#ifdef/#expand names, which the
-// compiler documents as case-sensitive; see src/includeGraph.ts).
+// compiler documents as case-sensitive; see src/core/includeGraph.ts).
 //
 // Deliberately out of scope, same spirit as the rest of this codebase's
 // documented simplifications:
@@ -66,7 +66,11 @@ const macroEndRe = /^\s*#(?:endmacro|macroend)\b/i;
 const callStartRe = /^\s*#([A-Za-z_][\w.]*)\s*\(/;
 const paramRefRe = /&([A-Za-z_]\w*)/g;
 const hashNameRe = /#([A-Za-z_]\w*)/g;
-const expandDefinitionRe = /^\s*#expand\s+#(\S+)\s+(.*)$/i;
+// `#expand #name value` — the value (everything after the name) is
+// optional: `#expand #name` on its own is a real, if unusual, definition
+// that expands to nothing, and must still be recognized rather than
+// silently ignored (which looked like "#name isn't an #EXPAND at all").
+const expandDefinitionRe = /^\s*#expand\s+#(\S+)(?:[ \t]+(.*))?\s*$/i;
 
 // Scans forward from `openIndex` (the position of an already-matched "(")
 // for its matching ")", tracking nesting depth and skipping over anything
@@ -319,7 +323,7 @@ export function findExpandDefinitions(
   const defs = new Map<string, string>();
   lines.forEach((l) => {
     const m = l.text.match(expandDefinitionRe);
-    if (m) defs.set(m[1], m[2].trim());
+    if (m) defs.set(m[1], (m[2] ?? '').trim());
   });
   return defs;
 }
@@ -380,4 +384,58 @@ const reservedDirectiveKeywords = new Set([
 
 export function isReservedDirectiveKeyword(name: string): boolean {
   return reservedDirectiveKeywords.has(name.toLowerCase());
+}
+
+const expandBlockCommentRe = /\{[^{}]*\}/g;
+const expandLineCommentRe = /\/\/.*$/;
+
+// Removes GESStabs comments from an #EXPAND value: `{ … }` block comments
+// (not nestable in this language — a single non-nesting delimiter pair,
+// see src/core/scope.ts) and a trailing `// …` line comment, then collapses
+// the whitespace the removal leaves behind. The value of
+// `#expand #y #x { def } ghi` is `#x { def } ghi`, which must read as
+// `#x ghi`.
+export function stripExpandComments(value: string): string {
+  let out = value;
+  let prev = '';
+  while (out !== prev) {
+    prev = out;
+    out = out.replace(expandBlockCommentRe, ' ');
+  }
+  return out.replace(expandLineCommentRe, '').replace(/\s+/g, ' ').trim();
+}
+
+// Fully resolves an #EXPAND value: strips comments (see stripExpandComments)
+// and recursively substitutes every nested `#name` that is itself an
+// #EXPAND (case-sensitive, like the language; a reserved directive keyword
+// or an unknown `#name` is left as written). Unlike macros — which
+// deliberately are NOT flattened inside one another — #EXPAND is plain
+// nested text substitution and the compiler does flatten it. A name
+// already being expanded is left as-is if it recurs (cycle guard), and a
+// depth limit backstops pathological chains.
+export function resolveExpandValue(
+  name: string,
+  defs: Map<string, string>,
+  maxDepth = 25
+): string | undefined {
+  const root = defs.get(name);
+  if (root === undefined) return undefined;
+
+  const expand = (text: string, depth: number, stack: Set<string>): string => {
+    const stripped = stripExpandComments(text);
+    if (depth <= 0) return stripped;
+    // A fresh regex per call — a shared /g regex's lastIndex can't survive
+    // the reentrancy of String.replace calling back into expand().
+    return stripped.replace(/#([A-Za-z_]\w*)/g, (whole, ref: string) => {
+      if (isReservedDirectiveKeyword(ref) || stack.has(ref)) return whole;
+      const refValue = defs.get(ref);
+      if (refValue === undefined) return whole;
+      stack.add(ref);
+      const resolved = expand(refValue, depth - 1, stack);
+      stack.delete(ref);
+      return resolved;
+    });
+  };
+
+  return expand(root, maxDepth, new Set([name]));
 }

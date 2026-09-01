@@ -7,8 +7,8 @@
 // activity to decide what folds — even an inactive branch should still
 // fold in the editor showing it.
 //
-// Directive recognition is shared with src/diagnostics.ts / formatter.ts
-// via src/directives.ts (which also handles multiple directives on one
+// Directive recognition is shared with src/core/diagnostics.ts / formatter.ts
+// via src/core/directives.ts (which also handles multiple directives on one
 // line — a single-line `#ifdef X … #end` simply produces no fold range,
 // since start and end are the same line — and drops a directive token
 // sitting in a comment or string).

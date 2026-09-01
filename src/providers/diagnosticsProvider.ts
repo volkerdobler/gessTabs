@@ -1,4 +1,4 @@
-// Thin vscode wiring for src/diagnostics.ts (F2) — manages a
+// Thin vscode wiring for src/core/diagnostics.ts (F2) — manages a
 // DiagnosticCollection's lifecycle. Unlike vscode's provider interfaces
 // (HoverProvider, CompletionItemProvider, ...) there is no
 // "DiagnosticProvider" registration point; diagnostics are pushed
@@ -8,13 +8,13 @@
 // it operates directly on the diagnostics this file produces.
 
 import * as vscode from 'vscode';
-import { Scope } from './scope';
+import { Scope } from '../core/scope';
 import {
   computeDiagnostics,
   findLastDeclaredVariableBefore,
   DiagnosticSeverity,
-} from './diagnostics';
-import { printDebugMessage } from './workspaceFiles';
+} from '../core/diagnostics';
+import { printDebugMessage } from '../util/workspaceFiles';
 
 function toVscodeSeverity(
   severity: DiagnosticSeverity

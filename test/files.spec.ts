@@ -1,7 +1,7 @@
 import { expect } from 'chai';
 import * as fs from 'fs';
 import * as path from 'path';
-import { getAllFilenamesInDirectory } from '../src/fsutils';
+import { getAllFilenamesInDirectory } from '../src/util/fsutils';
 
 const tmpDir = path.join(__dirname, 'tmp_test_dir');
 

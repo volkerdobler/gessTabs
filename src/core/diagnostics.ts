@@ -115,7 +115,7 @@ export function findLastDeclaredVariableBefore(
 // --- 2. Unmatched #MACRO/#ENDMACRO and #IFDEF-family/#END blocks ---------
 // Directive recognition (single-line `#ifnempty … #else … #end`, and
 // directives sitting in a trailing `// …` comment / string) lives in
-// src/directives.ts, shared with foldingRanges.ts / formatter.ts.
+// src/core/directives.ts, shared with foldingRanges.ts / formatter.ts.
 export function checkUnmatchedBlocks(
   lines: string[],
   isNotInComment: IsNotInComment
@@ -207,7 +207,7 @@ export function checkUnmatchedBlocks(
 
 // --- 3. Duplicate variable declaration ------------------------------------
 // Mirrors compiler error 8: "variable declared twice". Reuses
-// src/semanticTokens.ts's collectDeclarationTokens — the VARIABLE-family/
+// src/core/semanticTokens.ts's collectDeclarationTokens — the VARIABLE-family/
 // COMPUTE-family/VARIABLES statements that actually create a new name, as
 // opposed to a VARTITLE/VARTEXT/VALUELABELS statement that only
 // *annotates* an existing one (using the full "variable" token set from

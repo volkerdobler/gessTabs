@@ -9,15 +9,15 @@
 // static list is needed.
 
 import * as vscode from 'vscode';
-import { buildWorkspaceIndex } from './symbolIndex';
-import { collectDefinedNamesBefore } from './symbolCompletion';
-import { findMacroDefinitions } from './macroExpansion';
+import { buildWorkspaceIndex } from '../core/symbolIndex';
+import { collectDefinedNamesBefore } from '../core/symbolCompletion';
+import { findMacroDefinitions } from '../core/macroExpansion';
 import {
   makeWorkspaceReader,
   findWorkspaceFiles,
   normalizePath,
   printDebugMessage,
-} from './workspaceFiles';
+} from '../util/workspaceFiles';
 
 export class GesstabsSymbolCompletionProvider
   implements vscode.CompletionItemProvider

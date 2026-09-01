@@ -1,13 +1,13 @@
 // Pure logic for the F1 autocomplete item's variable/table-name half —
-// kept vscode-free (unlike src/completionProviders.ts, its thin wiring
-// counterpart) so it can be unit-tested directly, same split as
-// src/macroExpansion.ts/src/macroProviders.ts.
+// kept vscode-free (unlike src/providers/completionProviders.ts, its thin
+// wiring counterpart) so it can be unit-tested directly, same split as
+// src/core/macroExpansion.ts/src/providers/macroProviders.ts.
 //
-// Reuses src/semanticTokens.ts's collectSemanticTokens to find variable/
-// table NAME tokens — the exact same "which lines define a variable"
-// regex-based recognition the document/workspace symbol providers and
-// semantic highlighting already share — rather than a third
-// reimplementation of that matching.
+// Reuses src/core/semanticTokens.ts's collectSemanticTokens to find
+// variable/table NAME tokens — the exact same "which lines define a
+// variable" regex-based recognition the document/workspace symbol
+// providers and semantic highlighting already share — rather than a
+// third reimplementation of that matching.
 
 import { collectSemanticTokens } from './semanticTokens';
 

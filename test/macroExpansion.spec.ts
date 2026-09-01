@@ -7,10 +7,12 @@ import {
   expandLines,
   findParamReferenceAt,
   findExpandDefinitions,
+  stripExpandComments,
+  resolveExpandValue,
   findHashNameAt,
   isReservedDirectiveKeyword,
   MacroSourceLine,
-} from '../src/macroExpansion';
+} from '../src/core/macroExpansion';
 
 function src(text: string, file = '/main.tab'): MacroSourceLine[] {
   return text.split('\n').map((t, i) => ({ file, line: i, text: t }));
@@ -378,6 +380,73 @@ describe('findExpandDefinitions', () => {
       src('#expandinc #counter 1\n#expandintoken #x foo')
     );
     expect(defs.size).to.equal(0);
+  });
+
+  it('recognizes a value-less "#expand #name" as an (empty) definition', () => {
+    const defs = findExpandDefinitions(src('#expand #s\nvariable a = 1;'));
+    expect(defs.has('s')).to.equal(true);
+    expect(defs.get('s')).to.equal('');
+  });
+
+  it('recognizes a short single-letter name', () => {
+    const defs = findExpandDefinitions(src('#expand #s totalcol( 1 )'));
+    expect(defs.get('s')).to.equal('totalcol( 1 )');
+  });
+});
+
+describe('stripExpandComments', () => {
+  it('removes { … } block comments and collapses whitespace', () => {
+    expect(stripExpandComments('#x { def } ghi')).to.equal('#x ghi');
+  });
+
+  it('removes a trailing // line comment', () => {
+    expect(stripExpandComments('abc ghi // a note')).to.equal('abc ghi');
+  });
+
+  it('removes several / adjacent block comments', () => {
+    expect(stripExpandComments('a {c1} b {c2}c')).to.equal('a b c');
+  });
+
+  it('leaves a value with no comments untouched (bar whitespace)', () => {
+    expect(stripExpandComments('  totalcol( 1 )  ')).to.equal('totalcol( 1 )');
+  });
+});
+
+describe('resolveExpandValue', () => {
+  const defs = (pairs: [string, string][]) => new Map(pairs);
+
+  it('resolves a nested #EXPAND and strips comments (handbook-style)', () => {
+    const d = defs([
+      ['x', 'abc'],
+      ['y', '#x { def } ghi'],
+    ]);
+    expect(resolveExpandValue('y', d)).to.equal('abc ghi');
+  });
+
+  it('resolves several levels deep', () => {
+    const d = defs([
+      ['a', '1'],
+      ['b', '#a 2'],
+      ['c', '#b 3'],
+    ]);
+    expect(resolveExpandValue('c', d)).to.equal('1 2 3');
+  });
+
+  it('leaves an unknown #name and a reserved directive keyword as written', () => {
+    const d = defs([['y', '#unknown #ifdef tail']]);
+    expect(resolveExpandValue('y', d)).to.equal('#unknown #ifdef tail');
+  });
+
+  it('does not loop on a cyclic definition', () => {
+    const d = defs([
+      ['p', '#q p'],
+      ['q', '#p q'],
+    ]);
+    expect(resolveExpandValue('p', d)).to.equal('#p q p');
+  });
+
+  it('returns undefined for an unknown name', () => {
+    expect(resolveExpandValue('nope', defs([['x', '1']]))).to.be.undefined;
   });
 });
 

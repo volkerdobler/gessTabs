@@ -1,5 +1,5 @@
 import { expect } from 'chai';
-import { formatLines } from '../src/formatter';
+import { formatLines } from '../src/core/formatter';
 
 const alwaysCode = () => true;
 

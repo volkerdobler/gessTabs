@@ -1,5 +1,5 @@
 import { expect } from 'chai';
-import { LRUCache } from '../src/lru';
+import { LRUCache } from '../src/util/lru';
 
 describe('LRUCache', () => {
   it('evicts the least recently used entry once maxSize is exceeded', () => {

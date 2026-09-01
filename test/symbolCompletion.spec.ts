@@ -1,5 +1,5 @@
 import { expect } from 'chai';
-import { collectDefinedNamesBefore } from '../src/symbolCompletion';
+import { collectDefinedNamesBefore } from '../src/core/symbolCompletion';
 
 describe('collectDefinedNamesBefore', () => {
   it('collects a variable defined on an earlier line', () => {

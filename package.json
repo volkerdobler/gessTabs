@@ -79,6 +79,16 @@
           "default": true,
           "description": "Show syntax + description for the GESStabs keyword under the cursor. Has no effect if gesstabs.hover.enabled is false."
         },
+        "gesstabs.hover.variables": {
+          "type": "boolean",
+          "default": true,
+          "description": "Show the declaration line for the variable under the cursor (when the script defines it). Has no effect if gesstabs.hover.enabled is false."
+        },
+        "gesstabs.hover.variableAnnotations": {
+          "type": "boolean",
+          "default": true,
+          "description": "Also list the VARTITLE/VARTEXT/VALUELABELS statements for the variable in its hover. Has no effect if gesstabs.hover.enabled or gesstabs.hover.variables is false."
+        },
         "gesstabs.hover.language": {
           "type": "string",
           "enum": [

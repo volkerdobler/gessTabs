@@ -12,7 +12,7 @@ import {
   tableHeadRe,
   tableAxisRe,
   usageRe,
-} from '../src/regex';
+} from '../src/core/regex';
 
 describe('regex factories', () => {
   it('wordDefRe matches exact word and quoted', () => {

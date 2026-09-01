@@ -1,10 +1,10 @@
-// Thin vscode wiring for src/foldingRanges.ts — same "pure logic module +
-// thin provider" split as src/macroExpansion.ts/src/macroProviders.ts.
+// Thin vscode wiring for src/core/foldingRanges.ts — same "pure logic module +
+// thin provider" split as src/core/macroExpansion.ts/./macroProviders.ts.
 
 import * as vscode from 'vscode';
-import { Scope } from './scope';
-import { findFoldRanges } from './foldingRanges';
-import { printDebugMessage } from './workspaceFiles';
+import { Scope } from '../core/scope';
+import { findFoldRanges } from '../core/foldingRanges';
+import { printDebugMessage } from '../util/workspaceFiles';
 
 export class GesstabsFoldingRangeProvider
   implements vscode.FoldingRangeProvider

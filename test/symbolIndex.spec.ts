@@ -1,13 +1,13 @@
 import { expect } from 'chai';
 import * as path from 'path';
-import { FileReader } from '../src/includeGraph';
+import { FileReader } from '../src/core/includeGraph';
 import {
   buildWorkspaceIndex,
   findDefinitionLine,
   findAllUsages,
   findWordRangeInLine,
   findAllWordRangesInLine,
-} from '../src/symbolIndex';
+} from '../src/core/symbolIndex';
 
 const ROOT = path.resolve('/gesstabs-symbolindex-test');
 const p = (...segments: string[]) => path.join(ROOT, ...segments);

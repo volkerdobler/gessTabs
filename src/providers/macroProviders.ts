@@ -1,13 +1,13 @@
 // vscode-facing macro tooling (F3 of the editor-support roadmap): shows
 // what a #name(...) call actually expands to, provides signature help
 // while typing a call, and a usage-count CodeLens on #MACRO declarations.
-// All the actual parsing/substitution logic lives in src/macroExpansion.ts
-// (pure, unit-tested); this file is just the thin vscode wiring, same
-// split as extension.ts's own providers.
+// All the actual parsing/substitution logic lives in
+// src/core/macroExpansion.ts (pure, unit-tested); this file is just the
+// thin vscode wiring, same split as extension.ts's own providers.
 
 import * as vscode from 'vscode';
-import { Scope } from './scope';
-import { buildWorkspaceIndex, WorkspaceIndex } from './symbolIndex';
+import { Scope } from '../core/scope';
+import { buildWorkspaceIndex, WorkspaceIndex } from '../core/symbolIndex';
 import {
   findMacroDefinitions,
   findMacroCalls,
@@ -15,17 +15,18 @@ import {
   expandMacro,
   expandLines,
   findExpandDefinitions,
+  resolveExpandValue,
   findHashNameAt,
   isReservedDirectiveKeyword,
   MacroDefinition,
-} from './macroExpansion';
+} from '../core/macroExpansion';
 import {
   makeWorkspaceReader,
   findWorkspaceFiles,
   normalizePath,
   printDebugMessage,
-} from './workspaceFiles';
-import { FileReader } from './includeGraph';
+} from '../util/workspaceFiles';
+import { FileReader } from '../core/includeGraph';
 
 async function buildMacroContext(document: vscode.TextDocument) {
   const fileNames = await findWorkspaceFiles(document);
@@ -230,19 +231,44 @@ export class GesstabsMacroHoverProvider implements vscode.HoverProvider {
         const { expandDefs } = await buildMacroContext(document);
         if (token && token.isCancellationRequested) return null;
 
-        const value = expandDefs.get(hashName);
-        if (value === undefined) {
+        // Merge the workspace-resolved definitions with a direct scan of
+        // the current document: an `#expand #name …` in *this* file must
+        // always resolve, even when the INCLUDE graph that produced
+        // `expandDefs` doesn't reach this file (orphaned during editing,
+        // an unresolved INCLUDE path, …). The merged map also feeds the
+        // recursive resolution below, where a nested `#other` may live in
+        // either place.
+        const localDefs = findExpandDefinitions(
+          document
+            .getText()
+            .split(/\r?\n/)
+            .map((text, line) => ({
+              file: normalizePath(document.uri.fsPath),
+              line,
+              text,
+            }))
+        );
+        const allExpandDefs = new Map([...expandDefs, ...localDefs]);
+
+        if (!allExpandDefs.has(hashName)) {
           printDebugMessage(
             `gesstabs: hover - "#${hashName}" is not a column-1 macro call, and no "#expand #${hashName} ..." definition was found (names are case-sensitive). Known #expand names: ${
-              Array.from(expandDefs.keys()).join(', ') || '(none)'
+              Array.from(allExpandDefs.keys()).join(', ') || '(none)'
             }`
           );
           return null;
         }
 
+        // Comments stripped, nested #EXPANDs resolved recursively.
+        const value = resolveExpandValue(hashName, allExpandDefs) ?? '';
+
         const md = new vscode.MarkdownString();
         md.appendMarkdown(`**EXPAND** \`#${hashName}\`\n`);
-        md.appendCodeblock(value, 'gesstabs');
+        if (value === '') {
+          md.appendMarkdown('\n_(expands to nothing)_');
+        } else {
+          md.appendCodeblock(value, 'gesstabs');
+        }
         return new vscode.Hover(md);
       }
 

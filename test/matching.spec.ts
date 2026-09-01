@@ -3,7 +3,7 @@ import {
   lineMatchesDefinition,
   lineMatchesUsage,
   matchInScope,
-} from '../src/matching';
+} from '../src/core/matching';
 
 // pass-through: treat every regex match as "not in a comment" so these
 // tests exercise only the regex-matching logic, not the scope wiring.
