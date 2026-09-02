@@ -10,11 +10,7 @@ Rough tiering of the items below, by effort/risk and dependency order — not a 
 - **Tier 1 — foundational, do next.** **Variable handling (definition & reference) needs to be rethought from scratch** (below) and its four sub-points. Do the handbook-driven design pass _before_ touching go-to-definition/references/rename/hover code again — several other items below are really facets of this same problem and risk being built twice otherwise: **Hover over String** is the same quoted-token ambiguity described there, and the multi-response-variable classification the mutually-exclusive table/cell-option diagnostics need requires the same kind of workspace-wide symbol model this rework should produce.
 - **Tier 2 — builds on Tier 1's improved symbol model.** **Workspace-wide (cross-`INCLUDE`) scope for the F2 diagnostics** and the multi-response-variable classification half of **Mutually-exclusive table/cell-option diagnostics beyond `CELLSET`/`INVERTOUT`+`UPDATEINVERT`** — both were deliberately deferred pending exactly this kind of model.
 - **Tier 3 — independent, pick up opportunistically, no particular order.** `#DOMACRO`-family looping macro expansion, semantic highlighting's last-name-only limitation, the keyword-hover-content setting, the formatter's option-list alignment.
-- **Ongoing, not a sprint item.** Keyword database gaps ("fix as you notice" — see its own entry below) and the `origin/master`-merge toolchain risk (watch at each merge, no standing action).
-
-## Known issues
-
-- **Merging `origin/master` into `rewrite` will likely re-drop the dev-tooling dependencies again.** This has already happened once (see `docs/HISTORY.md`'s P0 regression entry) — master's own `package.json` still has a leaner `devDependencies`/`eslint` version than `rewrite`. Stays a live risk until master's toolchain choices are reconciled with (or `rewrite`'s are upstreamed to) master.
+- **Ongoing, not a sprint item.** Keyword database gaps ("fix as you notice" — see its own entry below).
 
 ## Possible future improvements
 
