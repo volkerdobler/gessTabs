@@ -211,6 +211,15 @@ describe('checkDuplicateDeclarations', () => {
     expect(checkDuplicateDeclarations(lines, alwaysNotInComment)).to.be.empty;
   });
 
+  it('does not flag a WEIGHTCELLS re-mentioning an existing variable', () => {
+    const lines = [
+      'singleq geschl = 1;',
+      'weightcells geschl = 1:48% 2:52%;',
+      'weightcells autoalign geschl = 1:48% 2:52%;',
+    ];
+    expect(checkDuplicateDeclarations(lines, alwaysNotInComment)).to.be.empty;
+  });
+
   it('is case-insensitive', () => {
     const lines = ['variable X = 1;', 'variable x = 2;'];
     expect(

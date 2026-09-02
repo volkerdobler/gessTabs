@@ -82,6 +82,16 @@ describe('collectSemanticTokens', () => {
     ]);
   });
 
+  it('tags the WEIGHTCELLS target variable as "variable"', () => {
+    const tokens = collectSemanticTokens(
+      ['weightcells geschl = 1:48% 2:52%;'],
+      alwaysCode
+    );
+    expect(tokens).to.deep.equal([
+      { line: 0, startChar: 12, length: 6, type: 'variable' },
+    ]);
+  });
+
   it('does not tag anything inside a comment', () => {
     const isNotInComment = () => false;
     const tokens = collectSemanticTokens(

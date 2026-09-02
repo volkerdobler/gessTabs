@@ -36,6 +36,7 @@ import {
   multiVarDefRe,
   multiVarRe,
   computeDefRe,
+  weightcellsRe,
   tableHeadRe,
   tableAxisRe,
   macroDefRe,
@@ -56,6 +57,7 @@ export type IsNotInComment = (line: number, char: number) => boolean;
 
 const singleVarRegExp = singleVarDefRe('');
 const computeRegExp = computeDefRe('');
+const weightcellsRegExp = weightcellsRe('');
 const multiVarDefRegExp = multiVarDefRe('');
 const multiVarRegExp = multiVarRe('');
 const tableHeadRegExp = tableHeadRe('');
@@ -130,7 +132,9 @@ function pushHashToken(
 // The subset of "variable"-shaped statements that actually *declare* a
 // new name (VARIABLE-family/COMPUTE-family/VARIABLES), as opposed to
 // multiVarRe's family (VARTITLE/VARTEXT/VALUELABELS/...) which only
-// *annotates* an already-existing variable. Exported separately (rather
+// *annotates* an already-existing variable, or WEIGHTCELLS which
+// *references* one (its <varname> is a variable declared/computed
+// earlier, never created here — see weightcellsRe). Exported separately (rather
 // than folded silently into collectLineTokens below) because F2's
 // duplicate-declaration diagnostic needs exactly this narrower set —
 // reusing multiVarRe's matches there would misreport an ordinary
@@ -217,6 +221,14 @@ function collectLineTokens(
   const multiVarMatch = lineText.match(multiVarRegExp);
   if (multiVarMatch) {
     pushVariableToken(tokens, lineIndex, multiVarMatch, isNotInComment);
+  }
+
+  // WEIGHTCELLS <varname> = … — a reference to an existing variable, not a
+  // declaration (so it's here, not in collectDeclarationTokens), but its
+  // name is still worth highlighting like a table head/axis usage.
+  const weightcellsMatch = lineText.match(weightcellsRegExp);
+  if (weightcellsMatch) {
+    pushVariableToken(tokens, lineIndex, weightcellsMatch, isNotInComment);
   }
 
   const headMatch = lineText.match(tableHeadRegExp);

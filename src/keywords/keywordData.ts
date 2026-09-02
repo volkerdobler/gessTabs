@@ -11634,14 +11634,6 @@ export const keywordData: KeywordEntry[] = [
     },
   },
   {
-    name: 'VALUELABEL',
-    syntax: '',
-    description: {
-      en: '',
-      de: '',
-    },
-  },
-  {
     name: 'VALUELABELS',
     syntax:
       'VALUELABELS <VarList> = [ ADD ]\n{ LabelEntry }*n ;\nLabelEntry ::=\n[<number> "String" | OVERCODE [ SUM ] [<name>] { <number> [ :<number>\n] }*n "String" ] [ LabelOption ]\nLabelOption ::=',

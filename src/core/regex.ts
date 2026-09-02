@@ -94,13 +94,35 @@ export function multiVarRe(word: string): RegExp {
 
 export function computeDefRe(word: string): RegExp {
   const defWithOptions =
-    '\\b(f?compute\\s+(?:add|alpha|ascend|copy|descend|eliminate|init|load|replace|shuffle|sort|swap)?|weightcells\\s+(?:autoalign)?)\\b';
+    '\\b(f?compute\\s+(?:add|alpha|ascend|copy|descend|eliminate|init|load|replace|shuffle|sort|swap)?)\\b';
 
   const pattern =
     word.length > 0
       ? `${defWithOptions}\\s+(?:${getWordDefinition(word)}\\b).*=`
       : `${defWithOptions}(?:\\s+(?:${constVarName})|(?:${constVarListSeq}))\\s*=`;
   return buildRe('computeDefRe', word, pattern);
+}
+
+// WEIGHTCELLS <varname> = { <code> : <target>% }*n; — unlike COMPUTE this
+// does NOT create a variable: <varname> is an existing variable whose
+// marginal distribution the weighting targets (handbook "WEIGHTCELLS":
+// `WEIGHTCELLS [ AUTOALIGN ] <varname> = …`, always a variable declared/
+// computed earlier). So it's kept out of computeDefRe (whose matches every
+// caller treats as a *declaration* — go-to-definition target, semantic
+// "this line declares a name", F2's duplicate-declaration check) and given
+// its own factory, wired only into the *usage* matchers.
+export function weightcellsRe(word: string): RegExp {
+  // `WEIGHTCELLS [ AUTOALIGN ] <varname> = …` — AUTOALIGN and its trailing
+  // whitespace are one optional group, so the bare (no-AUTOALIGN) form
+  // matches too (unlike computeDefRe, whose two chained `\s+` deliberately
+  // require an option keyword).
+  const verb = '\\b(weightcells)\\s+(?:autoalign\\s+)?';
+
+  const pattern =
+    word.length > 0
+      ? `${verb}(?:${getWordDefinition(word)}\\b).*=`
+      : `${verb}(${constVarList})\\s*=`;
+  return buildRe('weightcellsRe', word, pattern);
 }
 
 export function macroDefRe(word: string): RegExp {

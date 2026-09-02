@@ -5,6 +5,7 @@ import {
   multiVarDefRe,
   multiVarRe,
   computeDefRe,
+  weightcellsRe,
   macroDefRe,
   macroOwnDefRe,
   expandDefRe,
@@ -66,8 +67,26 @@ describe('regex factories', () => {
     expect(r.test('compute   myVar = 1')).to.be.false;
     expect(r.test('compute add myVar = 1')).to.be.true;
     expect(r.test('fcompute add myVar = 2')).to.be.true;
-    expect(r.test('weightcells autoalign myVar = 3')).to.be.true;
     expect(r.test('notcompute add myVar = 1')).to.be.false;
+    // WEIGHTCELLS is no longer part of computeDefRe — it references an
+    // existing variable, it doesn't declare one (see weightcellsRe).
+    expect(r.test('weightcells autoalign myVar = 3')).to.be.false;
+  });
+
+  it('weightcellsRe matches "weightcells [autoalign] <var> =" but not compute', () => {
+    const r = weightcellsRe('myVar');
+    expect(r.test('weightcells myVar = 1:50% 2:50%;')).to.be.true;
+    expect(r.test('weightcells autoalign myVar = 1:50% 2:50%;')).to.be.true;
+    expect(r.test('weightcells "my var" = 1:50% 2:50%;')).to.be.false;
+    expect(r.test('compute add myVar = 1')).to.be.false;
+    expect(r.test('weightcells otherVar = 1:50% 2:50%;')).to.be.false;
+  });
+
+  it('weightcellsRe with empty word matches any weighted variable name', () => {
+    const r = weightcellsRe('');
+    expect(r.test('WEIGHTCELLS geschl = 1:48% 2:52%;')).to.be.true;
+    expect(r.test('WEIGHTCELLS AUTOALIGN agesex = 11:25%;')).to.be.true;
+    expect(r.test('compute add x = 1;')).to.be.false;
   });
 
   it('macroDefRe matches "#macro #name("', () => {

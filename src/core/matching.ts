@@ -8,6 +8,7 @@ import {
   multiVarDefRe,
   multiVarRe,
   computeDefRe,
+  weightcellsRe,
   macroDefRe,
   macroOwnDefRe,
   expandDefRe,
@@ -87,6 +88,7 @@ export function lineHasQuotedVariableReference(
   const multiVarDefRegExp = multiVarDefRe(word);
   const multiVarRegExp = multiVarRe(word);
   const computeRegExp = computeDefRe(word);
+  const weightcellsRegExp = weightcellsRe(word);
   const tableHeadRegExp = tableHeadRe(word);
   const tableAxisRegExp = tableAxisRe(word);
 
@@ -95,6 +97,7 @@ export function lineHasQuotedVariableReference(
     isNotInComment(lineText.search(multiVarDefRegExp)) ||
     isNotInComment(lineText.search(multiVarRegExp)) ||
     isNotInComment(lineText.search(computeRegExp)) ||
+    isNotInComment(lineText.search(weightcellsRegExp)) ||
     isNotInComment(lineText.search(tableHeadRegExp)) ||
     isNotInComment(lineText.search(tableAxisRegExp))
   );
@@ -109,6 +112,7 @@ export function lineMatchesUsage(
   const multiVarRegExp = multiVarRe(word);
   const multiVarDefRegExp = multiVarDefRe(word);
   const computeRegExp = computeDefRe(word);
+  const weightcellsRegExp = weightcellsRe(word);
   const macroDefRegExp = macroDefRe(word);
   const macroOwnRegExp = macroOwnDefRe(word);
   const expandDefRegExp = expandDefRe(word);
@@ -121,6 +125,7 @@ export function lineMatchesUsage(
     isNotInComment(lineText.search(singleVarRegExp)) ||
     isNotInComment(lineText.search(multiVarRegExp)) ||
     isNotInComment(lineText.search(computeRegExp)) ||
+    isNotInComment(lineText.search(weightcellsRegExp)) ||
     isNotInComment(lineText.search(macroDefRegExp)) ||
     isNotInComment(lineText.search(macroOwnRegExp)) ||
     isNotInComment(lineText.search(expandDefRegExp)) ||
