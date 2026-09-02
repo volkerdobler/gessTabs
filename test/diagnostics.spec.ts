@@ -11,6 +11,10 @@ import {
   checkCellsetElements,
   checkInvertoutUpdateinvert,
   checkDefineCaseMismatch,
+  checkParenBalance,
+  checkNestedBlockComments,
+  scanBlockCommentGroups,
+  findEnclosingBlockCommentGroup,
   computeDiagnostics,
 } from '../src/core/diagnostics';
 
@@ -405,6 +409,84 @@ describe('checkDefineCaseMismatch', () => {
     const issues = checkDefineCaseMismatch(lines, alwaysNotInComment);
     expect(issues).to.have.length(1);
     expect(issues[0].message).to.include('FOO');
+  });
+});
+
+describe('checkParenBalance', () => {
+  it('does not flag balanced, nested parens', () => {
+    const lines = ['#x( a( b ) c( d ) );'];
+    expect(checkParenBalance(lines, alwaysNotInComment)).to.be.empty;
+  });
+
+  it('flags a forgotten closing paren on a macro call', () => {
+    const issues = checkParenBalance(['#x( a, b;'], alwaysNotInComment);
+    expect(issues).to.have.length(1);
+    expect(issues[0]).to.deep.include({
+      line: 0,
+      startChar: 2,
+      code: 'unmatched-open-paren',
+    });
+  });
+
+  it('flags a stray closing paren with nothing open', () => {
+    const issues = checkParenBalance(['x = 1 );'], alwaysNotInComment);
+    expect(issues).to.have.length(1);
+    expect(issues[0].code).to.equal('unmatched-close-paren');
+  });
+
+  it('balances parens across multiple lines', () => {
+    const lines = ['#x( a,', 'b );'];
+    expect(checkParenBalance(lines, alwaysNotInComment)).to.be.empty;
+  });
+
+  it('ignores parens inside a comment', () => {
+    const isCodeChar = (line: number) => line !== 0;
+    expect(checkParenBalance(['{ #x( a, b; }', 'x;'], isCodeChar)).to.be.empty;
+  });
+});
+
+describe('scanBlockCommentGroups / checkNestedBlockComments', () => {
+  it('finds a single, un-nested block comment group', () => {
+    const lines = ['{ old code }'];
+    const groups = scanBlockCommentGroups(lines);
+    expect(groups).to.have.length(1);
+    expect(groups[0].nestedStarts).to.be.empty;
+    expect(checkNestedBlockComments(lines)).to.be.empty;
+  });
+
+  it('flags a block comment nested inside another', () => {
+    const lines = ['{ outer', 'code { inner comment }', 'more code }'];
+    const issues = checkNestedBlockComments(lines);
+    expect(issues).to.have.length(1);
+    expect(issues[0]).to.deep.include({
+      line: 1,
+      code: 'nested-block-comment',
+    });
+    expect(issues[0].message).to.include('line 2');
+  });
+
+  it('does not flag independent, sequential block comments', () => {
+    const lines = ['{ first }', 'x;', '{ second }'];
+    expect(checkNestedBlockComments(lines)).to.be.empty;
+  });
+
+  it('ignores a brace-shaped character inside a string before any comment opens', () => {
+    const lines = ['VARTITLE x = "a { b";', '{ real comment }'];
+    expect(checkNestedBlockComments(lines)).to.be.empty;
+  });
+});
+
+describe('findEnclosingBlockCommentGroup', () => {
+  it('finds the group containing a given position', () => {
+    const lines = ['{ outer', 'code { inner }', 'more code }'];
+    const group = findEnclosingBlockCommentGroup(lines, 1, 5);
+    expect(group).to.not.be.undefined;
+    expect(group?.outerStart).to.deep.equal({ line: 0, char: 0 });
+    expect(group?.outerEnd).to.deep.equal({ line: 2, char: 10 });
+  });
+
+  it('returns undefined outside any group', () => {
+    expect(findEnclosingBlockCommentGroup(['x;'], 0, 0)).to.be.undefined;
   });
 });
 

@@ -83,7 +83,7 @@
     {
       "files": ["src/providers/diagnosticsProvider.ts"],
       "rules": {
-        "max-classes-per-file": ["error", 3],
+        "max-classes-per-file": ["error", 4],
         "class-methods-use-this": "off"
       }
     },

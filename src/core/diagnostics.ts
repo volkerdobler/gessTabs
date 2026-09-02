@@ -591,6 +591,209 @@ export function checkDefineCaseMismatch(
   return issues;
 }
 
+// --- 9. Unbalanced parentheses ---------------------------------------------
+// A forgotten ")" — e.g. on a #MACRO call — otherwise silently shifts
+// everything that follows into the wrong argument/expression instead of
+// failing where the mistake actually is. Parens may nest freely; this only
+// checks that every "(" outside a comment is eventually closed (and every
+// ")" has something open to close it), never that the nesting matches any
+// particular grammar. Like the rest of this module it doesn't distinguish
+// string-literal content from real code — a stray "(" inside a quoted
+// title is rare enough, and paired with its own ")" often enough, that
+// this is an accepted gap rather than a worthwhile complication.
+export function checkParenBalance(
+  lines: string[],
+  isNotInComment: IsNotInComment
+): DiagnosticIssue[] {
+  const issues: DiagnosticIssue[] = [];
+  const openStack: { line: number; char: number }[] = [];
+
+  lines.forEach((lineText, i) => {
+    for (let c = 0; c < lineText.length; c += 1) {
+      const ch = lineText[c];
+      if (ch !== '(' && ch !== ')') continue;
+      if (!isNotInComment(i, c)) continue;
+
+      if (ch === '(') {
+        openStack.push({ line: i, char: c });
+      } else if (openStack.length === 0) {
+        issues.push({
+          line: i,
+          startChar: c,
+          length: 1,
+          severity: 'error',
+          message: '")" has no matching "(" before it.',
+          code: 'unmatched-close-paren',
+        });
+      } else {
+        openStack.pop();
+      }
+    }
+  });
+
+  openStack.forEach(({ line, char }) =>
+    issues.push({
+      line,
+      startChar: char,
+      length: 1,
+      severity: 'error',
+      message: '"(" is never closed.',
+      code: 'unmatched-open-paren',
+    })
+  );
+
+  return issues;
+}
+
+// --- 10. Nested block comments ---------------------------------------------
+// GESStabs block comments are "{ … }" (see language-configuration.json and
+// scope.ts's blockCommentDelimiter) and — like scope.ts's own scanner —
+// gessTabs itself does not support nesting them: once inside a block
+// comment, the very next "}" ends it, no matter how many "{" appeared in
+// between. Commenting out a script block that already contains a block
+// comment (e.g. via the editor's built-in Toggle Block Comment, which just
+// wraps the selection in "{ … }") silently truncates the intended comment
+// at that inner "}", leaving the rest of the block active again — exactly
+// the trap this flags.
+//
+// Braces are exclusively comment syntax in this language (they're not a
+// general expression/argument delimiter the way "(" is), so any "{" found
+// while already inside an opened one is never legitimate code — it's
+// always either a second, doomed-to-truncate comment attempt or (rarer)
+// stray text that happened to contain a brace. Either way it's worth
+// flagging.
+//
+// Where the *real* (truncated) end is is computed directly — the first
+// "}" after the outer start, full stop. Where the outer group's own end
+// is depends on what the author actually intended, which isn't
+// recoverable from the broken text alone; nesting is matched depth-first
+// (like ordinary brackets) as a best-effort reconstruction of that intent,
+// good enough for the common single-level case this bug actually produces
+// and used only to size the "convert to line comments" quick fix, never
+// for the diagnostic's own truncation message.
+export interface BlockCommentGroup {
+  outerStart: { line: number; char: number };
+  outerEnd: { line: number; char: number };
+  nestedStarts: { line: number; char: number }[];
+}
+
+export function scanBlockCommentGroups(lines: string[]): BlockCommentGroup[] {
+  const groups: BlockCommentGroup[] = [];
+  let depth = 0;
+  let outerStart: { line: number; char: number } | undefined;
+  let nestedStarts: { line: number; char: number }[] = [];
+  let inString = false;
+  let stringChar = '';
+
+  lines.forEach((lineText, i) => {
+    let c = 0;
+    while (c < lineText.length) {
+      const ch = lineText[c];
+
+      if (depth === 0) {
+        if (inString) {
+          if (ch === stringChar) inString = false;
+        } else if (ch === '/' && lineText[c + 1] === '/') {
+          break; // rest of the line is a line comment
+        } else if (ch === '"' || ch === "'") {
+          inString = true;
+          stringChar = ch;
+        } else if (ch === '{') {
+          outerStart = { line: i, char: c };
+          nestedStarts = [];
+          depth = 1;
+        }
+        c += 1;
+        continue;
+      }
+
+      // Already inside an opened "{" — from here on gessTabs treats
+      // everything up to the next "}" as raw comment text, so (matching
+      // that) neither strings nor "//" are recognized any more either.
+      if (ch === '{') {
+        nestedStarts.push({ line: i, char: c });
+        depth += 1;
+      } else if (ch === '}') {
+        depth -= 1;
+        if (depth === 0 && outerStart) {
+          groups.push({
+            outerStart,
+            outerEnd: { line: i, char: c },
+            nestedStarts,
+          });
+          outerStart = undefined;
+          nestedStarts = [];
+        }
+      }
+      c += 1;
+    }
+  });
+
+  return groups;
+}
+
+function findRawClosingBrace(
+  lines: string[],
+  fromLine: number,
+  fromChar: number
+): { line: number; char: number } | undefined {
+  for (let i = fromLine; i < lines.length; i += 1) {
+    const idx = lines[i].indexOf('}', i === fromLine ? fromChar : 0);
+    if (idx !== -1) return { line: i, char: idx };
+  }
+  return undefined;
+}
+
+export function checkNestedBlockComments(lines: string[]): DiagnosticIssue[] {
+  const issues: DiagnosticIssue[] = [];
+
+  scanBlockCommentGroups(lines).forEach((group) => {
+    if (group.nestedStarts.length === 0) return;
+    const realEnd = findRawClosingBrace(
+      lines,
+      group.outerStart.line,
+      group.outerStart.char + 1
+    );
+    const realEndDescription = realEnd
+      ? `line ${realEnd.line + 1}`
+      : 'somewhere unexpected';
+
+    group.nestedStarts.forEach((nested) => {
+      issues.push({
+        line: nested.line,
+        startChar: nested.char,
+        length: 1,
+        severity: 'warning',
+        message: `Block comments ("{ … }") can't be nested in GESStabs — this comment actually ends at ${realEndDescription} (its first "}"), reactivating everything after that. Comment out each line individually with "//" instead.`,
+        code: 'nested-block-comment',
+      });
+    });
+  });
+
+  return issues;
+}
+
+// F5's quick fix for the nested-block-comment diagnostic — re-scans to find
+// which group a diagnostic's position belongs to, since the diagnostic
+// itself only carries a single point, not the whole (best-effort) outer
+// range. Shared by GesstabsNestedBlockCommentCodeActionProvider in
+// src/providers/diagnosticsProvider.ts.
+export function findEnclosingBlockCommentGroup(
+  lines: string[],
+  line: number,
+  char: number
+): BlockCommentGroup | undefined {
+  return scanBlockCommentGroups(lines).find((group) => {
+    const afterStart =
+      line > group.outerStart.line ||
+      (line === group.outerStart.line && char >= group.outerStart.char);
+    const beforeEnd =
+      line < group.outerEnd.line ||
+      (line === group.outerEnd.line && char <= group.outerEnd.char);
+    return afterStart && beforeEnd;
+  });
+}
+
 export function computeDiagnostics(
   lines: string[],
   isNotInComment: IsNotInComment
@@ -605,5 +808,7 @@ export function computeDiagnostics(
     ...checkCellsetElements(lines, isNotInComment),
     ...checkInvertoutUpdateinvert(lines, isNotInComment),
     ...checkDefineCaseMismatch(lines, isNotInComment),
+    ...checkParenBalance(lines, isNotInComment),
+    ...checkNestedBlockComments(lines),
   ];
 }

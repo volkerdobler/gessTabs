@@ -62,6 +62,7 @@ import {
   GesstabsDiagnosticsManager,
   GesstabsEmptyVarlistCodeActionProvider,
   GesstabsStrictVarlistCodeActionProvider,
+  GesstabsNestedBlockCommentCodeActionProvider,
 } from './providers/diagnosticsProvider';
 
 // this method is called when your extension is activated
@@ -254,6 +255,17 @@ export function activate(context: vscode.ExtensionContext) {
       {
         providedCodeActionKinds:
           GesstabsStrictVarlistCodeActionProvider.providedCodeActionKinds,
+      }
+    )
+  );
+
+  context.subscriptions.push(
+    vscode.languages.registerCodeActionsProvider(
+      { language: 'gesstabs', scheme: 'file' },
+      new GesstabsNestedBlockCommentCodeActionProvider(),
+      {
+        providedCodeActionKinds:
+          GesstabsNestedBlockCommentCodeActionProvider.providedCodeActionKinds,
       }
     )
   );
