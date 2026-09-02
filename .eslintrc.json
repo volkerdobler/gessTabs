@@ -1,0 +1,98 @@
+{
+  "root": true,
+  "plugins": ["prettier", "@typescript-eslint"],
+  "extends": [
+    "eslint:recommended",
+    "airbnb-base",
+    "plugin:@typescript-eslint/recommended",
+    "plugin:prettier/recommended"
+  ],
+  "settings": {
+    "import/core-modules": ["vscode"],
+    "import/resolver": {
+      "node": {
+        "extensions": [".js", ".ts"]
+      }
+    }
+  },
+  "rules": {
+    "no-unused-vars": "off",
+    "@typescript-eslint/no-unused-vars": [
+      "error",
+      { "argsIgnorePattern": "^_", "varsIgnorePattern": "^_", "caughtErrorsIgnorePattern": "^_" }
+    ],
+    "prettier/prettier": [
+      "error",
+      {
+        "trailingComma": "es5",
+        "singleQuote": true,
+        "printWidth": 80,
+        "useTabs": false,
+        "tabWidth": 2
+      }
+    ],
+    "semi": [2, "always"],
+    "@typescript-eslint/no-explicit-any": 0,
+    "@typescript-eslint/explicit-module-boundary-types": 0,
+    "@typescript-eslint/no-non-null-assertion": 0,
+    "no-constant-condition": 0,
+    "import/extensions": ["error", "ignorePackages", { "ts": "never" }],
+    "no-use-before-define": ["error", { "classes": false }],
+    "no-useless-constructor": "off",
+    "@typescript-eslint/no-useless-constructor": "error",
+    "no-empty-function": ["error", { "allow": ["constructors"] }],
+    "import/prefer-default-export": "off",
+    "no-continue": "off",
+    "no-plusplus": "off"
+  },
+  "overrides": [
+    {
+      "files": ["src/extension.ts"],
+      "rules": {
+        "max-classes-per-file": ["error", 5],
+        "class-methods-use-this": "off"
+      }
+    },
+    {
+      "files": ["src/providers/macroProviders.ts"],
+      "rules": {
+        "max-classes-per-file": ["error", 3],
+        "class-methods-use-this": "off"
+      }
+    },
+    {
+      "files": [
+        "src/providers/tableElementsProvider.ts",
+        "src/providers/variableHoverProvider.ts",
+        "src/providers/foldingProvider.ts",
+        "src/providers/semanticTokensProvider.ts",
+        "src/providers/formatterProvider.ts",
+        "src/providers/completionProviders.ts"
+      ],
+      "rules": {
+        "class-methods-use-this": "off"
+      }
+    },
+    {
+      "files": ["src/providers/keywordProviders.ts"],
+      "rules": {
+        "max-classes-per-file": ["error", 2],
+        "class-methods-use-this": "off"
+      }
+    },
+    {
+      "files": ["src/providers/diagnosticsProvider.ts"],
+      "rules": {
+        "max-classes-per-file": ["error", 3],
+        "class-methods-use-this": "off"
+      }
+    },
+    {
+      "files": ["test/**/*.ts"],
+      "rules": {
+        "@typescript-eslint/no-unused-expressions": "off",
+        "max-classes-per-file": ["error", 2]
+      }
+    }
+  ]
+}
