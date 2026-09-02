@@ -17,7 +17,7 @@ import {
   tableHeadRe,
   tableAxisRe,
 } from './core/regex';
-import { matchInScope } from './core/matching';
+import { matchInScope, lineMatchesDefinition } from './core/matching';
 import { getAllFilenamesInDirectory } from './util/fsutils';
 import {
   buildWorkspaceIndex,
@@ -444,7 +444,7 @@ class GesstabsReferenceProvider implements vscode.ReferenceProvider {
   public async provideReferences(
     document: vscode.TextDocument,
     position: vscode.Position,
-    _context: vscode.ReferenceContext,
+    context: vscode.ReferenceContext,
     token: vscode.CancellationToken
   ): Promise<vscode.Location[] | null> {
     const wordAtPosition = getWordAtPosition(document, position);
@@ -471,13 +471,34 @@ class GesstabsReferenceProvider implements vscode.ReferenceProvider {
       { conditionalsAllActive: true }
     );
     const usages = findAllUsages(index, word);
-    return usages.map(
-      (usage) =>
-        new vscode.Location(
-          vscode.Uri.file(usage.file),
-          resolvedLineRange(usage)
-        )
-    );
+    const locations: vscode.Location[] = [];
+    usages.forEach((usage) => {
+      const scope = index.scopes.get(usage.file);
+      const isNotInComment = (searchIndex: number) =>
+        !scope || scope.isNotInComment(usage.line, searchIndex);
+      if (
+        !context.includeDeclaration &&
+        lineMatchesDefinition(usage.text, word, isNotInComment)
+      ) {
+        return;
+      }
+      // One Location per occurrence on the line, not one spanning the
+      // whole line — a line like `IF (… in f24) THEN f24 = 2;` mentions
+      // the variable twice, same as rename handles it.
+      findAllWordRangesInLine(usage.text, word).forEach(([start, end]) => {
+        if (!isNotInComment(start)) return;
+        locations.push(
+          new vscode.Location(
+            vscode.Uri.file(usage.file),
+            new vscode.Range(
+              new vscode.Position(usage.line, start),
+              new vscode.Position(usage.line, end)
+            )
+          )
+        );
+      });
+    });
+    return locations;
   }
 }
 
