@@ -42,6 +42,10 @@ import {
   normalizePath,
   printDebugMessage,
 } from '../util/workspaceFiles';
+import {
+  GesstabsExternalNamesManager,
+  renderExternalSourceLines,
+} from './externalNamesProvider';
 
 const keywordNames = new Set(keywordData.map((k) => keywordLookupKey(k.name)));
 
@@ -67,6 +71,8 @@ function jumpLink(file: string, line: number, label?: string): string {
 }
 
 export class GesstabsVariableHoverProvider implements vscode.HoverProvider {
+  constructor(private readonly externalNames?: GesstabsExternalNamesManager) {}
+
   public async provideHover(
     document: vscode.TextDocument,
     position: vscode.Position,
@@ -216,13 +222,26 @@ export class GesstabsVariableHoverProvider implements vscode.HoverProvider {
             word
           ) ?? findMacroProducedDefinition(index, currentFile, -1, word);
 
+      // Not declared / macro-produced in the script — is `word` a variable
+      // read straight from the data source (CSVINFILE/SPSSINFILE/...)? If so
+      // the hover states that, instead of guessing "probably a dataset
+      // variable" (and it's worth showing even with no in-script annotation).
+      const externalSources =
+        !def && !macroDef && this.externalNames
+          ? await this.externalNames.externalSourcesFor(document, word)
+          : [];
+
       // Hovering the variable name inside one of its own annotation
       // statements (VARTITLE/VARTEXT/VALUELABELS & synonyms, or
-      // COPYTITLE/COPYTEXT/COPYLABELS) is only useful when it can point to
-      // where the variable is actually declared elsewhere — genuinely new
-      // information. With no declaration anywhere in the document, there's
-      // nothing left to add beyond what's already on screen.
-      if (isVariableAnnotationStatementLine(lineText) && !def && !macroDef) {
+      // COPYTITLE/COPYTEXT/COPYLABELS) is only useful when it can point
+      // somewhere the annotation itself doesn't — a real declaration, or the
+      // data source. With none of those there's nothing left to add.
+      if (
+        isVariableAnnotationStatementLine(lineText) &&
+        !def &&
+        !macroDef &&
+        externalSources.length === 0
+      ) {
         return null;
       }
 
@@ -233,7 +252,14 @@ export class GesstabsVariableHoverProvider implements vscode.HoverProvider {
         : [];
 
       // Nothing concrete to say — stay quiet rather than show an empty card.
-      if (!def && !macroDef && annotations.length === 0) return null;
+      if (
+        !def &&
+        !macroDef &&
+        annotations.length === 0 &&
+        externalSources.length === 0
+      ) {
+        return null;
+      }
 
       // One header, then the raw statements (each self-identifying via its
       // own `VARTITLE …`/`VALUELABELS …` leading keyword — no separate
@@ -273,6 +299,8 @@ export class GesstabsVariableHoverProvider implements vscode.HoverProvider {
         md.appendMarkdown(
           `\n${jumpLink(macroDef.callSite.file, macroDef.callSite.line)}\n`
         );
+      } else if (externalSources.length > 0) {
+        md.appendMarkdown(renderExternalSourceLines(word, externalSources));
       } else if (!hoveringOwnDeclaration) {
         md.appendMarkdown(
           '\n_not declared in the script — probably a dataset variable_\n'

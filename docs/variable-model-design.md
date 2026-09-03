@@ -604,7 +604,7 @@ consume it, on different timelines:
 
 | consumer | when | uses |
 | --- | --- | --- |
-| **near-term, lightweight** | now, alongside this module | a hover note ("`panelID` — Rohvariable aus `data.csv`, Spalte 3"); a `DocumentLink` on the `<filepath>`; the **missing-data-source diagnostic** (§11.6) |
+| **near-term, lightweight** | *done 2026-09-03* | the existing variable hover appends "_aus `data.csv` (CSVINFILE, Spalte 3) — main.tab:54_" for a name found in a source (via `manager.externalSourcesFor`); a `DocumentLink` on the `<filepath>`; the **missing-data-source diagnostic** (§11.6) |
 | **the variable model** | phase 2–4 of §8 | seeded as `origin: 'external'` symbols before the program-order pass (§11.5) |
 
 The near-term consumer must **not** try to be an "undefined variable" linter yet —

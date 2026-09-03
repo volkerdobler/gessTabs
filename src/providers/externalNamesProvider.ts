@@ -1,13 +1,16 @@
 // vscode wiring for the "raw variables from the data input file" feature
-// (docs/variable-model-design.md §11). Three consumers, one shared,
-// watcher-backed cache of the workspace's entry programs:
+// (docs/variable-model-design.md §11), built on a shared, watcher-backed
+// cache of the workspace's entry programs:
 //
-//   - GesstabsExternalNamesManager       — the cache + the "missing /
-//                                           unreadable data source" diagnostic
-//   - GesstabsDataSourceLinkProvider      — click the <filepath> in a
-//                                           CSVINFILE/SPSSINFILE/DATAFILE line
-//   - GesstabsExternalVariableHoverProvider — "Rohvariable aus data.csv" on a
-//                                             bare token that names one
+//   - GesstabsExternalNamesManager   — the cache, the "missing / unreadable
+//                                       data source" diagnostic, and
+//                                       externalSourcesFor(doc, word) for the
+//                                       variable hover ("aus data.csv")
+//   - GesstabsDataSourceLinkProvider  — click the <filepath> in a
+//                                       CSVINFILE/SPSSINFILE/DATAFILE line
+//   - renderExternalSourceLines()     — the markdown the variable hover
+//                                       (src/providers/variableHoverProvider.ts)
+//                                       appends when a name is a dataset variable
 //
 // The core logic is pure (src/core/entryScripts.ts + externalNames.ts); this
 // file only supplies the filesystem I/O, the FileSystemWatcher and the
@@ -36,7 +39,6 @@ import {
   normalizePath,
   printDebugMessage,
 } from '../util/workspaceFiles';
-import { constVarName } from '../core/regex';
 
 // Enough to cover any CSV header line and virtually every .sav dictionary
 // (the dictionary sits at the front of the file).
@@ -214,6 +216,20 @@ export class GesstabsExternalNamesManager {
     return out;
   }
 
+  // The resolved data sources (visible from `document`) that contain a
+  // variable literally named `word` — used by the variable hover to say
+  // "aus data.csv" instead of guessing "probably a dataset variable".
+  public async externalSourcesFor(
+    document: vscode.TextDocument,
+    word: string
+  ): Promise<ExternalNameSource[]> {
+    const key = word.toLowerCase();
+    return (await this.sourcesFor(document)).filter(
+      (s) =>
+        s.names !== 'unresolved' && s.names.some((n) => n.toLowerCase() === key)
+    );
+  }
+
   // "Missing / unreadable data source" diagnostics for one document:
   //   - a data-source statement in THIS file whose file can't be read
   //   - line 0 of an entry script (with INCLUDEs) that declares no source
@@ -323,75 +339,21 @@ export class GesstabsDataSourceLinkProvider
   }
 }
 
-// "Rohvariable aus data.csv" when hovering a bare token that names a
-// variable read from the entry program's data source.
-export class GesstabsExternalVariableHoverProvider
-  implements vscode.HoverProvider
-{
-  constructor(private readonly manager: GesstabsExternalNamesManager) {}
-
-  public async provideHover(
-    document: vscode.TextDocument,
-    position: vscode.Position
-  ): Promise<vscode.Hover | null> {
-    try {
-      const cfg = vscode.workspace.getConfiguration('gesstabs');
-      if (cfg.get<boolean>('hover.enabled', true) === false) return null;
-      if (cfg.get<boolean>('hover.variables', true) === false) return null;
-
-      const scope = new Scope(document);
-      if (!scope.isNotInComment(position.line, position.character)) return null;
-      // A word inside a string literal is quoted label/title text far more
-      // often than a variable reference; leave that to the full variable
-      // model (a bare reference — the common case — still resolves here).
-      if (scope.isStringScope(position.line, position.character)) return null;
-
-      const wordRange = document.getWordRangeAtPosition(
-        position,
-        new RegExp(constVarName, 'i')
-      );
-      if (!wordRange) return null;
-      const raw = document.getText(wordRange);
-      const word = raw.replace(/["']/g, '');
-      if (!word) return null;
-      const lineText = document.lineAt(position.line).text;
-      const before =
-        wordRange.start.character > 0
-          ? lineText[wordRange.start.character - 1]
-          : '';
-      if (before === '#' || before === '&' || word.startsWith('#')) return null;
-
-      const sources = await this.manager.sourcesFor(document);
-      const key = word.toLowerCase();
-      const hits = sources.filter(
-        (s) =>
-          s.names !== 'unresolved' &&
-          s.names.some((n) => n.toLowerCase() === key)
-      );
-      if (hits.length === 0) return null;
-      return GesstabsExternalVariableHoverProvider.render(word, hits);
-    } catch (e) {
-      printDebugMessage(`gesstabs: external-variable hover failed: ${e}`);
-      return null;
-    }
-  }
-
-  private static render(
-    word: string,
-    sources: ExternalNameSource[]
-  ): vscode.Hover {
-    const md = new vscode.MarkdownString();
-    md.isTrusted = { enabledCommands: ['vscode.open'] };
-    md.appendMarkdown(`**Rohvariable** \`${word}\`\n`);
-    sources.forEach((src) => {
+// A markdown fragment for the variable hover: "_aus `data.csv` (CSVINFILE,
+// Spalte 3) — [main.tab:54](…)_" per data source `word` was found in. The
+// jump link opens the input statement. Empty string when `sources` is empty.
+export function renderExternalSourceLines(
+  word: string,
+  sources: ExternalNameSource[]
+): string {
+  return sources
+    .map((src) => {
       const base = src.absPath
         ? path.basename(src.absPath)
         : src.statement.rawPath;
       const kw = src.statement.kind.toUpperCase();
-      const col =
-        src.columnIndex && src.columnIndex[word.toLowerCase()] !== undefined
-          ? `, Spalte ${src.columnIndex[word.toLowerCase()] + 1}`
-          : '';
+      const idx = src.columnIndex?.[word.toLowerCase()];
+      const col = idx === undefined ? '' : `, Spalte ${idx + 1}`;
       const args = encodeURIComponent(
         JSON.stringify([
           vscode.Uri.file(src.statement.file).toString(),
@@ -403,12 +365,9 @@ export class GesstabsExternalVariableHoverProvider
           },
         ])
       );
-      md.appendMarkdown(
-        `\n_aus \`${base}\` (${kw}${col}) — [${path.basename(
-          src.statement.file
-        )}:${src.statement.line + 1}](command:vscode.open?${args})_\n`
-      );
-    });
-    return new vscode.Hover(md);
-  }
+      return `\n_aus \`${base}\` (${kw}${col}) — [${path.basename(
+        src.statement.file
+      )}:${src.statement.line + 1}](command:vscode.open?${args})_\n`;
+    })
+    .join('');
 }

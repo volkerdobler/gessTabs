@@ -29,8 +29,10 @@ Done:
   `programsForFile`.
 - `src/providers/externalNamesProvider.ts` — watcher-backed cache;
   **missing/unreadable-data-source diagnostic** (`data-source-unreadable`,
-  `no-data-source`); `DocumentLink` on the `<filepath>`; "Rohvariable aus
-  `data.csv`" hover on a bare token that names a raw variable.
+  `no-data-source`); `DocumentLink` on the `<filepath>`;
+  `externalSourcesFor(doc, word)` used by the variable hover so it shows
+  _aus `data.csv` (CSVINFILE, Spalte 3) — main.tab:54_ instead of guessing
+  "probably a dataset variable".
 - Setting `gesstabs.dataInput.entryScriptPatterns` (default
   `["main.tab", "main*.tab", "*.tab"]`).
 - Tests: `test/externalNames.spec.ts`, `test/savDictionary.spec.ts`,

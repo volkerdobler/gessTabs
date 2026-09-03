@@ -67,7 +67,6 @@ import {
 import {
   GesstabsExternalNamesManager,
   GesstabsDataSourceLinkProvider,
-  GesstabsExternalVariableHoverProvider,
 } from './providers/externalNamesProvider';
 
 // this method is called when your extension is activated
@@ -78,6 +77,9 @@ export function activate(context: vscode.ExtensionContext) {
   printDebugMessage(
     'Congratulations, your extension "gesstabs" is now active!'
   );
+
+  const externalNamesManager = new GesstabsExternalNamesManager();
+  context.subscriptions.push(externalNamesManager);
 
   context.subscriptions.push(
     vscode.languages.registerDefinitionProvider(
@@ -158,7 +160,7 @@ export function activate(context: vscode.ExtensionContext) {
   context.subscriptions.push(
     vscode.languages.registerHoverProvider(
       { language: 'gesstabs', scheme: 'file' },
-      new GesstabsVariableHoverProvider()
+      new GesstabsVariableHoverProvider(externalNamesManager)
     )
   );
 
@@ -208,9 +210,6 @@ export function activate(context: vscode.ExtensionContext) {
   const diagnosticsManager = new GesstabsDiagnosticsManager();
   context.subscriptions.push(diagnosticsManager);
 
-  const externalNamesManager = new GesstabsExternalNamesManager();
-  context.subscriptions.push(externalNamesManager);
-
   const diagnosticsTimers = new Map<string, ReturnType<typeof setTimeout>>();
   const scheduleDiagnostics = (document: vscode.TextDocument): void => {
     const key = document.uri.toString();
@@ -235,12 +234,6 @@ export function activate(context: vscode.ExtensionContext) {
     vscode.languages.registerDocumentLinkProvider(
       { language: 'gesstabs', scheme: 'file' },
       new GesstabsDataSourceLinkProvider()
-    )
-  );
-  context.subscriptions.push(
-    vscode.languages.registerHoverProvider(
-      { language: 'gesstabs', scheme: 'file' },
-      new GesstabsExternalVariableHoverProvider(externalNamesManager)
     )
   );
 
