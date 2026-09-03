@@ -16,12 +16,15 @@ build this before the model rebuild below**, not as a step inside it. It does
 **not** change how the workspace is indexed. Detailed plan:
 **[docs/variable-model-design.md](docs/variable-model-design.md) §11**.
 
-- Find the entry script — tiers `main.tab` → `main*.tab` → `*.tab`
-  (case-insensitive, **searched recursively**, first non-empty tier wins), then
-  resolve its `INCLUDE` graph and scan for the data-source statement(s). The tier
-  list is a setting (`gesstabs.dataInput.entryScriptPatterns`, `string[]`,
-  default `["main.tab", "main*.tab", "*.tab"]`) so a project with a different
-  naming convention can override it.
+- Find the entry scripts — **every** root `.tab` (not itself `INCLUDE`d) matching
+  any of `gesstabs.dataInput.entryScriptPatterns` (`string[]`, case-insensitive
+  globs, recursive, default `["main.tab", "main*.tab", "*.tab"]` = every `.tab`;
+  narrow it to exclude helper `.tab`s). Each entry script + its `INCLUDE` graph
+  is an independent program with its **own** data source — a repo can have
+  `main.tab` (normal data) and `mainFlipped.tab` (flipped dataset, partly
+  different variable names) sharing include files. A name in a given file is
+  resolved against the data source of whichever entry script(s) include that
+  file (union if several; ambiguity marked).
 - Read the raw variable names from each source (union across sequential waves):
   - **`CSVINFILE`** and **delimited `DATAFILE`** — resolve the path relative to
     the containing file, read the first line, split on `;` or `,` (auto-detected;
@@ -46,7 +49,8 @@ build this before the model rebuild below**, not as a step inside it. It does
   hover note ("Rohvariable aus `data.csv`"), a `DocumentLink` on the `<filepath>`.
   Later it feeds the model (P1) as `origin: 'external'`.
 - Remaining open questions — design doc §11.7 (SPSS label depth, ZSAV,
-  header-cell jump, wildcard paths, exact vardef-include spelling).
+  header-cell jump, wildcard paths, model ↔ multiple entry programs, exact
+  vardef-include spelling).
 - Manual pages to mirror locally first: `csv.html`, `spss2.html`,
   `handhabung-von-ascii-daten.html`.
 

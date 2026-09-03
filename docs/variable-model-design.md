@@ -582,8 +582,11 @@ source. Raised and scoped 2026-09-03.
   line with neither → the file is **ignored** (not a delimited source).
 - **Encoding**: UTF-8 first; fall back to Windows-1252 when the bytes aren't
   valid UTF-8 (external data is sometimes CP-1252).
-- **`*.tab` search recurses into subdirectories** (repos with `study-a/main.tab`,
-  `study-b/main.tab`).
+- **`.tab` search recurses into subdirectories**, and **every** matching root
+  `.tab` is an independent entry program with its own data source — not "pick
+  one" (a repo can run `main.tab` and `mainFlipped.tab` over different datasets;
+  §11.2). The pattern list is the setting
+  `gesstabs.dataInput.entryScriptPatterns`.
 - **SPSS `.sav` parser v1**: variable **names + type** only. No variable labels,
   no value labels. (Revisit once the plumbing works — see §11.7 Q1.)
 
@@ -603,30 +606,51 @@ so it would be noisy. It only *adds* information about names it positively knows
 plus the one diagnostic that needs no symbol model (a data source that is declared
 but unreadable, or missing entirely).
 
-### 11.2 Finding the entry script(s)
+### 11.2 Entry scripts and per-include-graph resolution
 
-No "program" concept, no change to indexing. Search the workspace folder
-**recursively** for the first tier of patterns that matches anything. The tier
-list is a **setting** — `gesstabs.dataInput.entryScriptPatterns`,
-`string[]`, default:
+**No change to indexing.** An *entry script* is a `.tab` that starts a real
+GESStabs run — it (and only it) names the data source, and every file it pulls in
+via `INCLUDE` inherits that source's variables. A workspace can have **several**
+entry scripts that share include files but read **different** data, so this is
+not "pick one":
+
+> Example (from a real project): `main.tab` runs the normal tables against
+> `data.csv`; `mainFlipped.tab` runs a second set against a *flipped* dataset
+> with partly different variable names. Both `INCLUDE` a shared label/format
+> file, but each also includes its own variable-specific `.inc`s. A name
+> resolved for a file reached from `main.tab` must use `main.tab`'s data source;
+> the same-named `.inc` reached from `mainFlipped.tab` uses that one's.
+
+**Discovery.** `gesstabs.dataInput.entryScriptPatterns` — `string[]`, default:
 
 ```json
 ["main.tab", "main*.tab", "*.tab"]
 ```
 
-Each entry is a case-insensitive glob; tiers are tried in order, first non-empty
-tier wins. A project that names its entry script differently (`run.tab`,
-`tabellen/haupt.tab`, …) overrides this. An empty list disables external-name
-reading entirely.
+Each entry is a case-insensitive glob, matched against `.tab` files found
+**recursively** in the workspace. **Every** `.tab` matching **any** pattern that
+is also a root (never itself reached through another file's `INCLUDE`) is an
+entry script — all of them, not the first match. The default list matches every
+`.tab`; a project with stray helper `.tab` files narrows it (e.g.
+`["main.tab", "mainFlipped.tab"]`). An empty list disables external-name reading.
 
-For each picked `.tab`, resolve its `INCLUDE` graph with the existing
-`resolveIncludeGraph` and scan the resolved lines for input statements (§11.3).
-Union the results across the picked scripts.
+**Building the map.** For each entry script, resolve its `INCLUDE` graph
+(`resolveIncludeGraph`) and scan for input statements (§11.3). Produce, per entry
+script, an `EntryProgram { entryFile, files: string[], sources: ExternalNameSource[] }`.
 
-`findEntryScripts(folder, patterns, fsLike)` — pure, injected fs. When the file
-currently being hovered is itself inside one of the picked scripts' include
-graphs, prefer that script's data sources (a multi-study repo shouldn't
-cross-wire).
+**Resolving a name in a given file.** The provider takes the file being
+hovered/edited and finds every `EntryProgram` whose `files` contains it:
+
+- exactly one → use that program's `sources`.
+- more than one (a shared `.inc`) → the union of their names; when two programs
+  disagree on a name's kind, keep it but mark it ambiguous (hover: "aus `main.tab`
+  *oder* `mainFlipped.tab`").
+- none (an orphan file, or the entry-script patterns matched nothing) → no
+  external names; the missing-source diagnostic (§11.6) fires on the orphan's
+  own root if it declares no source.
+
+`findEntryScripts(folder, patterns, fsLike)` and the per-file lookup are pure;
+only the `EntryProgram` cache + watcher is vscode-facing.
 
 ### 11.3 Locating the data-source statements
 
@@ -662,8 +686,8 @@ DATAFILE    [ FILEKEY <key> ]                = <filepath> ;
 
 ### 11.4 Reading the raw names
 
-Result per script: the **union** of names across all waves (a name in *any* wave
-counts; panel waves routinely differ).
+Result per entry program: the **union** of names across all its waves (a name in
+*any* wave counts; panel waves routinely differ).
 
 **CSV / delimited `DATAFILE`:**
 
@@ -707,6 +731,12 @@ error (§9 Q3); origin stays `external`, the extra line is appended to
 go-to-definition on an external name lands on the input statement. The
 CSV-header-cell / `.sav`-offset jump is a later refinement (§11.7 Q3).
 
+Because entry programs can carry **different** external sets (§11.2), the model
+either builds per entry program, or `buildVariableModel` takes the
+`ExternalNameSource[]` for *the program that contains the file being queried* and
+is rebuilt when the query crosses into another program. Decide at phase 4 —
+§11.7 Q5.
+
 ### 11.6 Missing or unreadable data source — a diagnostic
 
 A GESStabs script needs a working data source; without one it does nothing. So,
@@ -716,14 +746,15 @@ flagged, by the near-term consumer alone:
 | situation | diagnostic | `names` |
 | --- | --- | --- |
 | a `CSVINFILE`/`SPSSINFILE`/`DATAFILE` statement whose `<filepath>` cannot be resolved or read | **warning** on that statement line: *"Datenquelle `<path>` nicht gefunden"* | `'unresolved'` |
-| the resolved program (all picked entry scripts) has **no** input statement at all | **warning** on the entry script (line 1): *"keine Datenquelle (SPSSINFILE/CSVINFILE/DATAFILE) im Skript"* | — |
+| an entry script's own `INCLUDE` graph has **no** input statement at all | **warning** on that entry script (line 1): *"keine Datenquelle (SPSSINFILE/CSVINFILE/DATAFILE) im Skript"* | — |
 | `<filepath>` unresolvable because it still holds `#EXPAND`/`&token&`/wildcard | **info** (not warning — it may well resolve at runtime): *"Datenpfad nicht statisch auflösbar"* | `'unresolved'` |
 | column-fixed / ZSAV / other not-yet-supported format | **info**: *"Variablennamen aus diesem Quellformat werden noch nicht gelesen"* | `'unresolved'` |
 
-Whenever `names` is `'unresolved'` the later model-level per-variable
-"undefined variable" check stays **suppressed for that whole script** — we cannot
-know which names the source would have supplied, so flagging unknown tokens would
-be noise. The source-level warning above is the signal instead.
+Whenever an entry program has any `'unresolved'` source, the later model-level
+per-variable "undefined variable" check stays **suppressed for every file in that
+program's include graph** — we cannot know which names the source would have
+supplied, so flagging unknown tokens would be noise. The source-level warning
+above is the signal instead.
 
 Wildcard path (`data*.csv`): try the union of `fs`-matching files' headers; only
 `'unresolved'` if none match (§11.7 Q4).
@@ -742,7 +773,12 @@ Wildcard path (`data*.csv`): try the union of `fs`-matching files' headers; only
    enough? *Proposed: keep the column index around (cheap), wire the jump later.*
 4. **Wildcard data paths** — union of matches, or `unresolved`? *Proposed: union
    for CSV headers, `unresolved` if no match.*
-5. **Exact `DATAFILE` / vardef-include shape** — confirm the `INPUT = <…>.inc;`
+5. **Model ↔ multiple entry programs** — when `main.tab` and `mainFlipped.tab`
+   carry different external sets, does `buildVariableModel` run once per entry
+   program, or once with the externals of whichever program owns the queried
+   file? *Proposed: per entry program, cached; a shared `.inc` gets whichever
+   model the active editor's program provides.*
+6. **Exact `DATAFILE` / vardef-include shape** — confirm the `INPUT = <…>.inc;`
    vs. `INCLUDE = <…>.inc;` spelling and how a column-fixed `DATAFILE` names its
    variable definitions, from `csv.html` / `handhabung-von-ascii-daten.html`
    (not yet mirrored). Only matters for the deferred column-fixed branch.
@@ -758,15 +794,18 @@ Wildcard path (`data*.csv`): try the union of `fs`-matching files' headers; only
 
 ### 11.9 New module surface (additive, no consumer churn)
 
-- `src/core/entryScripts.ts` — `findEntryScripts(folder, patterns, fsLike)`,
-  pure. `patterns` comes from `gesstabs.dataInput.entryScriptPatterns`.
+- `src/core/entryScripts.ts` — `findEntryScripts(folder, patterns, fsLike)` →
+  root `.tab` files matching any pattern; `buildEntryPrograms(...)` →
+  `EntryProgram[]` (`{ entryFile, files, sources }`); `programsForFile(programs,
+  file)`. Pure. `patterns` from `gesstabs.dataInput.entryScriptPatterns`.
 - `src/core/externalNames.ts` — `readExternalNames(resolvedOrder, containingDir,
   fsLike)` → `ExternalNameSource[]`; the CSV first-line reader and the `.sav`
   dictionary parser (split into `savDictionary.ts` if it grows past ~250 lines).
   Pure over an injected byte reader.
 - `src/providers/externalNamesProvider.ts` (or fold into the existing variable
-  hover) — the `FileSystemWatcher` + `path+mtime+size` cache, the hover note, the
-  `DocumentLink`, the missing-source diagnostic. The only vscode-facing piece.
+  hover) — the `FileSystemWatcher` + `path+mtime+size` cache of `EntryProgram[]`,
+  the hover note, the `DocumentLink`, the missing-source diagnostic. The only
+  vscode-facing piece.
 - New setting `gesstabs.dataInput.entryScriptPatterns` in `package.json`
   (`string[]`, default `["main.tab", "main*.tab", "*.tab"]`).
 - `test/entryScripts.spec.ts`, `test/externalNames.spec.ts` with tiny real
