@@ -731,11 +731,13 @@ error (§9 Q3); origin stays `external`, the extra line is appended to
 go-to-definition on an external name lands on the input statement. The
 CSV-header-cell / `.sav`-offset jump is a later refinement (§11.7 Q3).
 
-Because entry programs can carry **different** external sets (§11.2), the model
-either builds per entry program, or `buildVariableModel` takes the
-`ExternalNameSource[]` for *the program that contains the file being queried* and
-is rebuilt when the query crosses into another program. Decide at phase 4 —
-§11.7 Q5.
+The variable model (§7.2) is a **single** symbol table built in one pass. But
+entry programs can carry **different, partly conflicting** variable universes: a
+name may be external in one program and unknown in another, or numeric in
+`main.tab`'s dataset and `ALPHA` in `mainFlipped.tab`'s. One shared model cannot
+hold both truths. So there must be **one model per entry program** (built lazily,
+cached, keyed by the program's resolved file set + external mtimes). See §11.7 Q5
+for the parts still to decide.
 
 ### 11.6 Missing or unreadable data source — a diagnostic
 
@@ -773,11 +775,15 @@ Wildcard path (`data*.csv`): try the union of `fs`-matching files' headers; only
    enough? *Proposed: keep the column index around (cheap), wire the jump later.*
 4. **Wildcard data paths** — union of matches, or `unresolved`? *Proposed: union
    for CSV headers, `unresolved` if no match.*
-5. **Model ↔ multiple entry programs** — when `main.tab` and `mainFlipped.tab`
-   carry different external sets, does `buildVariableModel` run once per entry
-   program, or once with the externals of whichever program owns the queried
-   file? *Proposed: per entry program, cached; a shared `.inc` gets whichever
-   model the active editor's program provides.*
+5. **The variable model when there is more than one entry program.** The model
+   is one symbol table per entry program (§11.5). Two things still to decide:
+   - **A shared `.inc` opened on its own** — no active `main*.tab` context. Which
+     program's model applies? *Proposed: the program the active editor belongs
+     to; if none (the `.inc` is the only thing open), the union of all programs
+     that include it, with type conflicts shown as "mehrdeutig".*
+   - **Cost** — N entry programs ⇒ N model builds instead of one. *Proposed:
+     build lazily on first query into a program, cache keyed by that program's
+     file set + external-file mtimes, drop on a watcher event.*
 6. **Exact `DATAFILE` / vardef-include shape** — confirm the `INPUT = <…>.inc;`
    vs. `INCLUDE = <…>.inc;` spelling and how a column-fixed `DATAFILE` names its
    variable definitions, from `csv.html` / `handhabung-von-ascii-daten.html`
