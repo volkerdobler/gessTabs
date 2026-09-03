@@ -33,18 +33,25 @@ function firstNonWs(lineText: string): number {
 
 // --- 1. "Empty varlist binds to last-created variable" trap ---------------
 // Section 3.1: RECODE/VARTITLE/VARTEXT/VALUELABELS (and their synonyms
-// TITLE/TEXT/LABELS) silently apply to "die zuletzt erzeugte Variable"
-// when no variable list is given. STRICTVARLIST = YES; exists purely to
-// outlaw this. VARTITLE/VARTEXT/VALUELABELS all share the same "keyword
-// directly followed by =" shape when the (optional, bracketed in their
-// own syntax) varlist is omitted. RECODE is different — it has no
+// TITLE/TEXT/LABELS), plus COPYTEXT/COPYTITLE/COPYLABELS, silently apply
+// to "die zuletzt erzeugte Variable" when no variable list is given.
+// STRICTVARLIST = YES; exists purely to outlaw this. All of those share
+// the same "keyword directly followed by =" shape when the (optional,
+// bracketed in their own syntax) varlist is omitted. RECODE is different — it has no
 // optional-bracket varlist at all; instead its own "empty" form is a pure
 // value list (`RECODE 1 2 3 = 3;`) where a real varlist form always has
 // at least one non-numeric variable-name token before the first `=`
 // (`RECODE item1 item2 1 = 4;`) — confirmed directly against the
 // handbook's own worked examples (line ~6505-6511).
+// COPYTEXT/COPYTITLE/COPYLABELS share the same trap: with the (optional)
+// <varlist> omitted — `COPYTEXT = <source>;` — the copy binds to the
+// last-created variable (keywordData's COPYTITLE entry: "in some cases the
+// last defined variable"; the manual notes STRICTVARLIST covers "die
+// dazugehörigen COPY-Statements" too). Their RHS is always a single source
+// variable rather than a literal, but for this positional check only the
+// "keyword directly followed by =" shape matters.
 const emptyVarlistPropertyRe =
-  /^\s*(vartitle|title|vartext|text|valuelabels|labels)\s*=/i;
+  /^\s*(vartitle|title|vartext|text|valuelabels|labels|copytext|copytitle|copylabels)\s*=/i;
 const recodeEmptyVarlistRe = /^\s*(recode)\s+[\d\s,:]+=/i;
 
 export function checkEmptyVarlist(
@@ -143,7 +150,11 @@ export function checkUnmatchedBlocks(
 ): DiagnosticIssue[] {
   const issues: DiagnosticIssue[] = [];
   const conditionalStack: number[] = [];
-  let macroStart: number | undefined;
+  // A #MACRO body *can* legally contain another #MACRO — the inner one is
+  // formed while the outer expands, and this nests recursively (Makros
+  // page: "Man kann ein Macro auch innerhalb eines Macros definieren …
+  // funktioniert rekursiv"). So track opens on a stack, like #IFDEF.
+  const macroStack: number[] = [];
 
   const issueAt = (
     line: number,
@@ -181,13 +192,10 @@ export function checkUnmatchedBlocks(
           }
           break;
         case 'macro-start':
-          // A #MACRO body can't legally nest another #MACRO; a second
-          // start while one is open is left for the macro engine to
-          // reject rather than double-counted here.
-          if (macroStart === undefined) macroStart = i;
+          macroStack.push(i);
           break;
         case 'macro-end':
-          if (macroStart === undefined) {
+          if (macroStack.length === 0) {
             issueAt(
               i,
               'error',
@@ -195,7 +203,7 @@ export function checkUnmatchedBlocks(
               'unmatched-endmacro'
             );
           } else {
-            macroStart = undefined;
+            macroStack.pop();
           }
           break;
         case 'conditional-else':
@@ -214,14 +222,14 @@ export function checkUnmatchedBlocks(
       'unclosed-conditional'
     )
   );
-  if (macroStart !== undefined) {
+  macroStack.forEach((line) =>
     issueAt(
-      macroStart,
+      line,
       'error',
       'Unclosed #MACRO block — no matching #ENDMACRO/#MACROEND found before the end of the file.',
       'unclosed-macro'
-    );
-  }
+    )
+  );
 
   return issues;
 }

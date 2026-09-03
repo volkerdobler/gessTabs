@@ -32,9 +32,11 @@ export function findFoldRanges(
 ): FoldRange[] {
   const ranges: FoldRange[] = [];
   const conditionalStack: number[] = [];
-  // A #MACRO body can't legally contain another #MACRO (see
-  // macroExpansion.ts) — a single open-start slot mirrors that.
-  let macroStart: number | undefined;
+  // A #MACRO body *can* legally contain another #MACRO (Makros page:
+  // "Man kann ein Macro auch innerhalb eines Macros definieren …
+  // funktioniert rekursiv") — track opens on a stack and pair each
+  // #ENDMACRO with the nearest still-open #MACRO, like the conditionals.
+  const macroStack: number[] = [];
 
   lines.forEach((text, i) => {
     scanBlockDirectives(text, (col) => isNotInComment(i, col)).forEach((d) => {
@@ -46,12 +48,12 @@ export function findFoldRanges(
           ranges.push({ startLine: start, endLine: i, kind: 'conditional' });
         }
       } else if (d.kind === 'macro-start') {
-        if (macroStart === undefined) macroStart = i;
-      } else if (d.kind === 'macro-end' && macroStart !== undefined) {
-        if (i > macroStart) {
-          ranges.push({ startLine: macroStart, endLine: i, kind: 'macro' });
+        macroStack.push(i);
+      } else if (d.kind === 'macro-end') {
+        const start = macroStack.pop();
+        if (start !== undefined && i > start) {
+          ranges.push({ startLine: start, endLine: i, kind: 'macro' });
         }
-        macroStart = undefined;
       }
     });
   });

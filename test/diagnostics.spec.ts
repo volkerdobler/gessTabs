@@ -35,6 +35,26 @@ describe('checkEmptyVarlist', () => {
     issues.forEach((issue) => expect(issue.code).to.equal('empty-varlist'));
   });
 
+  it('flags COPYTEXT/COPYTITLE/COPYLABELS with no variable name', () => {
+    const lines = [
+      'COPYTEXT = source;',
+      'COPYTITLE = source;',
+      'COPYLABELS = source;',
+    ];
+    const issues = checkEmptyVarlist(lines, alwaysNotInComment);
+    expect(issues).to.have.length(3);
+    issues.forEach((issue) => expect(issue.code).to.equal('empty-varlist'));
+  });
+
+  it('does not flag a COPY* statement with an explicit varlist', () => {
+    const lines = [
+      'COPYTEXT f1 f2 = source;',
+      'COPYTITLE f1 = source;',
+      'COPYLABELS f1 = source;',
+    ];
+    expect(checkEmptyVarlist(lines, alwaysNotInComment)).to.be.empty;
+  });
+
   it('flags a RECODE with a pure value list and no variable name', () => {
     const issues = checkEmptyVarlist(['RECODE 1 2 3 = 3;'], alwaysNotInComment);
     expect(issues).to.have.length(1);
@@ -119,6 +139,30 @@ describe('checkUnmatchedBlocks', () => {
   it('does not flag a properly matched #MACRO/#ENDMACRO', () => {
     const lines = ['#macro #x( &p )', 'compute &p = 1;', '#endmacro'];
     expect(checkUnmatchedBlocks(lines, alwaysCode)).to.be.empty;
+  });
+
+  it('accepts a legally nested #MACRO … #MACRO … #ENDMACRO … #ENDMACRO', () => {
+    const lines = [
+      '#macro #out( &o1 &o2 )',
+      '#macro #in( &i1 )',
+      'variable fz&i1 = &i1;',
+      '#endmacro',
+      '#in( &o1 )',
+      '#endmacro',
+    ];
+    expect(checkUnmatchedBlocks(lines, alwaysCode)).to.be.empty;
+  });
+
+  it('flags an outer #MACRO left unclosed when only the inner one closes', () => {
+    const lines = [
+      '#macro #out( &o1 )',
+      '#macro #in( &i1 )',
+      'variable fz&i1 = &i1;',
+      '#endmacro',
+    ];
+    const issues = checkUnmatchedBlocks(lines, alwaysCode);
+    expect(issues).to.have.length(1);
+    expect(issues[0]).to.deep.include({ line: 0, code: 'unclosed-macro' });
   });
 
   it('flags an unclosed #MACRO at end of file', () => {

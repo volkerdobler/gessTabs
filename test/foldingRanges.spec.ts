@@ -74,6 +74,21 @@ describe('findFoldRanges', () => {
     });
   });
 
+  it('folds a legally nested #MACRO inside a #MACRO independently', () => {
+    const lines = [
+      '#macro #out( &o1 &o2 )',
+      '#macro #in( &i1 )',
+      'variable fz&i1 = &i1;',
+      '#endmacro',
+      '#in( &o1 )',
+      '#endmacro',
+    ];
+    expect(findFoldRanges(lines)).to.deep.equal([
+      { startLine: 1, endLine: 3, kind: 'macro' },
+      { startLine: 0, endLine: 5, kind: 'macro' },
+    ]);
+  });
+
   it('does not fold an unclosed #MACRO or #IFDEF block', () => {
     expect(findFoldRanges(['#macro #example( &p )', 'compute &p = 1;'])).to.be
       .empty;
