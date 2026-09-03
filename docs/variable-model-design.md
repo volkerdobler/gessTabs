@@ -561,6 +561,13 @@ program) — they are **not** separate work.
 Concrete plan for reading the "raw" variable names a script pulls in from its data
 source. Raised and scoped 2026-09-03.
 
+> **Status: first cut implemented 2026-09-03.** `src/core/externalNames.ts` +
+> `src/core/savDictionary.ts` + `src/core/entryScripts.ts` +
+> `src/providers/externalNamesProvider.ts` + the
+> `gesstabs.dataInput.entryScriptPatterns` setting. Covers §11.1–§11.6 and
+> §11.9; the §11.7 open questions are the follow-up list. Not yet wired into a
+> variable model (that is P1.4 / §8 phase 4).
+
 **Decisions taken (2026-09-03):**
 
 - **Built early, as a standalone step** — `entryScripts.ts` + `externalNames.ts`

@@ -64,6 +64,11 @@ import {
   GesstabsStrictVarlistCodeActionProvider,
   GesstabsNestedBlockCommentCodeActionProvider,
 } from './providers/diagnosticsProvider';
+import {
+  GesstabsExternalNamesManager,
+  GesstabsDataSourceLinkProvider,
+  GesstabsExternalVariableHoverProvider,
+} from './providers/externalNamesProvider';
 
 // this method is called when your extension is activated
 // your extension is activated the very first time the command is executed
@@ -203,6 +208,9 @@ export function activate(context: vscode.ExtensionContext) {
   const diagnosticsManager = new GesstabsDiagnosticsManager();
   context.subscriptions.push(diagnosticsManager);
 
+  const externalNamesManager = new GesstabsExternalNamesManager();
+  context.subscriptions.push(externalNamesManager);
+
   const diagnosticsTimers = new Map<string, ReturnType<typeof setTimeout>>();
   const scheduleDiagnostics = (document: vscode.TextDocument): void => {
     const key = document.uri.toString();
@@ -210,9 +218,31 @@ export function activate(context: vscode.ExtensionContext) {
     if (existing) clearTimeout(existing);
     diagnosticsTimers.set(
       key,
-      setTimeout(() => diagnosticsManager.refresh(document), 300)
+      setTimeout(() => {
+        diagnosticsManager.refresh(document);
+        externalNamesManager.refresh(document).catch(() => undefined);
+      }, 300)
     );
   };
+
+  externalNamesManager.setOnChange(() => {
+    vscode.workspace.textDocuments.forEach((document) => {
+      if (document.languageId === 'gesstabs') scheduleDiagnostics(document);
+    });
+  });
+
+  context.subscriptions.push(
+    vscode.languages.registerDocumentLinkProvider(
+      { language: 'gesstabs', scheme: 'file' },
+      new GesstabsDataSourceLinkProvider()
+    )
+  );
+  context.subscriptions.push(
+    vscode.languages.registerHoverProvider(
+      { language: 'gesstabs', scheme: 'file' },
+      new GesstabsExternalVariableHoverProvider(externalNamesManager)
+    )
+  );
 
   context.subscriptions.push(
     vscode.workspace.onDidOpenTextDocument(scheduleDiagnostics)
@@ -223,19 +253,29 @@ export function activate(context: vscode.ExtensionContext) {
     )
   );
   context.subscriptions.push(
-    vscode.workspace.onDidCloseTextDocument((document) =>
-      diagnosticsManager.clear(document)
-    )
+    vscode.workspace.onDidCloseTextDocument((document) => {
+      diagnosticsManager.clear(document);
+      externalNamesManager.clear(document);
+    })
   );
   context.subscriptions.push(
     vscode.workspace.onDidChangeConfiguration((e) => {
-      if (!e.affectsConfiguration('gesstabs.diagnostics.enabled')) return;
+      if (e.affectsConfiguration('gesstabs.dataInput.entryScriptPatterns')) {
+        externalNamesManager.invalidate();
+      }
+      if (
+        !e.affectsConfiguration('gesstabs.diagnostics.enabled') &&
+        !e.affectsConfiguration('gesstabs.dataInput.entryScriptPatterns')
+      ) {
+        return;
+      }
       vscode.workspace.textDocuments.forEach(scheduleDiagnostics);
     })
   );
-  vscode.workspace.textDocuments.forEach((document) =>
-    diagnosticsManager.refresh(document)
-  );
+  vscode.workspace.textDocuments.forEach((document) => {
+    diagnosticsManager.refresh(document);
+    externalNamesManager.refresh(document).catch(() => undefined);
+  });
 
   context.subscriptions.push(
     vscode.languages.registerCodeActionsProvider(

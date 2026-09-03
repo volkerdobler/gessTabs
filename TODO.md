@@ -9,12 +9,40 @@ citations point at the local mirror in `dokumentation/online-manual/` (see
 
 ---
 
-## P0 — Read the dataset's raw variables (start here)
+## P0 — Read the dataset's raw variables
 
-Standalone, self-contained, and independently useful — **decided 2026-09-03 to
-build this before the model rebuild below**, not as a step inside it. It does
-**not** change how the workspace is indexed. Detailed plan:
-**[docs/variable-model-design.md](docs/variable-model-design.md) §11**.
+**First cut landed 2026-09-03.** Standalone, does not change indexing. Detailed
+plan: **[docs/variable-model-design.md](docs/variable-model-design.md) §11**.
+
+Done:
+
+- `src/core/externalNames.ts` — scan `CSVINFILE`/`SPSSINFILE`/`DATAFILE`
+  statements in a resolved order; CSV/delimited-`DATAFILE` header parsing (`;`/`,`
+  auto-detect, BOM strip, quoted fields, UTF-8 → Windows-1252 / UTF-16-BOM
+  decode); union across waves.
+- `src/core/savDictionary.ts` — SPSS `.sav` front-of-file dictionary parser,
+  variable **names + type** only (`$FL2` + `$FL3`; record type 2 + subtype-13
+  long-name map; endianness auto-detect). Value/variable labels, ZSAV inflate,
+  measurement level: not read.
+- `src/core/entryScripts.ts` — `findEntryScripts` (glob patterns) +
+  `buildEntryPrograms` (one program per root `.tab`, own data source) +
+  `programsForFile`.
+- `src/providers/externalNamesProvider.ts` — watcher-backed cache;
+  **missing/unreadable-data-source diagnostic** (`data-source-unreadable`,
+  `no-data-source`); `DocumentLink` on the `<filepath>`; "Rohvariable aus
+  `data.csv`" hover on a bare token that names a raw variable.
+- Setting `gesstabs.dataInput.entryScriptPatterns` (default
+  `["main.tab", "main*.tab", "*.tab"]`).
+- Tests: `test/externalNames.spec.ts`, `test/savDictionary.spec.ts`,
+  `test/entryScripts.spec.ts` (~30 cases).
+
+Follow-ups (design doc §11.7): SPSS variable/value labels, ZSAV inflate,
+CSV-header-cell go-to-definition, wildcard-path resolution, column-fixed
+`DATAFILE` (`INPUT = ….inc;` vardef), multi-line input statements, the
+`ENCODING <filetype> = …` override, per-workspace-folder cache for multi-root
+workspaces. Then P1.4 wires the names into the model as `origin: 'external'`.
+
+<details><summary>original plan (superseded by the "Done" list above)</summary>
 
 - Find the entry scripts — **every** root `.tab` (not itself `INCLUDE`d) matching
   any of `gesstabs.dataInput.entryScriptPatterns` (`string[]`, case-insensitive
@@ -53,6 +81,8 @@ build this before the model rebuild below**, not as a step inside it. It does
   vardef-include spelling).
 - Manual pages to mirror locally first: `csv.html`, `spss2.html`,
   `handhabung-von-ascii-daten.html`.
+
+</details>
 
 ---
 

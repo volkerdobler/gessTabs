@@ -126,6 +126,18 @@
           ],
           "default": "short",
           "description": "How much of the macro's original formatting to preserve in the \"Expanded #name(...)\" hover."
+        },
+        "gesstabs.dataInput.entryScriptPatterns": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": [
+            "main.tab",
+            "main*.tab",
+            "*.tab"
+          ],
+          "description": "Filename patterns (case-insensitive globs) for the entry .tab scripts whose CSVINFILE/SPSSINFILE/DATAFILE statements are read to recover the dataset's raw variable names. Every .tab matching any pattern that isn't itself INCLUDEd by another is treated as an independent program with its own data source. Narrow this list to exclude helper .tab files; an empty list disables reading external variable names."
         }
       }
     }
