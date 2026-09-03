@@ -45,11 +45,12 @@ import {
 
 const keywordNames = new Set(keywordData.map((k) => keywordLookupKey(k.name)));
 
-// `basename:line` rendered as a link that opens that file at that line.
-// Uses the `vscode.open` command (needs the MarkdownString's `isTrusted`
-// allow-list, set on the hover) so the line selection is honoured — a
-// bare `file:` link doesn't reliably jump to the line.
-function jumpLink(file: string, line: number): string {
+// `basename:line` (or a custom `label`) rendered as a link that opens that
+// file at that line. Uses the `vscode.open` command (needs the
+// MarkdownString's `isTrusted` allow-list, set on the hover) so the line
+// selection is honoured — a bare `file:` link doesn't reliably jump to the
+// line.
+function jumpLink(file: string, line: number, label?: string): string {
   const args = encodeURIComponent(
     JSON.stringify([
       vscode.Uri.file(file).toString(),
@@ -61,7 +62,8 @@ function jumpLink(file: string, line: number): string {
       },
     ])
   );
-  return `[${path.basename(file)}:${line + 1}](command:vscode.open?${args})`;
+  const text = label ?? `${path.basename(file)}:${line + 1}`;
+  return `[${text}](command:vscode.open?${args})`;
 }
 
 export class GesstabsVariableHoverProvider implements vscode.HoverProvider {
@@ -232,8 +234,19 @@ export class GesstabsVariableHoverProvider implements vscode.HoverProvider {
         );
         md.appendMarkdown(`\n${jumpLink(def.file, def.line)}\n`);
       } else if (macroDef) {
+        // Link the macro name straight to its `#macro #name(…)` definition
+        // — the body line and call site are shown just below, but the
+        // definition itself is the natural "where does this come from"
+        // target. macroDef.macro is always in the resolved index (that's
+        // how findMacroProducedDefinition matched the call), so the
+        // file/line are real.
+        const macroNameLink = jumpLink(
+          macroDef.macro.file,
+          macroDef.macro.defLine,
+          `#${macroDef.macro.name}`
+        );
         md.appendMarkdown(
-          `\n_produced by a \`#${macroDef.macro.name}\` macro call — not written literally in the script_\n`
+          `\n_produced by a ${macroNameLink} macro call — not written literally in the script_\n`
         );
         md.appendCodeblock(macroDef.bodyLine.text.trim(), 'gesstabs');
         md.appendMarkdown(
