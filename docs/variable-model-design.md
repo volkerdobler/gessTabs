@@ -606,19 +606,27 @@ but unreadable, or missing entirely).
 ### 11.2 Finding the entry script(s)
 
 No "program" concept, no change to indexing. Search the workspace folder
-**recursively**; first non-empty tier wins:
+**recursively** for the first tier of patterns that matches anything. The tier
+list is a **setting** — `gesstabs.dataInput.entryScriptPatterns`,
+`string[]`, default:
 
-1. a file named exactly `main.tab` — **case-insensitive** (`MAIN.TAB`, `Main.tab`)
-2. else `main*.tab` (case-insensitive glob)
-3. else every `*.tab`
+```json
+["main.tab", "main*.tab", "*.tab"]
+```
+
+Each entry is a case-insensitive glob; tiers are tried in order, first non-empty
+tier wins. A project that names its entry script differently (`run.tab`,
+`tabellen/haupt.tab`, …) overrides this. An empty list disables external-name
+reading entirely.
 
 For each picked `.tab`, resolve its `INCLUDE` graph with the existing
 `resolveIncludeGraph` and scan the resolved lines for input statements (§11.3).
 Union the results across the picked scripts.
 
-`findEntryScripts(folder, fsLike)` — pure, injected fs. When the file currently
-being hovered is itself inside one of the picked scripts' include graphs, prefer
-that script's data sources (a multi-study repo shouldn't cross-wire).
+`findEntryScripts(folder, patterns, fsLike)` — pure, injected fs. When the file
+currently being hovered is itself inside one of the picked scripts' include
+graphs, prefer that script's data sources (a multi-study repo shouldn't
+cross-wire).
 
 ### 11.3 Locating the data-source statements
 
@@ -750,14 +758,17 @@ Wildcard path (`data*.csv`): try the union of `fs`-matching files' headers; only
 
 ### 11.9 New module surface (additive, no consumer churn)
 
-- `src/core/entryScripts.ts` — `findEntryScripts(folder, fsLike)`, pure.
+- `src/core/entryScripts.ts` — `findEntryScripts(folder, patterns, fsLike)`,
+  pure. `patterns` comes from `gesstabs.dataInput.entryScriptPatterns`.
 - `src/core/externalNames.ts` — `readExternalNames(resolvedOrder, containingDir,
   fsLike)` → `ExternalNameSource[]`; the CSV first-line reader and the `.sav`
   dictionary parser (split into `savDictionary.ts` if it grows past ~250 lines).
   Pure over an injected byte reader.
 - `src/providers/externalNamesProvider.ts` (or fold into the existing variable
   hover) — the `FileSystemWatcher` + `path+mtime+size` cache, the hover note, the
-  `DocumentLink`. The only vscode-facing piece.
+  `DocumentLink`, the missing-source diagnostic. The only vscode-facing piece.
+- New setting `gesstabs.dataInput.entryScriptPatterns` in `package.json`
+  (`string[]`, default `["main.tab", "main*.tab", "*.tab"]`).
 - `test/entryScripts.spec.ts`, `test/externalNames.spec.ts` with tiny real
   `.csv` / `.sav` fixtures under `test/fixtures/`.
 

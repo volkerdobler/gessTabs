@@ -16,9 +16,12 @@ build this before the model rebuild below**, not as a step inside it. It does
 **not** change how the workspace is indexed. Detailed plan:
 **[docs/variable-model-design.md](docs/variable-model-design.md) §11**.
 
-- Find the entry script — `main.tab` (case-insensitive) → `main*.tab` → `*.tab`,
-  **searched recursively** through subdirectories — resolve its `INCLUDE` graph,
-  scan for the data-source statement(s).
+- Find the entry script — tiers `main.tab` → `main*.tab` → `*.tab`
+  (case-insensitive, **searched recursively**, first non-empty tier wins), then
+  resolve its `INCLUDE` graph and scan for the data-source statement(s). The tier
+  list is a setting (`gesstabs.dataInput.entryScriptPatterns`, `string[]`,
+  default `["main.tab", "main*.tab", "*.tab"]`) so a project with a different
+  naming convention can override it.
 - Read the raw variable names from each source (union across sequential waves):
   - **`CSVINFILE`** and **delimited `DATAFILE`** — resolve the path relative to
     the containing file, read the first line, split on `;` or `,` (auto-detected;
