@@ -88,9 +88,23 @@ export class GesstabsVariableHoverProvider implements vscode.HoverProvider {
       );
       if (!wordRange) return null;
       const rawWordText = document.getText(wordRange);
-      const isQuoted = /^["'][\s\S]*["']$/.test(rawWordText);
       const word = rawWordText.replace(/["']/g, '');
       if (!word || word.startsWith('#')) return null;
+
+      // Does this token have to sit in a position gessTabs actually
+      // accepts a quoted variable name (a declaration / annotation varlist
+      // or a TABLE head/axis) for the hover to mean anything? True when the
+      // matched token is itself quoted — and, crucially, also when it's a
+      // bare word that lands *inside* a string literal: getWordRangeAt-
+      // Position only scans a short window around the cursor, so on a long
+      // string it returns just the inner word, without the surrounding
+      // quotes (e.g. hovering `mindestens` in
+      // `toptext = "… schon mindestens einmal …";`). Either way the token
+      // is really quoted label/title text unless the line is one of those
+      // varlist contexts, so it must pass the same gate below.
+      const isQuoted =
+        /^["'][\s\S]*["']$/.test(rawWordText) ||
+        scope.isStringScope(position.line, position.character);
 
       // A token written `#name` or `&name` is a macro / #EXPAND reference
       // or a macro parameter — not a variable. vscode's word range (and
@@ -150,14 +164,17 @@ export class GesstabsVariableHoverProvider implements vscode.HoverProvider {
         return new vscode.Hover(md, wordRange);
       }
 
-      // A hover over a quoted string only makes sense when the string is
+      // A hover over quoted text only makes sense when the quoted token is
       // itself a variable-name reference — never for arbitrary quoted
       // label/title text, even when that text happens to read the same as
       // a real variable name elsewhere in the script (e.g. `VALUELABELS
       // status = 1 "region";`, where "region" is also declared as a real
       // variable — hovering that label text must not show region's
-      // declaration). A bare, unquoted word is always a genuine reference
-      // in this grammar, so this only gates quoted tokens.
+      // declaration; or hovering any word of the free text in
+      // `toptext = "… schon mindestens einmal …";`). A bare word outside a
+      // string is always a genuine reference in this grammar, so this only
+      // gates tokens that are quoted or sit inside a string literal (see
+      // `isQuoted` above).
       if (
         isQuoted &&
         !lineHasQuotedVariableReference(lineText, word, (searchIndex) =>

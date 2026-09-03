@@ -174,6 +174,23 @@ describe('lineHasQuotedVariableReference', () => {
     ).to.equal(false);
   });
 
+  it('does not treat a word of free header/label text as a reference', () => {
+    // The variable hover asks this for every bare word that lands inside a
+    // string literal (getWordRangeAtPosition returns just the inner word
+    // on a long string). None of these words is a variable reference —
+    // `toptext = "…"` is not a declaration/annotation varlist or a TABLE
+    // head/axis.
+    const line =
+      'toptext = "F15 In welchen Geschäften hast du schon mindestens ' +
+      'einmal eine oder mehrere Gutscheinkarten gekauft? - mind. 1x gekauft";';
+    for (const w of ['du', 'schon', 'mindestens', 'einmal', 'gekauft']) {
+      expect(
+        lineHasQuotedVariableReference(line, w, alwaysVisible),
+        w
+      ).to.equal(false);
+    }
+  });
+
   it('respects the isNotInComment callback', () => {
     const alwaysInComment = () => false;
     expect(

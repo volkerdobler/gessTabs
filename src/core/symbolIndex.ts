@@ -21,6 +21,7 @@ import {
 } from './includeGraph';
 import { Scope } from './scope';
 import { lineMatchesDefinition, lineMatchesUsage } from './matching';
+import { collectDeclarationTokens } from './semanticTokens';
 import {
   findMacroDefinitions,
   findMacroCalls,
@@ -116,6 +117,29 @@ export interface MacroProducedDefinition {
   callSite: ResolvedLine;
 }
 
+const stripQuotes = (s: string) => s.replace(/^["']|["']$/g, '');
+
+// Whether `lineText` is a name-declaring statement (VARIABLE-family /
+// COMPUTE-family / VARIABLES — the same narrow set F2's duplicate-
+// declaration check uses) whose declared name is exactly `word`. Used on
+// a macro body line *after* argument substitution, so the point is to
+// confirm the substituted line really declares `word` and isn't just some
+// unrelated statement that happens to mention it.
+//
+// NB: `lineMatchesDefinition` is unusable here — it takes an
+// `isNotInComment(searchIndex)` callback and, fed `-1` for "regex didn't
+// match", relies on the callback returning false; a `() => true` there
+// (the only scope info available for synthesised text) makes it return
+// true for *every* line.
+function bodyLineDeclaresName(lineText: string, word: string): boolean {
+  const target = stripQuotes(word).toLowerCase();
+  return collectDeclarationTokens(lineText, 0, () => true).some(
+    (t) =>
+      stripQuotes(lineText.substr(t.startChar, t.length)).toLowerCase() ===
+      target
+  );
+}
+
 // Cheap fallback for when findDefinitionLine finds nothing: `word` may not
 // be declared literally anywhere, but be produced by a #MACRO call that
 // passes it as the argument for a body statement like `compute &fr = 2;`
@@ -160,7 +184,7 @@ export function findMacroProducedDefinition(
       call.args
     );
     for (let j = 0; j < bodyLines.length; j++) {
-      if (lineMatchesDefinition(substituted[j], word, () => true)) {
+      if (bodyLineDeclaresName(substituted[j], word)) {
         return {
           macro,
           bodyLine: { ...bodyLines[j], text: substituted[j] },

@@ -169,6 +169,30 @@ describe('findMacroProducedDefinition', () => {
     expect(findMacroProducedDefinition(index, p('main.tab'), 3, 'somethingelse'))
       .to.be.undefined;
   });
+
+  it('does not report a preceding macro call whose body declares a different name', () => {
+    // Regression: a macro call sits before the cursor and its expanded
+    // body declares `f39mult`; hovering the unrelated `f23.12.1` must not
+    // claim it is "produced by" that macro. (The body line still mentions
+    // no `f23.12.1` at all — the old check matched every line regardless.)
+    const files = {
+      [p('main.tab')]: [
+        '#macro #makemulti2( &v )',
+        'makefamily &v = 50;',
+        '#endmacro',
+        '#makemulti2( f39mult )',
+        'vartitle "f23.12.1" = "REWE";',
+      ].join('\n'),
+    };
+    const index = buildWorkspaceIndex([p('main.tab')], makeReader(files));
+    expect(findMacroProducedDefinition(index, p('main.tab'), 4, 'f23.12.1')).to
+      .be.undefined;
+    // ...but the name it really does produce is still found.
+    expect(
+      findMacroProducedDefinition(index, p('main.tab'), 4, 'f39mult')?.bodyLine
+        .text
+    ).to.equal('makefamily f39mult = 50;');
+  });
 });
 
 describe('findAllUsages', () => {
