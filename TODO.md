@@ -1,74 +1,229 @@
-# TODO — Known issues & planned improvements
+# TODO — open work
 
-The full implementation history (what was built, why, and the bugs found along the way) lives in [docs/HISTORY.md](docs/HISTORY.md). This file tracks only what's actually still open.
+Finished work is recorded in git history (and, for everything that predates the
+2026-08-27 convention change, in [docs/HISTORY.md](docs/HISTORY.md)). This file
+lists only what is **still open**, in rough priority order. Priority is not a
+strict queue — an independent lower item can be picked up at any time. Manual
+citations point at the local mirror in `dokumentation/online-manual/` (see
+[Reference material](#reference-material)).
 
-## Prioritization / roadmap (raised 2026-09-02)
+---
 
-Rough tiering of the items below, by effort/risk and dependency order — not a strict queue, but a suggested sequence:
+## P0 — Read the dataset's raw variables (start here)
 
-- **Tier 0 — quick, isolated wins.** _All cleared._
-  - ✅ Done (2026-09-02): `GesstabsReferenceProvider.provideReferences` now honors `context.includeDeclaration` and highlights exact token spans instead of whole lines (was in "Known issues", removed once fixed — see git history), and the F2 diagnostics got their first manual verification pass in a running Extension Development Host.
-  - ✅ Done (2026-09-03): **Nested `#MACRO` false-positive.** `checkUnmatchedBlocks` (`src/core/diagnostics.ts`) and `findFoldRanges` (`src/core/foldingRanges.ts`) now track `#MACRO` opens on a stack, like the `#IFDEF` handling beside them, so a legally nested macro-in-macro no longer reports a spurious "unmatched `#ENDMACRO`" and its fold ranges nest correctly. (The macro engine `findMacroDefinitions` still treats the inner `#macro` as body text of the outer — correct per the manual, "Innere Macros werden erst während der Expansion des äußeren Macros gebildet" — but its body capture truncates at the first `#endmacro`; if that ever matters for hover, fix it there.)
-  - ✅ Done (2026-09-03): **`checkEmptyVarlist` now covers the `COPY*` statements.** `COPYTEXT`/`COPYTITLE`/`COPYLABELS` with the varlist omitted (`COPYTEXT = <source>;`) are flagged the same as bare `VARTITLE`/`VARTEXT`/`VALUELABELS`.
-- **Tier 1 — foundational, do next.** **Variable handling (definition & reference) needs to be rethought from scratch** (below) and its sub-points. Do the handbook-driven design pass _before_ touching go-to-definition/references/rename/hover code again — several other items below are really facets of this same problem and risk being built twice otherwise: **Hover over String** is the same quoted-token ambiguity described there, and the multi-response-variable classification the mutually-exclusive table/cell-option diagnostics need requires the same kind of workspace-wide symbol model this rework should produce. The 2026-09-02 doc review turned the vague "recognized incrementally" complaint into a concrete inventory of definition/reference forms the current `regex.ts` factories miss — see the expanded sub-points.
-  - ✅ Design pass done (2026-09-03): **[docs/variable-model-design.md](docs/variable-model-design.md)** — the coherent model (variable kinds, five origins, program order + "current variable"), the complete §3 definition-form / §4 reference-form inventory, the quoted-token rule as a positional `NameMode` table + one symbol lookup, the proposed `variableStatements.ts` classifier + `variableModel.ts` symbol table + `externalNames.ts`, a 6-phase plan that keeps Tier 2's "Hover over String" / multi-response classification / cross-INCLUDE F2 scope and Tier 3's semantic "last-name-only" fix from being separate work, and 6 open questions needing a decision before phase 1. **Next: resolve the open questions, then phase 1 (`variableStatements.ts`, pure, no consumer wired).**
-- **Tier 2 — builds on Tier 1's improved symbol model.** **Workspace-wide (cross-`INCLUDE`) scope for the F2 diagnostics** and the multi-response-variable classification half of **Mutually-exclusive table/cell-option diagnostics beyond `CELLSET`/`INVERTOUT`+`UPDATEINVERT`** — both were deliberately deferred pending exactly this kind of model. Also here: **runtime-block folding + unmatched-block diagnostics** for `IFBLOCK`/`ELSEBLOCK`/`ENDBLOCK`, `WHILEBLOCK … DO … ENDBLOCK` and `SETFILTER … ENDFILTER` (today only `#MACRO`/`#IFDEF` blocks are handled), and the **syntactic half** of the cell-option diagnostics that _doesn't_ need multi-response classification — e.g. `CALCULATECOLUMN` requires the preceding table to carry exactly one elementary `CELLELEMENT`.
-- **Tier 3 — independent, pick up opportunistically, no particular order.** `#DOMACRO`-family looping macro expansion, semantic highlighting's last-name-only limitation, the keyword-hover-content setting, the formatter's option-list alignment, `DocumentLink`s for filename references (`INCLUDE` / `LABELFROMFILE` / `#DOMACRO3` / `DATAFILE` / …), `.def` (and any other) INCLUDE file extensions, a deprecated-keyword diagnostic, `#EXPANDINTOKEN` / `#EXPANDINC` handling.
-- **Ongoing, not a sprint item.** Keyword database gaps ("fix as you notice" — see its own entry below).
+Standalone, self-contained, and independently useful — **decided 2026-09-03 to
+build this before the model rebuild below**, not as a step inside it. It does
+**not** change how the workspace is indexed. Detailed plan:
+**[docs/variable-model-design.md](docs/variable-model-design.md) §11**.
 
-## Possible future improvements
+- Find the entry script — `main.tab` (case-insensitive) → `main*.tab` → `*.tab`,
+  **searched recursively** through subdirectories — resolve its `INCLUDE` graph,
+  scan for the data-source statement(s).
+- Read the raw variable names from each source (union across sequential waves):
+  - **`CSVINFILE`** and **delimited `DATAFILE`** — resolve the path relative to
+    the containing file, read the first line, split on `;` or `,` (auto-detected;
+    an explicit `[ <delimchar> ]` in the statement wins). First line with neither
+    `;` nor `,` → not a delimited source. Decode UTF-8, fall back to
+    Windows-1252 on invalid bytes.
+  - **`SPSSINFILE`** (`.sav`) — a hand-written front-of-file dictionary parser:
+    variable **names + type** only for v1 (record type 2 + the type-7/subtype-13
+    long-name map + the type-7/subtype-20 encoding record). No labels yet. `$FL2`
+    only; ZSAV (`$FL3`) → unresolved with a reason.
+  - **`DATAFILE` with no `;`/`,` in the first line + a vardef include
+    (`INPUT = ….inc;`)** → column-binary / column-fixed format → **not
+    implemented now**, record as unresolved. Also `COLBININFILE` / `INVERTIN`.
+- **A working data source is mandatory** — a missing/unreadable input file, or a
+  script with no input statement at all, **is a diagnostic** (warning on the
+  statement / entry script). When the names can't be recovered, the later
+  per-variable "undefined variable" check stays suppressed for that script, but
+  the source-level problem is surfaced.
+- New pure modules `src/core/entryScripts.ts` + `src/core/externalNames.ts`; one
+  vscode-facing piece with a `FileSystemWatcher` + `path+mtime+size` cache
+  (never parse on keystroke). Near-term payoff: the missing-source diagnostic, a
+  hover note ("Rohvariable aus `data.csv`"), a `DocumentLink` on the `<filepath>`.
+  Later it feeds the model (P1) as `origin: 'external'`.
+- Remaining open questions — design doc §11.7 (SPSS label depth, ZSAV,
+  header-cell jump, wildcard paths, exact vardef-include spelling).
+- Manual pages to mirror locally first: `csv.html`, `spss2.html`,
+  `handhabung-von-ascii-daten.html`.
 
-- **Hover over String** should match the variable, if the string is a variable. It should not run if the content is a text string.
-- **Workspace-wide (cross-`INCLUDE`) scope for the F2 diagnostics.** `checkDuplicateDeclarations` and `checkDefineCaseMismatch` are document-scoped only, so a duplicate declaration or `#define` reference across an `INCLUDE` boundary isn't caught. `src/core/includeGraph.ts`/`src/core/symbolIndex.ts` already solve this properly for go-to-definition/references; wiring that into a live-typing diagnostic (on every keystroke, across the whole resolved workspace) is a bigger design/performance undertaking than the current per-document pass, deliberately deferred.
-- **Mutually-exclusive table/cell-option diagnostics beyond `CELLSET`/`INVERTOUT`+`UPDATEINVERT`.** `HARMONICMEAN`/`GEOMETRICMEAN`-with-other-cell-contents, `MEDIAN`-beyond-frequencies/percentiles, and `COLUMNPERCENT100`-with-multi-response-variables all require classifying _which variables are multi-response_ — workspace-wide semantic tracking (every `MULTIQ` declaration across the resolved program), not a syntactic per-document check.
-- **`#DOMACRO`/`#DOMACRO2`/`#DOMACRO3`/`#DOMACRO4` looping macro expansion** isn't recognized by the macro hover/expansion engine — only plain `#name(args)` direct calls are. Same for the handbook's `#call(&index &namepart &macroname)` pattern, where the callee name is itself a parameter and never appears literally at the call site.
-- **Semantic highlighting only highlights the _last_ name in a multi-name list** (`VARIABLES a b c = ...;`, a `RECODE`/`VALUELABELS` list, a multi-variable `TABLE` head/axis) — the shared regex factories capture the whole list as one blob, and splitting that into individually-positioned tokens wasn't attempted.
-- **Basic formatter doesn't align `=` in option lists or wrap long `TABLEFORMAT`/`CELLELEMENTS` flag lists** — deliberately deferred, no authoritative gessTabs style guide to formalize against; only mechanical, universally-safe changes (whitespace, directive-nesting indentation) are implemented.
-- **Keyword database gaps**: the original mechanical extraction from the manuals missed some real keywords entirely (their syntax is written as lowercase example code rather than the `Syntax:`/ALL-CAPS shapes the extractor recognized) and left some imperfect entries where two-column PDF-table flattening destroyed a clean per-item boundary, plus PDF-to-markdown artifacts (`�` for umlauts/ß, page numbers embedded mid-sentence). The manuals are moving online and won't be re-extracted, so `src/keywords/keywordData.ts` is now the hand-maintained source of record — patch entries directly in it as gaps/errors are found. Not a backlog item so much as an ongoing "fix as you notice" mechanism. (`scripts/extractKeywordDatabase.ts` is kept, deprecated, as the record of how the data was first mined.)
-- **Setting to control which parts of the keyword hover are shown** (raised 2026-08-27). Right now `renderHover` in `src/providers/keywordProviders.ts` already only shows syntax/description when that field actually exists on the entry — the two are never forced to appear together artificially. The open question was whether to _additionally_ let a user suppress one of them even when both are present, e.g. a `gesstabs.hover.keywordContent` setting (`"both"` | `"syntaxOnly"` | `"descriptionOnly"`), similar in shape to the existing `gesstabs.hover.macroExpansionStyle`. Deliberately not built — there's no concrete need for it yet, just a hypothetical "denser hovers while editing" preference. Revisit only if real usage actually surfaces a case for it.
+---
 
-### Found in the 2026-09-02 online-manual review
+## P1 — Variable model rebuild
 
-- ✅ Done (2026-09-03) — **Nested `#MACRO` definitions are legal but were flagged as an error.** The Makros page: "Man kann ein Macro auch innerhalb eines Macros definieren … Dieser Vorgang funktioniert rekursiv". `checkUnmatchedBlocks` (`src/core/diagnostics.ts`) and `foldingRanges.ts` tracked `macroStart` as a single value; both now use a stack like the `#IFDEF` handling beside them.
-- **Runtime block constructs get no folding and no unmatched-block diagnostic.** `IFBLOCK`/`ELSEBLOCK`/`ENDBLOCK` (nesting depth up to 512), `WHILEBLOCK <cond> DO … ENDBLOCK`, and `SETFILTER [name] … ENDFILTER [name]` (a named `ENDFILTER` closes every `SETFILTER` down to the named one, and errors if that name isn't on the stack) are all block-structured statements the extension currently ignores — only `#MACRO`/`#IFDEF` preprocessor blocks fold and get checked. `#STARTEXPORT`/`#ENDEXPORT` too.
-- **`.def` INCLUDE files are invisible to the tooling.** The manual's own `INCLUDE` examples use `INCLUDE = Labels.def;`, and `includeGraph.ts`'s `includeRe` follows any filename, but the language association (`package.json` `contributes.languages.extensions`) and the workspace-symbol scan (`getAllFilenamesInDirectory(wsfolder, '(tab|inc)')`, `src/extension.ts`) are `.tab`/`.inc` only — so `.def` files get no syntax highlighting and aren't in the symbol index. Check the full manual for any other conventional extensions.
-- **`DocumentLink` provider for filename references.** `INCLUDE = <file>;`, `VALUELABELS … = LABELFROMFILE <file>;`, `#DOMACRO3( name, <file>.csv )` / `#DOMACRO4( <file>.csv )`, `DATAFILE`/`CSVINFILE`/`SPSSINFILE`/`SYNTAX … = <file>` — none are clickable today.
-- **`CALCULATECOLUMN` / `COLUMNSUMMARY` single-`CELLELEMENT` rule.** The Berechnung-von-Tabelleninhalten page: `CALCULATECOLUMN` needs the preceding table to have exactly one elementary `CELLELEMENT` ("entweder `COLUMNPERCENT` oder `ABSOLUTE`, aber nicht beides, und auch kein zusammengesetztes wie `ABSCOLPERCENT`"). This is a purely syntactic check against the effective `CELLELEMENTS` (the extension already computes that for its hover) — no multi-response classification needed, unlike the other half of the cell-option-diagnostics item.
-- **A few more cheap syntactic diagnostics** in the spirit of the existing F2 checks: `VALUELABELS <a> <b> = ADD …` (a varlist with `ADD` → "Syntaxerror 528", ADD is one-variable-only); `OVERCODE <a> : <b>` where the range span exceeds 100 000 (syntax error) / 5 000 (warning) — same shape as `checkRecodeBounds`.
-- **Deprecated-keyword diagnostic.** The manual has an "Abgelöste Befehle" page; `USEFILTER`/`MAKEFILTER` are called out as "außer Dienst gestellt". Flag use of retired keywords once that list is mined into `keywordData.ts`.
-- **`#EXPANDINTOKEN &search& <replace>` and `#EXPANDINC`.** `#EXPANDINTOKEN` uses `&search&` delimiters (trailing `&` too, unlike a `&param` macro name) and rewrites inside tokens (`DATAFILE = study&land&.dat;`); the call sites aren't recognised. `#EXPANDINC` increments its integer value on each expansion — the expand hover should reflect that rather than showing the literal seed.
-- **keywordData: the `VALUELABELS` entry's description is mis-attributed.** Its `description` text is actually about the STRICTVARLIST / empty-varlist error ("ein Fehler … wenn man Syntaxvarianten ohne explizite Variablennennung benutzt … Das '=' hinter VARTITLE …"), not about `VALUELABELS`. Extraction artifact — replace with a real description from the Texte / Label-Eigenschaften pages.
-- **Read the externally-sourced variable names from the data-input file** (In- und Output von Datensätzen page). A `.tab`/`MAIN.tab` almost always names its data source with one or more of `DATAFILE` / `CSVINFILE` / `SPSSINFILE` / `INVERTIN` / `COLBININFILE` (`[ FILEKEY <key> ]` `[ <delimchar> ]` `[ ALLOWEMPTY ] = <filepath>;`), and the bulk of a real project's variables come from there — this is the concrete mechanism behind the "externally-sourced variable" sub-point of the variable-handling rethink. Feasibility per source:
+The single biggest structural gap. "What counts as a variable definition vs. a
+reference" is currently spread across eleven regex factories in
+[src/core/regex.ts](src/core/regex.ts), OR-ed per line in
+[src/core/matching.ts](src/core/matching.ts), and consumed by go-to-definition,
+find-references, rename, hover and the F2 diagnostics through **three disagreeing
+notions of "definition"**. It has no concept of variable identity, kind or origin,
+misses the most common creator of all (`COMPUTE` without a sub-keyword), and
+cannot answer the manual's actual quoted-token rule (*a quoted token is a
+variable name iff a variable of that name exists*).
 
-  - **CSV (`CSVINFILE` / a delimited `DATAFILE`)** — easy: resolve `<filepath>` relative to the `.tab`, read the first line, split on the delimiter (`[ <delimchar> ]` or the default), each field is a variable name. Plain Node `fs` in the extension host.
-  - **SPSS `.sav` (`SPSSINFILE`)** — medium: the variable dictionary sits at the front of the file (record type 2, plus the long-name map in a type-7/subtype-13 record); no need to touch the case data. Either bundle a `.sav` reader or write a ~150–250-line dictionary parser against the public format spec.
-  - **column-fixed `.dat` (`DATAFILE`)** — the variable definitions live in a following `INCLUDE = <vardef>.inc;`, typically as calls to a macro whose **first parameter is the variable name** (`#defvar( age 1 2 )` …), or a `#DOMACRO`. The extension already resolves the INCLUDE graph and finds macro defs/calls; a first cut is "first argument of every macro call in a vardef include = an externally-sourced variable" (better: expand the body and see the `SINGLEQ &name` / `VARNAME &name …` it emits). Also recognise `VARNAME = <name> <col> <len>;` and `VARIABLES <a> TO <b> = <col> <width>;` directly in the `.tab`. Rides on the `#DOMACRO` / macro-produced-name work.
-  - Caveats for all three: the data file is often **not present** on the editing machine (delivered later / on a share) — "external variables unknown" must be a normal state, not an error; `<filepath>` can contain `#EXPAND` / `&token&` substitutions and wildcards (`opn.*`); needs a `FileSystemWatcher` + cache, not a re-read on every keystroke. Payoff: a real symbol table of externally-sourced variables → "undefined variable" diagnostics, go-to-definition landing on the input statement / CSV header / macro call, working find-references, and the "does a variable of this name exist?" test the quoted-token disambiguation needs.
-  - Manual detail pages for this (not yet mirrored locally): `csv.html`, `spss2.html`, `handhabung-von-ascii-daten.html`, `invertierte-datensaetze.html`.
+Design pass complete → **[docs/variable-model-design.md](docs/variable-model-design.md)**.
+Do its phases in order. Several P2/P3 items below are facets of this same problem
+and are marked "(needs P1)" so they are not built twice.
 
-- **Variable handling (definition & reference) needs to be rethought from scratch** (raised 2026-09-02). The current model for what counts as a variable "definition" vs. a "reference" — spanning go-to-definition, find-references, rename, hover, and the F2 diagnostics — grew incrementally and doesn't hold together as a coherent design. **Design pass complete → [docs/variable-model-design.md](docs/variable-model-design.md)**; the sub-points below are all folded into its §3/§4 inventory and phase plan. Remaining work is that doc's phases 1–6 (see the online manual's [Variablen](https://help.gessgroup.de/gesstabs-help/variablen.html) page for the authoritative semantics).
-  - **Quoted tokens are ambiguous between "variable name" and "text content".** A variable name is a token, and a token containing a space must be quoted — e.g. `compute f1 = 1;` (token/variable `f1`) vs. `compute 'frage 1' = 1;` (token/variable `frage 1`, still a variable, not a string literal). So a quoted string can either be a variable reference (when a variable is syntactically valid at that position) or genuine textual content (e.g. a value label) — which one it is depends entirely on the surrounding keyword/argument position, not on the quoting itself. The manual states this outright (Logische Bedingungen): "GESStabs interpretiert Strings in Anführungszeichen oder Hochkommata als Variablennamen, wenn es eine Variable mit dem entsprechenden Namen gibt, sonst als Textkonstante" — i.e. the disambiguation is not even purely positional, it depends on whether a variable of that name exists. Any rework must resolve this per-position (and, ideally, per-known-symbol), not just strip quotes and treat every quoted token as either always-variable or always-text.
-  - **Most variables aren't defined in the script at all — they come from an external source (SPSS, CSV, etc.) read in via the script.** So "go to definition" often has no in-script declaration to land on for the bulk of variables in a real project; the model needs an explicit notion of "externally-sourced variable" distinct from "defined here". These names _are_ recoverable — from the `CSVINFILE`/`SPSSINFILE`/`DATAFILE` data source itself — see the dedicated "Read the externally-sourced variable names from the data-input file" item above.
-  - **Variables are also created or redefined at many other points** than the obvious `SINGLEQ`/`VARIABLE`/`VARIABLES`/`MULTIQ`/`DICHOQ`/`MAKE*` declarations the factories in `src/core/regex.ts` currently recognize. Concrete forms found in the 2026-09-02 manual review that are **not** recognized as definitions today:
-    - **Plain `COMPUTE <var> = <expr>;` and `FCOMPUTE`** — the single most common variable-creating statement ("Ergebnis eines COMPUTE-Befehls ist stets eine Zielvariable … Wenn eine Zielvariable nicht existiert, wird automatisch eine Variable erzeugt", Compute page). `computeDefRe` only matches when a sub-keyword (`ADD`/`ALPHA`/…) is present — a documented, tested quirk (`test/regex.spec.ts`).
-    - **`COMPUTE CONCAT` / `COMPUTE SUBSTR`** create an `ALPHA` target var but aren't in `computeDefRe`'s sub-keyword list; **`COMPUTE REPLACE <value> <var> = …`** and **`COMPUTE SORT ( … ) <var> = …`** put the target after an argument, not right after the sub-keyword.
-    - **`IF <cond> THEN <var> = … [ELSE <var> = …]`** (and `THEN COPY/LOAD/CONCAT/SUBSTR …`) — "`<anweisung>` ist ein beliebiges `COMPUTE`-Statement unter Weglassen des Keywords `COMPUTE`" (Logische Bedingungen). Same for statements inside `IFBLOCK`/`WHILEBLOCK` blocks.
-    - **`MAKESINGLES`, `MULTIFROMSTRING`, `CROSSVAR`/`CROSS2VAR`, `INTERVALS`, `MAXINDEX`/`MININDEX`, `DATA <method> <newvar> = …`** — all documented variable-creating statements, none in `singleVarDefRe`. `MULTIFROMSTRING` and `DATA` also carry option/method tokens between the keyword and the new name.
-    - **`MAKESINGLE <var>;` with no `=`**, and the column-position `SINGLEQ <var> 0 VARTEXT … ;` form (no `=`) — `singleVarDefRe` requires a trailing `=`.
-    - **`SINGLEQ <var> = OPENASALPHA DATA <sourcevar>;`** — derives a second variable from `<sourcevar>`; a (re)definition of `<var>` and a reference to `<sourcevar>`.
-  - **Predefined and virtual variables the model must know about** (so it never reports them "undefined" and can flag illegal redeclaration):
-    - System variables `SystemFileNo`, `SystemWeight`, `SystemCaseNo`, `SysMiss`, `NIL` (Systemvariablen page) — "Der Versuch, eigene Variablen mit diesen Namen zu generieren, führt zu einem Fehler" → candidate for a new diagnostic.
-    - `POSTPROCESS <cellelement> : …` virtual variables `SELF`, `CellAbs`, `CellPhys`, `XAbs`/`YAbs`, `TtlAbs`, `XVarNo`/`YVarNo`, `XCode`/`YCode`, `StatAbs`/`StatPhys`, `XPhys`/`YPhys` — valid only inside that clause.
-  - **Macro-produced names**: `#macro #m( &p ) COMPUTE &p.recoded = &p; #endmacro` makes a variable `<arg>.recoded` that never appears literally (partly handled by commit `7f0b000`); param names can be numeric (`&1`) and are substituted mid-token (`&name_alpha`, `&p1.recoded`). Also check macro-parameter parsing handles the comma-separated param form the manual shows: `#macro #x( &1 &combicode, &faktor )`.
-  - **A variable can carry its own texts (text/title/labels) — see [Variablen: Texte](https://help.gessgroup.de/gesstabs-help/variablen-texte.html).** Hover should surface this info when present. Which parts are shown (text, title, labels) should be configurable, similar in shape to the existing `gesstabs.hover.keywordContent`/`macroExpansionStyle` settings noted above. Note the no-`=` `[VALUE]LABELS <varlist> COPY <src>;` / `… AS <src>;` infix forms alongside the `COPYLABELS <varlist> = <src>;` form.
+- **P1.0 — decide the six open questions** in the design doc §9 before phase 1
+  lands (re-definition vs. duplicate, `$`-member expansion, `#IF[N]EXIST`
+  feedback loop, performance budget, `.def` extension handling, no-name
+  `VARFAMILY`).
+- **P1.1 — statement classifier** `variableStatements.ts` + continuation-line
+  joining `toLogicalStatements` — pure, table-driven, fully spec'd, **no consumer
+  wired yet**. One parser per statement shape covering the whole §3 / §4
+  inventory: `COMPUTE`/`FCOMPUTE` with no sub-keyword, `MAKESINGLE(S)`,
+  `IF … THEN <var> = …`, `VARGROUP`/`GROUPS`/`INTERVALS`/`INDEXVAR`,
+  `DATA <method> <var> = …`, the statistical creators, overcodes, the no-`=`
+  column-position forms. Emits `block: 'open'|'close'` for `IFBLOCK`/`WHILEBLOCK`/
+  `SETFILTER`/`#MACRO`/`#STARTEXPORT` so P2's folding has one recognizer to call.
+- **P1.2 — symbol table** `variableModel.ts`: `declared` + `predefined` origins,
+  program-order pass, "current variable" tracking. Wire the **variable hover**
+  onto it first (smallest blast radius, best signal).
+- **P1.3 — migrate the remaining consumers** onto the model: go-to-definition,
+  find-references, rename, semantic highlighting, F2 empty-varlist +
+  duplicate-declaration. Delete `regex.ts` / `matching.ts` /
+  `collectDeclarationTokens` / `findVariableAnnotations` /
+  `lineHasQuotedVariableReference` once nothing uses them. This step alone also
+  fixes:
+  - **hover / go-to-def on a quoted string that names a variable** — resolved
+    per-position + per-known-symbol instead of the current hand-enumerated
+    positional guess (Manual: Logische Bedingungen). Partly mitigated already
+    (string-scope gate), but the real fix is the model.
+  - **semantic highlighting only marks the _last_ name in a multi-name list**
+    (`VARIABLES a b c = …`, `RECODE`/`VALUELABELS` lists, multi-variable `TABLE`
+    heads) — the classifier hands back every name span with a real offset.
+- **P1.4 — wire P0's external names into the model** as `origin: 'external'`
+  symbols, seeded before the program-order pass. A later in-script
+  `SINGLEQ`/`COMPUTE` of the same name is a re-definition, not a duplicate. This
+  is what gives go-to-definition and the undefined-variable diagnostic something
+  to land on / check against for the bulk of a real project's variables.
+- **P1.5 — macro-produced names** into the model: numeric params (`&1`),
+  comma-separated param lists, mid-token substitution (`&p.recoded`). Builds on
+  the existing `findMacroProducedDefinition`. `#DOMACRO` looping stays P3, but the
+  model's macro hook is shaped so that work plugs in without reshaping the
+  symbol record.
+- **P1.6 — new model-based diagnostics**: undefined variable (a bare reference
+  the model cannot resolve, with no unresolved external source in play);
+  system-variable redeclaration (`SysMiss`, `NIL`, `SystemFileNo`,
+  `SystemWeight`, `SystemCaseNo` — declaring one is a syntax error, Manual:
+  Systemvariablen); kind-illegal operations (`RECODE`/arithmetic on a
+  `VARFAMILY`/`VARGROUP`, an `ALPHA` var in two `AlphaFamily`s, …).
+
+---
+
+## P2 — Diagnostics & block constructs
+
+- **Runtime-block folding + unmatched-block diagnostics** for
+  `IFBLOCK`/`ELSEBLOCK`/`ENDBLOCK` (nesting depth up to 512),
+  `WHILEBLOCK <cond> DO … ENDBLOCK`, `SETFILTER [name] … ENDFILTER [name]` (a
+  named `ENDFILTER` closes every `SETFILTER` down to the named one, and errors if
+  that name is not on the stack) and `#STARTEXPORT`/`#ENDEXPORT`. Today only
+  `#MACRO`/`#IFDEF` blocks fold and get checked. Consumes P1.1's `block` flags.
+- **Cross-`INCLUDE` scope for the F2 diagnostics.** `checkDuplicateDeclarations`
+  and `checkDefineCaseMismatch` are document-scoped, so a duplicate declaration
+  or `#define`-case mismatch across an `INCLUDE` boundary is missed.
+  `includeGraph.ts` / `symbolIndex.ts` already resolve the workspace; running
+  that on every keystroke across the whole resolved program is the open
+  design/performance question. (needs P1)
+- **`CALCULATECOLUMN` / `COLUMNSUMMARY` single-`CELLELEMENT` rule** — the
+  preceding table must carry exactly one elementary `CELLELEMENT`
+  (`COLUMNPERCENT` **or** `ABSOLUTE`, not both, and no composite like
+  `ABSCOLPERCENT`). Purely syntactic against the effective `CELLELEMENTS` the
+  extension already computes for its hover. (Manual: Berechnung von
+  Tabelleninhalten.)
+- **Mutually-exclusive cell-option diagnostics** beyond the existing
+  `CELLSET`/`INVERTOUT`+`UPDATEINVERT` check: `HARMONICMEAN`/`GEOMETRICMEAN` with
+  other cell contents, `MEDIAN` beyond frequencies/percentiles,
+  `COLUMNPERCENT100` with a multi-response variable — the last needs the model to
+  know which variables are `MULTIQ`. (needs P1)
+- **Cheap syntactic checks** in the spirit of the current F2 set:
+  `VALUELABELS <a> <b> = ADD …` (a varlist with `ADD` → Syntaxerror 528; `ADD` is
+  one-variable-only); `OVERCODE <a> : <b>` where the range span exceeds 100 000
+  (error) / 5 000 (warning) — same shape as `checkRecodeBounds`.
+- **Deprecated-keyword diagnostic** — flag retired keywords
+  (`USEFILTER`/`MAKEFILTER`, …) once the manual's "Abgelöste Befehle" list is
+  mined into `keywordData.ts`.
+
+---
+
+## P3 — Editor niceties (independent, opportunistic)
+
+- **`DocumentLink` provider for filename references** — `INCLUDE = <file>;`,
+  `VALUELABELS … = LABELFROMFILE <file>;`, `#DOMACRO3( name, <file>.csv )` /
+  `#DOMACRO4( <file>.csv )`, `DATAFILE`/`CSVINFILE`/`SPSSINFILE`/`SYNTAX = <file>`
+  — none are clickable today. Pairs naturally with P1.4, which already resolves
+  the data-source paths.
+- **`.def` (and any other) INCLUDE file extensions** — the manual's own examples
+  use `INCLUDE = Labels.def;`; `includeGraph.ts` follows any filename, but the
+  language association (`package.json` `contributes.languages`) and the workspace
+  scan (`getAllFilenamesInDirectory(…, '(tab|inc)')`) are `.tab`/`.inc` only. Fold
+  into P1.3's file-discovery work.
+- **`#DOMACRO`/`#DOMACRO2`/`#DOMACRO3`/`#DOMACRO4` looping expansion** and the
+  `#call( &index &namepart &macroname )` indirect-call pattern (the callee name
+  is itself a parameter and never appears literally at the call site) — not
+  recognized by the macro hover / expansion engine.
+- **`#EXPANDINTOKEN &search& <replace>` and `#EXPANDINC`** — `#EXPANDINTOKEN`
+  uses `&search&` delimiters (trailing `&` too, unlike a `&param` macro name) and
+  rewrites inside tokens (`DATAFILE = study&land&.dat;`); `#EXPANDINC` increments
+  its integer value on each expansion (the expand hover should reflect that, not
+  the literal seed).
+- **Formatter: align `=` in option lists, wrap long `TABLEFORMAT`/`CELLELEMENTS`
+  flag lists** — deferred; no authoritative gessTabs style guide to formalize
+  against, so today only mechanical whitespace/indent changes are made.
+- **Keyword-hover-content setting** (`gesstabs.hover.keywordContent`:
+  `"both"` | `"syntaxOnly"` | `"descriptionOnly"`), shaped like the existing
+  `gesstabs.hover.macroExpansionStyle`. Build only if a real "denser hovers while
+  editing" need actually surfaces.
+
+---
+
+## Ongoing
+
+- **Keyword database gaps.** `src/keywords/keywordData.ts` is the hand-maintained
+  source of record now (the manuals moved online and won't be re-extracted).
+  Patch entries directly as gaps/errors are noticed. Known issue: the
+  `VALUELABELS` entry's `description` is actually about the STRICTVARLIST /
+  empty-varlist error (an extraction artifact) — replace it with a real
+  description from the Texte / Label-Eigenschaften pages.
+- **Mine the online manual further.** It has substantially more detail than the
+  extension currently reflects — worth revisiting during any refactor, not just
+  the P1 rework.
+
+---
 
 ## Reference material
 
-The whole `dokumentation/` tree is git-ignored — local reference only, not committed. When looking something up, use these in order (most useful first):
+The whole `dokumentation/` tree is git-ignored — local reference only, not
+committed. When looking something up, use these in order (most useful first):
 
-1. **`dokumentation/online-manual/md/*.md`** — **start here.** Pages of the current online manual converted to Markdown (clean UTF-8, code examples as fenced blocks). Covers the topics the open work above needs: `Variablentypen`, `Bildung neuer Variablen`, `Variablen-Eigenschaften`, `Texte`, `Label-Eigenschaften`, `Systemvariablen`, `Compute`, `Berechnung von Tabelleninhalten`, `Logische Bedingungen`, `Statistische Funktionen`, `Filter` / `Fallselektion` / `Bedingte Tabellenanzeige`, `Rundungen`, `Gruppierungen` (Obercodes / Indexvariablen / Variablenfamilien / Variablengruppen), `Das Skript`, `Makros`, `Textersatz`, plus `hmkwindex` (keyword index — one topic-page link per keyword).
-2. **`dokumentation/online-manual/*.html`** — the browser-saved source pages; check these when the Markdown conversion dropped a table or detail, and for pages saved after the last conversion run (e.g. `In- und Output von Datensätzen`). No converter script is committed — regenerate the `md/` with bs4 + markdownify when needed.
-3. **Online gessTabs manual** — the authoritative source, but the site sits behind a Cloudflare JS challenge, so `WebFetch` / `curl` / `wget` all get HTTP 403 and only a real browser can reach it (re-save pages into `online-manual/` as needed). Entry point: [Startseite](https://help.gessgroup.de/gesstabs-help/) · [Referenzindex](https://help.gessgroup.de/gesstabs-help/hmkwindex.html) · [Variablen](https://help.gessgroup.de/gesstabs-help/variablen.html) · [Variablen bilden](https://help.gessgroup.de/gesstabs-help/bildung-neuer-variablen.html) · [Variablen und Codes](https://help.gessgroup.de/gesstabs-help/variablen-und-codes.html) · [Berechnung](https://help.gessgroup.de/gesstabs-help/berechnung.html) · [Variablen: Texte](https://help.gessgroup.de/gesstabs-help/variablen-texte.html) · [Das Skript](https://help.gessgroup.de/gesstabs-help/das-skript.html).
-4. **`dokumentation/GESStabs-Handbuch_engl.md`** (English) / **`dokumentation/gesstabs_handbuch_52.md`** (German, umlauts mangled to `�`) — the older full handbook as one converted-PDF file; use as a cross-check and for anything the 23 mirrored pages don't cover. Also `manual_index_list.tab` (flat keyword list) and `syntax.txt`.
-
-The online manual has substantially more detail than the extension currently reflects — worth mining further during future refactoring, not just for the variable rethink above.
+1. **`dokumentation/online-manual/md/*.md`** — **start here.** Pages of the
+   current online manual converted to Markdown (clean UTF-8, code examples as
+   fenced blocks). Covers the topics the open work above needs: `Variablentypen`,
+   `Bildung neuer Variablen`, `Variablen-Eigenschaften`, `Texte`,
+   `Label-Eigenschaften`, `Systemvariablen`, `Compute`, `Berechnung von
+   Tabelleninhalten`, `Logische Bedingungen`, `Statistische Funktionen`, `Filter`
+   / `Fallselektion` / `Bedingte Tabellenanzeige`, `Rundungen`, `Gruppierungen`
+   (Obercodes / Indexvariablen / Variablenfamilien / Variablengruppen), `Das
+   Skript`, `Makros`, `Textersatz`, plus `hmkwindex` (keyword index).
+2. **`dokumentation/online-manual/*.html`** — the browser-saved source pages;
+   check these when the Markdown conversion dropped a table or detail, and for
+   pages saved after the last conversion run (e.g. `In- und Output von
+   Datensätzen`). No converter script is committed — regenerate the `md/` with
+   bs4 + markdownify when needed. Not yet mirrored and needed for P1.4:
+   `csv.html`, `spss2.html`, `handhabung-von-ascii-daten.html`,
+   `invertierte-datensaetze.html`.
+3. **Online gessTabs manual** — the authoritative source, but the site sits
+   behind a Cloudflare JS challenge, so `WebFetch` / `curl` / `wget` all get
+   HTTP 403 and only a real browser can reach it (re-save pages into
+   `online-manual/` as needed). Entry point:
+   [Startseite](https://help.gessgroup.de/gesstabs-help/) ·
+   [Referenzindex](https://help.gessgroup.de/gesstabs-help/hmkwindex.html) ·
+   [Variablen](https://help.gessgroup.de/gesstabs-help/variablen.html) ·
+   [Variablen bilden](https://help.gessgroup.de/gesstabs-help/bildung-neuer-variablen.html) ·
+   [Das Skript](https://help.gessgroup.de/gesstabs-help/das-skript.html).
+4. **`dokumentation/GESStabs-Handbuch_engl.md`** (English) /
+   **`dokumentation/gesstabs_handbuch_52.md`** (German, umlauts mangled to `�`) —
+   the older full handbook as one converted-PDF file; cross-check and for
+   anything the mirrored pages don't cover. Also `manual_index_list.tab` (flat
+   keyword list) and `syntax.txt`.

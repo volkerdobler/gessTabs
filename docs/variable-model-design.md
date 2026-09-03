@@ -1,9 +1,10 @@
 # Variable model — handbook-driven design pass
 
-> Status: **design, not yet implemented.** This is the "handbook-driven design pass"
-> TODO.md's Tier 1 asks for *before* go-to-definition / references / rename / hover /
-> the F2 diagnostics are touched again. Nothing in `src/` changes until this is
-> agreed. Written 2026-09-03 against the online manual mirror in
+> Status: **design, not yet implemented.** The handbook-driven design pass
+> [TODO.md](../TODO.md)'s P1 asks for *before* go-to-definition / references /
+> rename / hover / the F2 diagnostics are touched again. Nothing in `src/` changes
+> until this is agreed. §11 (external variables) was pulled out to a standalone
+> **P0** on 2026-09-03. Written 2026-09-03 against the online manual mirror in
 > `dokumentation/online-manual/md/` (Variablentypen, Bildung neuer Variablen,
 > Variablen-Eigenschaften, Texte, Label-Eigenschaften, Systemvariablen, Compute,
 > Logische Bedingungen, Statistische Funktionen, Gruppierungen/*, Filter, Das Skript)
@@ -425,7 +426,7 @@ export function buildVariableModel(
 - Cache by workspace-file-set + mtimes (same shape as the existing
   `buildWorkspaceIndex` callers; add an LRU like `src/util/lru.ts`).
 
-### 7.3 `externalNames.ts` — externally-sourced variables (phase 4)
+### 7.3 `externalNames.ts` — externally-sourced variables (phase 0 reader, phase 4 model wiring — see §11)
 
 ```ts
 export interface ExternalNameSource {
@@ -436,17 +437,21 @@ export interface ExternalNameSource {
 export function readExternalNames(index: WorkspaceIndex, fs: FileSystemLike): ExternalNameSource[];
 ```
 
-- **Phase 4a**: CSV (`CSVINFILE`, delimited `DATAFILE`) — resolve path relative to
-  the `.tab`, read first line, split on `[ ‹delimchar› ]` or default. Node `fs`.
-- **Phase 4b**: SPSS `.sav` dictionary parser (record type 2 + type-7/subtype-13
-  long-name map). ~200 lines against the public format spec, or a vendored reader.
-- **Phase 4c**: column-fixed `.dat` — vardef-include macro-call first-argument
-  heuristic; `VARNAME = ‹n› ‹col› ‹len›;`; `VARIABLES ‹a› TO ‹b› = ‹col› ‹w›;`.
-- `FileSystemWatcher` + cache in the provider layer; **never** re-read on
-  keystroke. `‹filepath›` may contain `#EXPAND`/`&token&`/wildcards — mark
-  `unresolved` rather than guess.
+The reader is **phase 0** (standalone, §11). This section is just the interface
+the model consumes at phase 4. Coverage, per the 2026-09-03 decisions in §11:
+
+- **v1**: `CSVINFILE`, delimited `DATAFILE` (first line, split on `‹delimchar›`
+  or the default), and `SPSSINFILE` (`.sav` dictionary parser — **names + type
+  only**: record type 2 + type-7/subtype-13 long-name map + type-7/subtype-20
+  encoding; `$FL2` only).
+- **later**: SPSS variable/value labels, ZSAV (`$FL3`), column-fixed `.dat`
+  (vardef-include macro-call heuristic; `VARNAME = ‹n› ‹col› ‹len›;`;
+  `VARIABLES ‹a› TO ‹b› = ‹col› ‹w›;`).
+- `FileSystemWatcher` + `path+mtime+size` cache in the provider layer; **never**
+  re-read on keystroke. `‹filepath›` still holding `#EXPAND`/`&token&`/wildcards
+  after normal substitution → `unresolved`, don't guess.
 - Manual pages to mirror first: `csv.html`, `spss2.html`,
-  `handhabung-von-ascii-daten.html`, `invertierte-datensaetze.html`.
+  `handhabung-von-ascii-daten.html`.
 
 ### 7.4 Continuation-line joining
 
@@ -490,10 +495,11 @@ turning a resolved reference line into precise character ranges (rename needs it
 
 | phase | deliverable | risk | unblocks |
 | --- | --- | --- | --- |
+| **0** | `entryScripts.ts` + `externalNames.ts` (CSV + SPSS names/type + delimited `DATAFILE`) + a lightweight hover note / `DocumentLink`. **Standalone — does not touch indexing or wait on the model.** See §11. | low — pure + one watcher | phase 4; near-term "which names are dataset vars" signal |
 | **1** | `variableStatements.ts` + `toLogicalStatements` + full spec. **No consumer wired yet.** | low — pure, additive | everything below |
 | **2** | `variableModel.ts` (declared + predefined origins; no macro/external). Wire **hover** first (smallest blast radius, best signal). | med | — |
 | **3** | Move go-to-definition, references, rename, semantic highlighting onto the model. Delete `regex.ts`/`matching.ts`. Move F2 empty-varlist + duplicate-declaration onto the model. | med-high — behaviour-visible | Tier 2 cross-INCLUDE F2 scope, Tier 3 semantic "last-name" fix |
-| **4** | `externalNames.ts` 4a (CSV) → 4b (SPSS) → 4c (fixed `.dat`). Feed `origin: 'external'`. Add DocumentLink for the data-source statement. | med | "undefined variable" diagnostic, real go-to-def for dataset vars |
+| **4** | Feed the phase-0 `externalNames.ts` output into the model as `origin: 'external'`. (The reader itself — CSV + SPSS + delimited `DATAFILE` — is pulled out to **phase 0**, see §11.) | low | "undefined variable" diagnostic, real go-to-def for dataset vars |
 | **5** | macro-produced names into the model (numeric/comma params, mid-token). `#DOMACRO` stays Tier 3. | med | — |
 | **6** | New diagnostics on the model: undefined-variable, system-var redeclaration, `ALPHA` var in two `AlphaFamily`s, kind-illegal ops. | low each | Tier 2 items |
 
@@ -544,5 +550,214 @@ program) — they are **not** separate work.
 - Runtime-block folding for `IFBLOCK`/`WHILEBLOCK`/`SETFILTER` (Tier 2) — but
   phase 1's classifier **does** emit `block: 'open'|'close'` for them so the Tier 2
   folding work has one recognizer to call.
-- Actually shipping the SPSS `.sav` parser (phase 4b) — design only until 4a
-  proves the model's `external` slot is right.
+- Value labels / variable labels from the SPSS `.sav` (phase 0 ships names + type
+  only — §11.7 Q1).
+- ZSAV (`$FL3`) support (§11.7 Q2), header-cell go-to-definition jumps (Q3).
+
+---
+
+## 11. External variables from the data input file
+
+Concrete plan for reading the "raw" variable names a script pulls in from its data
+source. Raised and scoped 2026-09-03.
+
+**Decisions taken (2026-09-03):**
+
+- **Built early, as a standalone step** — `entryScripts.ts` + `externalNames.ts`
+  first, *not* gated behind the classifier / model / consumer migration. It is
+  self-contained (script text in, name list out) and independently useful.
+- **The symbol index is not touched.** `buildWorkspaceIndex`'s "merge every
+  non-included `.tab`" behaviour stays exactly as today. Entry-script detection
+  here is used **only** to decide *which* data-source statements to read.
+- **A working data source is mandatory.** A GESStabs script without one does
+  nothing useful, so a missing/unreadable input file **is a diagnostic**, not a
+  silent normal state (§11.6). We still can't recover the names in that case, but
+  we say so.
+- **In v1**: `CSVINFILE`, `SPSSINFILE`, and delimited `DATAFILE` (delimiter
+  detected in the file's first line, §11.3). Column-fixed / column-binary
+  `DATAFILE`, `COLBININFILE`, `INVERTIN` are out (their names come from a vardef
+  `INCLUDE` — §6, a later phase).
+- **CSV/`DATAFILE` delimiter is `;` or `,` only** — auto-detected from the header
+  line (explicit `[ <delimchar> ]` in the statement wins if present). A first
+  line with neither → the file is **ignored** (not a delimited source).
+- **Encoding**: UTF-8 first; fall back to Windows-1252 when the bytes aren't
+  valid UTF-8 (external data is sometimes CP-1252).
+- **`*.tab` search recurses into subdirectories** (repos with `study-a/main.tab`,
+  `study-b/main.tab`).
+- **SPSS `.sav` parser v1**: variable **names + type** only. No variable labels,
+  no value labels. (Revisit once the plumbing works — see §11.7 Q1.)
+
+### 11.1 Two consumers, one module
+
+`readExternalNames(...)` produces `ExternalNameSource[]` (§7.3 shape). Two things
+consume it, on different timelines:
+
+| consumer | when | uses |
+| --- | --- | --- |
+| **near-term, lightweight** | now, alongside this module | a hover note ("`panelID` — Rohvariable aus `data.csv`, Spalte 3"); a `DocumentLink` on the `<filepath>`; the **missing-data-source diagnostic** (§11.6) |
+| **the variable model** | phase 2–4 of §8 | seeded as `origin: 'external'` symbols before the program-order pass (§11.5) |
+
+The near-term consumer must **not** try to be an "undefined variable" linter yet —
+without the model there is no reliable "declared in the script" set to subtract,
+so it would be noisy. It only *adds* information about names it positively knows,
+plus the one diagnostic that needs no symbol model (a data source that is declared
+but unreadable, or missing entirely).
+
+### 11.2 Finding the entry script(s)
+
+No "program" concept, no change to indexing. Search the workspace folder
+**recursively**; first non-empty tier wins:
+
+1. a file named exactly `main.tab` — **case-insensitive** (`MAIN.TAB`, `Main.tab`)
+2. else `main*.tab` (case-insensitive glob)
+3. else every `*.tab`
+
+For each picked `.tab`, resolve its `INCLUDE` graph with the existing
+`resolveIncludeGraph` and scan the resolved lines for input statements (§11.3).
+Union the results across the picked scripts.
+
+`findEntryScripts(folder, fsLike)` — pure, injected fs. When the file currently
+being hovered is itself inside one of the picked scripts' include graphs, prefer
+that script's data sources (a multi-study repo shouldn't cross-wire).
+
+### 11.3 Locating the data-source statements
+
+Scan the resolved `order` (normal scope only — reuse `Scope`) for:
+
+```
+SPSSINFILE  [ FILEKEY <key> ]                = <filepath> ;
+CSVINFILE   [ FILEKEY <key> ] [ <delimchar> ] = <filepath> ;
+DATAFILE    [ FILEKEY <key> ]                = <filepath> ;
+```
+
+(Manual: *In- und Output von Datensätzen*.)
+
+- **One input-file keyword *type* per script** — the manual: *"Die gleichzeitige
+  Verwendung von SPSSINFILE, CSVINFILE, INVERTIN, DATAFILE oder COLBININFILE ist
+  nicht möglich."* Multiple statements of that one type are normal (sequential
+  waves), each optionally `FILEKEY <key>`-tagged. `<key>` is irrelevant to
+  raw-name extraction — ignore it.
+- `<filepath>`: quoted or bare, resolved **relative to the directory of the
+  `.tab`/`.inc` file that physically contains the statement**.
+- `<filepath>` still containing `#` / `&` / `*` / `?` after the include graph's
+  normal substitution → **unresolved** (§11.6), don't guess.
+- **`DATAFILE` type discrimination** (it has no delimiter token of its own):
+  read the file's first line.
+  - contains `;` or `,` → treat as a delimited source, read like CSV (§11.4).
+  - contains neither **and** the script has a vardef include
+    (`INPUT = <…>.inc;` / a `.inc` of `VARNAME`/`#defvar`-style column
+    definitions) → **column-binary / column-fixed**; record the source but
+    `names: 'unresolved'`, reason `"column-fixed data — not supported yet"`.
+    Defer to §6 / a later phase.
+  - contains neither and no vardef include → `unresolved`, reason
+    `"cannot determine DATAFILE format"`.
+
+### 11.4 Reading the raw names
+
+Result per script: the **union** of names across all waves (a name in *any* wave
+counts; panel waves routinely differ).
+
+**CSV / delimited `DATAFILE`:**
+
+- Read only the first line (bounded chunk, cut at first `\n` — never load the file).
+- Decode UTF-8; on invalid bytes, re-decode as Windows-1252. Strip a leading BOM.
+- Delimiter: the statement's explicit `[ <delimchar> ]` if present; else whichever
+  of `;` or `,` appears in the line (if both, the more frequent one). **Neither
+  present → the file is not a delimited source: skip it** (no names, no error —
+  for `CSVINFILE` this shouldn't happen and is worth a warning; for `DATAFILE`
+  it's the column-fixed branch, §11.3).
+- Unquote (`"…"`), trim. Each field = one raw variable name, **column index kept**
+  (for the hover note / a future header-cell jump).
+
+**SPSS `.sav`** — hand-written dictionary parser, front-of-file only, never the
+case data:
+
+- magic `$FL2` (plain / type-1 bytecode compression) — **supported**.
+- magic `$FL3` (ZSAV, zlib-compressed dictionary) — **not v1**; detect and return
+  `unresolved` with a clear reason (§11.7 Q2).
+- record type 2 (variable records): 8-byte short name, type field
+  (`0` numeric → kind `atomic`; `>0` string width → kind `alpha`; `-1` string
+  continuation segment → skip). Ignore formats, missing-value specs, the inline
+  label for v1.
+- record type 7 / subtype 13 (long-name map): short name → real
+  case-preserving name (≤ 64 chars). Prefer this name when present.
+- record type 7 / subtype 20 (encoding): use it to decode the names.
+
+Everything else (value-label sets type 3/4, variable labels, measurement level)
+is **skipped in v1**.
+
+### 11.5 Feeding the variable model (later)
+
+When the model is built (§8 phase 2+): seed each raw name **before** the
+program-order pass as
+`VariableSymbol { origin: 'external', kind, definitions: [<the input statement
+line>] }`. A later in-script `SINGLEQ`/`COMPUTE` of the same name is a
+**re-definition layered on** the external origin — not a duplicate-declaration
+error (§9 Q3); origin stays `external`, the extra line is appended to
+`definitions`.
+
+go-to-definition on an external name lands on the input statement. The
+CSV-header-cell / `.sav`-offset jump is a later refinement (§11.7 Q3).
+
+### 11.6 Missing or unreadable data source — a diagnostic
+
+A GESStabs script needs a working data source; without one it does nothing. So,
+unlike an ordinary "undefined variable" (which needs the model), this **is**
+flagged, by the near-term consumer alone:
+
+| situation | diagnostic | `names` |
+| --- | --- | --- |
+| a `CSVINFILE`/`SPSSINFILE`/`DATAFILE` statement whose `<filepath>` cannot be resolved or read | **warning** on that statement line: *"Datenquelle `<path>` nicht gefunden"* | `'unresolved'` |
+| the resolved program (all picked entry scripts) has **no** input statement at all | **warning** on the entry script (line 1): *"keine Datenquelle (SPSSINFILE/CSVINFILE/DATAFILE) im Skript"* | — |
+| `<filepath>` unresolvable because it still holds `#EXPAND`/`&token&`/wildcard | **info** (not warning — it may well resolve at runtime): *"Datenpfad nicht statisch auflösbar"* | `'unresolved'` |
+| column-fixed / ZSAV / other not-yet-supported format | **info**: *"Variablennamen aus diesem Quellformat werden noch nicht gelesen"* | `'unresolved'` |
+
+Whenever `names` is `'unresolved'` the later model-level per-variable
+"undefined variable" check stays **suppressed for that whole script** — we cannot
+know which names the source would have supplied, so flagging unknown tokens would
+be noise. The source-level warning above is the signal instead.
+
+Wildcard path (`data*.csv`): try the union of `fs`-matching files' headers; only
+`'unresolved'` if none match (§11.7 Q4).
+
+### 11.7 Open questions
+
+1. **SPSS parser depth, next step** — after names+type v1, add variable labels
+   (type 2) + value-label sets (type 3/4) so the model can seed
+   `VARTITLE`/`VALUELABELS` for every dataset variable? Large hover win, ~doubles
+   the parser. *Proposed: yes, as the immediate follow-up.*
+2. **ZSAV (`$FL3`)** — bundle a zlib inflate (Node has `zlib` built in) to read
+   the compressed dictionary, or stay `unresolved`? *Proposed: do it — Node
+   `zlib.inflateSync` is free, and ZSAV is increasingly common.*
+3. **Header-cell / offset jump** — worth building the CSV-column and `.sav`-record
+   location tracking for go-to-definition, or is landing on the input statement
+   enough? *Proposed: keep the column index around (cheap), wire the jump later.*
+4. **Wildcard data paths** — union of matches, or `unresolved`? *Proposed: union
+   for CSV headers, `unresolved` if no match.*
+5. **Exact `DATAFILE` / vardef-include shape** — confirm the `INPUT = <…>.inc;`
+   vs. `INCLUDE = <…>.inc;` spelling and how a column-fixed `DATAFILE` names its
+   variable definitions, from `csv.html` / `handhabung-von-ascii-daten.html`
+   (not yet mirrored). Only matters for the deferred column-fixed branch.
+
+### 11.8 Caching & performance
+
+- `FileSystemWatcher` on the resolved data-source paths **and** on `*.tab`.
+- Parse result cached by `path + mtime + size`; the SPSS parse is the expensive
+  one — evict only on watcher events.
+- **Never** parse on keystroke. The model (later) takes the already-parsed
+  `ExternalNameSource[]` as an input (`buildVariableModel` `opts.externalNames`),
+  so its hot path stays file-free.
+
+### 11.9 New module surface (additive, no consumer churn)
+
+- `src/core/entryScripts.ts` — `findEntryScripts(folder, fsLike)`, pure.
+- `src/core/externalNames.ts` — `readExternalNames(resolvedOrder, containingDir,
+  fsLike)` → `ExternalNameSource[]`; the CSV first-line reader and the `.sav`
+  dictionary parser (split into `savDictionary.ts` if it grows past ~250 lines).
+  Pure over an injected byte reader.
+- `src/providers/externalNamesProvider.ts` (or fold into the existing variable
+  hover) — the `FileSystemWatcher` + `path+mtime+size` cache, the hover note, the
+  `DocumentLink`. The only vscode-facing piece.
+- `test/entryScripts.spec.ts`, `test/externalNames.spec.ts` with tiny real
+  `.csv` / `.sav` fixtures under `test/fixtures/`.
+
