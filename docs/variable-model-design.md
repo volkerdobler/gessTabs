@@ -158,7 +158,7 @@ possibly with `<a> TO <b>` ranges; `$` member forms expand to atomic members.
 | `MAKESINGLE ‹v›;` | `‹v›` | **no `=`**; error if `‹v›` already exists |
 | `MAKESINGLE ‹v› = ‹expr›;` | `‹v›` | shorthand for `MAKESINGLE ‹v›; COMPUTE ‹v› = ‹expr›;` |
 | `MAKESINGLE ‹v› = ALPHA;` | `‹v›` (ALPHA) | |
-| `VARIABLES ‹v›‹n1› TO ‹v›‹n2› = ‹start› ‹width›;` | `‹v›n1 … ‹v›n2` | contiguous block |
+| `VARIABLES ‹v›‹n1› TO ‹v›‹n2› = ‹start› ‹width›;` | `‹v›n1 … ‹v›n2` | contiguous block; **numeric-suffix `TO`** (§9 Q2) — the only place `TO` synthesises brand-new names by pattern rather than slicing existing ones |
 | `MAKESINGLES ‹vl› [ = ‹vl› ];` | left `‹vl›` (+ **refs** to right `‹vl›`) | `VARIABLES` + `COMPUTE COPY` |
 | `ASSOCVAR ‹v› = [ALPHA] ‹startcol› …;` | `‹v›` | supplementary from ASSOCFILE |
 | `CLONEVAR ‹v› = ‹src› [opts];` | `‹v›` (+ **ref** `‹src›`) | same type as `‹src›`; not for ASSOCVAR/INDEXVAR |
@@ -274,6 +274,7 @@ A **reference** is any occurrence of an existing name that is not its definition
 | `FILTER ‹vl› [= ‹cond› \| AS ‹v›];` | | **always** (varlist + `AS` target) |
 | `SETFILTER`/`FIF`/`IF`/`IFBLOCK`/`WHILEBLOCK` **condition** | `IF Partei EQ "SPD" THEN …` | **only if a variable of that name exists** — else text constant (the manual's rule) |
 | `IN` set test | `IF [1:3] IN frage11 THEN …` / `IF [2] IN ( v1 v7 TO v10 ) THEN …` | RHS: always a name; `( … )` list: always names; LHS `[ … ]`: values/overcode-names |
+| `‹a› TO ‹b›` inside any of the varlist positions above | `RECODE item1 TO item8 …` / `VARTEXT esseWagnerMenge to esseHandelsmarkeMenge = "…";` | **always** two names, resolved (§9 Q2) to *every variable declared between them, in program order* — not a name pattern; needs the model (P1.2) + external column order (P1.4) for a raw variable |
 | arithmetic operand | `COMPUTE m = (v1 + v2) / 2;` | bare: always; quoted: iff exists |
 | `IS` type test | `IF ‹v› IS MULTIQ THEN …` | LHS always a name; RHS is a type keyword |
 | `CONCAT` / `SUBSTR` args | `COMPUTE CONCAT x = "lit" q1 "lit" q2;` | a token is a var iff it names one, else text |
@@ -520,10 +521,42 @@ program) — they are **not** separate work.
 > unchanged from the proposals below; the short form:
 > 1. **No-name `VARFAMILY`/`VARGROUP`/… → ignore** (classifier returns no
 >    `defines`); emit a `malformed` marker so a later diagnostic can flag it.
-> 2. **`$` members → resolve on demand.** The classifier expands `‹v›$1`/`‹v›_$1`
->    /`‹v› TO`-style member spans for *reference* purposes, but the symbol table
->    stores `members` / `memberCount` and synthesises a `$k` symbol only when
->    `resolve()` is asked for one.
+> 2. **`$` members → resolve on demand**, as before — the symbol table stores
+>    `members` / `memberCount` and synthesises a `$k` symbol only when
+>    `resolve()` is asked for one. **`‹a› TO ‹b›` turned out to be TWO distinct
+>    mechanisms, not one — corrected 2026-09-05 (user clarification against a
+>    real script; §3.1/§4 updated to match):**
+>    - **Definition position** (`VARIABLES ‹a›‹n1› TO ‹a›‹n2› = …;`,
+>      `MAKESINGLES f1 TO f17;`) — synthesises brand-new names by a literal
+>      numeric-suffix pattern: shared textual prefix + trailing integer,
+>      inclusive range. Purely classifier-level, no model needed —
+>      `expandNameRange` (`variableStatements.ts`) already implements exactly
+>      this, confirmed against six real manual examples across `Bildung neuer
+>      Variablen`, `Recodierung`, `Variablenfamilien`, `Statistische
+>      Funktionen` and `Compute` (including a dotted prefix, `f.1 TO f.3`).
+>    - **Reference position** (`RECODE item1 TO item8 …`, `VARTEXT ‹a› TO
+>      ‹b› = "…";`, `VARFAMILY f = ‹a› TO ‹b›;`, `MEAN m = ‹a› TO ‹b›;`,
+>      `COMPUTE COPY ‹a› TO ‹b› = …;`, `VARGROUP g = ( ‹a› TO ‹b› ) EQ …;`, …)
+>      means "every variable **declared between** `‹a›` and `‹b›`, inclusive,
+>      **in declaration order**" — `‹a›`/`‹b›` need not share any name pattern
+>      at all. Confirmed real example: four unrelated `COMPUTE`-created names
+>      (`esseWagnerMenge`, `esseOetkerMenge`, `esseGustavoMenge`,
+>      `esseHandelsmarkeMenge`), then `vartext esseWagnerMenge to
+>      esseHandelsmarkeMenge = "xxx";` annotates all four. For a **raw/
+>      external** variable (never created by any script statement — an SPSS/
+>      CSV column read straight from the data source), "declared" means its
+>      position in the data file's own column order (SPSS field order / CSV
+>      header order, left to right) — resolving this case needs P1.4's
+>      external-name integration, not just the in-script symbol table. This
+>      is a **model** feature (the program-order symbol sequence,
+>      `buildVariableModel`/P1.2, sliced between two resolved endpoints —
+>      P1.4 for the raw-variable case), not a classifier one: the classifier's
+>      job stays "flag `hasNameRange`, keep both endpoint spans as
+>      `references`" (already done); the model resolves the slice on demand
+>      when a consumer (rename, find-references, the future undefined-
+>      variable check) actually asks for it. Open sub-question, not yet
+>      decided: `‹b›` declared *before* `‹a›` in program order — error, or
+>      silently treat as `‹b› TO ‹a›`?
 > 3. **Duplicate-declaration is kind-gated.** The classifier tags each defining
 >    statement with `defKind: 'declaration' | 'assignment'`. Only `declaration`
 >    kinds (SINGLEQ/VARIABLE(S)/MAKE*/VARFAMILY/VARGROUP/GROUPS/INTERVALS/

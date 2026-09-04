@@ -43,8 +43,21 @@ items below are facets of this same problem, marked "(needs P1)".
   (design doc §9, "P1.0 — resolved").
 - **P1.1** (statement classifier `variableStatements.ts` + `toLogicalStatements`,
   `src/core/statements.ts`) — **done**. Still open:
-  - `<a> TO <b>` range expansion beyond the numeric-suffix `expandNameRange`
-    helper; `$`-member spans (§9 Q2 — resolve on demand in the model);
+  - **`‹a› TO ‹b›` is two distinct mechanisms** (corrected 2026-09-05, design
+    doc §9 Q2/§3.1/§4 updated): the numeric-suffix pattern (`VARIABLES a1 TO
+    a9 = …;`) is definition-only and already fully handled by
+    `expandNameRange` — confirmed against six real manual examples, no
+    known gap left there. The *reference*-position form (`RECODE item1 TO
+    item8 …`, `VARTEXT a TO b = "…";`, …) means "every variable **declared
+    between `a` and `b`, in program order**" — names need not share any
+    pattern at all (confirmed real example in §9 Q2). That's a **model**
+    feature (P1.2: slice `buildVariableModel`'s program-order symbol
+    sequence between two resolved endpoints; P1.4: a raw/external variable's
+    "declaration order" is its column position in the SPSS/CSV file, so this
+    also needs external names wired in) — not implemented yet. The
+    classifier's own part (flag `hasNameRange`, keep both endpoints as
+    references) is already done.
+  - `$`-member spans (§9 Q2 — resolve on demand in the model);
     `POSTPROCESS` clause-local virtuals (§5); precise `IN`/`IS`/`[ … ]`
     set-test handling; a full table-driven spec pass (one case per §3/§4 row).
   - `LABELVALUE ‹numvar› = ‹src›;` (+ synonym `SINGLEFROMSTRING`, found
@@ -76,10 +89,13 @@ items below are facets of this same problem, marked "(needs P1)".
     moves too, then delete `regex.ts` in full.
   - Fold in the `.def` / other INCLUDE-extension fix (design §9 Q6).
 - **P1.4** — wire P0's external names into the model as `origin: 'external'`
-  symbols, seeded before the program-order pass. A later in-script
-  `SINGLEQ`/`COMPUTE` of the same name is a re-definition, not a duplicate. This
-  is what gives go-to-definition and the undefined-variable diagnostic something
-  to land on / check against for the bulk of a real project's variables.
+  symbols, seeded before the program-order pass, **preserving the data
+  source's own column order** (SPSS field order / CSV header order — needed
+  for P1.1's reference-position `‹a› TO ‹b›`, §9 Q2, to resolve a range whose
+  endpoints are raw/external variables). A later in-script `SINGLEQ`/`COMPUTE`
+  of the same name is a re-definition, not a duplicate. This is what gives
+  go-to-definition and the undefined-variable diagnostic something to land on
+  / check against for the bulk of a real project's variables.
 - **P1.5** — macro-produced names into the model: numeric params (`&1`),
   comma-separated param lists, mid-token substitution (`&p.recoded`). Builds on
   the existing `findMacroProducedDefinition`. `#DOMACRO` looping stays P3, but the
