@@ -1,4 +1,5 @@
 import { expect } from 'chai';
+import { Scope } from '../src/core/scope';
 import {
   checkEmptyVarlist,
   findLastDeclaredVariableBefore,
@@ -19,6 +20,18 @@ import {
 } from '../src/core/diagnostics';
 
 const alwaysNotInComment = () => true;
+
+// A real Scope over `text`, for tests that need the actual string/comment
+// distinction (checkParenBalance's isNormalScope) rather than the
+// always-true stand-in above.
+function scopeOf(text: string): Scope {
+  const lines = text.split('\n');
+  const doc = {
+    lineCount: lines.length,
+    lineAt: (n: number) => ({ text: lines[n] }),
+  };
+  return new Scope(doc as any);
+}
 
 describe('checkEmptyVarlist', () => {
   it('flags VARTITLE/VARTEXT/VALUELABELS (and synonyms) with no variable name', () => {
@@ -125,7 +138,11 @@ describe('findLastDeclaredVariableBefore', () => {
 
 describe('hasStrictVarlistEnabled', () => {
   it('finds STRICTVARLIST = YES; anywhere in the document', () => {
-    const lines = ['variable x = 1;', 'STRICTVARLIST = YES;', 'VARTITLE = "x";'];
+    const lines = [
+      'variable x = 1;',
+      'STRICTVARLIST = YES;',
+      'VARTITLE = "x";',
+    ];
     expect(hasStrictVarlistEnabled(lines, alwaysNotInComment)).to.be.true;
   });
 
@@ -141,8 +158,8 @@ describe('hasStrictVarlistEnabled', () => {
   });
 
   it('ignores a match inside a comment', () => {
-    expect(hasStrictVarlistEnabled(['STRICTVARLIST = YES;'], () => false)).to
-      .be.false;
+    expect(hasStrictVarlistEnabled(['STRICTVARLIST = YES;'], () => false)).to.be
+      .false;
   });
 
   it('returns false when never set', () => {
@@ -312,7 +329,10 @@ describe('checkDuplicateDeclarations', () => {
     const lines = ['varfamily f = a b c;', 'varfamily f = d e;'];
     const issues = checkDuplicateDeclarations(lines, alwaysNotInComment);
     expect(issues).to.have.length(1);
-    expect(issues[0]).to.deep.include({ line: 1, code: 'duplicate-declaration' });
+    expect(issues[0]).to.deep.include({
+      line: 1,
+      code: 'duplicate-declaration',
+    });
   });
 });
 
@@ -526,6 +546,39 @@ describe('checkParenBalance', () => {
   it('ignores parens inside a comment', () => {
     const isCodeChar = (line: number) => line !== 0;
     expect(checkParenBalance(['{ #x( a, b; }', 'x;'], isCodeChar)).to.be.empty;
+  });
+
+  // Reported 2026-09-05: a "(" inside a string was counted as real code,
+  // so a script with an unbalanced paren *inside a quoted title/argument*
+  // (which never has to balance with anything) was wrongly flagged as
+  // broken. checkParenBalance is given isNormalScope (code only, strings
+  // excluded) instead of isNotInComment (which includes string content)
+  // specifically to fix this — these tests use a real Scope, not the
+  // always-true stand-in above, since the bug is entirely about the
+  // string/comment distinction the stand-in can't exercise.
+  it('does not flag a "(" inside a single-quoted #MACRO argument string (the reported POWERCHARTOPTION example)', () => {
+    const line =
+      '#barchart(10 01 "&sp1" "&zeilen" \'POWERCHARTOPTION "SeriesColorMarkstring=*(net*;$778a26"\' 01 "valuelabels x position &sp1")';
+    const scope = scopeOf(line);
+    expect(checkParenBalance([line], (l, c) => scope.isNormalScope(l, c))).to.be
+      .empty;
+  });
+
+  it('does not flag a "(" inside a double-quoted VALUELABELS text (the reported example)', () => {
+    const lines = ['valuelabels "s3" =', '1 "Dies ist ( ein Text"', ';'];
+    const scope = scopeOf(lines.join('\n'));
+    expect(checkParenBalance(lines, (l, c) => scope.isNormalScope(l, c))).to.be
+      .empty;
+  });
+
+  it('still flags a real unmatched "(" that sits outside any string', () => {
+    const line = '#x( "a" ;';
+    const scope = scopeOf(line);
+    const issues = checkParenBalance([line], (l, c) =>
+      scope.isNormalScope(l, c)
+    );
+    expect(issues).to.have.length(1);
+    expect(issues[0].code).to.equal('unmatched-open-paren');
   });
 });
 

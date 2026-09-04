@@ -53,8 +53,10 @@ export class GesstabsDiagnosticsManager {
         lines.push(document.lineAt(i).text);
       }
 
-      const issues = computeDiagnostics(lines, (line, char) =>
-        scope.isNotInComment(line, char)
+      const issues = computeDiagnostics(
+        lines,
+        (line, char) => scope.isNotInComment(line, char),
+        (line, char) => scope.isNormalScope(line, char)
       );
 
       const diagnostics = issues.map((issue) => {

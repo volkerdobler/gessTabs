@@ -337,6 +337,24 @@ items below are facets of this same problem, marked "(needs P1)".
 
 ## P2 — Diagnostics & block constructs
 
+- **`checkParenBalance` false positive on a "(" inside a string — fixed
+  2026-09-05.** Reported: `#barchart(10 01 "&sp1" "&zeilen" 'POWERCHART
+  OPTION "SeriesColorMarkstring=*(net*;$778a26"' 01 "valuelabels x
+  position &sp1")` and `valuelabels "s3" = 1 "Dies ist ( ein Text";` both
+  wrongly flagged `unmatched-open-paren`. Root cause: unlike every other
+  check in `diagnostics.ts`, paren-balance checking was already
+  documented as a known/accepted gap for exactly this ("doesn't
+  distinguish string-literal content from real code") — the reports prove
+  it isn't rare enough to accept. Fix: `checkParenBalance` now takes
+  `isNormalScope` (code only, strings excluded) instead of
+  `isNotInComment` (code + string content — the right choice for every
+  *other* check, since gessTabs quotes names/tokens routinely);
+  `computeDiagnostics` gained a matching optional 3rd param, threaded from
+  `diagnosticsProvider.ts` as `scope.isNormalScope`. Three new
+  `diagnostics.spec.ts` cases using a real `Scope` (not the always-true
+  test stand-in, which can't exercise the string/comment distinction the
+  bug is about) — both reported examples plus a "still flags a real
+  unmatched paren outside any string" regression guard.
 - **Runtime-block folding + unmatched-block diagnostics** for
   `IFBLOCK`/`ELSEBLOCK`/`ENDBLOCK` (nesting depth up to 512),
   `WHILEBLOCK <cond> DO … ENDBLOCK`, `SETFILTER [name] … ENDFILTER [name]` (a

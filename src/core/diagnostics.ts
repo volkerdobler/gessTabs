@@ -644,13 +644,17 @@ export function checkDefineCaseMismatch(
 // failing where the mistake actually is. Parens may nest freely; this only
 // checks that every "(" outside a comment is eventually closed (and every
 // ")" has something open to close it), never that the nesting matches any
-// particular grammar. Like the rest of this module it doesn't distinguish
-// string-literal content from real code — a stray "(" inside a quoted
-// title is rare enough, and paired with its own ")" often enough, that
-// this is an accepted gap rather than a worthwhile complication.
+// particular grammar.
+//
+// Unlike every other check in this module, this one is given `isNormalScope`
+// (code only), not `isNotInComment` (code + string content) — a "(" inside a
+// quoted title/#MACRO-argument string is common (found 2026-09-05:
+// `#barchart(... 'POWERCHARTOPTION "SeriesColorMark=*(net*;..."' ...)`, and
+// `valuelabels "s3" = 1 "Dies ist ( ein Text";`) and never has to balance
+// with anything, so counting it would misreport a real script as broken.
 export function checkParenBalance(
   lines: string[],
-  isNotInComment: IsNotInComment
+  isNormalScope: IsNotInComment
 ): DiagnosticIssue[] {
   const issues: DiagnosticIssue[] = [];
   const openStack: { line: number; char: number }[] = [];
@@ -659,7 +663,7 @@ export function checkParenBalance(
     for (let c = 0; c < lineText.length; c += 1) {
       const ch = lineText[c];
       if (ch !== '(' && ch !== ')') continue;
-      if (!isNotInComment(i, c)) continue;
+      if (!isNormalScope(i, c)) continue;
 
       if (ch === '(') {
         openStack.push({ line: i, char: c });
@@ -843,7 +847,10 @@ export function findEnclosingBlockCommentGroup(
 
 export function computeDiagnostics(
   lines: string[],
-  isNotInComment: IsNotInComment
+  isNotInComment: IsNotInComment,
+  // code only, excluding string content too — see checkParenBalance's own
+  // comment for why it alone needs this instead of isNotInComment.
+  isNormalScope: IsNotInComment = isNotInComment
 ): DiagnosticIssue[] {
   return [
     ...checkEmptyVarlist(lines, isNotInComment),
@@ -855,7 +862,7 @@ export function computeDiagnostics(
     ...checkCellsetElements(lines, isNotInComment),
     ...checkInvertoutUpdateinvert(lines, isNotInComment),
     ...checkDefineCaseMismatch(lines, isNotInComment),
-    ...checkParenBalance(lines, isNotInComment),
+    ...checkParenBalance(lines, isNormalScope),
     ...checkNestedBlockComments(lines),
   ];
 }
