@@ -56,7 +56,20 @@ items below are facets of this same problem, marked "(needs P1)".
     "declaration order" is its column position in the SPSS/CSV file, so this
     also needs external names wired in) — not implemented yet. The
     classifier's own part (flag `hasNameRange`, keep both endpoints as
-    references) is already done.
+    references) is already done. **Confirmed 2026-09-05: this form is legal
+    only at a reference position — a new variable can never be created with
+    it, `VARIABLES`'s numeric-suffix pattern is the only way to mint names by
+    range**, so the two mechanisms never collide.
+  - **Known correctness bug in already-shipped P1.3** (found while
+    documenting the above): `collectVariableOccurrences`/`model.references()`
+    — live in **find-references and rename today** — only see the two
+    literal endpoint names of a reference-position `‹a› TO ‹b›`. Every
+    variable *in between* is invisible to "Find All References" and,
+    worse, **rename silently misses it** — renaming a variable that's only
+    covered via such a range finds nothing on that line, even though the
+    statement genuinely applies to it. Not a hypothetical edge case if this
+    `TO` form is used in real scripts. Worth doing before P1.6, despite the
+    P1.2/P1.4 dependency below.
   - `$`-member spans (§9 Q2 — resolve on demand in the model);
     `POSTPROCESS` clause-local virtuals (§5); precise `IN`/`IS`/`[ … ]`
     set-test handling; a full table-driven spec pass (one case per §3/§4 row).

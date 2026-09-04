@@ -554,9 +554,26 @@ program) — they are **not** separate work.
 >      job stays "flag `hasNameRange`, keep both endpoint spans as
 >      `references`" (already done); the model resolves the slice on demand
 >      when a consumer (rename, find-references, the future undefined-
->      variable check) actually asks for it. Open sub-question, not yet
->      decided: `‹b›` declared *before* `‹a›` in program order — error, or
->      silently treat as `‹b› TO ‹a›`?
+>      variable check) actually asks for it. **Confirmed (2026-09-05): this
+>      form is legal only at a reference position — a brand-new variable can
+>      never be created with it, `VARIABLES`'s numeric-suffix pattern is the
+>      only way to mint new names by range.** So the two mechanisms never
+>      collide; which one applies is decided purely by the statement's own
+>      `defKind`/kind, no ambiguity to resolve at the name level.
+>    - **Known correctness gap in already-shipped P1.3**: because this isn't
+>      resolved yet, `collectVariableOccurrences`/`model.references()` — live
+>      in find-references and rename today — only ever see the *two literal
+>      endpoint tokens* of a reference-position `‹a› TO ‹b›` as references.
+>      Every variable *in between* is silently invisible to "Find All
+>      References" and, worse, to **rename**: renaming
+>      `esseGustavoMenge` in the example above finds nothing on the
+>      `vartext esseWagnerMenge to esseHandelsmarkeMenge = "xxx";` line, even
+>      though that statement genuinely does apply to it — a real false
+>      negative for any script using this (apparently common) pattern, not
+>      just a future nice-to-have. Worth prioritizing above its P1.2/§9-Q2
+>      framing suggests.
+>    - Open sub-question, not yet decided: `‹b›` declared *before* `‹a›` in
+>      program order — error, or silently treat as `‹b› TO ‹a›`?
 > 3. **Duplicate-declaration is kind-gated.** The classifier tags each defining
 >    statement with `defKind: 'declaration' | 'assignment'`. Only `declaration`
 >    kinds (SINGLEQ/VARIABLE(S)/MAKE*/VARFAMILY/VARGROUP/GROUPS/INTERVALS/
