@@ -5,6 +5,7 @@ import { buildWorkspaceIndex } from '../src/core/symbolIndex';
 import {
   buildVariableModel,
   collectVariableOccurrences,
+  primaryDefinitions,
 } from '../src/core/variableModel';
 
 const ROOT = path.resolve('/gesstabs-varmodel-test');
@@ -186,6 +187,55 @@ describe('buildVariableModel', () => {
   });
 });
 
+describe('primaryDefinitions', () => {
+  it('drops IF-THEN/COMPUTE reassignments — go-to-definition must not offer them (the F12 fix)', () => {
+    // regression: F12 on esseWagnerMenge used to also list every later
+    // `if (...) then esseWagnerMenge = ...` line as if each were an
+    // alternate declaration, even though gessTabs never treats a
+    // reassignment as declaring anything (design §3.3).
+    const m = modelOf(
+      [
+        'compute esseWagnerMenge = 0;',
+        'if (1 in s10) then esseWagnerMenge = esseWagnerMenge + anzahl;',
+        'if (2 in s10) then esseWagnerMenge = esseWagnerMenge + anzahl2;',
+      ].join('\n')
+    );
+    const sym = m.resolveAnywhere('esseWagnerMenge');
+    expect(sym?.definitions).to.have.length(3);
+
+    const primary = primaryDefinitions(sym!);
+    expect(primary).to.have.length(1);
+    expect(primary[0].line.line).to.equal(0);
+    expect(primary[0].statement).to.contain('compute esseWagnerMenge');
+  });
+
+  it('returns every real declaration when a name is declared more than once (#ifdef branches)', () => {
+    const m = modelOf(
+      [
+        '#ifdef DE',
+        'singleq land = 1 2 3;',
+        '#else',
+        'singleq land = 4 5 6;',
+        '#endif',
+      ].join('\n')
+    );
+    const sym = m.resolveAnywhere('land');
+    const primary = primaryDefinitions(sym!);
+    expect(primary).to.have.length(2);
+    expect(primary.map((d) => d.line.line)).to.deep.equal([1, 3]);
+  });
+
+  it('falls back to the earliest entry when no defKind is a declaration', () => {
+    // a bare COMPUTE is the sole creator of the name (defKind
+    // 'assignment') despite gessTabs auto-creating it on first use.
+    const m = modelOf('compute x = 1;\ncompute x = x + 1;');
+    const sym = m.resolveAnywhere('x');
+    const primary = primaryDefinitions(sym!);
+    expect(primary).to.have.length(1);
+    expect(primary[0].line.line).to.equal(0);
+  });
+});
+
 describe('collectVariableOccurrences', () => {
   it('finds every bare occurrence of a name, including twice on one line', () => {
     const occ = collectVariableOccurrences(
@@ -289,9 +339,12 @@ describe('collectVariableOccurrences', () => {
 
   it('a reversed non-pattern range (‹b› declared before ‹a›) is resolved by swapping, not silently dropped (§9 Q2 open sub-question)', () => {
     const idx = indexOf(
-      ['compute a = 0;', 'compute b = 0;', 'compute c = 0;', 'vartext c to a = "xxx";'].join(
-        '\n'
-      )
+      [
+        'compute a = 0;',
+        'compute b = 0;',
+        'compute c = 0;',
+        'vartext c to a = "xxx";',
+      ].join('\n')
     );
     expect(collectVariableOccurrences(idx, 'b', true)).to.have.length(1);
   });

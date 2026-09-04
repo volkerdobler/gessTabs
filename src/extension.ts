@@ -24,6 +24,7 @@ import {
 import {
   buildVariableModel,
   collectVariableOccurrences,
+  primaryDefinitions,
 } from './core/variableModel';
 import { blankComments, ResolvedLine } from './core/includeGraph';
 import { toLogicalStatements } from './core/statements';
@@ -427,11 +428,20 @@ class GesstabsDefintionProvider implements vscode.DefinitionProvider {
     const sym =
       model.resolve(word, currentFile, position.line) ??
       model.resolveAnywhere(word);
-    if (sym && sym.definitions.length > 0) {
-      return sym.definitions.map(
-        (d) =>
-          new vscode.Location(vscode.Uri.file(d.file), resolvedLineRange(d))
-      );
+    if (sym) {
+      // Only the real declaration(s) (§3.3) — a COMPUTE/IF…THEN
+      // reassignment elsewhere must never show up as an alternate
+      // go-to-definition target just because it also touches `sym`.
+      const primary = primaryDefinitions(sym);
+      if (primary.length > 0) {
+        return primary.map(
+          (d) =>
+            new vscode.Location(
+              vscode.Uri.file(d.line.file),
+              resolvedLineRange(d.line)
+            )
+        );
+      }
     }
 
     // No modelled declaration — `word` might still be produced by a #MACRO

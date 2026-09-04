@@ -399,6 +399,7 @@ export interface VariableSymbol {
   kind: VariableKind;
   origin: 'declared' | 'external' | 'predefined' | 'virtual' | 'macro-produced';
   definitions: ResolvedLine[];         // usually 1; >1 for #ifdef per-branch or re-def
+  definitionKinds: ('declaration' | 'assignment')[]; // defKind per `definitions` entry — added 2026-09-05, see primaryDefinitions() below and §3.3
   annotations: VariableAnnotation[];   // VARTITLE/VARTEXT/VALUELABELS (moves from variableInfo.ts)
   members?: string[];                  // atomic members of a family/group, when known
   scope?: { file: string; startLine: number; endLine: number };  // POSTPROCESS virtuals
@@ -417,6 +418,13 @@ export function buildVariableModel(
   index: WorkspaceIndex,
   opts?: { externalNames?: ExternalNameSource[]; macroExpansion?: boolean }
 ): VariableModel;
+
+// added 2026-09-05: `sym.definitions` mixes real declarations with every
+// later reassignment (§3.3), so a consumer that wants "the declaration(s)"
+// — go-to-definition — must not use the array as-is. Declaration-kind
+// entries when any exist, else the single earliest entry (a bare COMPUTE
+// that happens to be the sole creator).
+export function primaryDefinitions(sym: VariableSymbol): { line: ResolvedLine; statement: string }[];
 ```
 
 - Single forward pass over `index.order`, joining continuation lines, calling
@@ -503,7 +511,7 @@ turning a resolved reference line into precise character ranges (rename needs it
 | **0** | `entryScripts.ts` + `externalNames.ts` (CSV + SPSS names/type + delimited `DATAFILE`) + a lightweight hover note / `DocumentLink`. **Standalone — does not touch indexing or wait on the model.** See §11. | low — pure + one watcher | phase 4; near-term "which names are dataset vars" signal |
 | **1** | `variableStatements.ts` + `toLogicalStatements` + full spec. **No consumer wired yet.** **First cut landed 2026-09-04** — `src/core/statements.ts` + `src/core/variableStatements.ts` + specs; covers §3.1–§3.5, the §4 name-modes, `defKind`, and `block` open/close/mid. Open: overcodes (§3.6), the non-pattern `TO` form + `$`-member expansion (§9 Q2), `POSTPROCESS` virtuals, exhaustive per-row spec. Numeric-suffix `TO` expansion (§9 Q2) wired 2026-09-05. | low — pure, additive | everything below |
 | **2** | `variableModel.ts` (declared + predefined origins; no macro/external). Wire **hover** first (smallest blast radius, best signal). **Done 2026-09-04** — `src/core/variableModel.ts` + spec (`buildVariableModel` → `all`/`statements`/`at`/`resolve`/`resolveAnywhere`/`currentVariableAt`/`references`/`annotationsFor`; system-var seed, no-forward-ref, kinds+members, varlist/current-var/`COPY*`/orphan annotations, quoted-token rule). `variableHoverProvider.ts` rebuilt on the model; `variableInfo.ts` + `lineHasQuotedVariableReference` now dead (deleted in phase 3). Not yet eyeballed in a running VS Code. | med | — |
-| **3** | Move go-to-definition, references, rename, semantic highlighting onto the model. Delete `regex.ts`/`matching.ts`. Move F2 empty-varlist + duplicate-declaration onto the model. **In progress 2026-09-04** — go-to-def / find-references / rename done (`collectVariableOccurrences` in `variableModel.ts`); semantic highlighting done (`collectModelSemanticTokens`, fixes the "last-name" bug); F2 empty-varlist + duplicate-declaration done (kind-gated on `defKind`, design §9 Q3); `DocumentSymbolProvider` + `symbolCompletion` done. `regex.ts`/`matching.ts`'s dead functions deleted (`findDefinitionLine`, `findAllUsages`, `lineMatchesDefinition`, `lineMatchesUsage`, `lineHasQuotedVariableReference`, the old `collectDeclarationTokens`/`collectSemanticTokens` pass, `variableInfo.ts` in full); `matching.ts` now just `matchInScope`. Still blocking a full `regex.ts` cleanup: `GessTabsWorkspaceSymbolProvider` (Ctrl+T), discovered mid-pass, not yet migrated — see TODO.md. | med-high — behaviour-visible | Tier 2 cross-INCLUDE F2 scope, Tier 3 semantic "last-name" fix |
+| **3** | Move go-to-definition, references, rename, semantic highlighting onto the model. Delete `regex.ts`/`matching.ts`. Move F2 empty-varlist + duplicate-declaration onto the model. **In progress 2026-09-04** — go-to-def / find-references / rename done (`collectVariableOccurrences` in `variableModel.ts`); semantic highlighting done (`collectModelSemanticTokens`, fixes the "last-name" bug); F2 empty-varlist + duplicate-declaration done (kind-gated on `defKind`, design §9 Q3); `DocumentSymbolProvider` + `symbolCompletion` done. `regex.ts`/`matching.ts`'s dead functions deleted (`findDefinitionLine`, `findAllUsages`, `lineMatchesDefinition`, `lineMatchesUsage`, `lineHasQuotedVariableReference`, the old `collectDeclarationTokens`/`collectSemanticTokens` pass, `variableInfo.ts` in full); `matching.ts` now just `matchInScope`. Still blocking a full `regex.ts` cleanup: `GessTabsWorkspaceSymbolProvider` (Ctrl+T), discovered mid-pass, not yet migrated — see TODO.md. **Follow-up bug fixed 2026-09-05**: go-to-definition still returned every `IF…THEN`/`COMPUTE` reassignment as an alternate target, not just the real declaration(s) — `VariableSymbol.definitions` mixes both (§3.3: a reassignment is never a declaration). Fix: `VariableSymbol.definitionKinds` (parallel `defKind` array) + `primaryDefinitions(sym)` in `variableModel.ts` (declaration-kind entries when any exist, else the earliest entry), consumed by `GesstabsDefintionProvider`; see TODO.md. | med-high — behaviour-visible | Tier 2 cross-INCLUDE F2 scope, Tier 3 semantic "last-name" fix |
 | **4** | Feed the phase-0 `externalNames.ts` output into the model as `origin: 'external'`. (The reader itself — CSV + SPSS + delimited `DATAFILE` — is pulled out to **phase 0**, see §11.) | low | "undefined variable" diagnostic, real go-to-def for dataset vars |
 | **5** | macro-produced names into the model (numeric/comma params, mid-token). `#DOMACRO` stays Tier 3. | med | — |
 | **6** | New diagnostics on the model: undefined-variable, system-var redeclaration, `ALPHA` var in two `AlphaFamily`s, kind-illegal ops. | low each | Tier 2 items |

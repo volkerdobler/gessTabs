@@ -61,6 +61,15 @@ export interface VariableSymbol {
   definitions: ResolvedLine[];
   // the full statement text for each entry in `definitions`, parallel array.
   definitionStatements: string[];
+  // defKind (design §9 Q3) of the statement that produced each entry,
+  // parallel array — 'declaration' for a real SINGLEQ/VARFAMILY/…, or
+  // 'assignment' for a COMPUTE/IF-THEN (re-)assignment that happened to be
+  // the one that first created the name. See `primaryDefinitions()`: only
+  // this array lets a consumer tell "the declaration(s)" apart from every
+  // later touch — gessTabs never treats a re-assignment as declaring
+  // anything (§3.3), so a COMPUTE/IF-THEN reassignment elsewhere must never
+  // be offered as an alternate go-to-definition target.
+  definitionKinds: ('declaration' | 'assignment')[];
   annotations: ModelAnnotation[];
   // doc string for a `predefined` system variable.
   predefinedDoc?: string;
@@ -107,6 +116,37 @@ export interface VariableModel {
   // in the resolved program (the whole-index fallback the old
   // findDefinitionLine(-1) provided).
   resolveAnywhere(name: string): VariableSymbol | undefined;
+}
+
+export interface PrimaryDefinition {
+  line: ResolvedLine;
+  statement: string;
+}
+
+// "The declaration(s)" among a symbol's `definitions` — never a mere
+// re-assignment. gessTabs never treats a COMPUTE/IF-THEN (re-)assignment
+// as declaring anything (design doc §3.3); showing one as if it were an
+// alternate declaration site (go-to-definition, or the variable hover
+// before it was fixed the same way) is simply wrong, and was a real,
+// reported bug in both. Rule: every `declaration`-kind entry if at least
+// one exists (an #ifdef-per-branch variable can legitimately have more
+// than one real declaration — all of them belong here); otherwise the
+// single *earliest* entry, which — since gessTabs has no forward
+// references — is necessarily the statement that actually created the
+// name, even though its own `defKind` is `'assignment'` (a bare `COMPUTE`,
+// the language's single most common creator).
+export function primaryDefinitions(sym: VariableSymbol): PrimaryDefinition[] {
+  const declared = sym.definitions
+    .map((line, i) => ({
+      line,
+      statement: sym.definitionStatements[i],
+      kind: sym.definitionKinds[i],
+    }))
+    .filter((d) => d.kind === 'declaration');
+  if (declared.length > 0) return declared;
+  return sym.definitions.length > 0
+    ? [{ line: sym.definitions[0], statement: sym.definitionStatements[0] }]
+    : [];
 }
 
 // ---------------------------------------------------------------------------
@@ -190,6 +230,7 @@ export function buildVariableModel(index: WorkspaceIndex): VariableModel {
       origin: 'predefined',
       definitions: [],
       definitionStatements: [],
+      definitionKinds: [],
       annotations: [],
       predefinedDoc: p.doc,
     });
@@ -213,6 +254,7 @@ export function buildVariableModel(index: WorkspaceIndex): VariableModel {
       if (existing && existing.origin !== 'predefined') {
         existing.definitions.push(loc.line);
         existing.definitionStatements.push(stmt.text);
+        existing.definitionKinds.push(cls.defKind ?? 'assignment');
         if (cls.targetKind && cls.targetKind !== 'unknown') {
           existing.kind = cls.targetKind;
         }
@@ -225,6 +267,7 @@ export function buildVariableModel(index: WorkspaceIndex): VariableModel {
           origin: 'declared',
           definitions: [loc.line],
           definitionStatements: [stmt.text],
+          definitionKinds: [cls.defKind ?? 'assignment'],
           annotations: [],
           ...(members ? { members } : {}),
         });
@@ -241,6 +284,7 @@ export function buildVariableModel(index: WorkspaceIndex): VariableModel {
         origin: 'virtual',
         definitions: [locateInStatement(stmt, span.rawStart).line],
         definitionStatements: [stmt.text],
+        definitionKinds: ['declaration'],
         annotations: [],
         scope: {
           file: stmt.file,

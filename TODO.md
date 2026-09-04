@@ -103,7 +103,29 @@ items below are facets of this same problem, marked "(needs P1)".
 - **P1.3** (migrate go-to-definition / find-references / rename / semantic
   highlighting / the F2 empty-varlist + duplicate-declaration checks /
   `GesstabsDocumentSymbolProvider` / `symbolCompletion.ts` onto the model) —
-  **done**, manually verified in a live Extension Development Host. Still open:
+  **done**, manually verified in a live Extension Development Host.
+  - **F12 go-to-definition bug — fixed 2026-09-05.** Reported after the
+    above verification: F12 over an `IF … THEN` reassignment still listed
+    *every other* `IF … THEN` reassignment of the same name as an
+    alternate definition target, even though none of them declares
+    anything (design §3.3 — gessTabs never treats a reassignment as a
+    declaration). Root cause: `GesstabsDefintionProvider` jumped straight
+    to `sym.definitions` (every touch, declarations and reassignments
+    alike), the same class of bug the hover already had to work around
+    earlier by hard-coding `definitions[0]`, but go-to-definition's
+    multi-location answer can't just take index 0 — a name legitimately
+    declared twice (e.g. once per `#ifdef`/`#else` branch) must still
+    surface both. Fix: `VariableSymbol` gained a parallel
+    `definitionKinds: ('declaration' | 'assignment')[]` array (the
+    `defKind` of the statement behind each `definitions` entry), and a new
+    `primaryDefinitions(sym)` in `variableModel.ts` returns every
+    `'declaration'`-kind entry when there is at least one, else falls back
+    to the single earliest entry (a bare `COMPUTE` that happens to be the
+    sole creator). `GesstabsDefintionProvider` now maps over
+    `primaryDefinitions(sym)` instead of `sym.definitions`. Covered by
+    three new `variableModel.spec.ts` cases (reassignments dropped,
+    multi-declaration kept, bare-COMPUTE fallback).
+  - Still open (pre-existing, unrelated to the F12 fix above):
   - **`GessTabsWorkspaceSymbolProvider`** (Ctrl+T "Go to Symbol in Workspace",
     `extension.ts`) — discovered mid-pass, not in the original plan. Still
     built on `singleVarDefRe`/`multiVarDefRe`/`computeDefRe`/`tableHeadRe` +
