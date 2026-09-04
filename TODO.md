@@ -436,6 +436,26 @@ items below are facets of this same problem, marked "(needs P1)".
     fuzzier, larger effort than the other two (no single "which statement
     forms are illegal for which kind" list assembled yet), deliberately
     left for a separate pass.
+  - **Still open — malformed statements never surface as a diagnostic.**
+    Found 2026-09-05 while checking `groups sysmiss;` against the
+    system-variable-redeclaration fix above (a red herring for that check
+    specifically — see the commit/chat — but a real, separate gap):
+    `variableStatements.ts`'s classifier already detects and records a
+    good number of clearly-broken statement shapes via
+    `ClassifiedStatement.malformed?: string` — `‹keyword›: no '='` and
+    `‹keyword›: no target name` for `SINGLEQ`/`MAKESINGLE`/`VARIABLES`/
+    `MULTIFROMSTRING`/`VARFAMILY`/`GROUPS`/`INTERVALS`/`VARGROUP`/
+    `INDEXVAR`/the statistical creators/`DATA` (§9 Q1's "no-name
+    VARFAMILY" case included) — but **nothing anywhere reads this field**;
+    a script with `groups sysmiss;` (missing its `=` and body entirely)
+    compiles cleanly as far as the extension is concerned, no squiggle at
+    all, even though it would be a real compiler error. Needs: a new
+    check (`diagnostics.ts` or `modelDiagnostics.ts` — doesn't need the
+    full workspace model, just `toLogicalStatements` + `classifyStatement`
+    per statement, so document-scoped like the rest of `diagnostics.ts`
+    is probably the right home) that surfaces `cls.malformed` as an Error,
+    anchored at the statement's own start. Small, contained, no design
+    questions outstanding — good next pickup.
 
 ---
 
