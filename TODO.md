@@ -126,17 +126,37 @@ items below are facets of this same problem, marked "(needs P1)".
     three new `variableModel.spec.ts` cases (reassignments dropped,
     multi-declaration kept, bare-COMPUTE fallback).
   - Still open (pre-existing, unrelated to the F12 fix above):
-  - **`GessTabsWorkspaceSymbolProvider`** (Ctrl+T "Go to Symbol in Workspace",
-    `extension.ts`) — discovered mid-pass, not in the original plan. Still
-    built on `singleVarDefRe`/`multiVarDefRe`/`computeDefRe`/`tableHeadRe` +
-    `macroDefRe`/`expandDefRe`, each rebuilt **per keystroke** from the user's
-    search query — an architecturally different, query-driven shape from
-    every other consumer already migrated (needs a workspace-wide scan +
-    substring-filter over `model.all()`/`classifyStatement`, not just a
-    swap). Blocks a full `regex.ts` cleanup.
-  - `weightcellsRe`/`tableAxisRe` in `regex.ts` are now fully unused dead
-    exports — low-priority tidy-up once `GessTabsWorkspaceSymbolProvider`
-    moves too, then delete `regex.ts` in full.
+  - **`GessTabsWorkspaceSymbolProvider` (Ctrl+T) migrated — done 2026-09-05.**
+    Was rebuilding `singleVarDefRe`/`multiVarDefRe`/`computeDefRe`/
+    `tableHeadRe` regexes **per keystroke** from the search query — an
+    architecturally different, query-driven shape from every other
+    consumer. Rebuilt as: `getAllFilenamesInDirectory` finds every
+    `.tab`/`.inc` file in the workspace (unchanged), then one
+    `buildWorkspaceIndex(files, …)` over the whole set — every file no
+    other file `INCLUDE`s becomes its own root, so every independent
+    entry program is covered, not just whichever file happens to be open
+    (entry scripts are independent programs, not "pick one" — §11.2) —
+    feeds one `buildVariableModel`; each symbol contributes
+    `primaryDefinitions(sym)` (declaration(s) only, same §3.3 rule the F12
+    fix above enforces — a reassignment must not clutter Ctrl+T results
+    either). Macro/`#EXPAND` definitions and `TABLE` head/axis names stay
+    the same per-document regex/classifier scan
+    `GesstabsDocumentSymbolProvider` already uses (unrelated to the
+    variable model), just looped over every discovered file instead of
+    one open document. `query` is now a plain case-insensitive substring
+    filter applied to the full result, not baked into a regex — a
+    genuine UX improvement (partial names now match, not just an exact
+    whole-word token). The old `spush` name-splitting helper is gone with
+    its regex-based callers. Manual verification of Ctrl+T in the live
+    Extension Development Host still outstanding.
+  - `singleVarDefRe`/`multiVarDefRe`/`computeDefRe`/`tableHeadRe` (their
+    only caller was the old `GessTabsWorkspaceSymbolProvider`) join
+    `weightcellsRe`/`tableAxisRe` as fully unused dead exports in
+    `regex.ts` — low-priority tidy-up (their own `regex.spec.ts` coverage
+    is harmless to keep meanwhile). `regex.ts` itself still has live
+    callers elsewhere (`diagnostics.ts`, `symbolIndex.ts`,
+    `tableElements.ts` — `usageRe`/`wordDefRe`/`multiVarRe`/`expandRe`/
+    `macroOwnDefRe`), so full deletion is still a separate, later step.
   - Fold in the `.def` / other INCLUDE-extension fix (design §9 Q6).
 - **P1.4** — wire P0's external names into the model as `origin: 'external'`
   symbols, seeded before the program-order pass, **preserving the data
