@@ -244,8 +244,12 @@ and are marked "(needs P1)" so they are not built twice.
     `tableHeadRe`/`tableAxisRe` entries; head vs. axis is no longer
     distinguished — simplification, both just say `[table]` now). The
     macro/`#EXPAND` half is untouched. Document-scoped, like before — no
-    workspace/INCLUDE resolution. **Not manually verified in a running VS
-    Code yet.**
+    workspace/INCLUDE resolution. **Manually verified 2026-09-04** in the
+    live Extension Development Host — multi-name `VARIABLES`/`TABLE` head
+    +axis split into individual entries, the `COMPUTE`-without-sub-keyword
+    and `MAKESINGLE` gaps fixed, annotations and macro/`#EXPAND` entries
+    unaffected, all confirmed against a test snippet covering every case
+    above.
   - **`symbolCompletion.ts` (F1 autocomplete) — done 2026-09-04**: replaced
     entirely by `model.at(file, line).all()` — a program point's visible-
     symbol view already *is* "every name valid here, no forward
