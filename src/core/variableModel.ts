@@ -352,6 +352,46 @@ export function buildVariableModel(index: WorkspaceIndex): VariableModel {
           });
         }
       );
+
+      // §9 Q2's non-pattern `‹a› TO ‹b›` form: "every variable declared
+      // between `a` and `b`, in program order" — `a`/`b` need not share a
+      // name pattern, so only the model (which knows declaration order)
+      // can resolve this, unlike the numeric-suffix form the classifier
+      // already expands on its own. `‹b›` declared before `‹a›` (§9 Q2's
+      // open sub-question) is resolved here as: swap silently, favouring a
+      // useful answer over a silent no-op. Members are anchored at the
+      // whole range phrase, same as expandNameRange's own synthetic spans
+      // — no literal token of their own, but a real, reusable line+range.
+      cls.unresolvedRanges?.forEach(({ from, to }) => {
+        const fromIdx = firstSeen.get(from.name);
+        const toIdx = firstSeen.get(to.name);
+        if (fromIdx === undefined || toIdx === undefined) return;
+        const lo = Math.min(fromIdx, toIdx);
+        const hi = Math.max(fromIdx, toIdx);
+        const phraseStart = Math.min(from.rawStart, to.rawStart);
+        const phraseEnd = Math.max(
+          from.rawStart + from.rawLength,
+          to.rawStart + to.rawLength
+        );
+        const loc = locateInStatement(stmt, phraseStart);
+        symbols.forEach((sym) => {
+          const idx = firstSeen.get(sym.name);
+          if (idx === undefined || idx <= lo || idx >= hi) return;
+          out.push({
+            line: loc.line,
+            character: loc.character,
+            span: {
+              name: sym.name,
+              raw: sym.displayName,
+              rawStart: phraseStart,
+              rawLength: phraseEnd - phraseStart,
+              quoted: false,
+              synthetic: true,
+            },
+            inKeyword: cls.keyword,
+          });
+        });
+      });
     });
     return out;
   };

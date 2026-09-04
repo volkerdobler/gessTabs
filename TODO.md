@@ -67,14 +67,24 @@ items below are facets of this same problem, marked "(needs P1)".
     phrase's text would corrupt the *other* endpoint's own name. Locked in
     with `variableModel.spec.ts` cases for both the non-literal hit and the
     `literal: true` case staying unaffected.
-  - **The genuinely non-pattern reference-position form is unchanged** —
-    still needs the model (P1.2: slice `buildVariableModel`'s program-order
-    symbol sequence between two resolved endpoints; P1.4: a raw/external
-    variable's "declaration order" is its column position in the SPSS/CSV
-    file). Confirmed 2026-09-05: this form is legal **only** at a reference
-    position — a new variable can never be created with it, `VARIABLES`'s
-    numeric-suffix pattern is the only way to mint names by range — so the
-    two mechanisms never collide.
+  - **The non-pattern reference-position form — in-script part done
+    2026-09-05.** The classifier's post-pass now records every `‹a› TO ‹b›`
+    pair `expandNameRange` couldn't expand as `unresolvedRanges: { from,
+    to }[]`; `buildVariableModel`'s `references()` resolves each one against
+    its own program-order symbol sequence (`firstSeen`) — every declared
+    symbol strictly between `from`'s and `to`'s declaration index becomes a
+    synthetic (non-literal) reference, same `synthetic`/`literal` machinery
+    as the numeric-suffix case, so `collectVariableOccurrences` picks it up
+    automatically (find-references shows it, rename correctly skips it) with
+    no further plumbing. `‹b›` declared before `‹a›` (the open sub-question)
+    is resolved as: swap silently rather than drop the range. Verified
+    end-to-end against the exact reported example (four `COMPUTE`-created
+    names, `vartext esseWagnerMenge to esseHandelsmarkeMenge = "xxx";`) —
+    `variableModel.spec.ts`. **Still open**: a **raw/external** variable's
+    "declaration order" — its column position in the SPSS/CSV file — needs
+    P1.4 (external names aren't in the model's symbol table at all yet), so
+    a range whose endpoint is a dataset variable rather than an in-script
+    one isn't resolved yet.
   - `$`-member spans (§9 Q2 — resolve on demand in the model);
     `POSTPROCESS` clause-local virtuals (§5); precise `IN`/`IS`/`[ … ]`
     set-test handling; a full table-driven spec pass (one case per §3/§4 row).

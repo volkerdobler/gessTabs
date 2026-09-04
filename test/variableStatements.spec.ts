@@ -283,6 +283,13 @@ describe('classifyStatement — ranges & overcodes', () => {
       'essehandelsmarkemenge',
     ]);
     expect(s.hasNameRange).to.be.true;
+    expect(s.unresolvedRanges).to.have.length(1);
+    expect(s.unresolvedRanges?.[0].from.name).to.equal('essewagnermenge');
+    expect(s.unresolvedRanges?.[0].to.name).to.equal('essehandelsmarkemenge');
+  });
+
+  it('an expandable numeric-suffix pair is NOT recorded as an unresolvedRange', () => {
+    expect(c('mean m = item1 to item4;').unresolvedRanges).to.be.undefined;
   });
 
   it('OVERCODE ‹name› ‹values› "text" records a virtual code', () => {

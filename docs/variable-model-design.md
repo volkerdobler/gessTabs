@@ -557,34 +557,56 @@ program) — they are **not** separate work.
 >      CSV column read straight from the data source), "declared" means its
 >      position in the data file's own column order (SPSS field order / CSV
 >      header order, left to right) — resolving this case needs P1.4's
->      external-name integration, not just the in-script symbol table. This
->      is a **model** feature (the program-order symbol sequence,
->      `buildVariableModel`/P1.2, sliced between two resolved endpoints —
->      P1.4 for the raw-variable case), not a classifier one: the classifier's
->      job stays "flag `hasNameRange`, keep both endpoint spans as
->      `references`" (already done); the model resolves the slice on demand
->      when a consumer (rename, find-references, the future undefined-
->      variable check) actually asks for it. **Confirmed (2026-09-05): this
->      form is legal only at a reference position — a brand-new variable can
->      never be created with it, `VARIABLES`'s numeric-suffix pattern is the
->      only way to mint new names by range.** So the two mechanisms never
->      collide; which one applies is decided purely by the statement's own
->      `defKind`/kind, no ambiguity to resolve at the name level.
->    - **`collectVariableOccurrences` fixed too — 2026-09-05.** The decision
->      above (find-references keeps the range phrase as a non-literal hit;
->      rename excludes it) is implemented: `NameSpan.synthetic?: boolean`
->      (set on a range-synthesised member), `VariableOccurrence.literal:
->      boolean` (derived from it). `GesstabsReferenceProvider` keeps both
->      kinds; `GesstabsRenameProvider` filters to `literal` occurrences
->      before building its `WorkspaceEdit`. Only the *numeric-suffix* form
->      benefits so far — the *non-pattern* form (names that share no numeric
->      suffix, the `esseWagnerMenge`/`esseHandelsmarkeMenge` example) still
->      has nothing for the model to expand in the first place; once that's
->      implemented (P1.2/P1.4, below), it produces the same kind of
->      `synthetic` span and this same literal/non-literal split applies to it
->      automatically, no further plumbing needed.
->    - Open sub-question, not yet decided: `‹b›` declared *before* `‹a›` in
->      program order — error, or silently treat as `‹b› TO ‹a›`?
+>      external-name integration, not just the in-script symbol table.
+>      **Confirmed (2026-09-05): this form is legal only at a reference
+>      position — a brand-new variable can never be created with it,
+>      `VARIABLES`'s numeric-suffix pattern is the only way to mint new names
+>      by range.** So the two mechanisms never collide; which one applies is
+>      decided purely by the statement's own `defKind`/kind, no ambiguity to
+>      resolve at the name level.
+>    - **`collectVariableOccurrences` — literal vs. non-literal occurrences,
+>      2026-09-05.** A range member has no literal text of its own on its
+>      statement's line (`item3` never appears as a substring in `mean m =
+>      item1 to item4;`), so `findAllWordRangesInLine`'s text scan — what
+>      `collectVariableOccurrences` was built around — can never find it
+>      regardless of what the model already knows. Fixed by giving
+>      `NameSpan` a `synthetic?: boolean` flag (set on every range-
+>      synthesised member, both the numeric-suffix and — see below — the
+>      declaration-order kind) and `VariableOccurrence` a `literal: boolean`
+>      derived from it: `collectVariableOccurrences` now also emits an entry
+>      straight from `model.references(name)`'s own already-resolved,
+>      `locateInStatement`-anchored synthetic spans, tagged `literal: false`.
+>      `GesstabsReferenceProvider` (find-references) keeps both kinds — a
+>      range-phrase hit is a genuine usage location. `GesstabsRenameProvider`
+>      filters to `literal` occurrences only before building its
+>      `WorkspaceEdit`: substituting the range phrase's text would corrupt
+>      the *other* endpoint's own name, so there is no safe automatic rename
+>      for one of these.
+>    - **In-script part done, 2026-09-05.** `classifyStatement`'s post-pass
+>      records every `‹a› TO ‹b›` pair `expandNameRange` couldn't expand as
+>      `unresolvedRanges: { from: NameSpan; to: NameSpan }[]` — the
+>      classifier's job stays purely mechanical (recognise the shape, don't
+>      resolve it). `buildVariableModel`'s `references()` does the actual
+>      resolution: for each unresolved pair, look up both endpoints'
+>      `firstSeen` program-order index and emit a synthetic (`NameSpan.
+>      synthetic: true`) reference for every OTHER symbol whose own
+>      `firstSeen` falls strictly between them — anchored at the whole range
+>      phrase, exactly like the numeric-suffix case's synthetic spans, so
+>      `collectVariableOccurrences`'s existing `literal`/non-`literal` split
+>      (previous bullet) covers this automatically: find-references shows it,
+>      rename skips it, with no further plumbing. **`‹b›` declared before
+>      `‹a›` — resolved:** swap silently (`Math.min`/`Math.max` on the two
+>      indices) rather than drop the range; a useful answer beats a silent
+>      no-op, and nothing in the manual suggests order should be an error.
+>      Verified end-to-end against the exact reported example (four
+>      `COMPUTE`-created names, `vartext esseWagnerMenge to
+>      esseHandelsmarkeMenge = "xxx";` correctly reaches all four) —
+>      `variableModel.spec.ts`. **Still open**: a raw/external endpoint —
+>      P1.4 hasn't wired external names into the symbol table
+>      (`firstSeen`/`symbols`) at all yet, so a range naming a dataset
+>      variable resolves nothing today; once P1.4 lands (preserving the
+>      data source's own column order, per the note above), this same
+>      `firstSeen`-based resolution covers it without further changes here.
 > 3. **Duplicate-declaration is kind-gated.** The classifier tags each defining
 >    statement with `defKind: 'declaration' | 'assignment'`. Only `declaration`
 >    kinds (SINGLEQ/VARIABLE(S)/MAKE*/VARFAMILY/VARGROUP/GROUPS/INTERVALS/

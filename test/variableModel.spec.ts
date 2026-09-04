@@ -261,4 +261,38 @@ describe('collectVariableOccurrences', () => {
     );
     expect(occ.every((o) => o.literal)).to.be.true;
   });
+
+  it("the non-pattern reference-position TO form resolves to every variable declared between the two endpoints, in program order (§9 Q2 — the user's own reported example)", () => {
+    const idx = indexOf(
+      [
+        'compute esseWagnerMenge = 0;',
+        'compute esseOetkerMenge = 0;',
+        'compute esseGustavoMenge = 0;',
+        'compute esseHandelsmarkeMenge = 0;',
+        'vartext esseWagnerMenge to esseHandelsmarkeMenge = "xxx";',
+      ].join('\n')
+    );
+    // the two named endpoints are already literal, always-mode references —
+    // this is about the two variables in between, which share no name
+    // pattern with the endpoints at all. excludeDefinitions drops each
+    // one's own `compute` line, leaving just the vartext range hit.
+    ['esseOetkerMenge', 'esseGustavoMenge'].forEach((name) => {
+      const refs = collectVariableOccurrences(idx, name, true);
+      expect(refs, name).to.have.length(1);
+      expect(refs[0].literal, name).to.be.false;
+      expect(refs[0].line.line, name).to.equal(4);
+    });
+    // the endpoints themselves are unaffected — still literal occurrences.
+    const wagner = collectVariableOccurrences(idx, 'esseWagnerMenge');
+    expect(wagner.some((o) => o.literal && o.line.line === 4)).to.be.true;
+  });
+
+  it('a reversed non-pattern range (‹b› declared before ‹a›) is resolved by swapping, not silently dropped (§9 Q2 open sub-question)', () => {
+    const idx = indexOf(
+      ['compute a = 0;', 'compute b = 0;', 'compute c = 0;', 'vartext c to a = "xxx";'].join(
+        '\n'
+      )
+    );
+    expect(collectVariableOccurrences(idx, 'b', true)).to.have.length(1);
+  });
 });

@@ -106,6 +106,13 @@ export interface ClassifiedStatement {
   // at least one name list in the statement used an `‹a› TO ‹b›` range;
   // the model expands numeric-suffix ranges via `expandNameRange`.
   hasNameRange?: boolean;
+  // `‹a› TO ‹b›` pairs whose endpoints do NOT fit expandNameRange's
+  // numeric-suffix shape (§9 Q2's non-pattern reference-position form,
+  // "every variable declared between `a` and `b`, in program order") —
+  // `collectNames` already inlined the ones that do fit as literal member
+  // spans, so only the model can resolve these, using its own program-order
+  // symbol sequence (`buildVariableModel`).
+  unresolvedRanges?: { from: NameSpan; to: NameSpan }[];
   // runtime-block boundary, for Tier 2 folding / unmatched-block checks.
   // 'mid' is ELSEBLOCK / ELSE-style (closes one region, opens the next).
   block?: 'open' | 'close' | 'mid';
@@ -1156,11 +1163,11 @@ function classifyDispatch(
   return base('other', keyword);
 }
 
-// Post-pass over `classifyDispatch`: the two cross-cutting facts that are
-// easier to read straight off the token stream than to thread through
-// every per-shape parser — an `‹a› TO ‹b›` name range anywhere in the
-// statement, and OVERCODE/OVEROVERCODE `‹ocname›` virtual codes (§3.6),
-// which can appear standalone or embedded in a VALUELABELS body.
+// Post-pass over `classifyDispatch`: cross-cutting facts that are easier
+// to read straight off the token stream than to thread through every
+// per-shape parser — every `‹a› TO ‹b›` name range in the statement (§9
+// Q2), and OVERCODE/OVEROVERCODE `‹ocname›` virtual codes (§3.6), which can
+// appear standalone or embedded in a VALUELABELS body.
 export function classifyStatement(
   statementText: string
 ): ClassifiedStatement | undefined {
@@ -1168,6 +1175,7 @@ export function classifyStatement(
   if (!cls) return undefined;
   const tokens = tokenize(statementText);
 
+  const unresolvedRanges: { from: NameSpan; to: NameSpan }[] = [];
   for (let i = 1; i < tokens.length - 1; i += 1) {
     if (
       kw(tokens[i]) === 'to' &&
@@ -1175,9 +1183,17 @@ export function classifyStatement(
       isWordOrString(tokens[i + 1])
     ) {
       cls.hasNameRange = true;
-      break;
+      const from = spanOf(tokens[i - 1]);
+      const to = spanOf(tokens[i + 1]);
+      // §9 Q2: `collectNames` already inlined a numeric-suffix pair (`v1 TO
+      // v9`) as literal member spans — only a pair that pattern doesn't fit
+      // needs the model's program-order resolution.
+      if (!expandNameRange(from.name, to.name)) {
+        unresolvedRanges.push({ from, to });
+      }
     }
   }
+  if (unresolvedRanges.length) cls.unresolvedRanges = unresolvedRanges;
 
   const virtual: NameSpan[] = [];
   for (let i = 0; i < tokens.length; i += 1) {
