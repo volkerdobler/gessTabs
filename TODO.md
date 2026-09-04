@@ -41,9 +41,12 @@ Done:
   `test/entryScripts.spec.ts` (~30 cases).
 
 Follow-ups (design doc §11.7): CSV-header-cell go-to-definition, wildcard-path
-resolution, column-fixed `DATAFILE` (`INPUT = ….inc;` vardef), multi-line input
-statements, the `ENCODING <filetype> = …` override, per-workspace-folder cache
-for multi-root workspaces. Then P1.4 wires the names into the model as
+resolution, column-fixed `DATAFILE` (`INPUT = ….inc;` vardef — `INFILE` is a
+documented synonym for `DATAFILE`, confirmed 2026-09-04 from the newly-mirrored
+`Anhang > Historisches > Handhabung von ASCII-Daten > Daten-Input` page; same
+deferred column-fixed case, worth recognizing once that lands), multi-line
+input statements, the `ENCODING <filetype> = …` override, per-workspace-folder
+cache for multi-root workspaces. Then P1.4 wires the names into the model as
 `origin: 'external'`.
 
 Closed (not doing): SPSS variable/value labels — gessTabs scripts (re)define
@@ -141,9 +144,20 @@ and are marked "(needs P1)" so they are not built twice.
     the numeric-suffix helper, `$`-member spans (§9 Q2 — resolve on demand in
     the model), `POSTPROCESS` clause-local virtuals (§5), precise
     `IN`/`IS`/`[ … ]` set-test handling, a full table-driven spec pass (one case
-    per §3/§4 row), and precise reference character offsets (the model's
-    `locate` is line-accurate but column-approximate when a statement's first
-    line had leading whitespace).
+    per §3/§4 row). (The statement-offset column-imprecision noted here earlier
+    was fixed 2026-09-04 — see the semantic-highlighting entry below,
+    `locateInStatement`.)
+  - **Newly found 2026-09-04**, from the manual pages converted this session
+    (see Reference material): `LABELVALUE ‹numvar› = ‹src›;` (+ synonym
+    `SINGLEFROMSTRING`) is a real atomic-variable-creating statement not yet in
+    `variableStatements.ts` — added to design doc §3.1, not implemented. Also:
+    `IF ‹cond1› ASSERT ‹cond2› [TITLE "…"];` (a THEN-less `IF` variant,
+    `Anhang > (Kunden-)Spezifika`) falls through `classifyIf`'s no-`THEN`
+    branch, which scans the *whole* rest of the statement as condition
+    references — the bare word `ASSERT` and the `TITLE "…"` text both risk
+    being picked up as phantom references (minor false-positive, not
+    reference-completeness-breaking; `EXPR_OPERATORS` could gain `assert`/
+    `title` as a quick fix).
 - **P1.2 — symbol table** `variableModel.ts` + wire the variable hover.
   **Done 2026-09-04.**
   - `src/core/variableModel.ts` + `test/variableModel.spec.ts`:
@@ -338,9 +352,16 @@ and are marked "(needs P1)" so they are not built twice.
   `VALUELABELS <a> <b> = ADD …` (a varlist with `ADD` → Syntaxerror 528; `ADD` is
   one-variable-only); `OVERCODE <a> : <b>` where the range span exceeds 100 000
   (error) / 5 000 (warning) — same shape as `checkRecodeBounds`.
-- **Deprecated-keyword diagnostic** — flag retired keywords
-  (`USEFILTER`/`MAKEFILTER`, …) once the manual's "Abgelöste Befehle" list is
-  mined into `keywordData.ts`.
+- **Deprecated-keyword diagnostic** — flag retired keywords. The manual's
+  "Abgelöste Befehle" page is now mirrored (2026-09-04,
+  `dokumentation/online-manual/md/Anhang _ Historisches _ Abgelöste
+  Befehle.md`) and gives the full list to mine into `keywordData.ts`:
+  `AutoClear`, `AutoOverSort` (+ `IndentAutoOversort`),
+  `CalcColLowAccuracy`, `CHIQUMinimum`/`ChiQUColMinumum`/`ChiQURowMinimum`,
+  `LowerCase`, `MarkCells` (alte Version), `Nominations`/`NominationsTitle`,
+  `Outfile`, `TableType`, `UseFilter`/`MakeFilter`, `YSignifInFront`. Each
+  entry names its replacement — read the page for the specific "use X
+  instead" wording per keyword before writing the diagnostic message.
 
 ---
 
@@ -396,20 +417,47 @@ committed. When looking something up, use these in order (most useful first):
 
 1. **`dokumentation/online-manual/md/*.md`** — **start here.** Pages of the
    current online manual converted to Markdown (clean UTF-8, code examples as
-   fenced blocks). Covers the topics the open work above needs: `Variablentypen`,
-   `Bildung neuer Variablen`, `Variablen-Eigenschaften`, `Texte`,
-   `Label-Eigenschaften`, `Systemvariablen`, `Compute`, `Berechnung von
-   Tabelleninhalten`, `Logische Bedingungen`, `Statistische Funktionen`, `Filter`
-   / `Fallselektion` / `Bedingte Tabellenanzeige`, `Rundungen`, `Gruppierungen`
+   fenced blocks). **All 71 HTML pages currently saved under
+   `online-manual/` are converted as of 2026-09-04** (39 pages newly
+   converted that session — table formatting/sorting/weighting/significance-
+   testing, the deprecated-command list, the full syntax-error catalog,
+   in/output-of-datasets, and the historical ASCII-input pages). Covers the
+   topics the open work above needs: `Variablentypen`, `Bildung neuer
+   Variablen`, `Variablen-Eigenschaften`, `Texte`, `Label-Eigenschaften`,
+   `Systemvariablen`, `Compute`, `Berechnung von Tabelleninhalten`,
+   `Logische Bedingungen`, `Statistische Funktionen`, `Filter` /
+   `Fallselektion` / `Bedingte Tabellenanzeige`, `Rundungen`, `Gruppierungen`
    (Obercodes / Indexvariablen / Variablenfamilien / Variablengruppen), `Das
-   Skript`, `Makros`, `Textersatz`, plus `hmkwindex` (keyword index).
+   Skript`, `Makros`, `Textersatz`, `In- und Output von Datensätzen`,
+   `Handhabung von ASCII-Daten` (Daten-Input + Weiteres), plus
+   `hmkwindex` (keyword index). Two pages worth calling out for the open
+   work above:
+   - **`Anhang > Liste aller Syntaxfehlermeldungen`** — the full numbered
+     compiler error-message catalog (~850 messages). Exact wording for
+     P1.6's undefined-variable diagnostic: **#10** "variable not found
+     (undeclared variable?)", **#20** "undeclared variable or
+     wrong-spelled number", **#69** "Invalid Function-Name or undeclared
+     Variable". **#8** "variable declared twice" (already cited by
+     `checkDuplicateDeclarations`), **#42** "Nested Comments not allowed"
+     (already cited by `checkNestedBlockComments`) confirm those two are
+     wired to the right compiler error.
+   - **`Anhang > Historisches > Abgelöste Befehle`** — the deprecated-
+     keyword list P2's "Deprecated-keyword diagnostic" item needs (now
+     mined, see that item below): `AutoClear`, `AutoOverSort` (+
+     `IndentAutoOversort`), `CalcColLowAccuracy`,
+     `CHIQUMinimum`/`ChiQUColMinumum`/`ChiQURowMinimum`, `LowerCase`,
+     `MarkCells` (alte Version), `Nominations`/`NominationsTitle`,
+     `Outfile`, `TableType`, `UseFilter`/`MakeFilter`, `YSignifInFront`.
 2. **`dokumentation/online-manual/*.html`** — the browser-saved source pages;
-   check these when the Markdown conversion dropped a table or detail, and for
-   pages saved after the last conversion run (e.g. `In- und Output von
-   Datensätzen`). No converter script is committed — regenerate the `md/` with
-   bs4 + markdownify when needed. Not yet mirrored and needed for P1.4:
-   `csv.html`, `spss2.html`, `handhabung-von-ascii-daten.html`,
-   `invertierte-datensaetze.html`.
+   check these when the Markdown conversion dropped a table or detail.
+   `dokumentation/online-manual/_convert.py` (bs4 + markdownify, git-ignored
+   along with the rest of `dokumentation/`) regenerates `md/<name>.md` from
+   any `<name>.html` — run it again after saving a new page or re-saving an
+   updated one. Still not mirrored at all (no HTML saved yet) and needed for
+   P1.4/P0's SPSS/CSV follow-ups: `csv.html`, `spss2.html`,
+   `invertierte-datensaetze.html`, `openq-files.html`, `assoc.html`,
+   `dbase-input.html`, `columnbinary-format.html` (all linked from the now-
+   mirrored `In- und Output von Datensätzen` page, none saved yet).
 3. **Online gessTabs manual** — the authoritative source, but the site sits
    behind a Cloudflare JS challenge, so `WebFetch` / `curl` / `wget` all get
    HTTP 403 and only a real browser can reach it (re-save pages into

@@ -162,6 +162,8 @@ possibly with `<a> TO <b>` ranges; `$` member forms expand to atomic members.
 | `MAKESINGLES ‹vl› [ = ‹vl› ];` | left `‹vl›` (+ **refs** to right `‹vl›`) | `VARIABLES` + `COMPUTE COPY` |
 | `ASSOCVAR ‹v› = [ALPHA] ‹startcol› …;` | `‹v›` | supplementary from ASSOCFILE |
 | `CLONEVAR ‹v› = ‹src› [opts];` | `‹v›` (+ **ref** `‹src›`) | same type as `‹src›`; not for ASSOCVAR/INDEXVAR |
+| `LABELVALUE ‹numvar› = ‹src›;` | `‹numvar›` (+ **ref** `‹src›`) | new 2026-09-04, from the newly-mirrored `Anhang > (Kunden-)Spezifika` — converts an ALPHA/labelled var's text into a numeric value; `MISSING` if not parseable. **Not yet in `variableStatements.ts`** |
+| `SINGLEFROMSTRING = ‹numvar› = ‹src›;` | `‹numvar›` (+ **ref** `‹src›`) | documented synonym for `LABELVALUE` (same page; the doubled `=` is the manual's own syntax box, unconfirmed against a real example). **Not yet in `variableStatements.ts`** |
 
 ### 3.2 COMPUTE family (Compute page)
 
@@ -250,9 +252,11 @@ enclosing variable's label list. Codes assigned 65001+.
 `STATIC`, `INIT` (as a bare word), `NOINPUT`, `NOOUTPUT`, `PRINTALL`, `ALPHA <vl> =
 YES`, `ASALPHA`, `OPENASALPHA <vl> = YES`, `FILTER`, `WEIGHTCELLS`, `NORMALIZE`,
 `EVALFAMVALONCE`, `CONCATNUMTOSTR`, `INCLUDETITLEINTEXT`, `GENERATELABELS`,
-`LABELFORMAT`, `RECODE`, `RANGES`, `OVERCODE` on an *existing* list — these
-**annotate / reference / operate on** existing variables. `singleVarConst` must
-drop `static`/`init`.
+`LABELFORMAT`, `RECODE`, `RANGES`, `OVERCODE` on an *existing* list,
+`StoreAlpha <vl> = YES` (In- und Output von Datensätzen: keeps an OPEN
+variable's content as text rather than a code on output — a data-input/output
+property, not a declaration) — these **annotate / reference / operate on**
+existing variables. `singleVarConst` must drop `static`/`init`.
 
 ---
 
