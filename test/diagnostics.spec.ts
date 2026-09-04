@@ -103,6 +103,24 @@ describe('findLastDeclaredVariableBefore', () => {
       'x'
     );
   });
+
+  it('finds COMPUTE without a sub-keyword — the old regex-based version never matched this', () => {
+    const lines = ['compute umsatz = preis * menge;', 'VARTITLE = "x";'];
+    expect(
+      findLastDeclaredVariableBefore(lines, 1, alwaysNotInComment)
+    ).to.equal('umsatz');
+  });
+
+  it('follows an IF-THEN re-assignment as the current variable too', () => {
+    const lines = [
+      'singleq x = 1;',
+      'if x eq 1 then y = 2;',
+      'VARTITLE = "x";',
+    ];
+    expect(
+      findLastDeclaredVariableBefore(lines, 2, alwaysNotInComment)
+    ).to.equal('y');
+  });
 });
 
 describe('hasStrictVarlistEnabled', () => {
@@ -273,6 +291,28 @@ describe('checkDuplicateDeclarations', () => {
     expect(
       checkDuplicateDeclarations(lines, alwaysNotInComment)
     ).to.have.length(1);
+  });
+
+  it('does not flag COMPUTE ADD re-assigning an existing variable — legal, not a duplicate declaration (§9 Q3)', () => {
+    const lines = ['compute add x = 1;', 'compute add x = 2;'];
+    expect(checkDuplicateDeclarations(lines, alwaysNotInComment)).to.be.empty;
+  });
+
+  it('does not flag a plain COMPUTE (no sub-keyword) re-assignment either', () => {
+    const lines = ['compute x = 1;', 'compute x = 2;'];
+    expect(checkDuplicateDeclarations(lines, alwaysNotInComment)).to.be.empty;
+  });
+
+  it('does not flag an IF-THEN re-assignment of an already-declared variable', () => {
+    const lines = ['singleq x = 1;', 'if x eq 1 then x = 2;'];
+    expect(checkDuplicateDeclarations(lines, alwaysNotInComment)).to.be.empty;
+  });
+
+  it('flags a VARFAMILY declared twice — a declaration form the old regex pass never covered', () => {
+    const lines = ['varfamily f = a b c;', 'varfamily f = d e;'];
+    const issues = checkDuplicateDeclarations(lines, alwaysNotInComment);
+    expect(issues).to.have.length(1);
+    expect(issues[0]).to.deep.include({ line: 1, code: 'duplicate-declaration' });
   });
 });
 

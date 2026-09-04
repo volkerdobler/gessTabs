@@ -223,10 +223,26 @@ and are marked "(needs P1)" so they are not built twice.
     line was indented — this had been shipped in P1.2 (hover) already but
     only bit there as an imprecise jump-line; here it would have visibly
     miscoloured text. `collectDeclarationTokens`/`collectSemanticTokens`
-    (the old regex pass) are **kept**, still used by `diagnostics.ts` and
-    `symbolCompletion.ts`.
-  - **Still open**: the F2 empty-varlist + duplicate-declaration checks
-    (`diagnostics.ts`), `GesstabsDocumentSymbolProvider` (still on the regex
+    (the old regex pass) are **kept**, still used by `symbolCompletion.ts`
+    and `symbolIndex.ts`'s `bodyLineDeclaresName`.
+  - **F2 empty-varlist + duplicate-declaration — done 2026-09-04**
+    (`diagnostics.ts`, still document-scoped, no workspace/INCLUDE
+    resolution — that stays a separate Tier 2 item, design §7.5/Tier-2
+    table): `findLastDeclaredVariableBefore` (F5's "insert the name
+    explicitly" quick fix) now tracks "die aktuelle Variable" the way
+    `variableModel.ts` does (`classified.bindsCurrentVariable`) instead of
+    the old regex keyword set — fixes the fix never working after a plain
+    `COMPUTE` (no sub-keyword, the single most common creator).
+    `checkDuplicateDeclarations` is now gated on `defKind === 'declaration'`
+    (design §9 Q3) — catches the whole §3 declaration inventory the old
+    regex set missed (`VARFAMILY`, `MAKESINGLE`, `VARGROUP`, `GROUPS`,
+    `INTERVALS`, `INDEXVAR`, the statistical creators, `DATA`, …) *and*
+    fixes a real false positive: `compute add x = 1; compute add x = 2;`
+    (legal re-assignment) used to be misreported as a duplicate declaration,
+    since the old `computeDefRe`-based check couldn't distinguish a first
+    creation from a re-assignment. `checkEmptyVarlist` itself (the pattern
+    match) didn't need the model — untouched.
+  - **Still open**: `GesstabsDocumentSymbolProvider` (still on the regex
     factories), `symbolCompletion.ts`.
   - **Then delete**: `regex.ts` / `matching.ts` / `collectDeclarationTokens` /
     `collectSemanticTokens`/`collectLineTokens` / `variableInfo.ts`

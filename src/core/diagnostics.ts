@@ -10,8 +10,10 @@
 // attempts; a duplicate declaration or #define reference across an
 // INCLUDE boundary is a known, accepted gap.
 
-import { collectDeclarationTokens } from './semanticTokens';
 import { scanBlockDirectives } from './directives';
+import { ResolvedLine } from './includeGraph';
+import { toLogicalStatements, locateInStatement } from './statements';
+import { classifyStatement } from './variableStatements';
 
 export type DiagnosticSeverity = 'error' | 'warning';
 
@@ -29,6 +31,28 @@ export type IsNotInComment = (line: number, char: number) => boolean;
 function firstNonWs(lineText: string): number {
   const idx = lineText.search(/\S/);
   return idx === -1 ? 0 : idx;
+}
+
+// Turns this document's lines into the classifier's input shape
+// (src/core/statements.ts / src/core/variableStatements.ts): blank out
+// comment-scoped characters per the caller's own IsNotInComment (so a `;`
+// or a keyword inside a comment can't be mistaken for real code — same
+// trick src/core/includeGraph.ts's blankComments plays, just driven by a
+// generic callback instead of requiring a real Scope instance, matching
+// this module's own existing IsNotInComment convention), then join into
+// logical statements. Document-scoped, like every check in this file —
+// no workspace/INCLUDE resolution (see the file header).
+function toClassifierOrder(
+  lines: string[],
+  isNotInComment: IsNotInComment
+): ResolvedLine[] {
+  return lines.map((text, i) => {
+    let blanked = '';
+    for (let c = 0; c < text.length; c += 1) {
+      blanked += isNotInComment(i, c) ? text[c] : ' ';
+    }
+    return { file: 'document', line: i, text: blanked };
+  });
 }
 
 // --- 1. "Empty varlist binds to last-created variable" trap ---------------
@@ -95,28 +119,35 @@ export function checkEmptyVarlist(
 }
 
 // F5's quick fix for the empty-varlist diagnostic: "insert
-// <lastVariableName> explicitly". Reuses the same collectDeclarationTokens
-// checkDuplicateDeclarations is built on to find the actual variable
-// gessTabs would silently apply the statement to — i.e. the fix inserts
-// exactly what the compiler would otherwise have guessed, made explicit.
-// Scans strictly *before* `beforeLine` (never the diagnostic's own line),
-// matching the no-forward-reference/backward-scan shape used everywhere
-// else in this codebase (symbolIndex.ts's findDefinitionLine).
+// <lastVariableName> explicitly" — finds "die aktuelle Variable" (Compute
+// page) gessTabs would silently apply the statement to, i.e. the fix
+// inserts exactly what the compiler would otherwise have guessed, made
+// explicit. Tracks it the same way src/core/variableModel.ts's
+// buildVariableModel does (classified.bindsCurrentVariable), rather than
+// the old regex-based collectDeclarationTokens' narrower keyword set —
+// which, notably, never matched COMPUTE without a sub-keyword (regex.ts's
+// documented computeDefRe quirk), so a script's single most common
+// creator used to defeat this quick fix entirely. Scans strictly *before*
+// `beforeLine` (never the diagnostic's own line), matching the
+// no-forward-reference/backward-scan shape used everywhere else in this
+// codebase (symbolIndex.ts's findDefinitionLine).
 export function findLastDeclaredVariableBefore(
   lines: string[],
   beforeLine: number,
   isNotInComment: IsNotInComment
 ): string | undefined {
-  let lastName: string | undefined;
   const limit = Math.min(beforeLine, lines.length);
-  for (let i = 0; i < limit; i += 1) {
-    const tokens = collectDeclarationTokens(lines[i], i, isNotInComment);
-    if (tokens.length > 0) {
-      const lastToken = tokens[tokens.length - 1];
-      lastName = lines[i].substr(lastToken.startChar, lastToken.length);
+  const statements = toLogicalStatements(
+    toClassifierOrder(lines.slice(0, limit), isNotInComment)
+  );
+  let current: string | undefined;
+  statements.forEach((stmt) => {
+    const cls = classifyStatement(stmt.text);
+    if (cls?.bindsCurrentVariable && cls.defines.length > 0) {
+      current = cls.defines[cls.defines.length - 1].raw;
     }
-  }
-  return lastName;
+  });
+  return current;
 }
 
 // F5's *other* fix for the empty-varlist trap — a source action (not a
@@ -235,35 +266,43 @@ export function checkUnmatchedBlocks(
 }
 
 // --- 3. Duplicate variable declaration ------------------------------------
-// Mirrors compiler error 8: "variable declared twice". Reuses
-// src/core/semanticTokens.ts's collectDeclarationTokens — the VARIABLE-family/
-// COMPUTE-family/VARIABLES statements that actually create a new name, as
-// opposed to a VARTITLE/VARTEXT/VALUELABELS statement that only
-// *annotates* an existing one (using the full "variable" token set from
-// collectSemanticTokens here would misreport an ordinary re-mention as a
-// duplicate declaration).
+// Mirrors compiler error 8: "variable declared twice". Built on the
+// statement classifier's `defKind` (design doc §9 Q3): only a real
+// **declaration** (SINGLEQ/VARIABLE(S)/MAKE*/VARFAMILY/VARGROUP/GROUPS/
+// INTERVALS/INDEXVAR/the statistical creators/DATA/…) can be a duplicate.
+// COMPUTE/FCOMPUTE and an IF-THEN assignment are always `assignment` kind
+// and never counted, even when re-using an existing name — that's normal,
+// legal re-assignment, not a duplicate (the old regex-based version
+// mis-flagged e.g. `compute add x = 1; compute add x = 2;` as one, since
+// computeDefRe matches any COMPUTE-with-sub-keyword regardless of intent).
+// A VARTITLE/VARTEXT/VALUELABELS/WEIGHTCELLS re-mention (`annotation`/
+// reference-only kinds) was never counted either, before or now.
 export function checkDuplicateDeclarations(
   lines: string[],
   isNotInComment: IsNotInComment
 ): DiagnosticIssue[] {
   const issues: DiagnosticIssue[] = [];
+  const statements = toLogicalStatements(
+    toClassifierOrder(lines, isNotInComment)
+  );
   const firstSeenAt = new Map<string, number>();
 
-  lines.forEach((lineText, i) => {
-    collectDeclarationTokens(lineText, i, isNotInComment).forEach((token) => {
-      const name = lineText.substr(token.startChar, token.length);
-      const key = name.toLowerCase();
-      const firstLine = firstSeenAt.get(key);
+  statements.forEach((stmt) => {
+    const cls = classifyStatement(stmt.text);
+    if (!cls || cls.defKind !== 'declaration') return;
+    cls.defines.forEach((span) => {
+      const loc = locateInStatement(stmt, span.rawStart);
+      const firstLine = firstSeenAt.get(span.name);
       if (firstLine === undefined) {
-        firstSeenAt.set(key, i);
+        firstSeenAt.set(span.name, loc.line.line);
         return;
       }
       issues.push({
-        line: i,
-        startChar: token.startChar,
-        length: token.length,
+        line: loc.line.line,
+        startChar: loc.character,
+        length: span.rawLength,
         severity: 'warning',
-        message: `"${name}" was already declared at line ${firstLine + 1}.`,
+        message: `"${span.raw}" was already declared at line ${firstLine + 1}.`,
         code: 'duplicate-declaration',
       });
     });
