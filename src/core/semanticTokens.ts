@@ -43,6 +43,14 @@ import {
   expandDefRe,
 } from './regex';
 import { findMacroCalls, isReservedDirectiveKeyword } from './macroExpansion';
+import { blankComments, ResolvedLine } from './includeGraph';
+import { Scope } from './scope';
+import {
+  toLogicalStatements,
+  locateInStatement,
+  LogicalStatement,
+} from './statements';
+import { classifyStatement, NameSpan } from './variableStatements';
 
 export type SemanticTokenType = 'variable' | 'macro';
 
@@ -154,7 +162,11 @@ export function collectDeclarationTokens(
   return tokens;
 }
 
-function collectLineTokens(
+// The '#name' family — macro definitions/calls and bare #EXPAND
+// references — found on one line. Pure line scanning, unrelated to the
+// variable model; shared by both the legacy regex-based token pass below
+// and the model-based one (collectModelSemanticTokens).
+function collectMacroTokensForLine(
   lineText: string,
   lineIndex: number,
   isNotInComment: IsNotInComment
@@ -216,6 +228,21 @@ function collectLineTokens(
     m = hashNameGlobalRe.exec(lineText);
   }
 
+  return tokens;
+}
+
+function collectLineTokens(
+  lineText: string,
+  lineIndex: number,
+  isNotInComment: IsNotInComment
+): SemanticToken[] {
+  if (lineText.length === 0) return [];
+  const tokens: SemanticToken[] = collectMacroTokensForLine(
+    lineText,
+    lineIndex,
+    isNotInComment
+  );
+
   tokens.push(...collectDeclarationTokens(lineText, lineIndex, isNotInComment));
 
   const multiVarMatch = lineText.match(multiVarRegExp);
@@ -252,5 +279,78 @@ export function collectSemanticTokens(
   lines.forEach((lineText, i) => {
     tokens.push(...collectLineTokens(lineText, i, isNotInComment));
   });
+  return tokens;
+}
+
+// ---------------------------------------------------------------------------
+// Model-based pass (P1.3) — replaces the regex-based variable/table-name
+// half of collectLineTokens above (collectDeclarationTokens, multiVarRe,
+// weightcellsRe, tableHeadRe/tableAxisRe) with the statement classifier.
+// The macro/#EXPAND half (collectMacroTokensForLine) is unrelated to the
+// variable model and reused as-is.
+//
+// The classifier hands back *every* name span with a real offset, so this
+// also fixes the "only the last name in a multi-name list is coloured"
+// limitation documented at the top of this file for VARIABLES/COMPUTE
+// multi-target declarations, VARTITLE/VARTEXT/VALUELABELS lists and
+// multi-variable TABLE heads/axes.
+//
+// Deliberately still curated, not "every reference in the program": a
+// COMPUTE/IF expression operand is not highlighted here, same scope limit
+// as before — the classifier's own `always`-mode references for
+// annotation statements, TABLE heads/axes, and the reference-only
+// statements (WEIGHTCELLS/FILTER/FACTOR) are added; declarations
+// (`defines` + `virtualDefines`) always are.
+const REF_HIGHLIGHT_KEYWORDS = new Set(['weightcells', 'filter', 'factor']);
+
+export function collectModelSemanticTokens(
+  lines: string[],
+  scope: Scope
+): SemanticToken[] {
+  const isNotInComment: IsNotInComment = (line, char) =>
+    scope.isNotInComment(line, char);
+
+  const tokens: SemanticToken[] = [];
+  lines.forEach((lineText, i) => {
+    tokens.push(...collectMacroTokensForLine(lineText, i, isNotInComment));
+  });
+
+  // Comments are blanked to spaces first (matching how includeGraph.ts
+  // builds `order`) so a `;` inside a comment can't split a statement, and
+  // so no token can ever land inside one — no per-span comment check
+  // needed below.
+  const order: ResolvedLine[] = lines.map((text, i) => ({
+    file: 'document',
+    line: i,
+    text: blankComments(scope, i, text),
+  }));
+  const statements = toLogicalStatements(order);
+
+  const emit = (stmt: LogicalStatement, span: NameSpan) => {
+    const { line, character } = locateInStatement(stmt, span.rawStart);
+    tokens.push({
+      line: line.line,
+      startChar: character,
+      length: span.rawLength,
+      type: 'variable',
+    });
+  };
+
+  statements.forEach((stmt) => {
+    const cls = classifyStatement(stmt.text);
+    if (!cls) return;
+    cls.defines.forEach((span) => emit(stmt, span));
+    (cls.virtualDefines ?? []).forEach((span) => emit(stmt, span));
+    if (
+      cls.kind === 'annotation' ||
+      cls.kind === 'table' ||
+      REF_HIGHLIGHT_KEYWORDS.has(cls.keyword)
+    ) {
+      cls.references
+        .filter((r) => r.mode === 'always')
+        .forEach((r) => emit(stmt, r.span));
+    }
+  });
+
   return tokens;
 }

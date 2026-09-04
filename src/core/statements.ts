@@ -112,6 +112,37 @@ export function toLogicalStatements(order: ResolvedLine[]): LogicalStatement[] {
   return out;
 }
 
+// Maps an offset within a LogicalStatement's (trimmed) `text` back to the
+// resolved line and character it came from. `text` is trimmed for display,
+// so an offset on the first line is shifted by however much leading
+// whitespace `.trim()` stripped — undone here by reading that whitespace
+// back off the line's own (untrimmed) source text. Exact for the common
+// case (the statement starts fresh on its own line, not sharing it with a
+// preceding one); a statement whose start line IS shared
+// (`a = 1; b = 2;`) can be off by that shared prefix's length on its own
+// first line only — rare in practice, and callers (hover, semantic
+// tokens) lose at most a few columns, never the line.
+export function locateInStatement(
+  stmt: LogicalStatement,
+  offset: number
+): { line: ResolvedLine; character: number } {
+  const firstLineText = stmt.lines[0]?.text ?? '';
+  const leadingWs = firstLineText.length - firstLineText.trimStart().length;
+  let consumed = 0;
+  for (let i = 0; i < stmt.lines.length; i += 1) {
+    const piece = stmt.lines[i];
+    const len = piece.text.length - (i === 0 ? leadingWs : 0);
+    if (offset <= consumed + len) {
+      const character =
+        i === 0 ? offset + leadingWs : Math.max(0, offset - consumed);
+      return { line: piece, character };
+    }
+    consumed += len + 1; // + '\n'
+  }
+  const last = stmt.lines[stmt.lines.length - 1];
+  return { line: last, character: 0 };
+}
+
 // The logical statement that contains (file, line) — the one whose
 // resolved lines include that exact line. Used by consumers that start
 // from a single ResolvedLine (a definition, the cursor position) and need

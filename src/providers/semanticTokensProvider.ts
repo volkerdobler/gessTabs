@@ -4,7 +4,7 @@
 import * as vscode from 'vscode';
 import { Scope } from '../core/scope';
 import {
-  collectSemanticTokens,
+  collectModelSemanticTokens,
   SemanticTokenType,
 } from '../core/semanticTokens';
 import { printDebugMessage } from '../util/workspaceFiles';
@@ -30,9 +30,7 @@ export class GesstabsSemanticTokensProvider
         lines.push(document.lineAt(i).text);
       }
 
-      const tokens = collectSemanticTokens(lines, (line, char) =>
-        scope.isNotInComment(line, char)
-      );
+      const tokens = collectModelSemanticTokens(lines, scope);
 
       // SemanticTokensBuilder requires tokens pushed in increasing
       // line/character order.

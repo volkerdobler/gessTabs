@@ -17,7 +17,11 @@
 
 import { ResolvedLine } from './includeGraph';
 import { WorkspaceIndex, findAllWordRangesInLine } from './symbolIndex';
-import { toLogicalStatements, LogicalStatement } from './statements';
+import {
+  toLogicalStatements,
+  locateInStatement,
+  LogicalStatement,
+} from './statements';
 import {
   classifyStatement,
   ClassifiedStatement,
@@ -135,25 +139,6 @@ const COPY_ANNOT_KIND: Record<string, 'vartitle' | 'vartext' | 'valuelabels'> =
     copylabels: 'valuelabels',
   };
 
-// Locate an offset within a joined statement text back to its resolved
-// line and the character offset within that line.
-function locate(
-  stmt: LogicalStatement,
-  offset: number
-): { line: ResolvedLine; character: number } {
-  let consumed = 0;
-  for (let i = 0; i < stmt.lines.length; i += 1) {
-    const piece = stmt.lines[i];
-    const len = i === 0 ? stmt.text.split('\n')[0].length : piece.text.length;
-    if (offset <= consumed + len) {
-      return { line: piece, character: Math.max(0, offset - consumed) };
-    }
-    consumed += len + 1; // + '\n'
-  }
-  const last = stmt.lines[stmt.lines.length - 1];
-  return { line: last, character: 0 };
-}
-
 const currentAsList = (c: string | undefined): string[] => (c ? [c] : []);
 
 function memberSpans(cls: ClassifiedStatement): string[] | undefined {
@@ -223,7 +208,7 @@ export function buildVariableModel(index: WorkspaceIndex): VariableModel {
     const members = memberSpans(cls);
 
     cls.defines.forEach((span) => {
-      const loc = locate(stmt, span.rawStart);
+      const loc = locateInStatement(stmt, span.rawStart);
       const existing = symbols.get(span.name);
       if (existing && existing.origin !== 'predefined') {
         existing.definitions.push(loc.line);
@@ -254,7 +239,7 @@ export function buildVariableModel(index: WorkspaceIndex): VariableModel {
         displayName: span.raw.replace(/^["']|["']$/g, ''),
         kind: 'atomic',
         origin: 'virtual',
-        definitions: [locate(stmt, span.rawStart).line],
+        definitions: [locateInStatement(stmt, span.rawStart).line],
         definitionStatements: [stmt.text],
         annotations: [],
         scope: {
@@ -358,7 +343,7 @@ export function buildVariableModel(index: WorkspaceIndex): VariableModel {
             // known at this point (the manual's rule)
             if ((firstSeen.get(span.name) ?? Infinity) > i) return;
           }
-          const loc = locate(stmt, span.rawStart);
+          const loc = locateInStatement(stmt, span.rawStart);
           out.push({
             line: loc.line,
             character: loc.character,

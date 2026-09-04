@@ -166,8 +166,9 @@ and are marked "(needs P1)" so they are not built twice.
     `lineHasQuotedVariableReference` (+ its spec) — no non-test consumer
     left. Not deleted yet because P1.3 also removes `regex.ts`/`matching.ts`
     and it is one cleanup.
-  - **Not verified in a running VS Code yet** — the provider has no unit
-    test (vscode-coupled); needs a manual hover pass.
+  - **Manually verified 2026-09-04** — hover checked live in the Extension
+    Development Host (see P1.3's verification below; hover wasn't re-listed
+    separately but shares the same session).
 - **P1.3 — migrate the remaining consumers** onto the model. **In progress.**
   - **Done 2026-09-04**: go-to-definition (`model.resolve` + `resolveAnywhere`,
     covers the whole §3 inventory the regexes missed), **find-references** and
@@ -177,17 +178,38 @@ and are marked "(needs P1)" so they are not built twice.
     longer renames the `"region"` label text). Classifier gained
     `WEIGHTCELLS`/`FILTER`/`FACTOR` (reference-only statements) so those varlists
     are covered. `lineMatchesDefinition` / `findAllUsages` no longer used by
-    `extension.ts`.
-  - **Still open**: semantic highlighting (`semanticTokens.ts` — also fixes the
-    "only the last name in a multi-name list is coloured" bug, the classifier
-    hands back every span), the F2 empty-varlist + duplicate-declaration checks
+    `extension.ts`. **Manually verified in a live Extension Development Host**
+    (go to definition / find all references / rename symbol all confirmed
+    working).
+  - **Semantic highlighting — done 2026-09-04**: `collectModelSemanticTokens`
+    in `semanticTokens.ts` (wired in `semanticTokensProvider.ts`) replaces the
+    variable/table-name half of the old regex pass with the classifier —
+    fixes the documented "only the last name in a multi-name list is
+    coloured" bug for `VARIABLES a b c = …`, multi-target `COMPUTE`,
+    `VARTITLE`/`VARTEXT`/`VALUELABELS` lists and multi-variable `TABLE`
+    heads/axes, and now also tags `COMPUTE` without a sub-keyword (never
+    matched by the old `computeDefRe` empty-word case) and `OVERCODE`
+    virtual names. Still curated, not exhaustive — a `COMPUTE`/`IF`
+    expression operand stays untagged, matching the pre-existing scope
+    limit. The macro/`#EXPAND` half (`collectMacroTokensForLine`) is
+    unchanged, reused as-is. Along the way, fixed a real bug in
+    `toLogicalStatements`/`locateInStatement` (`statements.ts`): a
+    statement's leading whitespace was silently dropped from every offset
+    calculation, which could misplace tokens by a column on line 1 and
+    misattribute the line entirely for a multi-line statement whose first
+    line was indented — this had been shipped in P1.2 (hover) already but
+    only bit there as an imprecise jump-line; here it would have visibly
+    miscoloured text. `collectDeclarationTokens`/`collectSemanticTokens`
+    (the old regex pass) are **kept**, still used by `diagnostics.ts` and
+    `symbolCompletion.ts`.
+  - **Still open**: the F2 empty-varlist + duplicate-declaration checks
     (`diagnostics.ts`), `GesstabsDocumentSymbolProvider` (still on the regex
     factories), `symbolCompletion.ts`.
   - **Then delete**: `regex.ts` / `matching.ts` / `collectDeclarationTokens` /
-    `variableInfo.ts` (`findVariableAnnotations` etc.) /
-    `lineHasQuotedVariableReference` / `findAllUsages` — once nothing uses them.
+    `collectSemanticTokens`/`collectLineTokens` / `variableInfo.ts`
+    (`findVariableAnnotations` etc.) / `lineHasQuotedVariableReference` /
+    `findAllUsages` — once nothing uses them.
   - Fold in the `.def` / other INCLUDE-extension fix (design §9 Q6).
-  - Not verified in a running VS Code yet.
 - **P1.4 — wire P0's external names into the model** as `origin: 'external'`
   symbols, seeded before the program-order pass. A later in-script
   `SINGLEQ`/`COMPUTE` of the same name is a re-definition, not a duplicate. This

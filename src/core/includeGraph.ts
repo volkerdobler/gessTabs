@@ -98,7 +98,11 @@ function parseNameList(raw: string): string[] {
 // module's own directive regexes — aren't anchored to the start of the
 // line and so can't tell a keyword in a trailing comment apart from a
 // real one on their own.
-function blankComments(scope: Scope, lineIndex: number, text: string): string {
+export function blankComments(
+  scope: Scope,
+  lineIndex: number,
+  text: string
+): string {
   let result = '';
   for (let i = 0; i < text.length; i++) {
     result += scope.isNotInComment(lineIndex, i) ? text[i] : ' ';
