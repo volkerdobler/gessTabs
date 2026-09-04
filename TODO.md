@@ -257,21 +257,55 @@ items below are facets of this same problem, marked "(needs P1)".
     constructor param, `GesstabsExternalNamesManager` — same instance
     `GesstabsVariableHoverProvider` already receives) — F12 on a raw
     dataset variable now jumps to its data-source statement. Manual
-    verification in a live Extension Development Host still outstanding.
-  - **Still open**: find-references / rename / `GessTabsWorkspaceSymbolProvider`
-    (Ctrl+T) don't build with `externalNames` yet, so a raw column doesn't
-    show up there (deliberately scoped out of this pass — go-to-definition
-    was the design doc's headline ask). Rename in particular needs a
-    conscious decision, not just a wire-up: renaming a raw column's
-    *references* in the script without renaming the actual dataset column
-    would leave the script referring to a name that no longer matches
-    any real column — worth an explicit guard (reject, or warn) once
-    wired, not a silent edit. `GesstabsVariableHoverProvider` is
-    deliberately **not** touched — it already has its own, separately
-    working `externalSourcesFor` fallback (recently tuned, see git log),
-    and wiring `externalNames` into its own model build would change
-    *when* that fallback fires without a live-tested reason to. This is
-    also what P1.6's undefined-variable diagnostic will check against.
+    verification in a live Extension Development Host confirmed working
+    (F12 on a raw dataset variable jumps to its data-source statement).
+  - **Find-references / rename / Ctrl+T wired too — done 2026-09-05**:
+    - `collectVariableOccurrences` gained a 4th `opts?: BuildVariableModelOptions`
+      param, threaded into its own internal `buildVariableModel` call, plus
+      a new case: a bare word-scan can never find a raw column's own
+      "declaration" (the CSVINFILE/SPSSINFILE/DATAFILE line never
+      literally mentions the column name — it's parsed from the data
+      file's header/dictionary, not written in the script), so an
+      `origin: 'external'` symbol's `definitions` are now added as
+      explicit non-literal entries (same treatment the numeric-suffix/
+      non-pattern `TO`-range members already got) — included in
+      find-references, filtered out of rename by the existing
+      `literal`-only rule. Two new `variableModel.spec.ts` cases (a quoted
+      reference to a raw column now resolves once `externalNames` is
+      passed; the CSVINFILE line itself shows up, and is excluded exactly
+      like any other definition when `excludeDefinitions` is set).
+    - `GesstabsReferenceProvider` now takes the same
+      `GesstabsExternalNamesManager` constructor param and passes
+      `sourcesFor(document)` through — Find All References on a raw
+      dataset variable now finds every literal usage plus the data-source
+      line.
+    - `GesstabsRenameProvider` also takes it, but for the opposite
+      reason: renaming a raw column's script references without
+      renaming the actual dataset column would silently leave the script
+      referring to a name no real column matches — `provideRenameEdits`
+      now resolves `word` against a model built with `externalNames`
+      first and **throws** (shown to the user as an error, VS Code's
+      standard rename-provider-failure UX) when its `origin` is still
+      `'external'`. An already-`declared` symbol (a real in-script
+      declaration re-defined it, see `primaryDefinitions`) renames
+      normally — only a still-purely-external name is blocked.
+    - `GessTabsWorkspaceSymbolProvider` (Ctrl+T) also takes it; since
+      Ctrl+T is workspace-wide (no single "current document" to scope
+      `sourcesFor` to), it instead unions every entry program's sources
+      via `getPrograms()`, deduped by statement location the same way
+      `sourcesFor` already dedupes. `model.all()`'s origin filter grew
+      `'external'`; the container label is `'external'` outright (a raw
+      column's `sym.kind` is always the generic `'atomic'`, and its
+      "declaring statement" — the data-source line — isn't part of the §3
+      grammar `classifyStatement` recognises at all, so there's no
+      keyword to borrow the way a real declaration's container gets one).
+    - `GesstabsVariableHoverProvider` remains deliberately **not**
+      touched — it already has its own, separately working
+      `externalSourcesFor` fallback (recently tuned, see git log), and
+      wiring `externalNames` into its own model build would change *when*
+      that fallback fires without a live-tested reason to.
+    - **Still open**: the undefined-variable diagnostic itself (P1.6) —
+      this phase is what it will check against.
 - **P1.5** — macro-produced names into the model: numeric params (`&1`),
   comma-separated param lists, mid-token substitution (`&p.recoded`). Builds on
   the existing `findMacroProducedDefinition`. `#DOMACRO` looping stays P3, but the

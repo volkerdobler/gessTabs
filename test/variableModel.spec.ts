@@ -489,4 +489,26 @@ describe('collectVariableOccurrences', () => {
     );
     expect(collectVariableOccurrences(idx, 'b', true)).to.have.length(1);
   });
+
+  it('finds a quoted reference to a raw external column (only resolvable once externalNames is passed)', () => {
+    const idx = indexOf('compute y = "alter";');
+    const opts = { externalNames: [externalSource(['alter'])] };
+    // without externalNames, the model doesn't know "alter" is a real
+    // name, so the manual's quoted-token rule correctly leaves it alone.
+    expect(collectVariableOccurrences(idx, 'alter')).to.have.length(0);
+    const occ = collectVariableOccurrences(idx, 'alter', false, opts);
+    expect(occ.some((o) => o.literal && o.line.line === 0)).to.be.true;
+  });
+
+  it('includes the CSVINFILE statement itself as a non-literal "declaration" location, excluded like any other when excludeDefinitions is set', () => {
+    const idx = indexOf('compute y = "alter";');
+    const opts = { externalNames: [externalSource(['alter'])] };
+    const withDef = collectVariableOccurrences(idx, 'alter', false, opts);
+    const csvLine = withDef.find((o) => o.line.line === 0 && !o.literal);
+    expect(csvLine).to.not.be.undefined;
+    expect(csvLine?.length).to.equal('csvinfile = data.csv;'.length);
+
+    const withoutDef = collectVariableOccurrences(idx, 'alter', true, opts);
+    expect(withoutDef.some((o) => !o.literal)).to.be.false;
+  });
 });

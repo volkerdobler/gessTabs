@@ -601,22 +601,28 @@ export interface VariableOccurrence {
 // `name` is only a member of (§9 Q2) — `findAllWordRangesInLine` can never
 // find these (there's no literal `name` text on that line at all), so
 // they're added separately from `model.references(name)`'s own
-// already-resolved, already-`locateInStatement`-anchored entries. Callers
-// building a rename edit MUST filter to `literal` occurrences only.
+// already-resolved, already-`locateInStatement`-anchored entries. Same
+// reasoning covers an `origin: 'external'` symbol's own "declaration" — the
+// CSVINFILE/SPSSINFILE/DATAFILE statement never literally mentions the raw
+// column's name — added below as one more non-literal entry per
+// `definitions` line, spanning the whole statement (P1.4). Callers building
+// a rename edit MUST filter to `literal` occurrences only — which already
+// excludes every non-literal entry this function adds, external
+// declarations included, so a rename can never touch the raw dataset name.
 export function collectVariableOccurrences(
   index: WorkspaceIndex,
   name: string,
-  excludeDefinitions = false
+  excludeDefinitions = false,
+  opts: BuildVariableModelOptions = {}
 ): VariableOccurrence[] {
-  const model = buildVariableModel(index);
+  const model = buildVariableModel(index, opts);
+  const sym = model.resolveAnywhere(name);
   const modelRefs = model.references(name);
   const refLineKeys = new Set(
     modelRefs.map((r) => `${r.line.file}:${r.line.line}`)
   );
   const defLineKeys = new Set(
-    (model.resolveAnywhere(name)?.definitions ?? []).map(
-      (d) => `${d.file}:${d.line}`
-    )
+    (sym?.definitions ?? []).map((d) => `${d.file}:${d.line}`)
   );
 
   const out: VariableOccurrence[] = [];
@@ -652,6 +658,17 @@ export function collectVariableOccurrences(
         literal: false,
       });
     });
+
+  if (!excludeDefinitions && sym?.origin === 'external') {
+    sym.definitions.forEach((d) => {
+      out.push({
+        line: d,
+        character: 0,
+        length: d.text.length,
+        literal: false,
+      });
+    });
+  }
 
   return out;
 }

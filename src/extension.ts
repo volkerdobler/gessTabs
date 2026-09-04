@@ -17,6 +17,7 @@ import {
   primaryDefinitions,
 } from './core/variableModel';
 import { blankComments, FileReader, ResolvedLine } from './core/includeGraph';
+import { ExternalNameSource } from './core/externalNames';
 import { toLogicalStatements } from './core/statements';
 import { classifyStatement } from './core/variableStatements';
 import {
@@ -100,13 +101,13 @@ export function activate(context: vscode.ExtensionContext) {
         language: 'gesstabs',
         scheme: 'file',
       },
-      new GesstabsReferenceProvider()
+      new GesstabsReferenceProvider(externalNamesManager)
     )
   );
 
   context.subscriptions.push(
     vscode.languages.registerWorkspaceSymbolProvider(
-      new GessTabsWorkspaceSymbolProvider()
+      new GessTabsWorkspaceSymbolProvider(externalNamesManager)
     )
   );
 
@@ -116,7 +117,7 @@ export function activate(context: vscode.ExtensionContext) {
         language: 'gesstabs',
         scheme: 'file',
       },
-      new GesstabsRenameProvider()
+      new GesstabsRenameProvider(externalNamesManager)
     )
   );
 
@@ -470,6 +471,8 @@ class GesstabsDefintionProvider implements vscode.DefinitionProvider {
 // Allow the user to see all the source code locations where a certain
 // variable / function/ method / symbol is being used.
 class GesstabsReferenceProvider implements vscode.ReferenceProvider {
+  constructor(private readonly externalNames?: GesstabsExternalNamesManager) {}
+
   public async provideReferences(
     document: vscode.TextDocument,
     position: vscode.Position,
@@ -499,6 +502,13 @@ class GesstabsReferenceProvider implements vscode.ReferenceProvider {
       makeWorkspaceReader(document),
       { conditionalsAllActive: true }
     );
+    // externalNames (P1.4): finds every literal usage of a raw dataset
+    // column too, plus (with includeDeclaration) the CSVINFILE/SPSSINFILE/
+    // DATAFILE line that names it, same as go-to-definition.
+    const externalSources = this.externalNames
+      ? await this.externalNames.sourcesFor(document)
+      : [];
+    if (token && token.isCancellationRequested) return null;
     // Unlike rename, "Find All References" keeps non-literal occurrences too
     // (§9 Q2: a numeric-suffix `‹a› TO ‹b›` range member with no text of its
     // own) — pointing at the range phrase is still a genuine, useful usage
@@ -506,7 +516,8 @@ class GesstabsReferenceProvider implements vscode.ReferenceProvider {
     return collectVariableOccurrences(
       index,
       word,
-      !context.includeDeclaration
+      !context.includeDeclaration,
+      { externalNames: externalSources }
     ).map(
       ({ line, character, length }) =>
         new vscode.Location(
@@ -523,6 +534,8 @@ class GesstabsReferenceProvider implements vscode.ReferenceProvider {
 // Allow the user to rename a variable everywhere it's used across the
 // workspace's resolved INCLUDE graph.
 class GesstabsRenameProvider implements vscode.RenameProvider {
+  constructor(private readonly externalNames?: GesstabsExternalNamesManager) {}
+
   public async provideRenameEdits(
     document: vscode.TextDocument,
     position: vscode.Position,
@@ -552,13 +565,34 @@ class GesstabsRenameProvider implements vscode.RenameProvider {
       makeWorkspaceReader(document),
       { conditionalsAllActive: true }
     );
+
+    // externalNames (P1.4): a raw dataset column is never a rename
+    // target — the name lives in the data file itself, and this
+    // extension has no way to rename an actual column there. Renaming
+    // only its script occurrences would silently leave the script
+    // referring to a name no real column matches, so refuse outright
+    // rather than produce a half-correct edit. (An already-`declared`
+    // symbol — one a real in-script declaration has re-defined, see
+    // primaryDefinitions — renames normally; only a still-purely-
+    // `external` one is blocked.)
+    const externalSources = this.externalNames
+      ? await this.externalNames.sourcesFor(document)
+      : [];
+    if (token && token.isCancellationRequested) return null;
+    const model = buildVariableModel(index, { externalNames: externalSources });
+    if (model.resolveAnywhere(word)?.origin === 'external') {
+      throw new Error(
+        `"${word}" ist eine Rohvariable aus der Datenquelle (CSVINFILE/SPSSINFILE/DATAFILE) — sie kann hier nicht umbenannt werden, da der Name in der Datendatei selbst nicht mit geändert wird.`
+      );
+    }
+
     // Non-literal occurrences (§9 Q2: a numeric-suffix `‹a› TO ‹b›` range
     // member with no text of its own — `character`/`length` span the whole
     // range phrase) must never be rename targets: there is no safe
     // substitution that wouldn't also corrupt the range's other endpoint.
-    const occurrences = collectVariableOccurrences(index, word, false).filter(
-      (o) => o.literal
-    );
+    const occurrences = collectVariableOccurrences(index, word, false, {
+      externalNames: externalSources,
+    }).filter((o) => o.literal);
     if (occurrences.length === 0) return null;
 
     const edit = new vscode.WorkspaceEdit();
@@ -708,6 +742,8 @@ class GesstabsDocumentSymbolProvider implements vscode.DocumentSymbolProvider {
 class GessTabsWorkspaceSymbolProvider
   implements vscode.WorkspaceSymbolProvider
 {
+  constructor(private readonly externalNames?: GesstabsExternalNamesManager) {}
+
   public async provideWorkspaceSymbols(
     query: string,
     token: vscode.CancellationToken
@@ -789,17 +825,52 @@ class GessTabsWorkspaceSymbolProvider
       conditionalsAllActive: true,
     });
     if (token && token.isCancellationRequested) return [];
-    const model = buildVariableModel(index);
+
+    // externalNames (P1.4): every entry program's data sources, unioned —
+    // a raw dataset column belongs in Ctrl+T too (workspace-wide, so
+    // there's no single "current document" to scope sourcesFor() to;
+    // getPrograms() covers every independent entry program instead, same
+    // reasoning as the file scan above).
+    let externalSources: ExternalNameSource[] = [];
+    if (this.externalNames) {
+      const programs = await this.externalNames.getPrograms(
+        vscode.window.activeTextEditor?.document.uri
+      );
+      const seen = new Set<string>();
+      externalSources = programs
+        .flatMap((prog) => prog.sources)
+        .filter((src) => {
+          const key = `${src.statement.file}:${src.statement.line}`;
+          if (seen.has(key)) return false;
+          seen.add(key);
+          return true;
+        });
+    }
+    if (token && token.isCancellationRequested) return [];
+
+    const model = buildVariableModel(index, { externalNames: externalSources });
     model.all().forEach((sym) => {
-      if (sym.origin !== 'declared' && sym.origin !== 'virtual') return;
+      if (
+        sym.origin !== 'declared' &&
+        sym.origin !== 'virtual' &&
+        sym.origin !== 'external'
+      )
+        return;
       primaryDefinitions(sym).forEach((d) => {
         // The declaring statement's own keyword (compute/singleq/
         // varfamily/…) rather than sym.kind: a bare COMPUTE's targetKind
         // is 'unknown' until something narrows it (design §3 — COMPUTE
         // doesn't say ALPHA/OPEN up front), which read as a bare
         // "unknown" container in the Ctrl+T list with nothing more
-        // useful to show.
-        const declKeyword = classifyStatement(d.statement)?.keyword;
+        // useful to show. An external symbol's "statement" is the
+        // CSVINFILE/SPSSINFILE/DATAFILE line — classifyStatement doesn't
+        // recognise it at all (it's not part of the §3 grammar), so name
+        // the container 'external' outright instead of falling through
+        // to the generic 'atomic'.
+        const declKeyword =
+          sym.origin === 'external'
+            ? 'external'
+            : classifyStatement(d.statement)?.keyword;
         push(
           vscode.SymbolKind.Variable,
           declKeyword ?? sym.kind,
