@@ -264,6 +264,13 @@ describe('conditionalsAllActive', () => {
   it('finds a definition and its uses inside an inactive #ifdef branch', () => {
     const files = {
       [p('main.tab')]: [
+        // #undefine (rather than leaving DRAFT unmentioned) makes it a
+        // confidently-known-but-unset switch — see TODO.md P1 / the
+        // "uncertain" describe block in includeGraph.spec.ts: a name
+        // never touched by #define/#undefine anywhere is ambiguous and
+        // keeps BOTH #ifdef/#else arms even without conditionalsAllActive,
+        // which isn't what this test is about.
+        '#undefine DRAFT',
         '#ifdef DRAFT',
         'variable a = 1;',
         'table t1 = #k by a;',

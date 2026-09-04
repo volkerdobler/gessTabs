@@ -54,6 +54,80 @@ describe('toLogicalStatements', () => {
     expect(out[0]).to.include({ file: 'a.tab', startLine: 0 });
     expect(out[1]).to.include({ file: 'a.tab', startLine: 1 });
   });
+
+  // A column-1 macro/preprocessor call (#name(...), #DOMACRO(...) & co.) is
+  // self-terminating at its own balanced ")" and, per the real reported
+  // case, must NOT be followed by a ";" — without this, the scan below
+  // would swallow every real statement up to the next accidental ";" it
+  // finds, corrupting all of them.
+  describe('a column-1 macro call ends at its own ")", not the next ";"', () => {
+    it('does not swallow the statements that follow it', () => {
+      const out = toLogicalStatements(
+        lines(
+          'a.tab',
+          '#makemulti2( f71_16mult f71_m1.16.1 f71_m2.16.1 )\ncompute x = 0;\ntext x = "y";'
+        )
+      );
+      expect(out.map((s) => s.text)).to.deep.equal([
+        '#makemulti2( f71_16mult f71_m1.16.1 f71_m2.16.1 )',
+        'compute x = 0;',
+        'text x = "y";',
+      ]);
+      expect(out[0].terminated).to.be.true;
+    });
+
+    it('leaves a (redundant) trailing ";" as its own harmless empty statement', () => {
+      // classifyStatement (variableStatements.ts) returns undefined for a
+      // lone ";" fragment — every consumer already guards on that, so this
+      // extra entry is inert, not a regression.
+      const out = toLogicalStatements(
+        lines('a.tab', '#mymacro( a b );\ncompute x = 0;')
+      );
+      expect(out.map((s) => s.text)).to.deep.equal([
+        '#mymacro( a b )',
+        ';',
+        'compute x = 0;',
+      ]);
+    });
+
+    it('tracks nested parens inside the call', () => {
+      const out = toLogicalStatements(
+        lines('a.tab', '#mymacro( (a b) c )\ncompute x = 0;')
+      );
+      expect(out[0].text).to.equal('#mymacro( (a b) c )');
+      expect(out[1].text).to.equal('compute x = 0;');
+    });
+
+    it('ignores parens inside a quoted argument', () => {
+      const out = toLogicalStatements(
+        lines('a.tab', '#domacro3( name, "a(b).csv" )\ncompute x = 0;')
+      );
+      expect(out[0].text).to.equal('#domacro3( name, "a(b).csv" )');
+      expect(out[1].text).to.equal('compute x = 0;');
+    });
+
+    it('tolerates leading indentation before the "#"', () => {
+      const out = toLogicalStatements(
+        lines('a.tab', '  #mymacro( a b )\ncompute x = 0;')
+      );
+      expect(out[0].text).to.equal('#mymacro( a b )');
+      expect(out[1].text).to.equal('compute x = 0;');
+    });
+
+    it('is a known limitation: a "#name(" sharing a line with a preceding statement is not recognized as column-1', () => {
+      // Matches the same "always a column-1 construct" convention the
+      // macro hover/expansion engine already assumes (macroExpansion.ts's
+      // own callStartRe) — real gessTabs scripts don't write it this way,
+      // so the old "scan for the next ;" behavior still applies here.
+      const out = toLogicalStatements(
+        lines('a.tab', 'compute a = 1; #mymacro( b )\ncompute c = 2;')
+      );
+      expect(out.map((s) => s.text)).to.deep.equal([
+        'compute a = 1;',
+        '#mymacro( b )\ncompute c = 2;',
+      ]);
+    });
+  });
 });
 
 describe('findLogicalStatement', () => {

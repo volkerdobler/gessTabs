@@ -328,6 +328,30 @@ export function findExpandDefinitions(
   return defs;
 }
 
+// A "#(\S+)" right after "#expand" — same shape as expandDefinitionRe's
+// own first capture, kept separate so callers can ask "is the cursor on
+// *this* token" without needing the rest of expandDefinitionRe's
+// end-of-line anchor (a definition line's value can run past the name).
+const expandDefinitionNameRe = /^\s*#expand\s+#(\S+)/i;
+
+// True when `charIndex` on `lineText` sits on the "#name" that this very
+// "#expand #name value" line itself defines — as opposed to a reference to
+// that name elsewhere (including inside the same line's own value, e.g. a
+// nested "#other" being substituted in). Hovering the name being declared
+// would only echo the value the line already says right there, which is
+// never useful — even though the same name may also be (re)defined on
+// another line elsewhere in the program.
+export function isExpandDefinitionNameAt(
+  lineText: string,
+  charIndex: number
+): boolean {
+  const m = lineText.match(expandDefinitionNameRe);
+  if (!m) return false;
+  const nameStart = m[0].length - m[1].length - 1; // position of the '#'
+  const nameEnd = m[0].length;
+  return charIndex >= nameStart && charIndex <= nameEnd;
+}
+
 // Finds a "#name" token at a given character offset, for resolving an
 // #EXPAND reference under the cursor. Does not require/consume any
 // following "(...)" — a macro call's own "#name(" is recognized

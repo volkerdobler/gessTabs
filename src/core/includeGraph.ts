@@ -169,11 +169,25 @@ interface ConditionalFrame {
   // branchPaths can tell "different arms of the same conditional" apart
   // from "two unrelated conditionals".
   groupId: number;
+  // True when this conditional could not be statically decided —
+  // #IF[N]EMPTY/#IF[N]EXIST(S) (never evaluated, see the module doc
+  // comment) or a plain #ifdef/#ifndef whose name(s) are never touched by
+  // any #define/#undefine anywhere in the reachable graph (TODO.md P1 —
+  // such a switch is routinely set from outside the analyzed script: a
+  // CLI -D flag, a different main*.tab variant, …). evaluateActive then
+  // keeps BOTH arms active regardless of #else, unlike the fixed-
+  // `conditionTrue: true` trick this replaced, which only ever kept the
+  // `#ifdef` arm — once `#else` flipped `inElse`, `!conditionTrue` made
+  // the `#else` arm inactive, silently dropping real content on that
+  // side (confirmed: `#ifempty "&x"` `a;` `#else` `b;` `#end` used to
+  // resolve to just `a;`).
+  uncertain?: boolean;
 }
 
 function evaluateActive(stack: ConditionalFrame[]): boolean {
   if (stack.length === 0) return true;
   const top = stack[stack.length - 1];
+  if (top.uncertain) return top.parentActive;
   const branchActive = top.inElse ? !top.conditionTrue : top.conditionTrue;
   return top.parentActive && branchActive;
 }
@@ -189,6 +203,19 @@ export function resolveIncludeGraph(
   if (options.externalDefines) {
     Array.from(options.externalDefines).forEach((name) => defines.define(name));
   }
+  // Skipped when this call already IS the all-active pass — collectKnownDefineNames
+  // (declared below — genuinely mutually recursive with this function, not
+  // just an ordering nit) makes exactly one such call itself with
+  // conditionalsAllActive forced on, which is the recursion's base case.
+  const knownSwitchNames = allActive
+    ? undefined
+    : new Set([
+        // eslint-disable-next-line no-use-before-define
+        ...collectKnownDefineNames(entryFile, readFile, options),
+        ...Array.from(options.externalDefines ?? []).map((n) =>
+          n.toLowerCase()
+        ),
+      ]);
 
   const order: ResolvedLine[] = [];
   const files: string[] = [];
@@ -282,29 +309,38 @@ export function resolveIncludeGraph(
             const argEnd = conds[di + 1]?.index ?? text.length;
             const argText = text.slice(d.index + d.text.length, argEnd);
             const tok = d.text.toLowerCase();
-            let conditionTrue: boolean;
+            let conditionTrue = true;
+            let uncertain = false;
             if (allActive) {
               // #IFDEF/#IFNDEF stop gating entirely (see options doc).
-              conditionTrue = true;
-            } else if (tok === '#ifdef') {
-              conditionTrue = parseNameList(argText).some((n) =>
-                defines.isDefined(n)
-              );
-            } else if (tok === '#ifndef') {
-              conditionTrue = parseNameList(argText).some(
-                (n) => !defines.isDefined(n)
-              );
+            } else if (tok === '#ifdef' || tok === '#ifndef') {
+              const names = parseNameList(argText);
+              if (
+                knownSwitchNames &&
+                names.every((n) => !knownSwitchNames.has(n.toLowerCase()))
+              ) {
+                // None of these names is ever #define'd/#undefine'd
+                // anywhere in the reachable graph — nothing here can say
+                // whether the switch is set (see ConditionalFrame.uncertain).
+                uncertain = true;
+              } else {
+                conditionTrue =
+                  tok === '#ifdef'
+                    ? names.some((n) => defines.isDefined(n))
+                    : names.some((n) => !defines.isDefined(n));
+              }
             } else {
               // #IF[N]EMPTY / #IF[N]EXIST(S): not statically evaluated
               // (see module doc comment) — keep both branches active so
               // real definitions inside either arm are still found.
-              conditionTrue = true;
+              uncertain = true;
             }
             stack.push({
               conditionTrue,
               inElse: false,
               parentActive: frameActive,
               groupId: groupIdCounter.next,
+              uncertain,
             });
             groupIdCounter.next += 1;
           }
@@ -349,4 +385,54 @@ export function resolveIncludeGraph(
   visit(entryFile, 0);
 
   return { order, files, errors, scopes, branchPaths };
+}
+
+// Every name ever named in a `#define`/`#undefine` directive anywhere in
+// the reachable graph, ignoring #ifdef gating entirely (the same
+// "everything, regardless of branch" traversal `conditionalsAllActive`
+// already does) — used to tell "this #ifdef's name is a real switch this
+// script's authors use, just not set on this path" (confident) apart from
+// "nothing here ever touches this name at all" (uncertain — see
+// ConditionalFrame.uncertain). A conservative first cut: a name only ever
+// `#define`'d inside a branch whose own activity depends on that same name
+// is (rare, self-referential) still counted as known, since this pass
+// itself never gates on #ifdef state.
+function collectKnownDefineNames(
+  entryFile: string,
+  readFile: FileReader,
+  options: IncludeGraphOptions
+): Set<string> {
+  // A `#define`/`#undefine` line is consumed by the resolver the same way
+  // an `#ifdef`/`#else`/`#end` directive line is — it never reaches
+  // `order` at all (see IncludeGraphResult.branchPaths' doc comment) — so
+  // scanning `order` here would always come back empty. Re-reading every
+  // file `conditionalsAllActive` already proved reachable and scanning
+  // its raw lines directly (still comment/string-scope-aware, still
+  // ignoring #ifdef nesting entirely — this is deliberately more
+  // permissive than the real resolution) is what actually finds them.
+  const names = new Set<string>();
+  const full = resolveIncludeGraph(entryFile, readFile, {
+    ...options,
+    conditionalsAllActive: true,
+  });
+  full.files.forEach((file) => {
+    const lines = readFile(file);
+    if (!lines) return;
+    const scope = new Scope(makeScopeDoc(lines) as any);
+    lines.forEach((text, i) => {
+      if (text.length === 0) return;
+      if (!scope.isNotInComment(i, text.search(/\S/))) return;
+      // Lower-cased: this is a "is some real switch spelled anything like
+      // this known at all" signal, not the real (default case-sensitive,
+      // #ignorecase-aware) match `DefineSet.isDefined` performs — without
+      // this, a `#define xyz` + later `#ifdef XYZ` (case mismatch, real
+      // gessTabs: confidently NOT the same switch) would wrongly read as
+      // "xyz is a total unknown", not "known, just doesn't match here".
+      const d = text.match(defineRe);
+      if (d) names.add(d[1].toLowerCase());
+      const u = text.match(undefineRe);
+      if (u) names.add(u[1].toLowerCase());
+    });
+  });
+  return names;
 }

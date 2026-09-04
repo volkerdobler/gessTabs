@@ -25,7 +25,6 @@ import {
   ExternalNamesIO,
   ExternalNameSource,
   findDataSourceStatements,
-  resolveExternalNames,
 } from '../core/externalNames';
 import {
   EntryProgram,
@@ -250,35 +249,42 @@ export class GesstabsExternalNamesManager {
       }
 
       const file = normalizePath(document.uri.fsPath);
-      const scope = new Scope(document);
-      const order = documentOrder(document).filter((rl) => {
-        const col = rl.text.search(/\S/);
-        return col === -1 ? false : scope.isNotInComment(rl.line, col);
-      });
-
       const diagnostics: vscode.Diagnostic[] = [];
 
-      resolveExternalNames(
-        findDataSourceStatements(order),
-        this.bytesIO
-      ).forEach((src) => {
-        if (src.names !== 'unresolved') return;
-        const { text } = document.lineAt(src.statement.line);
-        const from = Math.max(0, text.search(/\S/));
-        const d = new vscode.Diagnostic(
-          new vscode.Range(
-            src.statement.line,
-            from,
-            src.statement.line,
-            text.length
-          ),
-          src.reason ?? 'Datenquelle nicht lesbar.',
-          vscode.DiagnosticSeverity.Warning
-        );
-        d.source = 'gesstabs';
-        d.code = 'data-source-unreadable';
-        diagnostics.push(d);
-      });
+      // `sourcesFor` is built on resolveIncludeGraph's #define/#ifdef-gated
+      // `order` (buildEntryPrograms -> resolveIncludeGraph, no
+      // conditionalsAllActive — exactly the branch a real build would
+      // compile), unlike a raw per-line dump of the document. Using that
+      // here (instead of re-scanning documentOrder(document) blind to
+      // #ifdef state, as this used to) matters concretely: a data-source
+      // statement sitting in an #else arm that #define makes inactive
+      // (`#define SPSSfile` / `#ifdef SPSSfile` ... `#else` `datafile =
+      // "*cmpl_base.dat";` ... `#end`) must never surface a diagnostic —
+      // it plays no role in this build at all. Filtered to `file` since
+      // this collection is per-document; `sourcesFor` itself unions every
+      // owning program's sources (which can span other included files).
+      const externalSources = await this.sourcesFor(document);
+      externalSources
+        .filter(
+          (src) => src.statement.file === file && src.names === 'unresolved'
+        )
+        .forEach((src) => {
+          const { text } = document.lineAt(src.statement.line);
+          const from = Math.max(0, text.search(/\S/));
+          const d = new vscode.Diagnostic(
+            new vscode.Range(
+              src.statement.line,
+              from,
+              src.statement.line,
+              text.length
+            ),
+            src.reason ?? 'Datenquelle nicht lesbar.',
+            vscode.DiagnosticSeverity.Warning
+          );
+          d.source = 'gesstabs';
+          d.code = 'data-source-unreadable';
+          diagnostics.push(d);
+        });
 
       const programs = await this.getPrograms(document.uri);
       programs.forEach((prog) => {
@@ -311,7 +317,6 @@ export class GesstabsExternalNamesManager {
       // noise. System-variable redeclaration is a pure syntax check,
       // independent of any of that, so it always runs.
       const owningPrograms = programsForFile(programs, file);
-      const externalSources = await this.sourcesFor(document);
       const hasUnresolvedSource = externalSources.some(
         (s) => s.names === 'unresolved'
       );

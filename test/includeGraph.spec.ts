@@ -136,17 +136,30 @@ describe('resolveIncludeGraph', () => {
     expect(result.files.length).to.be.lessThan(depth);
   });
 
-  it('respects #ifdef / #else / #end', () => {
-    const reader = makeReader({
-      [p('main.tab')]:
-        '#ifdef a4\nvariable landscape = 1;\n#else\nvariable portrait = 1;\n#end',
-    });
-    const withoutDefine = resolveIncludeGraph(p('main.tab'), reader);
+  it('respects #ifdef / #else / #end once the switch is confidently known', () => {
+    const ifdefElse =
+      '#ifdef a4\nvariable landscape = 1;\n#else\nvariable portrait = 1;\n#end';
+    // `#undefine a4` (never preceded by a #define) makes "a4" a known-but-
+    // unset switch — same as a real #undefine reported by the maintainer
+    // (TODO.md P1) — as opposed to a name never mentioned at all (see the
+    // "uncertain" describe block below). A separate reader from the
+    // externalDefines case below: an in-script `#undefine a4` would
+    // otherwise cancel out that seeded external define (correctly, per
+    // real program-order semantics — just not what that assertion means
+    // to test).
+    const withoutDefine = resolveIncludeGraph(
+      p('main.tab'),
+      makeReader({ [p('main.tab')]: `#undefine a4\n${ifdefElse}` })
+    );
     expect(texts(withoutDefine)).to.deep.equal(['variable portrait = 1;']);
 
-    const withDefine = resolveIncludeGraph(p('main.tab'), reader, {
-      externalDefines: ['a4'],
-    });
+    // externalDefines alone (no in-script mention at all) already counts
+    // as "known" — see resolveIncludeGraph's knownSwitchNames.
+    const withDefine = resolveIncludeGraph(
+      p('main.tab'),
+      makeReader({ [p('main.tab')]: ifdefElse }),
+      { externalDefines: ['a4'] }
+    );
     expect(texts(withDefine)).to.deep.equal(['variable landscape = 1;']);
   });
 
@@ -164,10 +177,17 @@ describe('resolveIncludeGraph', () => {
   });
 
   it('supports #ifdef [ a b c ] as OR', () => {
-    const reader = makeReader({
-      [p('main.tab')]: '#ifdef [ def1 def2 def3 ]\ncompute xx = 1;\n#end',
+    const body = '#ifdef [ def1 def2 def3 ]\ncompute xx = 1;\n#end';
+    // Known-but-unset (own reader — see the #ifdef/#else test above for
+    // why this can't share a reader with the externalDefines case below).
+    const known = makeReader({
+      [p(
+        'main.tab'
+      )]: `#undefine def1\n#undefine def2\n#undefine def3\n${body}`,
     });
-    expect(texts(resolveIncludeGraph(p('main.tab'), reader))).to.deep.equal([]);
+    expect(texts(resolveIncludeGraph(p('main.tab'), known))).to.deep.equal([]);
+
+    const reader = makeReader({ [p('main.tab')]: body });
     expect(
       texts(
         resolveIncludeGraph(p('main.tab'), reader, {
@@ -178,15 +198,23 @@ describe('resolveIncludeGraph', () => {
   });
 
   it('supports nested #ifdef as AND', () => {
-    const reader = makeReader({
-      [p('main.tab')]:
-        '#ifdef a4\n#ifdef quer\nvariable a4quer = 1;\n#end\n#end',
-    });
+    const body = '#ifdef a4\n#ifdef quer\nvariable a4quer = 1;\n#end\n#end';
+    // "quer" needs to be known-but-unset here (not just never mentioned)
+    // for this to demonstrate AND-ness at all — otherwise the inner
+    // #ifdef would be uncertain and include its content regardless of
+    // "a4" alone. Own reader: an in-script #undefine would cancel out the
+    // externalDefines seed of "quer" in the second assertion below.
     expect(
       texts(
-        resolveIncludeGraph(p('main.tab'), reader, { externalDefines: ['a4'] })
+        resolveIncludeGraph(
+          p('main.tab'),
+          makeReader({ [p('main.tab')]: `#undefine quer\n${body}` }),
+          { externalDefines: ['a4'] }
+        )
       )
     ).to.deep.equal([]);
+
+    const reader = makeReader({ [p('main.tab')]: body });
     expect(
       texts(
         resolveIncludeGraph(p('main.tab'), reader, {
@@ -300,6 +328,82 @@ describe('resolveIncludeGraph', () => {
     ]);
   });
 
+  it('keeps BOTH arms of #ifempty/#ifexist when they have an #else (fixed 2026-09-05)', () => {
+    // The fixed-conditionTrue trick this used to rely on only ever kept
+    // the "if" arm once #else flipped inElse (!true = false) — a real,
+    // previously undetected gap: no existing test exercised #ifempty/
+    // #ifexist together with #else, only standalone.
+    const reader = makeReader({
+      [p('main.tab')]:
+        '#ifempty "&2"\nvariable if_true = 1;\n#else\nvariable if_false = 1;\n#end',
+    });
+    expect(texts(resolveIncludeGraph(p('main.tab'), reader))).to.deep.equal([
+      'variable if_true = 1;',
+      'variable if_false = 1;',
+    ]);
+  });
+
+  describe('an #ifdef/#ifndef name never touched by #define/#undefine anywhere (uncertain)', () => {
+    // TODO.md P1: such a switch is routinely set from outside the
+    // analyzed script (a CLI -D flag, a different main*.tab variant, a
+    // customer-specific include the workspace doesn't have) — nothing
+    // here can say whether it's set, so both arms are kept instead of
+    // silently defaulting to "not defined".
+    it('keeps both arms of #ifdef/#else', () => {
+      const reader = makeReader({
+        [p('main.tab')]:
+          '#ifdef neverMentioned\nvariable if_true = 1;\n#else\nvariable if_false = 1;\n#end',
+      });
+      expect(texts(resolveIncludeGraph(p('main.tab'), reader))).to.deep.equal([
+        'variable if_true = 1;',
+        'variable if_false = 1;',
+      ]);
+    });
+
+    it('keeps both arms of #ifndef/#else too', () => {
+      const reader = makeReader({
+        [p('main.tab')]:
+          '#ifndef neverMentioned\nvariable if_true = 1;\n#else\nvariable if_false = 1;\n#end',
+      });
+      expect(texts(resolveIncludeGraph(p('main.tab'), reader))).to.deep.equal([
+        'variable if_true = 1;',
+        'variable if_false = 1;',
+      ]);
+    });
+
+    it('a single unknown name in an OR list makes the whole thing uncertain', () => {
+      const reader = makeReader({
+        [p('main.tab')]:
+          '#ifdef [ neverMentioned ]\nx = 1;\n#else\ny = 1;\n#end',
+      });
+      expect(texts(resolveIncludeGraph(p('main.tab'), reader))).to.deep.equal([
+        'x = 1;',
+        'y = 1;',
+      ]);
+    });
+
+    it('is unaffected once #define/#undefine mentions the name anywhere, even without an #else', () => {
+      const reader = makeReader({
+        [p('main.tab')]: '#define known\n#ifdef known\nx = 1;\n#end',
+      });
+      expect(texts(resolveIncludeGraph(p('main.tab'), reader))).to.deep.equal([
+        'x = 1;',
+      ]);
+    });
+
+    it('mixing one known name with an unknown one in an OR list still resolves confidently', () => {
+      // A conservative first cut (TODO.md P1): only a list where EVERY
+      // name is unknown is treated as uncertain.
+      const reader = makeReader({
+        [p('main.tab')]:
+          '#undefine known\n#ifdef [ known neverMentioned ]\nx = 1;\n#else\ny = 1;\n#end',
+      });
+      expect(texts(resolveIncludeGraph(p('main.tab'), reader))).to.deep.equal([
+        'y = 1;',
+      ]);
+    });
+  });
+
   it('handles a single-line #ifnempty … #else … #end without leaking a frame', () => {
     // The inline #END must close the inline #IFNEMPTY, so the enclosing
     // #ifdef block still ends where its own #end says — otherwise every
@@ -335,6 +439,8 @@ describe('resolveIncludeGraph', () => {
   it('handles a single-line #ifdef … #end and pairs two closers on one line', () => {
     const reader = makeReader({
       [p('main.tab')]: [
+        '#undefine A',
+        '#undefine B',
         '#ifdef A x-inside #end',
         'after;',
         '#ifdef A',
@@ -373,6 +479,12 @@ describe('resolveIncludeGraph', () => {
     it('keeps both branches of #ifdef/#ifndef/#else and follows all INCLUDEs', () => {
       const reader = makeReader({
         [p('main.tab')]: [
+          // Known-but-unset (see the "honors #define/#undefine" test) so
+          // the "Normal" resolution below is confidently resolved, not
+          // itself already both-branches-kept — that's what the second,
+          // conditionalsAllActive assertion is specifically testing.
+          '#undefine WIN',
+          '#undefine DEBUG',
           '#ifdef WIN',
           'INCLUDE = win.inc;',
           '#else',
@@ -405,6 +517,7 @@ describe('resolveIncludeGraph', () => {
     it('surfaces a #MACRO / #EXPAND defined only in an inactive #ifdef branch', () => {
       const reader = makeReader({
         [p('main.tab')]: [
+          '#undefine PowerChart',
           '#ifdef PowerChart',
           '#macro #fillSlide39 ( &a &b )',
           'table = x by &a;',

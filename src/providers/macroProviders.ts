@@ -17,6 +17,7 @@ import {
   findExpandDefinitions,
   resolveExpandValue,
   findHashNameAt,
+  isExpandDefinitionNameAt,
   isReservedDirectiveKeyword,
   MacroDefinition,
 } from '../core/macroExpansion';
@@ -228,6 +229,17 @@ export class GesstabsMacroHoverProvider implements vscode.HoverProvider {
         if (!hashName || isReservedDirectiveKeyword(hashName)) {
           printDebugMessage(
             `gesstabs: hover - no "#name(...)" call or "#name" reference found at ${position.line}:${position.character} on line "${lineText}"`
+          );
+          return null;
+        }
+
+        // Hovering the "#name" that THIS "#expand #name value" line itself
+        // declares would just echo the value already sitting right there —
+        // not useful, even if the same name also has another definition
+        // earlier or later in the program.
+        if (isExpandDefinitionNameAt(lineText, position.character)) {
+          printDebugMessage(
+            `gesstabs: hover - "#${hashName}" at ${position.line}:${position.character} is the name this "#expand" line itself defines, not a reference, skipping`
           );
           return null;
         }

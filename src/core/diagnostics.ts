@@ -845,6 +845,45 @@ export function findEnclosingBlockCommentGroup(
   });
 }
 
+// --- 11. Malformed statements the classifier already detected -------------
+// variableStatements.ts's classifier already records a good number of
+// clearly-broken statement shapes via `ClassifiedStatement.malformed?:
+// string` (`‹keyword›: no '='`, `‹keyword›: no target name`, for
+// SINGLEQ/MAKESINGLE/VARIABLES/MULTIFROMSTRING/VARFAMILY/GROUPS/INTERVALS/
+// VARGROUP/INDEXVAR/the statistical creators/DATA — see collectNames'
+// callers) — but until now nothing read that field, so e.g. `groups
+// sysmiss;` (missing its `=` and body entirely) compiled with no squiggle
+// at all, even though it's a real compiler error. Document-scoped like the
+// rest of this file: just toLogicalStatements + classifyStatement per
+// statement, no workspace model needed.
+export function checkMalformedStatements(
+  lines: string[],
+  isNotInComment: IsNotInComment
+): DiagnosticIssue[] {
+  const issues: DiagnosticIssue[] = [];
+  const statements = toLogicalStatements(
+    toClassifierOrder(lines, isNotInComment)
+  );
+
+  statements.forEach((stmt) => {
+    const cls = classifyStatement(stmt.text);
+    if (!cls || !cls.malformed) return;
+    const loc = locateInStatement(stmt, 0);
+    const keywordMatch = stmt.text.match(/^\s*(\S+)/);
+    const length = keywordMatch ? keywordMatch[1].length : 1;
+    issues.push({
+      line: loc.line.line,
+      startChar: loc.character,
+      length,
+      severity: 'error',
+      message: `This statement is malformed (${cls.malformed}) and would fail to compile.`,
+      code: 'malformed-statement',
+    });
+  });
+
+  return issues;
+}
+
 export function computeDiagnostics(
   lines: string[],
   isNotInComment: IsNotInComment,
@@ -864,5 +903,6 @@ export function computeDiagnostics(
     ...checkDefineCaseMismatch(lines, isNotInComment),
     ...checkParenBalance(lines, isNormalScope),
     ...checkNestedBlockComments(lines),
+    ...checkMalformedStatements(lines, isNotInComment),
   ];
 }

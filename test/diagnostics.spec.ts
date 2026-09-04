@@ -16,6 +16,7 @@ import {
   checkNestedBlockComments,
   scanBlockCommentGroups,
   findEnclosingBlockCommentGroup,
+  checkMalformedStatements,
   computeDiagnostics,
 } from '../src/core/diagnostics';
 
@@ -624,6 +625,39 @@ describe('findEnclosingBlockCommentGroup', () => {
 
   it('returns undefined outside any group', () => {
     expect(findEnclosingBlockCommentGroup(['x;'], 0, 0)).to.be.undefined;
+  });
+});
+
+describe('checkMalformedStatements', () => {
+  it('flags GROUPS missing its "=" and body entirely (the reported example)', () => {
+    const lines = ['groups sysmiss;'];
+    const issues = checkMalformedStatements(lines, alwaysNotInComment);
+    expect(issues).to.have.length(1);
+    expect(issues[0]).to.deep.include({
+      line: 0,
+      startChar: 0,
+      length: 'groups'.length,
+      severity: 'error',
+      code: 'malformed-statement',
+    });
+    expect(issues[0].message).to.include('groups: no =');
+  });
+
+  it('flags a VARFAMILY with no target name', () => {
+    const lines = ['varfamily = a b c;'];
+    const issues = checkMalformedStatements(lines, alwaysNotInComment);
+    expect(issues).to.have.length(1);
+    expect(issues[0].message).to.include('varfamily: no target name');
+  });
+
+  it('does not flag a well-formed statement', () => {
+    const lines = ['groups g = | "x" : v eq 1;'];
+    expect(checkMalformedStatements(lines, alwaysNotInComment)).to.be.empty;
+  });
+
+  it('does not flag an unrecognized keyword — classifyStatement never sets malformed for kind "other"', () => {
+    const lines = ['foobar xyz;'];
+    expect(checkMalformedStatements(lines, alwaysNotInComment)).to.be.empty;
   });
 });
 

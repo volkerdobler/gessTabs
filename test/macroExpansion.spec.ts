@@ -10,6 +10,7 @@ import {
   stripExpandComments,
   resolveExpandValue,
   findHashNameAt,
+  isExpandDefinitionNameAt,
   isReservedDirectiveKeyword,
   MacroSourceLine,
 } from '../src/core/macroExpansion';
@@ -459,5 +460,28 @@ describe('findHashNameAt', () => {
 
   it('returns undefined when the cursor is not on a #token', () => {
     expect(findHashNameAt('variable a = 1;', 3)).to.be.undefined;
+  });
+});
+
+describe('isExpandDefinitionNameAt', () => {
+  const line = '#expand #kopf kopr1 kopf2 kopf3';
+
+  it('is true anywhere on the name this line defines', () => {
+    // "#kopf" spans indices 8-13
+    expect(isExpandDefinitionNameAt(line, 8)).to.be.true;
+    expect(isExpandDefinitionNameAt(line, 10)).to.be.true;
+    expect(isExpandDefinitionNameAt(line, 13)).to.be.true;
+  });
+
+  it('is false on the value words that follow, even a similarly-named one', () => {
+    expect(isExpandDefinitionNameAt(line, 20)).to.be.false; // "kopf2"
+  });
+
+  it('is false on a line that is not an "#expand" definition at all', () => {
+    expect(isExpandDefinitionNameAt('title "#kopf";', 8)).to.be.false;
+  });
+
+  it('is true even when the definition value is empty', () => {
+    expect(isExpandDefinitionNameAt('#expand #kopf', 10)).to.be.true;
   });
 });

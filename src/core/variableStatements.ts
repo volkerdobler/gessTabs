@@ -41,6 +41,7 @@ export type StatementKind =
   | 'makesingles'
   | 'assocvar'
   | 'clonevar'
+  | 'labelvalue'
   | 'compute'
   | 'if-then'
   | 'varfamily'
@@ -617,6 +618,24 @@ function classifyVariablesBlock(tokens: Token[]): ClassifiedStatement {
   return withDefines(cls, spans, 'declaration', 'atomic');
 }
 
+// SINGLEFROMSTRING = <newvar> = <alphavar>;  — a documented synonym for
+// LABELVALUE (Anhang > (Kunden-)Spezifika), but its own syntax box shows a
+// leading bare "=" right after the keyword before the usual
+// `<target> = <source>` shape — unconfirmed against a real example, so a
+// script that omits it (writing it exactly like LABELVALUE) is tolerated
+// too.
+function classifySingleFromString(tokens: Token[]): ClassifiedStatement {
+  const hasLeadingEq = tokens[1]?.type === 'op' && tokens[1].value === '=';
+  const adjusted = hasLeadingEq ? [tokens[0], ...tokens.slice(2)] : tokens;
+  return classifyTargetEqSources(
+    adjusted,
+    'labelvalue',
+    'singlefromstring',
+    'declaration',
+    'atomic'
+  );
+}
+
 function classifyMultiFromString(tokens: Token[]): ClassifiedStatement {
   // MULTIFROMSTRING [DELIMITED d] [DECIMALS c] v = alfavar;
   // target must pre-exist as a FAMILYVAR → an assignment, not a new decl.
@@ -867,6 +886,24 @@ function classifyIf(tokens: Token[], keyword: string): ClassifiedStatement {
   const cls = base('if-then', keyword);
   const thenIdx = tokens.findIndex((t) => kw(t) === 'then');
   if (thenIdx === -1) {
+    // IF <condition1> ASSERT <condition2> [TITLE "<text>"];  — a THEN-less
+    // variant (Anhang > (Kunden-)Spezifika). Both conditions are real
+    // ifKnown-mode expressions; ASSERT/TITLE are structural keywords, and
+    // TITLE's text is a plain error-message string (never a name) — none
+    // of the three should ever be swept in as a phantom reference the way
+    // a blind full-statement scan would.
+    const assertIdx = tokens.findIndex((t) => kw(t) === 'assert');
+    if (assertIdx !== -1) {
+      const titleIdx = tokens.findIndex(
+        (t, i) => i > assertIdx && kw(t) === 'title'
+      );
+      const cond2End = titleIdx === -1 ? tokens.length : titleIdx;
+      cls.references = [
+        ...collectExprRefs(tokens, 1, assertIdx, 'ifKnown'),
+        ...collectExprRefs(tokens, assertIdx + 1, cond2End, 'ifKnown'),
+      ];
+      return cls;
+    }
     cls.references = collectExprRefs(tokens, 1, tokens.length, 'ifKnown');
     return cls;
   }
@@ -942,14 +979,31 @@ function classifyRefStatement(
   return cls;
 }
 
+// Structural keywords that can appear inside a TABLE/OVERVIEW/XOVERVIEW
+// statement's own grammar (not just the simple `= head BY axis;` shape —
+// e.g. an `ADD`/cell-content clause's own `FILTER [range] IN var | BY …`)
+// and must never be swept in as a name reference alongside `by`. Not a
+// full model of that clause's grammar (still TODO — design doc §4 only
+// covers the plain head/axis row); just the keywords confirmed to appear
+// there in a real reported false-positive.
+const TABLE_CLAUSE_KEYWORDS = new Set(['by', 'filter', 'in']);
+
 function classifyTable(tokens: Token[], keyword: string): ClassifiedStatement {
-  // TABLE = <head> BY <axis> [BY …];  — every name is `always`.
+  // TABLE = <head> BY <axis> [BY …];  — every name is `always`. Also seen
+  // here in practice (not yet its own grammar, see TABLE_CLAUSE_KEYWORDS):
+  // an `ADD`/cell-content clause with its own `FILTER`/`IN`/range-bracket/
+  // `|`-separated sub-grammar and a `#name(...)` macro/#expand call.
   const cls = base('table', keyword);
   const eq = topLevelEq(tokens);
   if (eq === -1) return cls;
   for (let i = eq + 1; i < tokens.length; i++) {
     const t = tokens[i];
-    if (kw(t) === 'by') continue;
+    if (TABLE_CLAUSE_KEYWORDS.has(kw(t))) continue;
+    // A macro/#expand call's own "#name" is never itself a variable name
+    // (gessTabs names never start with "#") — its arguments (the tokens
+    // inside its "(...)") are unaffected by this and still walk through
+    // the loop normally, becoming references just like any other name.
+    if (t.type === 'word' && t.value.startsWith('#')) continue;
     if (isWordOrString(t))
       cls.references.push({ span: spanOf(t), mode: 'always' });
   }
@@ -1065,6 +1119,18 @@ function classifyDispatch(
       'declaration',
       'unknown'
     );
+  }
+  if (keyword === 'labelvalue') {
+    return classifyTargetEqSources(
+      tokens,
+      'labelvalue',
+      keyword,
+      'declaration',
+      'atomic'
+    );
+  }
+  if (keyword === 'singlefromstring') {
+    return classifySingleFromString(tokens);
   }
 
   // --- multi-response constructs -------------------------------

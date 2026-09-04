@@ -41,6 +41,28 @@ describe('classifyStatement — definition forms (§3)', () => {
     expect(defNames(s)).to.deep.equal(['neu']);
   });
 
+  it('LABELVALUE numvar = src; declares numvar and references src', () => {
+    const s = c('labelvalue NumberVar = alphatest;');
+    expect(s.kind).to.equal('labelvalue');
+    expect(defNames(s)).to.deep.equal(['numbervar']);
+    expect(s.defKind).to.equal('declaration');
+    expect(s.targetKind).to.equal('atomic');
+    expect(refNames(s)).to.deep.equal(['alphatest']);
+  });
+
+  it("SINGLEFROMSTRING = newvar = alphavar; (manual's doubled =) declares newvar", () => {
+    const s = c('singlefromstring = newvar = alphavar;');
+    expect(s.kind).to.equal('labelvalue');
+    expect(defNames(s)).to.deep.equal(['newvar']);
+    expect(refNames(s)).to.deep.equal(['alphavar']);
+  });
+
+  it('SINGLEFROMSTRING newvar = alphavar; (without the doubled =) still works', () => {
+    const s = c('singlefromstring newvar = alphavar;');
+    expect(defNames(s)).to.deep.equal(['newvar']);
+    expect(refNames(s)).to.deep.equal(['alphavar']);
+  });
+
   it('VARIABLES a b c = … declares every name, not just the last', () => {
     const s = c('variables a b c = 1 2;');
     expect(defNames(s)).to.deep.equal(['a', 'b', 'c']);
@@ -93,6 +115,20 @@ describe('classifyStatement — definition forms (§3)', () => {
   it('IF … THEN … ELSE … collects both branch targets', () => {
     const s = c('if a eq 1 then x = 1 else y = 2;');
     expect(defNames(s)).to.have.members(['x', 'y']);
+  });
+
+  it('IF cond1 ASSERT cond2 TITLE "…"; — both conditions ifKnown, ASSERT/TITLE never phantom refs', () => {
+    const s = c(
+      'if hatProdukt eq 1 assert kenntProdukt eq 1 title "muss kennen";'
+    );
+    expect(defNames(s)).to.be.empty;
+    expect(refNames(s)).to.deep.equal(['hatprodukt', 'kenntprodukt']);
+    expect(s.references.every((r) => r.mode === 'ifKnown')).to.be.true;
+  });
+
+  it('IF cond1 ASSERT cond2; — no TITLE clause, still just the two conditions', () => {
+    const s = c('if a eq 1 assert b eq 2;');
+    expect(refNames(s)).to.deep.equal(['a', 'b']);
   });
 
   it('VARFAMILY f = a b c — family decl, members are always-mode refs', () => {
@@ -181,6 +217,17 @@ describe('classifyStatement — references & current variable (§4)', () => {
     const s = c('table = a b by c;');
     expect(s.kind).to.equal('table');
     expect(refNames(s)).to.deep.equal(['a', 'b', 'c']);
+  });
+
+  it('OVERVIEW ADD = … FILTER [range] IN v | BY #expand(...) — clause keywords and the macro name are not phantom refs (reported example)', () => {
+    const s = c(
+      'overview add = 1 1 filter [11:19] in f13mult | by #meantest(f71_m1.1.1 f71_m1.2.1);'
+    );
+    expect(s.kind).to.equal('table');
+    // "filter"/"in"/"by" are clause keywords, "#meantest" is the macro
+    // call itself — none of those are variable references. f13mult and
+    // the macro's own arguments still are.
+    expect(refNames(s)).to.deep.equal(['f13mult', 'f71_m1.1.1', 'f71_m1.2.1']);
   });
 
   it('WEIGHTCELLS [AUTOALIGN] v = … references v, creates nothing', () => {
@@ -275,9 +322,7 @@ describe('classifyStatement — ranges & overcodes', () => {
   });
 
   it('a reference-position TO whose endpoints share no numeric-suffix pattern keeps just the two endpoints (§9 Q2 — the model resolves the rest)', () => {
-    const s = c(
-      'vartext esseWagnerMenge to esseHandelsmarkeMenge = "xxx";'
-    );
+    const s = c('vartext esseWagnerMenge to esseHandelsmarkeMenge = "xxx";');
     expect(refNames(s)).to.deep.equal([
       'essewagnermenge',
       'essehandelsmarkemenge',

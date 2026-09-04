@@ -9,6 +9,16 @@
 // granular version of this (widen a single start line to the next `;`);
 // this module replaces it with a proper top-level `;` split.
 //
+// One real exception to "statements end at `;`": a column-1 macro/
+// preprocessor call — `#name( args )`, `#DOMACRO(...)`/`#DOMACRO2..4(...)`
+// included — is a self-terminating construct that ends at its own balanced
+// `)` and must NOT be followed by a `;` (confirmed against a real script:
+// `#makemulti2( f71_16mult f71_m1.16.1 … )` with no trailing `;`, directly
+// followed by an ordinary `COMPUTE …;`). Without special-casing this, the
+// scan below would keep swallowing lines — including the next several real
+// statements — looking for a `;` that was never meant to come, corrupting
+// everything up to the next one it actually finds.
+//
 // Comments are already blanked to spaces in `order` (see
 // src/core/includeGraph.ts `blankComments`), so the only scope this needs
 // to track when hunting the terminating `;` is string quoting: a `;`
@@ -35,6 +45,14 @@ export interface LogicalStatement {
 // No gessTabs statement runs anywhere near this long; the cap just stops a
 // missing `;` from swallowing the rest of the program into one statement.
 const MAX_STATEMENT_LINES = 200;
+
+// A column-1 `#name(` macro/preprocessor call — same shape as
+// macroExpansion.ts's own `callStartRe`, kept independent since that
+// module is about substitution, not statement boundaries. Deliberately
+// anchored to the very start of the line (only checked at `c === 0` below)
+// to match the documented "always a column-1 construct" macro-call
+// convention — never triggers mid-line after a preceding `;`.
+const macroCallStartRe = /^\s*#[A-Za-z_][\w.]*\s*\(/;
 
 interface Piece {
   line: ResolvedLine;
@@ -65,11 +83,17 @@ export function toLogicalStatements(order: ResolvedLine[]): LogicalStatement[] {
   const out: LogicalStatement[] = [];
   let pieces: Piece[] = [];
   let inString: '"' | "'" | null = null;
+  // null: not inside a macro-call statement's own `( … )`. Once a fresh
+  // statement's first line matches macroCallStartRe, this counts paren
+  // depth instead of scanning for `;` — the statement ends the moment it
+  // returns to 0, `;` or not (see the module doc comment above).
+  let macroCallDepth: number | null = null;
 
   const endStatement = (terminated: boolean) => {
     flush(pieces, terminated, out);
     pieces = [];
     inString = null;
+    macroCallDepth = null;
   };
 
   for (let i = 0; i < order.length; i++) {
@@ -87,6 +111,9 @@ export function toLogicalStatements(order: ResolvedLine[]): LogicalStatement[] {
 
     const { text } = rl;
     let segStart = 0;
+    if (pieces.length === 0 && macroCallStartRe.test(text)) {
+      macroCallDepth = 0;
+    }
     for (let c = 0; c < text.length; c++) {
       const ch = text[c];
       if (inString) {
@@ -95,6 +122,18 @@ export function toLogicalStatements(order: ResolvedLine[]): LogicalStatement[] {
       }
       if (ch === '"' || ch === "'") {
         inString = ch;
+        continue;
+      }
+      if (macroCallDepth !== null) {
+        if (ch === '(') macroCallDepth += 1;
+        else if (ch === ')') {
+          macroCallDepth -= 1;
+          if (macroCallDepth === 0) {
+            pieces.push({ line: rl, text: text.slice(segStart, c + 1) });
+            endStatement(true);
+            segStart = c + 1;
+          }
+        }
         continue;
       }
       if (ch === ';') {
