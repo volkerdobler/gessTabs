@@ -496,8 +496,8 @@ turning a resolved reference line into precise character ranges (rename needs it
 | phase | deliverable | risk | unblocks |
 | --- | --- | --- | --- |
 | **0** | `entryScripts.ts` + `externalNames.ts` (CSV + SPSS names/type + delimited `DATAFILE`) + a lightweight hover note / `DocumentLink`. **Standalone — does not touch indexing or wait on the model.** See §11. | low — pure + one watcher | phase 4; near-term "which names are dataset vars" signal |
-| **1** | `variableStatements.ts` + `toLogicalStatements` + full spec. **No consumer wired yet.** | low — pure, additive | everything below |
-| **2** | `variableModel.ts` (declared + predefined origins; no macro/external). Wire **hover** first (smallest blast radius, best signal). | med | — |
+| **1** | `variableStatements.ts` + `toLogicalStatements` + full spec. **No consumer wired yet.** **First cut landed 2026-09-04** — `src/core/statements.ts` + `src/core/variableStatements.ts` + specs; covers §3.1–§3.5, the §4 name-modes, `defKind`, and `block` open/close/mid. Open: overcodes (§3.6), `TO`/`$`-member expansion, `POSTPROCESS` virtuals, exhaustive per-row spec. | low — pure, additive | everything below |
+| **2** | `variableModel.ts` (declared + predefined origins; no macro/external). Wire **hover** first (smallest blast radius, best signal). **Core module landed 2026-09-04** — `src/core/variableModel.ts` + spec (`buildVariableModel` → `all`/`at`/`resolve`/`currentVariableAt`/`references`; system-var seed, no-forward-ref, kinds+members, annotations, quoted-token rule). Open: wire the hover onto it. | med | — |
 | **3** | Move go-to-definition, references, rename, semantic highlighting onto the model. Delete `regex.ts`/`matching.ts`. Move F2 empty-varlist + duplicate-declaration onto the model. | med-high — behaviour-visible | Tier 2 cross-INCLUDE F2 scope, Tier 3 semantic "last-name" fix |
 | **4** | Feed the phase-0 `externalNames.ts` output into the model as `origin: 'external'`. (The reader itself — CSV + SPSS + delimited `DATAFILE` — is pulled out to **phase 0**, see §11.) | low | "undefined variable" diagnostic, real go-to-def for dataset vars |
 | **5** | macro-produced names into the model (numeric/comma params, mid-token). `#DOMACRO` stays Tier 3. | med | — |
@@ -511,6 +511,48 @@ program) — they are **not** separate work.
 ---
 
 ## 9. Open questions (need a decision before phase 1 lands)
+
+> **P1.0 — resolved 2026-09-04.** All six adopted as proposed. Rationale is
+> unchanged from the proposals below; the short form:
+> 1. **No-name `VARFAMILY`/`VARGROUP`/… → ignore** (classifier returns no
+>    `defines`); emit a `malformed` marker so a later diagnostic can flag it.
+> 2. **`$` members → resolve on demand.** The classifier expands `‹v›$1`/`‹v›_$1`
+>    /`‹v› TO`-style member spans for *reference* purposes, but the symbol table
+>    stores `members` / `memberCount` and synthesises a `$k` symbol only when
+>    `resolve()` is asked for one.
+> 3. **Duplicate-declaration is kind-gated.** The classifier tags each defining
+>    statement with `defKind: 'declaration' | 'assignment'`. Only `declaration`
+>    kinds (SINGLEQ/VARIABLE(S)/MAKE*/VARFAMILY/VARGROUP/GROUPS/INTERVALS/
+>    INDEXVAR/CROSSVAR/SPSSGROUP/ASSOCVAR/CLONEVAR/the statistical creators) can
+>    raise a duplicate; COMPUTE/FCOMPUTE/IF-THEN re-assignment never does.
+> 4. **`#IF[N]EMPTY` / `#IF[N]EXIST` → keep both branches** (no change);
+>    revisit the `#ifexist` feedback loop after phase 4.
+> 5. **Perf → LRU by file-set + mtime first**, measure, add incremental
+>    `didChange` updates only if a real project stutters.
+> 6. **`.def` and other INCLUDE extensions → folded into phase 3** (one
+>    "which files are part of the program" change: `contributes.languages`,
+>    the workspace scan's `(tab|inc)` filter, and `includeGraph` follow-any-name
+>    all move together).
+>
+> **Later-phase judgement calls — settled 2026-09-04 (adopt the default unless
+> a real case argues otherwise):**
+> - **P1.3 (A)** — migrating go-to-def / references / rename / semantic
+>   highlighting onto the model *will* change observable behaviour in the edge
+>   cases today's regexes miss or mishandle; that is acceptable, with the spec
+>   suite as the safety net. `regex.ts` / `matching.ts` / `collectDeclaration
+>   Tokens` / `findVariableAnnotations` / `lineHasQuotedVariableReference` are
+>   **deleted in the same commit** that removes their last consumer, not left
+>   as dead code for a release.
+> - **P1.6 (B)** — the undefined-variable diagnostic ships **under the existing
+>   `gesstabs.diagnostics.enabled` switch**, severity **Warning**, and is
+>   **fully suppressed for a program while any of its data sources is
+>   `unresolved`** (so a project whose `.sav`/`.csv` isn't on the editing
+>   machine gets no false "undefined" noise). System-variable redeclaration is
+>   an **Error** (the manual says it is one).
+> - **P1.4 (C)** — a shared `.inc` opened with no active `main*.tab`: use the
+>   program the active editor belongs to; if only the `.inc` is open, the
+>   **union** of all programs that include it, with per-name type/kind
+>   conflicts surfaced as "mehrdeutig".
 
 1. **`VARFAMILY = ‹vl›;` with no name.** The Bildung-neuer-Variablen syntax box
    shows it; every worked example has a name (`VARFAMILY item = …`). Treat the

@@ -112,20 +112,47 @@ Do its phases in order. Several P2/P3 items below are facets of this same proble
 and are marked "(needs P1)" so they are not built twice.
 
 - **P1.0 — decide the six open questions** in the design doc §9 before phase 1
-  lands (re-definition vs. duplicate, `$`-member expansion, `#IF[N]EXIST`
-  feedback loop, performance budget, `.def` extension handling, no-name
-  `VARFAMILY`).
+  lands. **Done 2026-09-04** — all six adopted as proposed (design doc §9, the
+  boxed "P1.0 — resolved" note): no-name `VARFAMILY` ignored, `$`-members
+  resolved on demand, duplicate-declaration kind-gated (`defKind`), `#IF[N]EXIST`
+  both branches kept, LRU-first perf, `.def` extensions folded into phase 3.
 - **P1.1 — statement classifier** `variableStatements.ts` + continuation-line
-  joining `toLogicalStatements` — pure, table-driven, fully spec'd, **no consumer
-  wired yet**. One parser per statement shape covering the whole §3 / §4
-  inventory: `COMPUTE`/`FCOMPUTE` with no sub-keyword, `MAKESINGLE(S)`,
-  `IF … THEN <var> = …`, `VARGROUP`/`GROUPS`/`INTERVALS`/`INDEXVAR`,
-  `DATA <method> <var> = …`, the statistical creators, overcodes, the no-`=`
-  column-position forms. Emits `block: 'open'|'close'` for `IFBLOCK`/`WHILEBLOCK`/
-  `SETFILTER`/`#MACRO`/`#STARTEXPORT` so P2's folding has one recognizer to call.
+  joining `toLogicalStatements` — pure, table-driven, **no consumer wired yet**.
+  **First cut landed 2026-09-04** (`src/core/statements.ts` +
+  `src/core/variableStatements.ts`, `test/statements.spec.ts` +
+  `test/variableStatements.spec.ts`):
+  - `toLogicalStatements` — top-level `;` split with string-scope tracking,
+    joins multi-line bodies, splits several statements per physical line,
+    flags run-away/file-boundary statements as `terminated: false`.
+  - `classifyStatement` covers: `SINGLEQ`/`VARIABLE`/`MAKESINGLE` (incl. the
+    no-`=` column form), `VARIABLES` block, `MAKESINGLES`, `COMPUTE`/`FCOMPUTE`
+    (with **and** without sub-keyword, COPY/SWAP/SORT/REPLACE target quirks,
+    empty-varlist → current variable), `IF … THEN … ELSE`,
+    `VARFAMILY`/`MAKEFAMILY`/`ALPHAFAMILY`/`CROSSVAR`/`MULTIFROMSTRING`,
+    `VARGROUP`/`GROUPS`/`MAKEGROUP`/`SPSSGROUP`, `INTERVALS`/`INDEXVAR`,
+    the statistical creators + `COUNT`, `DATA <method>`, `CLONEVAR`/`ASSOCVAR`,
+    the annotation keywords (refs-only / current-variable), `TABLE` head+axis,
+    and `block: 'open'|'close'|'mid'` for `IFBLOCK`/`WHILEBLOCK`/`SETFILTER`/
+    `#MACRO`/`#STARTEXPORT` + closers. Each defining statement is tagged
+    `defKind: 'declaration' | 'assignment'` (P1.0 Q3).
+  - Overcodes (`OVERCODE`/`OVEROVERCODE` `‹ocname›` → `virtualDefines`) and the
+    `hasNameRange` flag + `expandNameRange` helper landed 2026-09-04.
+  - **Still open for P1.1**: numeric-block/family `<a> TO <b>` expansion beyond
+    the numeric-suffix helper, `$`-member spans (§9 Q2 — resolve on demand in
+    the model), `POSTPROCESS` clause-local virtuals (§5), precise
+    `IN`/`IS`/`[ … ]` set-test handling, a full table-driven spec pass (one case
+    per §3/§4 row), and precise reference character offsets (the model's
+    `locate` is line-accurate but column-approximate when a statement's first
+    line had leading whitespace).
 - **P1.2 — symbol table** `variableModel.ts`: `declared` + `predefined` origins,
-  program-order pass, "current variable" tracking. Wire the **variable hover**
-  onto it first (smallest blast radius, best signal).
+  program-order pass, "current variable" tracking. **Core module landed
+  2026-09-04** (`src/core/variableModel.ts` + `test/variableModel.spec.ts`):
+  `buildVariableModel(index)` → `all()` / `at(file,line)` / `resolve(name,file,
+  line)` / `currentVariableAt` / `references(name)`; seeds the five system
+  variables, no-forward-reference visibility, kind + members from the
+  classifier, annotations bound by varlist or current variable, the quoted-token
+  rule runs in `references()`. **Still open: wire the variable hover onto it**
+  (then delete the hover's regex/`variableInfo` helpers per P1.3).
 - **P1.3 — migrate the remaining consumers** onto the model: go-to-definition,
   find-references, rename, semantic highlighting, F2 empty-varlist +
   duplicate-declaration. Delete `regex.ts` / `matching.ts` /
