@@ -42,34 +42,42 @@ items below are facets of this same problem, marked "(needs P1)".
 - **P1.0** (the six §9 open questions) — **done**, all adopted as proposed
   (design doc §9, "P1.0 — resolved").
 - **P1.1** (statement classifier `variableStatements.ts` + `toLogicalStatements`,
-  `src/core/statements.ts`) — **done**. Still open:
-  - **`‹a› TO ‹b›` is two distinct mechanisms** (corrected 2026-09-05, design
-    doc §9 Q2/§3.1/§4 updated): the numeric-suffix pattern (`VARIABLES a1 TO
-    a9 = …;`) is definition-only and already fully handled by
-    `expandNameRange` — confirmed against six real manual examples, no
-    known gap left there. The *reference*-position form (`RECODE item1 TO
-    item8 …`, `VARTEXT a TO b = "…";`, …) means "every variable **declared
-    between `a` and `b`, in program order**" — names need not share any
-    pattern at all (confirmed real example in §9 Q2). That's a **model**
-    feature (P1.2: slice `buildVariableModel`'s program-order symbol
-    sequence between two resolved endpoints; P1.4: a raw/external variable's
-    "declaration order" is its column position in the SPSS/CSV file, so this
-    also needs external names wired in) — not implemented yet. The
-    classifier's own part (flag `hasNameRange`, keep both endpoints as
-    references) is already done. **Confirmed 2026-09-05: this form is legal
-    only at a reference position — a new variable can never be created with
-    it, `VARIABLES`'s numeric-suffix pattern is the only way to mint names by
-    range**, so the two mechanisms never collide.
-  - **Known correctness bug in already-shipped P1.3** (found while
-    documenting the above): `collectVariableOccurrences`/`model.references()`
-    — live in **find-references and rename today** — only see the two
-    literal endpoint names of a reference-position `‹a› TO ‹b›`. Every
-    variable *in between* is invisible to "Find All References" and,
-    worse, **rename silently misses it** — renaming a variable that's only
-    covered via such a range finds nothing on that line, even though the
-    statement genuinely applies to it. Not a hypothetical edge case if this
-    `TO` form is used in real scripts. Worth doing before P1.6, despite the
-    P1.2/P1.4 dependency below.
+  `src/core/statements.ts`) — **done**. `‹a› TO ‹b›` turned out to be two
+  distinct mechanisms (design doc §9 Q2/§3.1/§4):
+  - **Numeric-suffix (definition *and* reference position) — done 2026-09-05.**
+    `collectNames` now expands a `VARIABLES a1 TO a9 = …;`/`MAKESINGLES f1 TO
+    f17;` range (definition position) and a `RECODE item1 TO item8 …`/`MEAN m
+    = Item1 TO Item13;`/`VARFAMILY f = a1 TO a3;`/`COMPUTE COPY …`/`VARGROUP
+    ( … )` range (reference position) into every real member via
+    `expandNameRange`, not just the two literal endpoints — fixes two real
+    gaps: (1) `a2..a8` from a `VARIABLES` range were previously **invisible
+    to the model entirely** (not declared, so hover/go-to-def/duplicate-
+    declaration/`VariableSymbol.members` never saw them); (2)
+    `model.references()` now correctly reports a reference-position range's
+    in-between members too (anchored at the whole `‹a› TO ‹b›` phrase, since
+    there's no literal token of their own to point at).
+  - **Still open, narrower than before**: `collectVariableOccurrences` — the
+    function actually driving the **live** find-references/rename commands —
+    doesn't consult `model.references()`'s range-synthesised entries at all;
+    it's built around `findAllWordRangesInLine`, a literal-text scan, which
+    finds nothing for a name that's never written verbatim on that line
+    (`item3` doesn't appear as text in `mean m = item1 to item4;`). Needs a
+    design decision, not just a wire-up: **find-references** should probably
+    still surface the range phrase as an informational (non-literal)
+    location; **rename** arguably should keep excluding these, since editing
+    the range phrase's text would corrupt the *other* endpoint's own name —
+    there's no safe automatic substitution for a variable that only exists
+    by virtue of the range. Locked in with `variableModel.spec.ts` cases
+    showing exactly this split (`model.references()` finds it,
+    `collectVariableOccurrences` still doesn't).
+  - **The genuinely non-pattern reference-position form is unchanged** —
+    still needs the model (P1.2: slice `buildVariableModel`'s program-order
+    symbol sequence between two resolved endpoints; P1.4: a raw/external
+    variable's "declaration order" is its column position in the SPSS/CSV
+    file). Confirmed 2026-09-05: this form is legal **only** at a reference
+    position — a new variable can never be created with it, `VARIABLES`'s
+    numeric-suffix pattern is the only way to mint names by range — so the
+    two mechanisms never collide.
   - `$`-member spans (§9 Q2 — resolve on demand in the model);
     `POSTPROCESS` clause-local virtuals (§5); precise `IN`/`IS`/`[ … ]`
     set-test handling; a full table-driven spec pass (one case per §3/§4 row).

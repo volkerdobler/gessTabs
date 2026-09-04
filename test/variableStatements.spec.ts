@@ -230,6 +230,61 @@ describe('classifyStatement — ranges & overcodes', () => {
     expect(c('compute x = 1;').hasNameRange).to.be.undefined;
   });
 
+  it('VARIABLES a1 TO a9 declares every member, not just the two endpoints', () => {
+    const s = c('variables a1 to a9 = 1 2;');
+    expect(defNames(s)).to.deep.equal([
+      'a1',
+      'a2',
+      'a3',
+      'a4',
+      'a5',
+      'a6',
+      'a7',
+      'a8',
+      'a9',
+    ]);
+  });
+
+  it('VARFAMILY members expand a numeric-suffix TO range, dotted prefix included', () => {
+    expect(refNames(c('varfamily f = a1 to a3;'))).to.deep.equal([
+      'a1',
+      'a2',
+      'a3',
+    ]);
+    expect(refNames(c('varfamily f = f.1 to f.3;'))).to.deep.equal([
+      'f.1',
+      'f.2',
+      'f.3',
+    ]);
+  });
+
+  it('a statistical creator source list expands a TO range', () => {
+    const s = c('mean m = Item1 to Item4;');
+    expect(refNames(s)).to.deep.equal(['item1', 'item2', 'item3', 'item4']);
+  });
+
+  it('COMPUTE COPY expands a TO range on both sides', () => {
+    const s = c('compute copy v1 to v3 = x1 to x3;');
+    expect(defNames(s)).to.deep.equal(['v1', 'v2', 'v3']);
+    expect(refNames(s)).to.deep.equal(['x1', 'x2', 'x3']);
+  });
+
+  it('a comma-separated list of TO ranges expands each independently', () => {
+    const s = c('compute copy v1 to v4 = x1 to x2, item1 to item2;');
+    expect(refNames(s)).to.deep.equal(['x1', 'x2', 'item1', 'item2']);
+  });
+
+  it('a reference-position TO whose endpoints share no numeric-suffix pattern keeps just the two endpoints (§9 Q2 — the model resolves the rest)', () => {
+    const s = c(
+      'vartext esseWagnerMenge to esseHandelsmarkeMenge = "xxx";'
+    );
+    expect(refNames(s)).to.deep.equal([
+      'essewagnermenge',
+      'essehandelsmarkemenge',
+    ]);
+    expect(s.hasNameRange).to.be.true;
+  });
+
   it('OVERCODE ‹name› ‹values› "text" records a virtual code', () => {
     const s = c('overcode ost 1 2 3 "Ostdeutschland";');
     expect(s.kind).to.equal('overcode');

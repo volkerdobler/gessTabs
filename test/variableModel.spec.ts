@@ -175,6 +175,15 @@ describe('buildVariableModel', () => {
     expect(sym?.definitions[0].text).to.contain('compute esseWagnerMenge');
     expect(sym?.definitions[1].line).to.equal(1);
   });
+
+  it('a VARIABLES numeric-suffix range declares every member — not just the two endpoints', () => {
+    // regression: a1..a9 used to only exist in the model as a1 and a9;
+    // a5 was invisible to hover/go-to-def/duplicate-declaration entirely.
+    const m = modelOf('variables a1 to a9 = 1 2;');
+    const a5 = m.resolve('a5', p('main.tab'), 5);
+    expect(a5?.origin).to.equal('declared');
+    expect(a5?.definitions[0].line).to.equal(0);
+  });
 });
 
 describe('collectVariableOccurrences', () => {
@@ -218,5 +227,30 @@ describe('collectVariableOccurrences', () => {
       'alter'
     );
     expect(occ.map((o) => o.line.line)).to.deep.equal([0, 2]);
+  });
+
+  it('model.references() finds a TO-range-synthesised member (no literal token needed)', () => {
+    // the classifier now expands a numeric-suffix TO range into real
+    // reference spans (item2/item3), anchored at the range phrase's own
+    // position — buildVariableModel's references() picks these up via
+    // locateInStatement, same as any other span.
+    const idx = indexOf('mean m = item1 to item4;');
+    const refs = buildVariableModel(idx).references('item3');
+    expect(refs.map((r) => r.line.line)).to.deep.equal([0]);
+  });
+
+  it("collectVariableOccurrences still can't surface that as a rename-able edit — no literal 'item3' text exists on the line", () => {
+    // known remaining gap (TODO.md): find-references/rename are driven by
+    // findAllWordRangesInLine (a literal-text scan), which has nothing to
+    // find here — renaming item3 correctly touches nothing on this line
+    // (there's no text to safely substitute without corrupting item1's own
+    // name), but "Find All References" arguably should still point here,
+    // which needs a different occurrence shape than collectVariableOccurrences
+    // returns today.
+    const occ = collectVariableOccurrences(
+      indexOf('mean m = item1 to item4;'),
+      'item3'
+    );
+    expect(occ).to.be.empty;
   });
 });

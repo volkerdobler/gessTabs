@@ -501,7 +501,7 @@ turning a resolved reference line into precise character ranges (rename needs it
 | phase | deliverable | risk | unblocks |
 | --- | --- | --- | --- |
 | **0** | `entryScripts.ts` + `externalNames.ts` (CSV + SPSS names/type + delimited `DATAFILE`) + a lightweight hover note / `DocumentLink`. **Standalone — does not touch indexing or wait on the model.** See §11. | low — pure + one watcher | phase 4; near-term "which names are dataset vars" signal |
-| **1** | `variableStatements.ts` + `toLogicalStatements` + full spec. **No consumer wired yet.** **First cut landed 2026-09-04** — `src/core/statements.ts` + `src/core/variableStatements.ts` + specs; covers §3.1–§3.5, the §4 name-modes, `defKind`, and `block` open/close/mid. Open: overcodes (§3.6), `TO`/`$`-member expansion, `POSTPROCESS` virtuals, exhaustive per-row spec. | low — pure, additive | everything below |
+| **1** | `variableStatements.ts` + `toLogicalStatements` + full spec. **No consumer wired yet.** **First cut landed 2026-09-04** — `src/core/statements.ts` + `src/core/variableStatements.ts` + specs; covers §3.1–§3.5, the §4 name-modes, `defKind`, and `block` open/close/mid. Open: overcodes (§3.6), the non-pattern `TO` form + `$`-member expansion (§9 Q2), `POSTPROCESS` virtuals, exhaustive per-row spec. Numeric-suffix `TO` expansion (§9 Q2) wired 2026-09-05. | low — pure, additive | everything below |
 | **2** | `variableModel.ts` (declared + predefined origins; no macro/external). Wire **hover** first (smallest blast radius, best signal). **Done 2026-09-04** — `src/core/variableModel.ts` + spec (`buildVariableModel` → `all`/`statements`/`at`/`resolve`/`resolveAnywhere`/`currentVariableAt`/`references`/`annotationsFor`; system-var seed, no-forward-ref, kinds+members, varlist/current-var/`COPY*`/orphan annotations, quoted-token rule). `variableHoverProvider.ts` rebuilt on the model; `variableInfo.ts` + `lineHasQuotedVariableReference` now dead (deleted in phase 3). Not yet eyeballed in a running VS Code. | med | — |
 | **3** | Move go-to-definition, references, rename, semantic highlighting onto the model. Delete `regex.ts`/`matching.ts`. Move F2 empty-varlist + duplicate-declaration onto the model. **In progress 2026-09-04** — go-to-def / find-references / rename done (`collectVariableOccurrences` in `variableModel.ts`); semantic highlighting done (`collectModelSemanticTokens`, fixes the "last-name" bug); F2 empty-varlist + duplicate-declaration done (kind-gated on `defKind`, design §9 Q3); `DocumentSymbolProvider` + `symbolCompletion` done. `regex.ts`/`matching.ts`'s dead functions deleted (`findDefinitionLine`, `findAllUsages`, `lineMatchesDefinition`, `lineMatchesUsage`, `lineHasQuotedVariableReference`, the old `collectDeclarationTokens`/`collectSemanticTokens` pass, `variableInfo.ts` in full); `matching.ts` now just `matchInScope`. Still blocking a full `regex.ts` cleanup: `GessTabsWorkspaceSymbolProvider` (Ctrl+T), discovered mid-pass, not yet migrated — see TODO.md. | med-high — behaviour-visible | Tier 2 cross-INCLUDE F2 scope, Tier 3 semantic "last-name" fix |
 | **4** | Feed the phase-0 `externalNames.ts` output into the model as `origin: 'external'`. (The reader itself — CSV + SPSS + delimited `DATAFILE` — is pulled out to **phase 0**, see §11.) | low | "undefined variable" diagnostic, real go-to-def for dataset vars |
@@ -530,10 +530,20 @@ program) — they are **not** separate work.
 >      `MAKESINGLES f1 TO f17;`) — synthesises brand-new names by a literal
 >      numeric-suffix pattern: shared textual prefix + trailing integer,
 >      inclusive range. Purely classifier-level, no model needed —
->      `expandNameRange` (`variableStatements.ts`) already implements exactly
->      this, confirmed against six real manual examples across `Bildung neuer
+>      `expandNameRange` (`variableStatements.ts`) implements exactly this,
+>      confirmed against six real manual examples across `Bildung neuer
 >      Variablen`, `Recodierung`, `Variablenfamilien`, `Statistische
 >      Funktionen` and `Compute` (including a dotted prefix, `f.1 TO f.3`).
+>      **Wired into `collectNames` 2026-09-05** (was previously just an
+>      unused exported helper): every span-collecting call site — both
+>      `defines` (`VARIABLES`/`MAKESINGLES`) and `references` (any other
+>      statement whose varlist happens to use this same numeric-suffix
+>      shape, e.g. `MEAN m = Item1 TO Item13;`) — now expands a matching pair
+>      into its full member list instead of keeping just the two endpoints.
+>      Fixed a real gap this surfaced: `a2..a8` from a `VARIABLES a1 TO a9`
+>      range used to be **entirely absent from the model** — not just
+>      un-renamed, genuinely never declared, so hover/go-to-definition/
+>      duplicate-declaration/`VariableSymbol.members` never saw them at all.
 >    - **Reference position** (`RECODE item1 TO item8 …`, `VARTEXT ‹a› TO
 >      ‹b› = "…";`, `VARFAMILY f = ‹a› TO ‹b›;`, `MEAN m = ‹a› TO ‹b›;`,
 >      `COMPUTE COPY ‹a› TO ‹b› = …;`, `VARGROUP g = ( ‹a› TO ‹b› ) EQ …;`, …)
@@ -560,18 +570,29 @@ program) — they are **not** separate work.
 >      only way to mint new names by range.** So the two mechanisms never
 >      collide; which one applies is decided purely by the statement's own
 >      `defKind`/kind, no ambiguity to resolve at the name level.
->    - **Known correctness gap in already-shipped P1.3**: because this isn't
->      resolved yet, `collectVariableOccurrences`/`model.references()` — live
->      in find-references and rename today — only ever see the *two literal
->      endpoint tokens* of a reference-position `‹a› TO ‹b›` as references.
->      Every variable *in between* is silently invisible to "Find All
->      References" and, worse, to **rename**: renaming
->      `esseGustavoMenge` in the example above finds nothing on the
->      `vartext esseWagnerMenge to esseHandelsmarkeMenge = "xxx";` line, even
->      though that statement genuinely does apply to it — a real false
->      negative for any script using this (apparently common) pattern, not
->      just a future nice-to-have. Worth prioritizing above its P1.2/§9-Q2
->      framing suggests.
+>    - **Known correctness gap, narrower after the 2026-09-05 fix above**:
+>      for the *non-pattern* form (names that don't share a numeric suffix —
+>      the `esseWagnerMenge`/`esseHandelsmarkeMenge` example), the model
+>      still has nothing to expand — that part is genuinely unimplemented,
+>      unchanged. But even for the *numeric-suffix* form, which the
+>      classifier now expands correctly, a second, independent gap surfaced:
+>      `collectVariableOccurrences` — the function that actually drives the
+>      **live** find-references/rename commands — doesn't consult
+>      `model.references()`'s output at all for its occurrence *positions*;
+>      it re-scans each candidate line with `findAllWordRangesInLine`, a
+>      literal-text search. A range-synthesised member has no literal text of
+>      its own on that line (`item3` never appears as a substring in `mean m
+>      = item1 to item4;`), so it's invisible to that scan regardless of what
+>      the model already knows. Confirmed with a `variableModel.spec.ts` pair
+>      showing the split directly: `buildVariableModel(idx).references
+>      ('item3')` finds the line (via `locateInStatement` anchoring the
+>      synthesised span to the range phrase); `collectVariableOccurrences
+>      (idx, 'item3')` returns `[]`. Needs a design decision, not just a
+>      wire-up: **find-references** could reasonably show the range phrase as
+>      an informational (non-literal) hit; **rename** arguably should keep
+>      excluding these on purpose — there is no text to substitute without
+>      corrupting the *other* endpoint's own name. Once the non-pattern form
+>      is implemented too, this same split applies to it identically.
 >    - Open sub-question, not yet decided: `‹b›` declared *before* `‹a›` in
 >      program order — error, or silently treat as `‹b› TO ‹a›`?
 > 3. **Duplicate-declaration is kind-gated.** The classifier tags each defining

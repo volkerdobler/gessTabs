@@ -311,47 +311,18 @@ function topLevelEq(tokens: Token[], from = 0): number {
   return -1;
 }
 
-// Collect a whitespace/comma-separated name list from tokens[from..to).
-// `<a> TO <b>` ranges keep both endpoints and set `hasRange`.
-function collectNames(
-  tokens: Token[],
-  from: number,
-  to: number
-): { spans: NameSpan[]; hasRange: boolean } {
-  const spans: NameSpan[] = [];
-  let hasRange = false;
-  for (let i = from; i < to; i++) {
-    const t = tokens[i];
-    if (
-      t.type === 'op' &&
-      (t.value === ',' || t.value === '(' || t.value === ')')
-    ) {
-      continue;
-    }
-    if (t.type === 'word' && t.value.toLowerCase() === 'to') {
-      hasRange = true;
-      continue;
-    }
-    // `BY` separates the varlist from the index var in INDEXVAR /
-    // INVINDEXVAR — a structural keyword, not a name.
-    if (t.type === 'word' && t.value.toLowerCase() === 'by') continue;
-    if (isWordOrString(t)) {
-      // stop at an obvious non-name operator
-      spans.push(spanOf(t));
-    } else {
-      // number / other op — end of the list
-      break;
-    }
-  }
-  return { spans, hasRange };
-}
-
 // Expands an `‹a› TO ‹b›` range whose endpoints share a non-numeric prefix
 // and differ only in a trailing integer (`v1 TO v4` → v1 v2 v3 v4; `q08 TO
-// q11` → q08 q09 q10 q11, zero-padding preserved from `from`). Returns
-// undefined when the two names don't fit that shape (a contiguous-block
-// `VARIABLES` range, or a family-member `TO`, needs the symbol table and
-// is resolved there). Exported for the model (§9 Q2).
+// q11` → q08 q09 q10 q11, zero-padding preserved from `from`; a dotted
+// prefix works the same way, `f.1 TO f.3` → f.1 f.2 f.3). Returns undefined
+// when the two names don't fit that shape — design doc §9 Q2: gessTabs has
+// a *second*, unrelated `‹a› TO ‹b›` meaning at a reference position (never
+// at a definition position — a new name always needs this numeric-suffix
+// shape) — "every variable declared between `‹a›` and `‹b›`, in program
+// order", names need not match at all. That form can't be resolved here
+// (needs the symbol table); `collectNames` below leaves such a pair as just
+// its two endpoints, and the model resolves the rest on demand. Exported
+// for the model's own use in that fallback path.
 export function expandNameRange(
   from: string,
   to: string
@@ -369,6 +340,82 @@ export function expandNameRange(
     out.push(m1[1] + String(n).padStart(width, '0'));
   }
   return out;
+}
+
+// A range member synthesised by expandNameRange rather than read literally
+// off one token — there's no single source position for it, so it's
+// anchored to the whole `‹a› TO ‹b›` phrase (from `‹a›`'s start through
+// `‹b›`'s end): a real, correct line for a jump link, just not a precise
+// column, matching this codebase's existing "line-accurate, column-
+// approximate" tradeoff for anything without a literal token of its own.
+function syntheticSpan(
+  name: string,
+  rangeStart: Token,
+  rangeEnd: Token
+): NameSpan {
+  return {
+    name: name.toLowerCase(),
+    raw: name,
+    rawStart: rangeStart.start,
+    rawLength: rangeEnd.end - rangeStart.start,
+    quoted: false,
+  };
+}
+
+// Collect a whitespace/comma-separated name list from tokens[from..to).
+// An `‹a› TO ‹b›` pair whose endpoints fit expandNameRange's numeric-suffix
+// shape is expanded in place (every member becomes its own span, in
+// order); one that doesn't (§9 Q2's reference-position form) keeps just
+// its two endpoints and sets `hasRange` so the model knows to resolve the
+// rest itself.
+function collectNames(
+  tokens: Token[],
+  from: number,
+  to: number
+): { spans: NameSpan[]; hasRange: boolean } {
+  const spans: NameSpan[] = [];
+  let hasRange = false;
+  let lastNameTok: Token | undefined;
+  let pendingRangeStart: Token | undefined;
+  for (let i = from; i < to; i++) {
+    const t = tokens[i];
+    if (
+      t.type === 'op' &&
+      (t.value === ',' || t.value === '(' || t.value === ')')
+    ) {
+      continue;
+    }
+    if (t.type === 'word' && t.value.toLowerCase() === 'to') {
+      hasRange = true;
+      pendingRangeStart = lastNameTok;
+      continue;
+    }
+    // `BY` separates the varlist from the index var in INDEXVAR /
+    // INVINDEXVAR — a structural keyword, not a name.
+    if (t.type === 'word' && t.value.toLowerCase() === 'by') continue;
+    if (isWordOrString(t)) {
+      if (pendingRangeStart) {
+        const rangeStart = pendingRangeStart;
+        const members = expandNameRange(
+          spanOf(rangeStart).name,
+          spanOf(t).name
+        );
+        if (members && members.length > 2) {
+          members
+            .slice(1, -1)
+            .forEach((name) => spans.push(syntheticSpan(name, rangeStart, t)));
+        }
+        pendingRangeStart = undefined;
+      }
+      // stop at an obvious non-name operator
+      spans.push(spanOf(t));
+      lastNameTok = t;
+    } else {
+      // number / other op — end of the list
+      break;
+    }
+  }
+  return { spans, hasRange };
 }
 
 // Name-like tokens in an expression / condition — every `word` token that
