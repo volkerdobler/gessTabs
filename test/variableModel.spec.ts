@@ -2,6 +2,7 @@ import { expect } from 'chai';
 import * as path from 'path';
 import { FileReader } from '../src/core/includeGraph';
 import { buildWorkspaceIndex } from '../src/core/symbolIndex';
+import { ExternalNameSource } from '../src/core/externalNames';
 import {
   buildVariableModel,
   collectVariableOccurrences,
@@ -22,6 +23,22 @@ const indexOf = (main: string, files: Record<string, string> = {}) => {
 
 const modelOf = (main: string, files: Record<string, string> = {}) =>
   buildVariableModel(indexOf(main, files));
+
+// A CSVINFILE source at main.tab:0, unless overridden.
+const externalSource = (
+  names: string[] | 'unresolved',
+  overrides: Partial<ExternalNameSource['statement']> = {}
+): ExternalNameSource => ({
+  statement: {
+    kind: 'csv',
+    file: p('main.tab'),
+    line: 0,
+    rawPath: 'data.csv',
+    text: 'csvinfile = data.csv;',
+    ...overrides,
+  },
+  names,
+});
 
 describe('buildVariableModel', () => {
   it('seeds the predefined system variables', () => {
@@ -184,6 +201,85 @@ describe('buildVariableModel', () => {
     const a5 = m.resolve('a5', p('main.tab'), 5);
     expect(a5?.origin).to.equal('declared');
     expect(a5?.definitions[0].line).to.equal(0);
+  });
+});
+
+describe('buildVariableModel — external names (P1.4)', () => {
+  it('a raw column becomes an external symbol, resolvable from the very start of the program', () => {
+    const m = buildVariableModel(indexOf('compute y = 1;'), {
+      externalNames: [externalSource(['alter', 'geschlecht'])],
+    });
+    const alter = m.resolve('alter', p('main.tab'), 0);
+    expect(alter?.origin).to.equal('external');
+    expect(alter?.kind).to.equal('atomic');
+    expect(alter?.definitions).to.have.length(1);
+    expect(alter?.definitions[0].line).to.equal(0);
+    expect(alter?.definitions[0].file).to.equal(p('main.tab'));
+    // "visible from the start" — resolves even at the very first line,
+    // same as a predefined system variable (the dataset loads first).
+    expect(m.resolve('geschlecht', p('main.tab'), 0)?.origin).to.equal(
+      'external'
+    );
+  });
+
+  it('preserves column order for the reference-position non-pattern ‹a› TO ‹b› form (§9 Q2)', () => {
+    // names deliberately share no numeric-suffix pattern, so expandNameRange
+    // can't expand this at classify time — only the model, which knows the
+    // raw columns' own file order, can resolve it (unresolvedRanges).
+    const m = buildVariableModel(
+      indexOf('vartext esseWagner to esseGustavo = "x";'),
+      {
+        externalNames: [
+          externalSource([
+            'esseWagner',
+            'esseOetker',
+            'esseGustavo',
+            'esseHandelsmarke',
+          ]),
+        ],
+      }
+    );
+    const refs = m.references('esseOetker');
+    expect(refs).to.have.length(1);
+    expect(refs[0].span.synthetic).to.equal(true);
+    // esseHandelsmarke is outside the esseWagner..esseGustavo range.
+    expect(m.references('esseHandelsmarke')).to.have.length(0);
+  });
+
+  it('a later real declaration promotes it to "declared" — a re-definition, not a duplicate', () => {
+    const m = buildVariableModel(indexOf('singleq alter = 1 2 3;'), {
+      externalNames: [externalSource(['alter'])],
+    });
+    const sym = m.resolveAnywhere('alter');
+    expect(sym?.origin).to.equal('declared');
+    expect(sym?.definitions).to.have.length(2);
+    const primary = primaryDefinitions(sym!);
+    // both the CSVINFILE line and the SINGLEQ line are `declaration`-kind.
+    expect(primary).to.have.length(2);
+    expect(primary.map((d) => d.line.line)).to.deep.equal([0, 0]);
+  });
+
+  it('a mere COMPUTE/IF…THEN touching a raw column does NOT promote it (§3.3 — never a declaration)', () => {
+    const m = buildVariableModel(indexOf('compute alter = alter + 1;'), {
+      externalNames: [externalSource(['alter'])],
+    });
+    const sym = m.resolveAnywhere('alter');
+    expect(sym?.origin).to.equal('external');
+    expect(sym?.definitions).to.have.length(2);
+  });
+
+  it('an unresolved source contributes no symbols, without crashing', () => {
+    const m = buildVariableModel(indexOf('compute y = 1;'), {
+      externalNames: [externalSource('unresolved')],
+    });
+    expect(m.resolveAnywhere('alter')).to.be.undefined;
+  });
+
+  it('a name already predefined is not shadowed by a same-named raw column', () => {
+    const m = buildVariableModel(indexOf('compute y = 1;'), {
+      externalNames: [externalSource(['SysMiss'])],
+    });
+    expect(m.resolveAnywhere('SysMiss')?.origin).to.equal('predefined');
   });
 });
 

@@ -231,13 +231,47 @@ items below are facets of this same problem, marked "(needs P1)".
     `entryScripts.ts`'s `.tab`-only entry-point discovery is deliberately
     untouched — a `.def`/`.inc` file is never its own entry point.
 - **P1.4** — wire P0's external names into the model as `origin: 'external'`
-  symbols, seeded before the program-order pass, **preserving the data
-  source's own column order** (SPSS field order / CSV header order — needed
-  for P1.1's reference-position `‹a› TO ‹b›`, §9 Q2, to resolve a range whose
-  endpoints are raw/external variables). A later in-script `SINGLEQ`/`COMPUTE`
-  of the same name is a re-definition, not a duplicate. This is what gives
-  go-to-definition and the undefined-variable diagnostic something to land on
-  / check against for the bulk of a real project's variables.
+  symbols. **Core model + go-to-definition done 2026-09-05**:
+  - `buildVariableModel(index, { externalNames })` — `externalNames.ts`'s
+    already-resolved `ExternalNameSource[]` (this module stays pure, no
+    filesystem I/O of its own) seeds one `origin: 'external'` symbol per raw
+    column/field, before the program-order pass, with a `firstSeen` index
+    negative enough to sit before every real statement — visible from the
+    very start of the program (the dataset loads before any script line
+    runs), same reasoning as `PREDEFINED`, but **preserving the data
+    source's own column order** across the flattened source-then-column
+    sequence (needed for P1.1's reference-position `‹a› TO ‹b›`, §9 Q2, to
+    resolve a range whose endpoints are raw/external variables — now
+    covered). Its one `definitions` entry points at the
+    `CSVINFILE`/`SPSSINFILE`/`DATAFILE` statement itself (the only
+    "declaration" a raw column has), `definitionKinds: ['declaration']` so
+    `primaryDefinitions()` picks it up like any real declaration. A later
+    in-script **declaration**-kind statement (`SINGLEQ`/`VARFAMILY`/…)
+    promotes `origin` to `'declared'` — a re-definition, not a duplicate —
+    while a mere `COMPUTE`/`IF…THEN` touching it (recoding a raw column
+    in place is common) does **not** promote it (§3.3: never a
+    declaration). A name already `predefined` is never shadowed by a
+    same-named raw column. Six new `variableModel.spec.ts` cases.
+    `GesstabsDefintionProvider` now builds with
+    `{ externalNames: await this.externalNames.sourcesFor(document) }` (new
+    constructor param, `GesstabsExternalNamesManager` — same instance
+    `GesstabsVariableHoverProvider` already receives) — F12 on a raw
+    dataset variable now jumps to its data-source statement. Manual
+    verification in a live Extension Development Host still outstanding.
+  - **Still open**: find-references / rename / `GessTabsWorkspaceSymbolProvider`
+    (Ctrl+T) don't build with `externalNames` yet, so a raw column doesn't
+    show up there (deliberately scoped out of this pass — go-to-definition
+    was the design doc's headline ask). Rename in particular needs a
+    conscious decision, not just a wire-up: renaming a raw column's
+    *references* in the script without renaming the actual dataset column
+    would leave the script referring to a name that no longer matches
+    any real column — worth an explicit guard (reject, or warn) once
+    wired, not a silent edit. `GesstabsVariableHoverProvider` is
+    deliberately **not** touched — it already has its own, separately
+    working `externalSourcesFor` fallback (recently tuned, see git log),
+    and wiring `externalNames` into its own model build would change
+    *when* that fallback fires without a live-tested reason to. This is
+    also what P1.6's undefined-variable diagnostic will check against.
 - **P1.5** — macro-produced names into the model: numeric params (`&1`),
   comma-separated param lists, mid-token substitution (`&p.recoded`). Builds on
   the existing `findMacroProducedDefinition`. `#DOMACRO` looping stays P3, but the

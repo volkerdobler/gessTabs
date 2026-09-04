@@ -6,17 +6,20 @@
 // name are genuine references once the quoted-token rule is applied
 // against the names actually known at that program point.
 //
-// Phase 2 scope (docs/variable-model-design.md §8): `declared` +
-// `predefined` origins only. `external` (phase 4), `macro-produced`
-// (phase 5) and on-demand `$`-member synthesis (§9 Q2) are not wired yet;
-// the shapes below leave room for them.
+// Phase 2 scope (docs/variable-model-design.md §8): `declared` + `predefined`
+// origins from the start; `external` joined 2026-09-05 (phase 4, P1.4).
+// `macro-produced` (phase 5) and on-demand `$`-member synthesis (§9 Q2) are
+// not wired yet; the shapes below leave room for them.
 //
-// PURE — takes a WorkspaceIndex, returns a plain object. The vscode-facing
-// consumers (hover first, then go-to-def / references / rename / the F2
-// diagnostics) are migrated onto this in phases 2–3.
+// PURE — takes a WorkspaceIndex (+ already-resolved external names — the
+// file I/O to read a .sav/.csv itself lives in externalNames.ts /
+// externalNamesProvider.ts, not here), returns a plain object. The
+// vscode-facing consumers (hover first, then go-to-def / references /
+// rename / the F2 diagnostics) are migrated onto this in phases 2–3.
 
 import { ResolvedLine } from './includeGraph';
 import { WorkspaceIndex, findAllWordRangesInLine } from './symbolIndex';
+import { ExternalNameSource } from './externalNames';
 import {
   toLogicalStatements,
   locateInStatement,
@@ -226,7 +229,20 @@ function memberSpans(cls: ClassifiedStatement): string[] | undefined {
   return undefined;
 }
 
-export function buildVariableModel(index: WorkspaceIndex): VariableModel {
+export interface BuildVariableModelOptions {
+  // Already-resolved data sources (CSVINFILE/SPSSINFILE/DATAFILE) whose raw
+  // column/field names become `origin: 'external'` symbols — see the
+  // seeding block below. Pass the same array `externalNames.ts`/
+  // `externalNamesProvider.ts` already produce (readExternalNames or
+  // GesstabsExternalNamesManager.sourcesFor); this module never touches
+  // the filesystem itself.
+  externalNames?: ExternalNameSource[];
+}
+
+export function buildVariableModel(
+  index: WorkspaceIndex,
+  opts: BuildVariableModelOptions = {}
+): VariableModel {
   const statements = toLogicalStatements(index.order);
   const classified: (ClassifiedStatement | undefined)[] = statements.map((s) =>
     classifyStatement(s.text)
@@ -270,6 +286,56 @@ export function buildVariableModel(index: WorkspaceIndex): VariableModel {
     firstSeen.set(p.name, -1);
   });
 
+  // `external` symbols — raw dataset columns/fields named by a
+  // CSVINFILE/SPSSINFILE/DATAFILE statement, never declared in-script.
+  // Seeded before the program-order pass, each with a firstSeen index
+  // negative enough to sit before every real statement (index 0..N-1) —
+  // visible from the very start of the program, same reasoning as
+  // PREDEFINED (the dataset is loaded before any script line runs) — but
+  // distinct and monotonically increasing across the flattened
+  // source-then-column order, so a reference-position `‹a› TO ‹b›` whose
+  // endpoints are both raw columns (§9 Q2, needs P1.1's `unresolvedRanges`
+  // slicing) resolves correctly, same machinery as in-script names. A name
+  // present in more than one source keeps only its first occurrence — a
+  // rare, documented simplification (see TODO.md P1.4).
+  const externalNames = opts.externalNames ?? [];
+  const totalExternalNames = externalNames.reduce(
+    (n, src) => n + (Array.isArray(src.names) ? src.names.length : 0),
+    0
+  );
+  let externalOrdinal = 0;
+  externalNames.forEach((src) => {
+    if (src.names === 'unresolved') return;
+    const loc: ResolvedLine = {
+      file: src.statement.file,
+      line: src.statement.line,
+      text: src.statement.text,
+    };
+    src.names.forEach((rawName) => {
+      const canonical = rawName.toLowerCase();
+      // -(totalExternalNames+1)..-2 — always < PREDEFINED's -1, always < 0.
+      const idx = externalOrdinal - totalExternalNames - 1;
+      externalOrdinal += 1;
+      if (symbols.has(canonical)) return; // predefined, or an earlier source's same-named column wins
+      symbols.set(canonical, {
+        name: canonical,
+        displayName: rawName,
+        kind: 'atomic',
+        origin: 'external',
+        definitions: [loc],
+        definitionStatements: [src.statement.text],
+        // treated as `declaration` — the data-source statement is the one
+        // place this name truly "declares" itself (there's no defKind to
+        // borrow from classifyStatement; a data-source statement is never
+        // itself a gessTabs statement the classifier sees).
+        definitionKinds: ['declaration'],
+        definitionBranches: [pathAt(loc.file, loc.line)],
+        annotations: [],
+      });
+      firstSeen.set(canonical, idx);
+    });
+  });
+
   let current: string | undefined;
 
   statements.forEach((stmt, i) => {
@@ -293,6 +359,15 @@ export function buildVariableModel(index: WorkspaceIndex): VariableModel {
           existing.kind = cls.targetKind;
         }
         if (members) existing.members = members;
+        // A raw dataset column a real declaration statement now also
+        // names is a re-definition, not a duplicate (design §11) — the
+        // script owns it from here on. A mere COMPUTE/IF…THEN touching it
+        // (RECODE-in-place is common and legitimate) does NOT promote it:
+        // §3.3 never treats an assignment as declaring anything, so the
+        // name is still fundamentally the dataset's own column.
+        if (existing.origin === 'external' && cls.defKind === 'declaration') {
+          existing.origin = 'declared';
+        }
       } else if (!existing) {
         symbols.set(span.name, {
           name: span.name,

@@ -80,7 +80,7 @@ export function activate(context: vscode.ExtensionContext) {
         language: 'gesstabs',
         scheme: 'file',
       },
-      new GesstabsDefintionProvider()
+      new GesstabsDefintionProvider(externalNamesManager)
     )
   );
 
@@ -337,6 +337,8 @@ function getWordAtPosition(
 // Allow the user to see the definition of variables/functions/methods
 // right where the variables / functions / methods are being used.
 class GesstabsDefintionProvider implements vscode.DefinitionProvider {
+  constructor(private readonly externalNames?: GesstabsExternalNamesManager) {}
+
   public async provideDefinition(
     document: vscode.TextDocument,
     position: vscode.Position,
@@ -375,7 +377,17 @@ class GesstabsDefintionProvider implements vscode.DefinitionProvider {
     // DATA <method>, the statistical creators, IF … THEN <var> = … — none
     // of which findDefinitionLine's regexes cover. Position-aware first
     // (no forward reference), then a whole-program fallback.
-    const model = buildVariableModel(index);
+    //
+    // externalNames (P1.4): a raw dataset column never named by any
+    // in-script statement still resolves — to the CSVINFILE/SPSSINFILE/
+    // DATAFILE line that names it, the only "declaration" a raw column
+    // has. sourcesFor already unions every entry program whose graph
+    // contains this document.
+    const externalSources = this.externalNames
+      ? await this.externalNames.sourcesFor(document)
+      : [];
+    if (token && token.isCancellationRequested) return null;
+    const model = buildVariableModel(index, { externalNames: externalSources });
     const sym =
       model.resolve(word, currentFile, position.line) ??
       model.resolveAnywhere(word);
