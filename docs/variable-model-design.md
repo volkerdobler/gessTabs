@@ -570,29 +570,19 @@ program) — they are **not** separate work.
 >      only way to mint new names by range.** So the two mechanisms never
 >      collide; which one applies is decided purely by the statement's own
 >      `defKind`/kind, no ambiguity to resolve at the name level.
->    - **Known correctness gap, narrower after the 2026-09-05 fix above**:
->      for the *non-pattern* form (names that don't share a numeric suffix —
->      the `esseWagnerMenge`/`esseHandelsmarkeMenge` example), the model
->      still has nothing to expand — that part is genuinely unimplemented,
->      unchanged. But even for the *numeric-suffix* form, which the
->      classifier now expands correctly, a second, independent gap surfaced:
->      `collectVariableOccurrences` — the function that actually drives the
->      **live** find-references/rename commands — doesn't consult
->      `model.references()`'s output at all for its occurrence *positions*;
->      it re-scans each candidate line with `findAllWordRangesInLine`, a
->      literal-text search. A range-synthesised member has no literal text of
->      its own on that line (`item3` never appears as a substring in `mean m
->      = item1 to item4;`), so it's invisible to that scan regardless of what
->      the model already knows. Confirmed with a `variableModel.spec.ts` pair
->      showing the split directly: `buildVariableModel(idx).references
->      ('item3')` finds the line (via `locateInStatement` anchoring the
->      synthesised span to the range phrase); `collectVariableOccurrences
->      (idx, 'item3')` returns `[]`. Needs a design decision, not just a
->      wire-up: **find-references** could reasonably show the range phrase as
->      an informational (non-literal) hit; **rename** arguably should keep
->      excluding these on purpose — there is no text to substitute without
->      corrupting the *other* endpoint's own name. Once the non-pattern form
->      is implemented too, this same split applies to it identically.
+>    - **`collectVariableOccurrences` fixed too — 2026-09-05.** The decision
+>      above (find-references keeps the range phrase as a non-literal hit;
+>      rename excludes it) is implemented: `NameSpan.synthetic?: boolean`
+>      (set on a range-synthesised member), `VariableOccurrence.literal:
+>      boolean` (derived from it). `GesstabsReferenceProvider` keeps both
+>      kinds; `GesstabsRenameProvider` filters to `literal` occurrences
+>      before building its `WorkspaceEdit`. Only the *numeric-suffix* form
+>      benefits so far — the *non-pattern* form (names that share no numeric
+>      suffix, the `esseWagnerMenge`/`esseHandelsmarkeMenge` example) still
+>      has nothing for the model to expand in the first place; once that's
+>      implemented (P1.2/P1.4, below), it produces the same kind of
+>      `synthetic` span and this same literal/non-literal split applies to it
+>      automatically, no further plumbing needed.
 >    - Open sub-question, not yet decided: `‹b›` declared *before* `‹a›` in
 >      program order — error, or silently treat as `‹b› TO ‹a›`?
 > 3. **Duplicate-declaration is kind-gated.** The classifier tags each defining

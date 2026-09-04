@@ -526,6 +526,10 @@ class GesstabsReferenceProvider implements vscode.ReferenceProvider {
       makeWorkspaceReader(document),
       { conditionalsAllActive: true }
     );
+    // Unlike rename, "Find All References" keeps non-literal occurrences too
+    // (§9 Q2: a numeric-suffix `‹a› TO ‹b›` range member with no text of its
+    // own) — pointing at the range phrase is still a genuine, useful usage
+    // location, it just isn't a text substitution target.
     return collectVariableOccurrences(
       index,
       word,
@@ -575,7 +579,13 @@ class GesstabsRenameProvider implements vscode.RenameProvider {
       makeWorkspaceReader(document),
       { conditionalsAllActive: true }
     );
-    const occurrences = collectVariableOccurrences(index, word, false);
+    // Non-literal occurrences (§9 Q2: a numeric-suffix `‹a› TO ‹b›` range
+    // member with no text of its own — `character`/`length` span the whole
+    // range phrase) must never be rename targets: there is no safe
+    // substitution that wouldn't also corrupt the range's other endpoint.
+    const occurrences = collectVariableOccurrences(index, word, false).filter(
+      (o) => o.literal
+    );
     if (occurrences.length === 0) return null;
 
     const edit = new vscode.WorkspaceEdit();

@@ -239,18 +239,26 @@ describe('collectVariableOccurrences', () => {
     expect(refs.map((r) => r.line.line)).to.deep.equal([0]);
   });
 
-  it("collectVariableOccurrences still can't surface that as a rename-able edit — no literal 'item3' text exists on the line", () => {
-    // known remaining gap (TODO.md): find-references/rename are driven by
-    // findAllWordRangesInLine (a literal-text scan), which has nothing to
-    // find here — renaming item3 correctly touches nothing on this line
-    // (there's no text to safely substitute without corrupting item1's own
-    // name), but "Find All References" arguably should still point here,
-    // which needs a different occurrence shape than collectVariableOccurrences
-    // returns today.
+  it('collectVariableOccurrences surfaces a range-synthesised member as a non-literal occurrence (find-references, not rename)', () => {
+    // fixed: the range phrase itself ("item1 to item4") is reported as a
+    // usage location for item3, but flagged literal: false — there is no
+    // "item3" text on this line to safely rename (that would corrupt
+    // item1's own name), so a rename provider must filter these out while
+    // a references provider can keep them.
     const occ = collectVariableOccurrences(
       indexOf('mean m = item1 to item4;'),
       'item3'
     );
-    expect(occ).to.be.empty;
+    expect(occ).to.have.length(1);
+    expect(occ[0].literal).to.be.false;
+    expect(occ[0].line.line).to.equal(0);
+  });
+
+  it('a literal occurrence of a plain name is flagged literal: true', () => {
+    const occ = collectVariableOccurrences(
+      indexOf('singleq alter = 1;\ncompute x = alter;'),
+      'alter'
+    );
+    expect(occ.every((o) => o.literal)).to.be.true;
   });
 });

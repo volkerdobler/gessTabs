@@ -56,20 +56,17 @@ items below are facets of this same problem, marked "(needs P1)".
     `model.references()` now correctly reports a reference-position range's
     in-between members too (anchored at the whole `‹a› TO ‹b›` phrase, since
     there's no literal token of their own to point at).
-  - **Still open, narrower than before**: `collectVariableOccurrences` — the
-    function actually driving the **live** find-references/rename commands —
-    doesn't consult `model.references()`'s range-synthesised entries at all;
-    it's built around `findAllWordRangesInLine`, a literal-text scan, which
-    finds nothing for a name that's never written verbatim on that line
-    (`item3` doesn't appear as text in `mean m = item1 to item4;`). Needs a
-    design decision, not just a wire-up: **find-references** should probably
-    still surface the range phrase as an informational (non-literal)
-    location; **rename** arguably should keep excluding these, since editing
-    the range phrase's text would corrupt the *other* endpoint's own name —
-    there's no safe automatic substitution for a variable that only exists
-    by virtue of the range. Locked in with `variableModel.spec.ts` cases
-    showing exactly this split (`model.references()` finds it,
-    `collectVariableOccurrences` still doesn't).
+  - **`collectVariableOccurrences` wired up too — done 2026-09-05.**
+    `NameSpan` gained `synthetic?: boolean` (set by `expandNameRange`'s
+    caller for a range-phrase member); `VariableOccurrence` gained
+    `literal: boolean`. Find-references (`GesstabsReferenceProvider`) now
+    includes a range-synthesised member as a non-literal hit pointing at the
+    whole `‹a› TO ‹b›` phrase — a genuine usage location, just not editable
+    text. Rename (`GesstabsRenameProvider`) filters to `literal` occurrences
+    only before building its `WorkspaceEdit`, since substituting the range
+    phrase's text would corrupt the *other* endpoint's own name. Locked in
+    with `variableModel.spec.ts` cases for both the non-literal hit and the
+    `literal: true` case staying unaffected.
   - **The genuinely non-pattern reference-position form is unchanged** —
     still needs the model (P1.2: slice `buildVariableModel`'s program-order
     symbol sequence between two resolved endpoints; P1.4: a raw/external

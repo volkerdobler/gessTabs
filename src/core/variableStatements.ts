@@ -72,6 +72,13 @@ export interface NameSpan {
   rawStart: number;
   rawLength: number;
   quoted: boolean;
+  // true for a member `expandNameRange` synthesised from an `‹a› TO ‹b›`
+  // pair (§9 Q2) — `raw`/`rawStart`/`rawLength` then describe the whole
+  // range phrase (no literal token of this name exists), not a real
+  // occurrence of `raw` itself. Consumers that need an editable text range
+  // (rename) must skip these; consumers that just need "where does this
+  // apply" (find-references) can still use the phrase's position.
+  synthetic?: boolean;
 }
 
 export interface StatementReference {
@@ -359,6 +366,7 @@ function syntheticSpan(
     rawStart: rangeStart.start,
     rawLength: rangeEnd.end - rangeStart.start,
     quoted: false,
+    synthetic: true,
   };
 }
 

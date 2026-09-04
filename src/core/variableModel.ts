@@ -383,6 +383,13 @@ export interface VariableOccurrence {
   line: ResolvedLine;
   character: number;
   length: number;
+  // false for a range-phrase hit (§9 Q2: a numeric-suffix `‹a› TO ‹b›`
+  // member the classifier synthesised — `name` never appears as literal
+  // text here, `character`/`length` span the whole "‹a› TO ‹b›" phrase
+  // instead). Find-references can still show these — they're a genuine
+  // usage — but **rename must skip non-literal occurrences**: there is no
+  // text to substitute without corrupting the range's other endpoint.
+  literal: boolean;
 }
 
 // Every occurrence of `name` across the resolved program that counts as a
@@ -393,14 +400,22 @@ export interface VariableOccurrence {
 // leaves label / title text that merely reads like a variable name
 // alone). Comment-scoped hits are dropped. `excludeDefinitions` skips the
 // statement lines that declare `name` (references' `!includeDeclaration`).
+//
+// Also includes non-literal hits from a numeric-suffix `‹a› TO ‹b›` range
+// `name` is only a member of (§9 Q2) — `findAllWordRangesInLine` can never
+// find these (there's no literal `name` text on that line at all), so
+// they're added separately from `model.references(name)`'s own
+// already-resolved, already-`locateInStatement`-anchored entries. Callers
+// building a rename edit MUST filter to `literal` occurrences only.
 export function collectVariableOccurrences(
   index: WorkspaceIndex,
   name: string,
   excludeDefinitions = false
 ): VariableOccurrence[] {
   const model = buildVariableModel(index);
+  const modelRefs = model.references(name);
   const refLineKeys = new Set(
-    model.references(name).map((r) => `${r.line.file}:${r.line.line}`)
+    modelRefs.map((r) => `${r.line.file}:${r.line.line}`)
   );
   const defLineKeys = new Set(
     (model.resolveAnywhere(name)?.definitions ?? []).map(
@@ -420,8 +435,27 @@ export function collectVariableOccurrences(
       if (scope && !scope.isNotInComment(rl.line, start)) return;
       const quoted = !!scope && scope.isStringScope(rl.line, start);
       if (quoted && !nameOnThisLine) return;
-      out.push({ line: rl, character: start, length: end - start });
+      out.push({
+        line: rl,
+        character: start,
+        length: end - start,
+        literal: true,
+      });
     });
   });
+
+  modelRefs
+    .filter((r) => r.span.synthetic)
+    .forEach((r) => {
+      const lineKey = `${r.line.file}:${r.line.line}`;
+      if (excludeDefinitions && defLineKeys.has(lineKey)) return;
+      out.push({
+        line: r.line,
+        character: r.character,
+        length: r.span.rawLength,
+        literal: false,
+      });
+    });
+
   return out;
 }
