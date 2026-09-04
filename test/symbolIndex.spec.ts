@@ -4,6 +4,7 @@ import { FileReader } from '../src/core/includeGraph';
 import {
   buildWorkspaceIndex,
   findMacroProducedDefinition,
+  findAllMacroProducedNames,
   findWordRangeInLine,
   findAllWordRangesInLine,
 } from '../src/core/symbolIndex';
@@ -149,6 +150,86 @@ describe('findMacroProducedDefinition', () => {
       findMacroProducedDefinition(index, p('main.tab'), 4, 'f39mult')?.bodyLine
         .text
     ).to.equal('makefamily f39mult = 50;');
+  });
+});
+
+describe('findAllMacroProducedNames', () => {
+  it('finds a variable defined via a macro-call-substituted &param', () => {
+    const files = {
+      [p('main.tab')]: [
+        '#macro #x( &fr )',
+        'compute &fr = 2;',
+        '#endmacro',
+        '#x( alter )',
+        'table t = #k by alter;',
+      ].join('\n'),
+    };
+    const index = buildWorkspaceIndex([p('main.tab')], makeReader(files));
+    const names = findAllMacroProducedNames(index);
+    expect(names).to.have.length(1);
+    expect(names[0]).to.deep.include({
+      name: 'alter',
+      raw: 'alter',
+      defKind: 'assignment',
+    });
+    expect(names[0].callSite.text).to.equal('#x( alter )');
+    expect(names[0].callSite.line).to.equal(3);
+    expect(names[0].bodyLine.text).to.equal('compute alter = 2;');
+    expect(names[0].bodyLine.line).to.equal(1);
+  });
+
+  it('collects one entry per call site — the same macro called twice produces two entries', () => {
+    const files = {
+      [p('main.tab')]: [
+        '#macro #x( &fr )',
+        'compute &fr = 2;',
+        '#endmacro',
+        '#x( alter )',
+        '#x( geschlecht )',
+      ].join('\n'),
+    };
+    const index = buildWorkspaceIndex([p('main.tab')], makeReader(files));
+    const names = findAllMacroProducedNames(index);
+    expect(names.map((n) => n.name)).to.deep.equal(['alter', 'geschlecht']);
+  });
+
+  it('collects every name a multi-line macro body declares', () => {
+    const files = {
+      [p('main.tab')]: [
+        '#macro #x( &fr )',
+        'singleq &fr.a = 1;',
+        'singleq &fr.b = 2;',
+        '#endmacro',
+        '#x( item )',
+      ].join('\n'),
+    };
+    const index = buildWorkspaceIndex([p('main.tab')], makeReader(files));
+    const names = findAllMacroProducedNames(index);
+    expect(names.map((n) => n.name)).to.deep.equal(['item.a', 'item.b']);
+    expect(names.every((n) => n.defKind === 'declaration')).to.be.true;
+  });
+
+  it('returns nothing when no #MACRO is defined at all', () => {
+    const index = buildWorkspaceIndex(
+      [p('main.tab')],
+      makeReader({ [p('main.tab')]: 'compute x = 1;' })
+    );
+    expect(findAllMacroProducedNames(index)).to.have.length(0);
+  });
+
+  it("ignores a call to a name that isn't a known macro", () => {
+    const index = buildWorkspaceIndex(
+      [p('main.tab')],
+      makeReader({
+        [p('main.tab')]: [
+          '#macro #x( &fr )',
+          'compute &fr = 2;',
+          '#endmacro',
+          '#nope( alter )',
+        ].join('\n'),
+      })
+    );
+    expect(findAllMacroProducedNames(index)).to.have.length(0);
   });
 });
 

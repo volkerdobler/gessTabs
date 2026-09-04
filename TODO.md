@@ -319,11 +319,45 @@ items below are facets of this same problem, marked "(needs P1)".
       that fallback fires without a live-tested reason to.
     - **Still open**: the undefined-variable diagnostic itself (P1.6) —
       this phase is what it will check against.
-- **P1.5** — macro-produced names into the model: numeric params (`&1`),
-  comma-separated param lists, mid-token substitution (`&p.recoded`). Builds on
-  the existing `findMacroProducedDefinition`. `#DOMACRO` looping stays P3, but the
-  model's macro hook is shaped so that work plugs in without reshaping the
-  symbol record.
+- **P1.5** — macro-produced names into the model. **Core done 2026-09-05**
+  (ahead of P1.6, which needs it to avoid false "undefined variable"
+  positives on a macro-produced name — see P1.6 below):
+  - `findAllMacroProducedNames(index)` (`symbolIndex.ts`) — the enumerative
+    sibling of the existing `findMacroProducedDefinition` (which answers
+    "who produced *this one* word", searched backward from a single
+    position, for the go-to-def fallback). Walks every macro call site in
+    the program once, substitutes its target macro's body the same way
+    `findMacroProducedDefinition`/the macro hover already do, and
+    classifies each substituted body line (`classifyStatement`) to
+    collect every name it `defines` — covering numeric params (`&1`),
+    comma-separated param lists, and mid-token substitution (`&p.recoded`,
+    verified: `singleq &fr.a = 1;` called with `alter` → `alter.a`) for
+    free, since substitution itself already handles all three (§9 wording
+    "Builds on the existing findMacroProducedDefinition" undersold it —
+    the *substitution* machinery already covered these; only the
+    *enumeration* was missing). `#DOMACRO` looping stays P3.
+  - `buildVariableModel(index, { macroExpansion: true })` — **opt-in**,
+    unlike `externalNames` (always-on once passed). Seeds one
+    `origin: 'macro-produced'` symbol per produced name, `firstSeen` at
+    the call site's own statement index (visible from the call onward,
+    honouring no-forward-reference same as everywhere else) — merges into
+    an existing symbol via the identical "existing vs new" logic
+    `externalNames` seeding already established (a name a real in-script
+    **declaration** also names promotes `'external'`→`'declared'` the
+    same way; a name called via the same macro more than once just gets
+    another `definitions` entry). Opt-in because a consumer that already
+    special-cases macro-produced names itself —
+    `GesstabsDefintionProvider`'s existing `findMacroProducedDefinition`
+    fallback, which additionally shows the call site, something a single
+    `definitions` entry can't — must not have the model start resolving
+    them out from under it and silently dropping that second location;
+    **not wired into any consumer yet**, P1.6's diagnostic is the
+    motivating one. Five new `symbolIndex.spec.ts` cases +
+    five new `variableModel.spec.ts` cases (opt-in gating, visible from
+    the call site, no-forward-reference, external→declared promotion,
+    called-twice). `#DOMACRO` looping stays P3, but the model's macro
+    hook is shaped so that work plugs in without reshaping the symbol
+    record.
 - **P1.6** — new model-based diagnostics: undefined variable (a bare reference
   the model cannot resolve, with no unresolved external source in play);
   system-variable redeclaration (`SysMiss`, `NIL`, `SystemFileNo`,

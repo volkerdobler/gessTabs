@@ -21,7 +21,7 @@ import {
 } from './includeGraph';
 import { Scope } from './scope';
 import { BranchPath } from './branchPaths';
-import { classifyStatement } from './variableStatements';
+import { classifyStatement, VariableKind } from './variableStatements';
 import {
   findMacroDefinitions,
   findMacroCalls,
@@ -161,6 +161,77 @@ export function findMacroProducedDefinition(
     }
   }
   return undefined;
+}
+
+export interface MacroProducedName {
+  // canonical (lower-cased) name.
+  name: string;
+  // as substituted, quotes stripped, original casing.
+  raw: string;
+  // the substituted body statement's own defKind/targetKind (design §9 Q3
+  // / §3) — same meaning as VariableSymbol.definitionKinds: 'declaration'
+  // for a real SINGLEQ/VARFAMILY/… inside the macro body, 'assignment'
+  // for a COMPUTE/IF-THEN.
+  defKind: 'declaration' | 'assignment';
+  targetKind: VariableKind;
+  // Where the macro was called — the only location visible in the script
+  // without expanding it.
+  callSite: ResolvedLine;
+  // The substituted macro body line that actually produces the name.
+  bodyLine: ResolvedLine;
+  bodyText: string;
+}
+
+// Every name any #MACRO call in the program produces — the enumerative
+// sibling of findMacroProducedDefinition above (which answers "who
+// produced *this one* word", searched backward from a single position).
+// Walks every call site once, substitutes its target macro's body the
+// same way findMacroProducedDefinition/the macro hover already do, and
+// classifies each substituted body line to collect every name it
+// defines. Feeds buildVariableModel's `origin: 'macro-produced'` seeding
+// (P1.5) and, through it, the undefined-variable diagnostic (P1.6): a
+// name only a macro produces must never be flagged as undefined.
+export function findAllMacroProducedNames(
+  index: WorkspaceIndex
+): MacroProducedName[] {
+  const macroIndex = buildMacroIndex(findMacroDefinitions(index.order));
+  if (macroIndex.size === 0) return [];
+
+  const out: MacroProducedName[] = [];
+  index.order.forEach((rl) => {
+    const call = findMacroCalls(rl.text)[0];
+    if (!call) return;
+    const macro = macroIndex.get(call.name.toLowerCase());
+    if (!macro) return;
+
+    const bodyLines = index.order.filter(
+      (l) =>
+        l.file === macro.file &&
+        l.line > macro.defLine &&
+        l.line < macro.endLine
+    );
+    const substituted = expandLines(
+      bodyLines.map((l) => l.text),
+      macro.params,
+      call.args
+    );
+    bodyLines.forEach((bl, j) => {
+      const cls = classifyStatement(substituted[j]);
+      if (!cls) return;
+      cls.defines.forEach((span) => {
+        out.push({
+          name: span.name,
+          raw: span.raw.replace(/^["']|["']$/g, ''),
+          defKind: cls.defKind ?? 'assignment',
+          targetKind: cls.targetKind ?? 'unknown',
+          callSite: rl,
+          bodyLine: { ...bl, text: substituted[j] },
+          bodyText: substituted[j],
+        });
+      });
+    });
+  });
+  return out;
 }
 
 // Every word-boundary occurrence of `word` within `text` — a line can

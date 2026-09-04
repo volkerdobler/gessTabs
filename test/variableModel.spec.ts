@@ -283,6 +283,76 @@ describe('buildVariableModel — external names (P1.4)', () => {
   });
 });
 
+describe('buildVariableModel — macro-produced names (P1.5, opt-in)', () => {
+  const macroScript = [
+    '#macro #x( &fr )',
+    'compute &fr = 2;',
+    '#endmacro',
+    '#x( alter )',
+    'table t = #k by alter;',
+  ].join('\n');
+
+  it('is not resolved at all unless opts.macroExpansion is set', () => {
+    const m = buildVariableModel(indexOf(macroScript));
+    expect(m.resolveAnywhere('alter')).to.be.undefined;
+  });
+
+  it('becomes an origin: "macro-produced" symbol once opted in, visible from the call site', () => {
+    const m = buildVariableModel(indexOf(macroScript), {
+      macroExpansion: true,
+    });
+    const sym = m.resolveAnywhere('alter');
+    expect(sym?.origin).to.equal('macro-produced');
+    expect(sym?.definitions).to.have.length(1);
+    expect(sym?.definitions[0].text).to.equal('compute alter = 2;');
+    expect(sym?.definitions[0].line).to.equal(1);
+    // visible on/after the call site (line 3) and everything following.
+    expect(m.resolve('alter', p('main.tab'), 4)).to.not.be.undefined;
+  });
+
+  it('honours no-forward-reference: not visible before the call site', () => {
+    const before = [
+      'table early = #k by alter;',
+      '#macro #x( &fr )',
+      'compute &fr = 2;',
+      '#endmacro',
+      '#x( alter )',
+    ].join('\n');
+    const m = buildVariableModel(indexOf(before), { macroExpansion: true });
+    expect(m.resolve('alter', p('main.tab'), 0)).to.be.undefined;
+  });
+
+  it('a declaration-kind macro body promotes an existing external symbol to "declared"', () => {
+    const declScript = [
+      '#macro #x( &fr )',
+      'singleq &fr = 1 2 3;',
+      '#endmacro',
+      '#x( alter )',
+    ].join('\n');
+    const m = buildVariableModel(indexOf(declScript), {
+      externalNames: [externalSource(['alter'])],
+      macroExpansion: true,
+    });
+    const sym = m.resolveAnywhere('alter');
+    expect(sym?.origin).to.equal('declared');
+    expect(sym?.definitions).to.have.length(2);
+  });
+
+  it('the same macro called twice with the same name adds a second definitions entry', () => {
+    const twice = [
+      '#macro #x( &fr )',
+      'compute &fr = 2;',
+      '#endmacro',
+      '#x( alter )',
+      '#x( alter )',
+    ].join('\n');
+    const m = buildVariableModel(indexOf(twice), { macroExpansion: true });
+    const sym = m.resolveAnywhere('alter');
+    expect(sym?.origin).to.equal('macro-produced');
+    expect(sym?.definitions).to.have.length(2);
+  });
+});
+
 describe('primaryDefinitions', () => {
   it('drops IF-THEN/COMPUTE reassignments — go-to-definition must not offer them (the F12 fix)', () => {
     // regression: F12 on esseWagnerMenge used to also list every later

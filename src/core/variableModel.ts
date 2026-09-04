@@ -18,7 +18,11 @@
 // rename / the F2 diagnostics) are migrated onto this in phases 2–3.
 
 import { ResolvedLine } from './includeGraph';
-import { WorkspaceIndex, findAllWordRangesInLine } from './symbolIndex';
+import {
+  WorkspaceIndex,
+  findAllWordRangesInLine,
+  findAllMacroProducedNames,
+} from './symbolIndex';
 import { ExternalNameSource } from './externalNames';
 import {
   toLogicalStatements,
@@ -237,6 +241,16 @@ export interface BuildVariableModelOptions {
   // GesstabsExternalNamesManager.sourcesFor); this module never touches
   // the filesystem itself.
   externalNames?: ExternalNameSource[];
+  // When true, every name any #MACRO call in the program produces (P1.5 —
+  // findAllMacroProducedNames) becomes an `origin: 'macro-produced'`
+  // symbol too, visible from its call site onward. Opt-in rather than
+  // always-on: a consumer that already special-cases macro-produced names
+  // itself (go-to-definition's own findMacroProducedDefinition fallback,
+  // which additionally shows the call site — something a single
+  // `definitions` entry can't) should not have the model start resolving
+  // them out from under it; the undefined-variable diagnostic (P1.6) is
+  // this option's motivating consumer.
+  macroExpansion?: boolean;
 }
 
 export function buildVariableModel(
@@ -464,6 +478,49 @@ export function buildVariableModel(
     }
     return last;
   };
+
+  // `macro-produced` symbols (P1.5, opt-in — see BuildVariableModelOptions).
+  // Runs after every real declaration above so a name a real statement
+  // *also* declares merges into that symbol via the same "existing vs
+  // new" logic every other origin already goes through, rather than
+  // needing its own duplicate merge/promotion rules. firstSeen is the
+  // call site's own statement index (via stmtIndexAt) — visible from
+  // where the call happens, not before, same no-forward-reference
+  // treatment as anything else.
+  if (opts.macroExpansion) {
+    findAllMacroProducedNames(index).forEach((mp) => {
+      const existing = symbols.get(mp.name);
+      const branch = pathAt(mp.bodyLine.file, mp.bodyLine.line);
+      if (existing && existing.origin !== 'predefined') {
+        existing.definitions.push(mp.bodyLine);
+        existing.definitionStatements.push(mp.bodyText);
+        existing.definitionKinds.push(mp.defKind);
+        existing.definitionBranches.push(branch);
+        if (mp.targetKind && mp.targetKind !== 'unknown') {
+          existing.kind = mp.targetKind;
+        }
+        // Same re-definition-not-a-duplicate reasoning as external names
+        // above: a real declaration inside the macro body genuinely
+        // declares the name; a mere assignment does not (§3.3).
+        if (existing.origin === 'external' && mp.defKind === 'declaration') {
+          existing.origin = 'declared';
+        }
+      } else if (!existing) {
+        symbols.set(mp.name, {
+          name: mp.name,
+          displayName: mp.raw,
+          kind: mp.targetKind,
+          origin: 'macro-produced',
+          definitions: [mp.bodyLine],
+          definitionStatements: [mp.bodyText],
+          definitionKinds: [mp.defKind],
+          definitionBranches: [branch],
+          annotations: [],
+        });
+        firstSeen.set(mp.name, stmtIndexAt(mp.callSite.file, mp.callSite.line));
+      }
+    });
+  }
 
   const viewAt = (pointIndex: number): ProgramPointView => {
     const visible = (): VariableSymbol[] =>
