@@ -214,9 +214,7 @@ and are marked "(needs P1)" so they are not built twice.
     misattribute the line entirely for a multi-line statement whose first
     line was indented — this had been shipped in P1.2 (hover) already but
     only bit there as an imprecise jump-line; here it would have visibly
-    miscoloured text. `collectDeclarationTokens`/`collectSemanticTokens`
-    (the old regex pass) are **kept**, still used by `symbolCompletion.ts`
-    and `symbolIndex.ts`'s `bodyLineDeclaresName`.
+    miscoloured text.
   - **F2 empty-varlist + duplicate-declaration — done 2026-09-04**
     (`diagnostics.ts`, still document-scoped, no workspace/INCLUDE
     resolution — that stays a separate Tier 2 item, design §7.5/Tier-2
@@ -234,12 +232,59 @@ and are marked "(needs P1)" so they are not built twice.
     since the old `computeDefRe`-based check couldn't distinguish a first
     creation from a re-assignment. `checkEmptyVarlist` itself (the pattern
     match) didn't need the model — untouched.
-  - **Still open**: `GesstabsDocumentSymbolProvider` (still on the regex
-    factories), `symbolCompletion.ts`.
-  - **Then delete**: `regex.ts` / `matching.ts` / `collectDeclarationTokens` /
-    `collectSemanticTokens`/`collectLineTokens` / `variableInfo.ts`
-    (`findVariableAnnotations` etc.) / `lineHasQuotedVariableReference` /
-    `findAllUsages` — once nothing uses them.
+  - **`GesstabsDocumentSymbolProvider` (Outline, Ctrl+Shift+O) — done
+    2026-09-04**: rebuilt on the classifier, one Outline entry per name
+    instead of the old "whole varlist crammed into one blob"/"last name
+    only" regex output — fixes real gaps: `MAKESINGLE v;` (no `=`) never
+    showed up at all, and a plain `compute x = 1;` (no sub-keyword) was
+    matched by `computeDefRe` into a *group that captures nothing*, so it
+    silently produced a garbage empty-named Outline entry. VARTITLE/
+    VARTEXT/VALUELABELS/COPY* re-mentions and TABLE head/axis names still
+    show as Outline landmarks (parity with the old `multiVarRe`/
+    `tableHeadRe`/`tableAxisRe` entries; head vs. axis is no longer
+    distinguished — simplification, both just say `[table]` now). The
+    macro/`#EXPAND` half is untouched. Document-scoped, like before — no
+    workspace/INCLUDE resolution. **Not manually verified in a running VS
+    Code yet.**
+  - **`symbolCompletion.ts` (F1 autocomplete) — done 2026-09-04**: replaced
+    entirely by `model.at(file, line).all()` — a program point's visible-
+    symbol view already *is* "every name valid here, no forward
+    reference", natively, instead of a second regex re-scan of the whole
+    resolved order. Queries `line - 1` (not `line`): `model.at()` is
+    inclusive of a symbol declared *on* the queried line (right for hover),
+    but completion must not offer a name still being typed on the current
+    line as a suggestion for itself. Now also suggests the five predefined
+    system variables, and returns each name in its stable first-seen
+    display casing rather than whatever casing happened to be written at
+    the specific occurrence the old token scan landed on.
+  - **Dead-code deletion pass — done 2026-09-04**, now that every real
+    consumer has moved onto the model: `findDefinitionLine`, `findAllUsages`
+    (`symbolIndex.ts`), `lineMatchesDefinition`, `lineMatchesUsage`,
+    `lineHasQuotedVariableReference` (`matching.ts` — now just
+    `matchInScope`, still needed generically), `collectDeclarationTokens`/
+    `collectLineTokens`/`collectSemanticTokens` (`semanticTokens.ts` — the
+    old regex-based token pass; `collectModelSemanticTokens` +
+    `collectMacroTokensForLine` remain), `src/core/variableInfo.ts` in
+    full. Their spec files deleted or trimmed to match
+    (`test/semanticTokens.spec.ts`, `test/variableInfo.spec.ts` gone;
+    `test/matching.spec.ts`/`test/symbolIndex.spec.ts` trimmed, the
+    still-meaningful assertions ported onto `buildVariableModel`/
+    `collectVariableOccurrences`). `symbolIndex.ts`'s
+    `bodyLineDeclaresName` (the macro-produced-definition fallback hover/
+    go-to-def still use) now checks `classifyStatement(...)?.defines`
+    instead of `collectDeclarationTokens`.
+  - **Still blocking a full `regex.ts` cleanup**: `GessTabsWorkspaceSymbolProvider`
+    (Ctrl+T "Go to Symbol in Workspace", `extension.ts`) — not in the
+    original P1.3 list, discovered during this pass. Still built on
+    `singleVarDefRe`/`multiVarDefRe`/`computeDefRe`/`tableHeadRe` +
+    `macroDefRe`/`expandDefRe`, each re-built **per keystroke** from the
+    user's own search query (`singleVarDefRe(query)`) — an architecturally
+    different, query-driven shape from every other consumer migrated so
+    far, and a bigger lift (needs a workspace-wide scan + substring-filter
+    over `model.all()`/`classifyStatement`, not just a swap). `weightcellsRe`/
+    `tableAxisRe` in `regex.ts` are now fully unused dead exports (nothing
+    left to prune around them until `GessTabsWorkspaceSymbolProvider`
+    moves too) — low-priority tidy-up.
   - Fold in the `.def` / other INCLUDE-extension fix (design §9 Q6).
 - **P1.4 — wire P0's external names into the model** as `origin: 'external'`
   symbols, seeded before the program-order pass. A later in-script

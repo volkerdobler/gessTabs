@@ -1,47 +1,26 @@
 // Semantic highlighting (F5): distinguishes variable/macro/table names
 // from the surrounding gessTabs keywords, layered on top of the existing
-// TextMate grammar rather than replacing it. Reuses the same regex
-// factories (src/core/regex.ts) the document/workspace symbol providers
-// already use to recognize *which lines* are variable/macro/table
-// definitions, and src/core/macroExpansion.ts for macro calls and the
-// bare-#name/reserved-keyword rules F3 already established.
+// TextMate grammar rather than replacing it.
 //
-// Known, deliberate scope limits (documented in docs/HISTORY.md's F5 entry
-// and TODO.md's "possible future improvements" too):
-// - A multi-name list (`VARIABLES a b c = ...;`, a RECODE/VALUELABELS
-//   list, a TABLE head/axis with more than one variable) only gets its
-//   LAST name highlighted. The shared regex factories capture the whole
-//   list as one blob for these statement kinds (that's what the existing
-//   document-symbol provider needs), and several of them (computeDefRe,
-//   multiVarDefRe, multiVarRe, tableHeadRe, tableAxisRe) resolve which of
-//   their own capture groups actually holds the list through a genuinely
-//   ambiguous internal alternation — confirmed by probing them directly:
-//   computeDefRe's plain single-variable branch captures the name into
-//   *no* group at all. Rather than depend on that, every one of these is
-//   read from its whole matched substring (`match[0]`) and the LAST
-//   identifier/quoted-string token in it is taken as "the name" — always
-//   correct for the (by far most common) single-name case, and a
-//   documented simplification for the list case.
-// - Only *definitions* are tokenized (matching what the document/
-//   workspace symbol providers already collect), not every usage
-//   elsewhere in the file — that needs symbolIndex.ts's workspace-wide
-//   usage matching, a bigger scope than a per-document token pass.
-// - Macro calls and bare #EXPAND references ARE included beyond bare
-//   definitions, because macroExpansion.ts already gives their exact
-//   position for free (findMacroCalls / the hash-name scan below), unlike
-//   variable/table usages.
+// Two independent halves:
+//   - macro / #EXPAND tokens (collectMacroTokensForLine) — pure line
+//     scanning via src/core/macroExpansion.ts, unrelated to the variable
+//     model.
+//   - variable / table-name tokens (collectModelSemanticTokens) — the
+//     statement classifier (src/core/variableStatements.ts), which
+//     replaced the original regex-based pass (docs/HISTORY.md's F5 entry):
+//     that version only coloured the *last* name in a multi-name list
+//     (`VARIABLES a b c = ...;`, a VARTITLE/VALUELABELS list, a
+//     multi-variable TABLE head/axis) because several of regex.ts's
+//     factories can't otherwise separate a whole matched varlist into
+//     individual names. The classifier hands back every name with a real
+//     offset, so that limitation is gone.
+//
+// Still curated, not "every reference in the program": a COMPUTE/IF
+// expression operand is not highlighted, matching the original pass'
+// scope (see collectModelSemanticTokens below for the exact set).
 
-import {
-  singleVarDefRe,
-  multiVarDefRe,
-  multiVarRe,
-  computeDefRe,
-  weightcellsRe,
-  tableHeadRe,
-  tableAxisRe,
-  macroDefRe,
-  expandDefRe,
-} from './regex';
+import { macroDefRe, expandDefRe } from './regex';
 import { findMacroCalls, isReservedDirectiveKeyword } from './macroExpansion';
 import { blankComments, ResolvedLine } from './includeGraph';
 import { Scope } from './scope';
@@ -63,55 +42,9 @@ export interface SemanticToken {
 
 export type IsNotInComment = (line: number, char: number) => boolean;
 
-const singleVarRegExp = singleVarDefRe('');
-const computeRegExp = computeDefRe('');
-const weightcellsRegExp = weightcellsRe('');
-const multiVarDefRegExp = multiVarDefRe('');
-const multiVarRegExp = multiVarRe('');
-const tableHeadRegExp = tableHeadRe('');
-const tableAxisRegExp = tableAxisRe('');
 const macroDefRegExp = macroDefRe('');
 const expandDefRegExp = expandDefRe('');
 const hashNameGlobalRe = /#([A-Za-z_]\w*)/g;
-const trailingByRe = /\s*\bby\b\s*$/i;
-
-// Finds the last identifier/quoted-string token in `text` — used for the
-// "last name in a possibly multi-name list" simplification documented
-// above. The negative lookahead ("nothing letter/quote-like follows")
-// guarantees this only succeeds at the true last token, regardless of
-// how many earlier names or keywords precede it.
-const lastNameTokenRe = /("[^"]+"|'[^']+'|[\p{L}][\p{L}\d_.]*)(?!.*["'\p{L}])/u;
-
-function lastNameRange(
-  text: string,
-  offset: number
-): { startChar: number; length: number } | undefined {
-  const m = text.match(lastNameTokenRe);
-  if (!m || m.index === undefined) return undefined;
-  return { startChar: offset + m.index, length: m[0].length };
-}
-
-function pushVariableToken(
-  tokens: SemanticToken[],
-  lineIndex: number,
-  match: RegExpMatchArray,
-  isNotInComment: IsNotInComment,
-  stripTrailingBy = false
-): void {
-  if (match.index === undefined) return;
-  const matched = stripTrailingBy
-    ? match[0].replace(trailingByRe, '')
-    : match[0];
-  const range = lastNameRange(matched, match.index);
-  if (!range) return;
-  if (!isNotInComment(lineIndex, range.startChar)) return;
-  tokens.push({
-    line: lineIndex,
-    startChar: range.startChar,
-    length: range.length,
-    type: 'variable',
-  });
-}
 
 // Adds a 'macro' token for the identifier following a '#' at `hashIndex`
 // (the '#' itself is excluded from the highlighted range, matching how
@@ -137,35 +70,9 @@ function pushHashToken(
   });
 }
 
-// The subset of "variable"-shaped statements that actually *declare* a
-// new name (VARIABLE-family/COMPUTE-family/VARIABLES), as opposed to
-// multiVarRe's family (VARTITLE/VARTEXT/VALUELABELS/...) which only
-// *annotates* an already-existing variable, or WEIGHTCELLS which
-// *references* one (its <varname> is a variable declared/computed
-// earlier, never created here — see weightcellsRe). Exported separately (rather
-// than folded silently into collectLineTokens below) because F2's
-// duplicate-declaration diagnostic needs exactly this narrower set —
-// reusing multiVarRe's matches there would misreport an ordinary
-// `VARTITLE x = "...";` re-mentioning an existing `x` as a duplicate
-// declaration, which it isn't.
-export function collectDeclarationTokens(
-  lineText: string,
-  lineIndex: number,
-  isNotInComment: IsNotInComment
-): SemanticToken[] {
-  if (lineText.length === 0) return [];
-  const tokens: SemanticToken[] = [];
-  [singleVarRegExp, computeRegExp, multiVarDefRegExp].forEach((re) => {
-    const match = lineText.match(re);
-    if (match) pushVariableToken(tokens, lineIndex, match, isNotInComment);
-  });
-  return tokens;
-}
-
 // The '#name' family — macro definitions/calls and bare #EXPAND
 // references — found on one line. Pure line scanning, unrelated to the
-// variable model; shared by both the legacy regex-based token pass below
-// and the model-based one (collectModelSemanticTokens).
+// variable model.
 function collectMacroTokensForLine(
   lineText: string,
   lineIndex: number,
@@ -231,76 +138,12 @@ function collectMacroTokensForLine(
   return tokens;
 }
 
-function collectLineTokens(
-  lineText: string,
-  lineIndex: number,
-  isNotInComment: IsNotInComment
-): SemanticToken[] {
-  if (lineText.length === 0) return [];
-  const tokens: SemanticToken[] = collectMacroTokensForLine(
-    lineText,
-    lineIndex,
-    isNotInComment
-  );
-
-  tokens.push(...collectDeclarationTokens(lineText, lineIndex, isNotInComment));
-
-  const multiVarMatch = lineText.match(multiVarRegExp);
-  if (multiVarMatch) {
-    pushVariableToken(tokens, lineIndex, multiVarMatch, isNotInComment);
-  }
-
-  // WEIGHTCELLS <varname> = … — a reference to an existing variable, not a
-  // declaration (so it's here, not in collectDeclarationTokens), but its
-  // name is still worth highlighting like a table head/axis usage.
-  const weightcellsMatch = lineText.match(weightcellsRegExp);
-  if (weightcellsMatch) {
-    pushVariableToken(tokens, lineIndex, weightcellsMatch, isNotInComment);
-  }
-
-  const headMatch = lineText.match(tableHeadRegExp);
-  if (headMatch) {
-    pushVariableToken(tokens, lineIndex, headMatch, isNotInComment, true);
-  }
-
-  const axisMatch = lineText.match(tableAxisRegExp);
-  if (axisMatch) {
-    pushVariableToken(tokens, lineIndex, axisMatch, isNotInComment);
-  }
-
-  return tokens;
-}
-
-export function collectSemanticTokens(
-  lines: string[],
-  isNotInComment: IsNotInComment
-): SemanticToken[] {
-  const tokens: SemanticToken[] = [];
-  lines.forEach((lineText, i) => {
-    tokens.push(...collectLineTokens(lineText, i, isNotInComment));
-  });
-  return tokens;
-}
-
-// ---------------------------------------------------------------------------
-// Model-based pass (P1.3) — replaces the regex-based variable/table-name
-// half of collectLineTokens above (collectDeclarationTokens, multiVarRe,
-// weightcellsRe, tableHeadRe/tableAxisRe) with the statement classifier.
-// The macro/#EXPAND half (collectMacroTokensForLine) is unrelated to the
-// variable model and reused as-is.
-//
-// The classifier hands back *every* name span with a real offset, so this
-// also fixes the "only the last name in a multi-name list is coloured"
-// limitation documented at the top of this file for VARIABLES/COMPUTE
-// multi-target declarations, VARTITLE/VARTEXT/VALUELABELS lists and
-// multi-variable TABLE heads/axes.
-//
-// Deliberately still curated, not "every reference in the program": a
-// COMPUTE/IF expression operand is not highlighted here, same scope limit
-// as before — the classifier's own `always`-mode references for
-// annotation statements, TABLE heads/axes, and the reference-only
-// statements (WEIGHTCELLS/FILTER/FACTOR) are added; declarations
-// (`defines` + `virtualDefines`) always are.
+// Variable/table-name tokens: declarations (`defines` + `virtualDefines`,
+// always) plus the classifier's own `always`-mode references for
+// annotation statements (VARTITLE/VARTEXT/VALUELABELS/COPY*), TABLE
+// heads/axes, and the reference-only statements (WEIGHTCELLS/FILTER/
+// FACTOR) — the same curated set the original regex-based pass covered,
+// minus its "last name only" limitation.
 const REF_HIGHLIGHT_KEYWORDS = new Set(['weightcells', 'filter', 'factor']);
 
 export function collectModelSemanticTokens(

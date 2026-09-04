@@ -20,8 +20,7 @@ import {
   IncludeGraphOptions,
 } from './includeGraph';
 import { Scope } from './scope';
-import { lineMatchesDefinition, lineMatchesUsage } from './matching';
-import { collectDeclarationTokens } from './semanticTokens';
+import { classifyStatement } from './variableStatements';
 import {
   findMacroDefinitions,
   findMacroCalls,
@@ -76,37 +75,6 @@ export function buildWorkspaceIndex(
   return { order, scopes, rootFiles };
 }
 
-function isNotInCommentAt(
-  index: WorkspaceIndex,
-  rl: ResolvedLine
-): (searchIndex: number) => boolean {
-  const scope = index.scopes.get(rl.file);
-  return (searchIndex: number) =>
-    !scope || scope.isNotInComment(rl.line, searchIndex);
-}
-
-// Scans backward from (fromFile, fromLine) — or, if that position isn't
-// part of the index, the whole index — for the nearest matching
-// definition, mirroring gessTabs' no-forward-reference compile order.
-export function findDefinitionLine(
-  index: WorkspaceIndex,
-  fromFile: string,
-  fromLine: number,
-  word: string
-): ResolvedLine | undefined {
-  const pos = index.order.findIndex(
-    (l) => l.file === fromFile && l.line === fromLine
-  );
-  const searchSpace = pos === -1 ? index.order : index.order.slice(0, pos);
-  for (let i = searchSpace.length - 1; i >= 0; i--) {
-    const rl = searchSpace[i];
-    if (lineMatchesDefinition(rl.text, word, isNotInCommentAt(index, rl))) {
-      return rl;
-    }
-  }
-  return undefined;
-}
-
 export interface MacroProducedDefinition {
   macro: MacroDefinition;
   // The macro body line, with the call's arguments already substituted
@@ -119,25 +87,18 @@ export interface MacroProducedDefinition {
 
 const stripQuotes = (s: string) => s.replace(/^["']|["']$/g, '');
 
-// Whether `lineText` is a name-declaring statement (VARIABLE-family /
-// COMPUTE-family / VARIABLES — the same narrow set F2's duplicate-
-// declaration check uses) whose declared name is exactly `word`. Used on
-// a macro body line *after* argument substitution, so the point is to
-// confirm the substituted line really declares `word` and isn't just some
-// unrelated statement that happens to mention it.
-//
-// NB: `lineMatchesDefinition` is unusable here — it takes an
-// `isNotInComment(searchIndex)` callback and, fed `-1` for "regex didn't
-// match", relies on the callback returning false; a `() => true` there
-// (the only scope info available for synthesised text) makes it return
-// true for *every* line.
+// Whether `lineText` is a statement whose `defines` declare `word` exactly
+// — the statement classifier (src/core/variableStatements.ts), covering
+// the whole §3 inventory rather than the old regex-based
+// collectDeclarationTokens' narrower VARIABLE-family/COMPUTE-family/
+// VARIABLES set. Used on a macro body line *after* argument substitution,
+// so the point is to confirm the substituted line really declares `word`
+// and isn't just some unrelated statement that happens to mention it —
+// classifyStatement needs no comment-scope info (there is none for
+// synthesised text; a whole substituted line is always "real code").
 function bodyLineDeclaresName(lineText: string, word: string): boolean {
   const target = stripQuotes(word).toLowerCase();
-  return collectDeclarationTokens(lineText, 0, () => true).some(
-    (t) =>
-      stripQuotes(lineText.substr(t.startChar, t.length)).toLowerCase() ===
-      target
-  );
+  return !!classifyStatement(lineText)?.defines.some((d) => d.name === target);
 }
 
 // Cheap fallback for when findDefinitionLine finds nothing: `word` may not
@@ -194,15 +155,6 @@ export function findMacroProducedDefinition(
     }
   }
   return undefined;
-}
-
-export function findAllUsages(
-  index: WorkspaceIndex,
-  word: string
-): ResolvedLine[] {
-  return index.order.filter((rl) =>
-    lineMatchesUsage(rl.text, word, isNotInCommentAt(index, rl))
-  );
 }
 
 // Every word-boundary occurrence of `word` within `text` — a line can

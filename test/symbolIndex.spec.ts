@@ -3,12 +3,14 @@ import * as path from 'path';
 import { FileReader } from '../src/core/includeGraph';
 import {
   buildWorkspaceIndex,
-  findDefinitionLine,
   findMacroProducedDefinition,
-  findAllUsages,
   findWordRangeInLine,
   findAllWordRangesInLine,
 } from '../src/core/symbolIndex';
+import {
+  buildVariableModel,
+  collectVariableOccurrences,
+} from '../src/core/variableModel';
 
 const ROOT = path.resolve('/gesstabs-symbolindex-test');
 const p = (...segments: string[]) => path.join(ROOT, ...segments);
@@ -67,51 +69,6 @@ describe('buildWorkspaceIndex', () => {
   });
 });
 
-describe('findDefinitionLine', () => {
-  it('finds the nearest matching definition scanning backward', () => {
-    const files = {
-      [p('main.tab')]: 'variable a = 1;\nvariable b = 2;\ntable t = #k by a;',
-    };
-    const index = buildWorkspaceIndex([p('main.tab')], makeReader(files));
-    const def = findDefinitionLine(index, p('main.tab'), 2, 'a');
-    expect(def?.text).to.equal('variable a = 1;');
-    expect(def?.line).to.equal(0);
-  });
-
-  it('does not find a definition that only occurs later (no forward references)', () => {
-    const files = {
-      [p('main.tab')]: 'table t = #k by a;\nvariable a = 1;',
-    };
-    const index = buildWorkspaceIndex([p('main.tab')], makeReader(files));
-    // cursor is on line 0, "a" is only defined afterward on line 1
-    const def = findDefinitionLine(index, p('main.tab'), 0, 'a');
-    expect(def).to.be.undefined;
-  });
-
-  it('finds a definition across an INCLUDE boundary', () => {
-    const files = {
-      [p('main.tab')]: 'INCLUDE = vars.inc;\ntable t = #k by a;',
-      [p('vars.inc')]: 'variable a = 1;',
-    };
-    const index = buildWorkspaceIndex(
-      [p('main.tab'), p('vars.inc')],
-      makeReader(files)
-    );
-    const def = findDefinitionLine(index, p('main.tab'), 1, 'a');
-    expect(def?.file).to.equal(p('vars.inc'));
-    expect(def?.text).to.equal('variable a = 1;');
-  });
-
-  it('ignores a definition-like pattern inside a comment', () => {
-    const files = {
-      [p('main.tab')]: '// variable a = 1;\ntable t = #k by a;',
-    };
-    const index = buildWorkspaceIndex([p('main.tab')], makeReader(files));
-    const def = findDefinitionLine(index, p('main.tab'), 1, 'a');
-    expect(def).to.be.undefined;
-  });
-});
-
 describe('findMacroProducedDefinition', () => {
   it('finds a variable defined via a macro-call-substituted &param', () => {
     const files = {
@@ -125,7 +82,7 @@ describe('findMacroProducedDefinition', () => {
     };
     const index = buildWorkspaceIndex([p('main.tab')], makeReader(files));
     // No literal declaration of "alter" is found the normal way.
-    expect(findDefinitionLine(index, p('main.tab'), 4, 'alter')).to.be
+    expect(buildVariableModel(index).resolveAnywhere('alter')).to.be
       .undefined;
 
     const macroDef = findMacroProducedDefinition(
@@ -195,40 +152,6 @@ describe('findMacroProducedDefinition', () => {
   });
 });
 
-describe('findAllUsages', () => {
-  it('finds every usage across the merged workspace order', () => {
-    const files = {
-      [p('main.tab')]: 'INCLUDE = vars.inc;\ntable t1 = #k by a;',
-      [p('vars.inc')]: 'variable a = 1;',
-      [p('other.tab')]: 'table t2 = #k by a;',
-    };
-    const index = buildWorkspaceIndex(
-      [p('main.tab'), p('vars.inc'), p('other.tab')],
-      makeReader(files)
-    );
-    const usages = findAllUsages(index, 'a');
-    const texts = usages.map((u) => u.text);
-    expect(texts).to.include('variable a = 1;');
-    expect(texts).to.include('table t1 = #k by a;');
-    expect(texts).to.include('table t2 = #k by a;');
-  });
-
-  it('finds a bare reference in an IF condition / THEN assignment', () => {
-    const files = {
-      [p('main.tab')]: [
-        'variable f24 = 1;',
-        'if (not ([1:2] in f24)) then f24 = 2;',
-        '// f24 mentioned only in a comment here',
-      ].join('\n'),
-    };
-    const index = buildWorkspaceIndex([p('main.tab')], makeReader(files));
-    const texts = findAllUsages(index, 'f24').map((u) => u.text);
-    expect(texts).to.include('variable f24 = 1;');
-    expect(texts).to.include('if (not ([1:2] in f24)) then f24 = 2;');
-    expect(texts).to.not.include('// f24 mentioned only in a comment here');
-  });
-});
-
 describe('findAllWordRangesInLine', () => {
   it('returns every occurrence of the word on the line', () => {
     expect(
@@ -270,18 +193,19 @@ describe('conditionalsAllActive', () => {
     };
     // DRAFT is not defined -> normally the whole #ifdef branch is gone.
     const gated = buildWorkspaceIndex([p('main.tab')], makeReader(files));
-    expect(findAllUsages(gated, 'a').map((u) => u.text)).to.deep.equal([
-      'variable a = 2;',
-    ]);
+    expect(
+      collectVariableOccurrences(gated, 'a').map((o) => o.line.text)
+    ).to.deep.equal(['variable a = 2;']);
 
     const all = buildWorkspaceIndex([p('main.tab')], makeReader(files), {
       conditionalsAllActive: true,
     });
-    const texts = findAllUsages(all, 'a').map((u) => u.text);
+    const texts = collectVariableOccurrences(all, 'a').map((o) => o.line.text);
     expect(texts).to.include('variable a = 1;');
     expect(texts).to.include('table t1 = #k by a;');
     expect(texts).to.include('variable a = 2;');
-    expect(findDefinitionLine(all, p('main.tab'), 2, 'a')).to.not.be.undefined;
+    expect(buildVariableModel(all).resolve('a', p('main.tab'), 2)).to.not.be
+      .undefined;
   });
 });
 
