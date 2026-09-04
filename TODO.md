@@ -182,6 +182,8 @@ and are marked "(needs P1)" so they are not built twice.
     in with a `variableModel.spec.ts` case against the exact reported
     scenario (`definitions[0]` is always the earliest, regardless of which
     line is hovered) — the provider itself still has no test.
+    **Manually re-verified 2026-09-04** against the reporting user's own
+    case in the live Extension Development Host.
 - **P1.3 — migrate the remaining consumers** onto the model. **In progress.**
   - **Done 2026-09-04**: go-to-definition (`model.resolve` + `resolveAnywhere`,
     covers the whole §3 inventory the regexes missed), **find-references** and
