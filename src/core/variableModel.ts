@@ -40,6 +40,10 @@ export interface ModelAnnotation {
   line: number;
   // the whole annotation statement, start line through the terminating `;`.
   statement: string;
+  // set when this annotation was aliased onto the symbol by a
+  // COPYTITLE/COPYTEXT/COPYLABELS `‹targets› = ‹source›` — the name of
+  // `‹source›`, whose real VARTITLE/VARTEXT/VALUELABELS this is.
+  copiedFrom?: string;
 }
 
 export interface VariableSymbol {
@@ -51,7 +55,11 @@ export interface VariableSymbol {
   origin: VariableOrigin;
   // usually one; more than one for an #ifdef-per-branch or a re-definition.
   definitions: ResolvedLine[];
+  // the full statement text for each entry in `definitions`, parallel array.
+  definitionStatements: string[];
   annotations: ModelAnnotation[];
+  // doc string for a `predefined` system variable.
+  predefinedDoc?: string;
   // atomic members of a family / group, when the declaration lists them.
   members?: string[];
   // declared slot count for MAKEFAMILY/MAKEGROUP `= ‹n›`.
@@ -76,6 +84,9 @@ export interface ProgramPointView {
 
 export interface VariableModel {
   all(): VariableSymbol[];
+  // every logical statement, in program order (reused by consumers that
+  // need statement context, e.g. the hover widening a definition line).
+  statements: LogicalStatement[];
   at(file: string, line: number): ProgramPointView;
   resolve(
     name: string,
@@ -84,6 +95,14 @@ export interface VariableModel {
   ): VariableSymbol | undefined;
   currentVariableAt(file: string, line: number): string | undefined;
   references(name: string): VariableReference[];
+  // every annotation naming `name` — a declared symbol's own, plus
+  // "orphan" VARTITLE/VARTEXT/VALUELABELS on a name the script never
+  // declares (a raw dataset variable).
+  annotationsFor(name: string): ModelAnnotation[];
+  // ignores program order — the symbol for `name` wherever it is declared
+  // in the resolved program (the whole-index fallback the old
+  // findDefinitionLine(-1) provided).
+  resolveAnywhere(name: string): VariableSymbol | undefined;
 }
 
 // ---------------------------------------------------------------------------
@@ -107,6 +126,15 @@ const ANNOTATION_KIND: Record<string, ModelAnnotation['kind']> = {
   labels: 'valuelabels',
 };
 
+// COPYTITLE/COPYTEXT/COPYLABELS `‹targets› = ‹source›` don't give the
+// targets their own annotation — they alias the source's.
+const COPY_ANNOT_KIND: Record<string, 'vartitle' | 'vartext' | 'valuelabels'> =
+  {
+    copytitle: 'vartitle',
+    copytext: 'vartext',
+    copylabels: 'valuelabels',
+  };
+
 // Locate an offset within a joined statement text back to its resolved
 // line and the character offset within that line.
 function locate(
@@ -125,6 +153,8 @@ function locate(
   const last = stmt.lines[stmt.lines.length - 1];
   return { line: last, character: 0 };
 }
+
+const currentAsList = (c: string | undefined): string[] => (c ? [c] : []);
 
 function memberSpans(cls: ClassifiedStatement): string[] | undefined {
   if (
@@ -150,6 +180,20 @@ export function buildVariableModel(index: WorkspaceIndex): VariableModel {
   const symbols = new Map<string, VariableSymbol>();
   // program index at which each symbol first becomes visible (-1 = seeded).
   const firstSeen = new Map<string, number>();
+  // VARTITLE/VARTEXT/VALUELABELS naming a variable the script never
+  // declares — usually a raw dataset variable. Kept so the hover can still
+  // show its annotations even though there is no `declared` symbol.
+  const orphanAnnotations = new Map<string, ModelAnnotation[]>();
+  const addAnnotation = (name: string, a: ModelAnnotation) => {
+    const sym = symbols.get(name);
+    if (sym) {
+      sym.annotations.push(a);
+      return;
+    }
+    const list = orphanAnnotations.get(name) ?? [];
+    list.push(a);
+    orphanAnnotations.set(name, list);
+  };
   // "die aktuelle Variable" after statement i (index into statements).
   const currentAfter: (string | undefined)[] = new Array(statements.length);
 
@@ -160,7 +204,9 @@ export function buildVariableModel(index: WorkspaceIndex): VariableModel {
       kind: 'atomic',
       origin: 'predefined',
       definitions: [],
+      definitionStatements: [],
       annotations: [],
+      predefinedDoc: p.doc,
     });
     firstSeen.set(p.name, -1);
   });
@@ -181,6 +227,7 @@ export function buildVariableModel(index: WorkspaceIndex): VariableModel {
       const existing = symbols.get(span.name);
       if (existing && existing.origin !== 'predefined') {
         existing.definitions.push(loc.line);
+        existing.definitionStatements.push(stmt.text);
         if (cls.targetKind && cls.targetKind !== 'unknown') {
           existing.kind = cls.targetKind;
         }
@@ -192,6 +239,7 @@ export function buildVariableModel(index: WorkspaceIndex): VariableModel {
           kind: cls.targetKind ?? 'unknown',
           origin: 'declared',
           definitions: [loc.line],
+          definitionStatements: [stmt.text],
           annotations: [],
           ...(members ? { members } : {}),
         });
@@ -207,6 +255,7 @@ export function buildVariableModel(index: WorkspaceIndex): VariableModel {
         kind: 'atomic',
         origin: 'virtual',
         definitions: [locate(stmt, span.rawStart).line],
+        definitionStatements: [stmt.text],
         annotations: [],
         scope: {
           file: stmt.file,
@@ -218,20 +267,31 @@ export function buildVariableModel(index: WorkspaceIndex): VariableModel {
     });
 
     // annotations
-    if (cls.kind === 'annotation' || cls.kind === 'overcode') {
-      const annKind = ANNOTATION_KIND[cls.keyword] ?? 'other';
-      let targets: string[];
-      if (cls.usesCurrentVariable) {
-        targets = current ? [current] : [];
-      } else {
-        targets = cls.references
-          .filter((r) => r.mode === 'always')
-          .map((r) => r.span.name);
-      }
+    const copyKind = COPY_ANNOT_KIND[cls.keyword];
+    if (copyKind) {
+      const refs = cls.references.filter((r) => r.mode === 'always');
+      const source = refs[refs.length - 1]?.span.name;
+      const targets = cls.usesCurrentVariable
+        ? currentAsList(current)
+        : refs.slice(0, -1).map((r) => r.span.name);
+      const srcAnns = source
+        ? symbols.get(source)?.annotations ??
+          orphanAnnotations.get(source) ??
+          []
+        : [];
+      const copied = srcAnns.filter((a) => a.kind === copyKind);
       targets.forEach((t) => {
-        const sym = symbols.get(t);
-        if (!sym) return;
-        sym.annotations.push({
+        copied.forEach((a) => addAnnotation(t, { ...a, copiedFrom: source }));
+      });
+    } else if (cls.kind === 'annotation' || cls.kind === 'overcode') {
+      const annKind = ANNOTATION_KIND[cls.keyword] ?? 'other';
+      const targets = cls.usesCurrentVariable
+        ? currentAsList(current)
+        : cls.references
+            .filter((r) => r.mode === 'always')
+            .map((r) => r.span.name);
+      targets.forEach((t) => {
+        addAnnotation(t, {
           kind: cls.kind === 'overcode' ? 'overcode' : annKind,
           keyword: cls.keyword,
           file: stmt.file,
@@ -313,6 +373,7 @@ export function buildVariableModel(index: WorkspaceIndex): VariableModel {
 
   return {
     all: () => [...symbols.values()],
+    statements,
     at: (file, line) => viewAt(stmtIndexAt(file, line)),
     resolve: (name, atFile, atLine) =>
       viewAt(stmtIndexAt(atFile, atLine)).resolve(name),
@@ -321,6 +382,14 @@ export function buildVariableModel(index: WorkspaceIndex): VariableModel {
     references: (name) => {
       const key = name.toLowerCase();
       return allReferences().filter((r) => r.span.name === key);
+    },
+    resolveAnywhere: (name) => symbols.get(name.toLowerCase()),
+    annotationsFor: (name) => {
+      const k = name.toLowerCase();
+      return [
+        ...(symbols.get(k)?.annotations ?? []),
+        ...(orphanAnnotations.get(k) ?? []),
+      ];
     },
   };
 }

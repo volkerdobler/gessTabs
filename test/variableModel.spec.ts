@@ -97,6 +97,56 @@ describe('buildVariableModel', () => {
     expect(alter?.definitions[0].file).to.equal(p('vars.inc'));
   });
 
+  it("COPYLABELS aliases the source variable's value labels onto the target", () => {
+    const m = modelOf(
+      [
+        'singleq src = 1;',
+        'valuelabels src = 1 "ja" 2 "nein";',
+        'singleq dst = 1;',
+        'copylabels dst = src;',
+      ].join('\n')
+    );
+    const dst = m.resolve('dst', p('main.tab'), 9);
+    expect(dst?.annotations).to.have.length(1);
+    expect(dst?.annotations[0].kind).to.equal('valuelabels');
+    expect(dst?.annotations[0].copiedFrom).to.equal('src');
+    expect(dst?.annotations[0].statement).to.contain('"ja"');
+  });
+
+  it('keeps a VALUELABELS on an undeclared (dataset) name as an orphan annotation', () => {
+    const m = modelOf('valuelabels rohvar = 1 "ja" 2 "nein";');
+    expect(m.resolve('rohvar', p('main.tab'), 9)).to.be.undefined;
+    const anns = m.annotationsFor('rohvar');
+    expect(anns).to.have.length(1);
+    expect(anns[0].kind).to.equal('valuelabels');
+  });
+
+  it("annotationsFor merges a declared symbol's own and orphan annotations", () => {
+    const m = modelOf('vartitle a = "T";\nsingleq a = 1;\nvartext a = "X";');
+    // "a" is declared on line 1; the line-0 VARTITLE precedes it (orphan),
+    // the line-2 VARTEXT is its own
+    expect(
+      m
+        .annotationsFor('a')
+        .map((x) => x.kind)
+        .sort()
+    ).to.deep.equal(['vartext', 'vartitle']);
+  });
+
+  it('resolveAnywhere ignores program order', () => {
+    const m = modelOf('compute t = later;\nsingleq later = 1;');
+    expect(m.resolve('later', p('main.tab'), 0)).to.be.undefined;
+    expect(m.resolveAnywhere('later')?.origin).to.equal('declared');
+  });
+
+  it('exposes the defining statement text and program-order statements', () => {
+    const m = modelOf('varfamily f =\n a b c ;');
+    expect(
+      m.resolve('f', p('main.tab'), 9)?.definitionStatements[0]
+    ).to.contain('varfamily f');
+    expect(m.statements.length).to.be.greaterThan(0);
+  });
+
   it('a re-definition adds a definition line, not a duplicate symbol', () => {
     const m = modelOf('compute x = 1;\ncompute x = 2;');
     const all = m.all().filter((s) => s.name === 'x');

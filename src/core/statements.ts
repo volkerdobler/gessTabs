@@ -111,3 +111,17 @@ export function toLogicalStatements(order: ResolvedLine[]): LogicalStatement[] {
   endStatement(false);
   return out;
 }
+
+// The logical statement that contains (file, line) — the one whose
+// resolved lines include that exact line. Used by consumers that start
+// from a single ResolvedLine (a definition, the cursor position) and need
+// the whole statement around it.
+export function findLogicalStatement(
+  statements: LogicalStatement[],
+  file: string,
+  line: number
+): LogicalStatement | undefined {
+  return statements.find((s) =>
+    s.lines.some((l) => l.file === file && l.line === line)
+  );
+}

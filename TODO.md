@@ -144,15 +144,30 @@ and are marked "(needs P1)" so they are not built twice.
     per §3/§4 row), and precise reference character offsets (the model's
     `locate` is line-accurate but column-approximate when a statement's first
     line had leading whitespace).
-- **P1.2 — symbol table** `variableModel.ts`: `declared` + `predefined` origins,
-  program-order pass, "current variable" tracking. **Core module landed
-  2026-09-04** (`src/core/variableModel.ts` + `test/variableModel.spec.ts`):
-  `buildVariableModel(index)` → `all()` / `at(file,line)` / `resolve(name,file,
-  line)` / `currentVariableAt` / `references(name)`; seeds the five system
-  variables, no-forward-reference visibility, kind + members from the
-  classifier, annotations bound by varlist or current variable, the quoted-token
-  rule runs in `references()`. **Still open: wire the variable hover onto it**
-  (then delete the hover's regex/`variableInfo` helpers per P1.3).
+- **P1.2 — symbol table** `variableModel.ts` + wire the variable hover.
+  **Done 2026-09-04.**
+  - `src/core/variableModel.ts` + `test/variableModel.spec.ts`:
+    `buildVariableModel(index)` → `all()` / `statements` / `at(file,line)` /
+    `resolve(name,file,line)` / `resolveAnywhere` / `currentVariableAt` /
+    `references(name)` / `annotationsFor(name)`. Seeds the five system
+    variables, no-forward-reference visibility, kind + members from the
+    classifier, annotations bound by varlist / current variable / `COPY*`
+    aliasing (`copiedFrom`) / orphan (undeclared dataset var), the
+    quoted-token rule in `references()`.
+  - `src/providers/variableHoverProvider.ts` rebuilt on the model —
+    `resolve` replaces `findDefinitionLine`, `annotationsFor` replaces
+    `findVariableAnnotations`, the classified statement replaces
+    `lineHasQuotedVariableReference` for the quoted-token gate,
+    `annotationsFor` + `copiedFrom` replace `matchCopyAnnotationTarget`. Now
+    also shows the variable's kind (+ member count for a family/group) and
+    a proper "Systemvariable" card. `findMacroProducedDefinition` +
+    `externalSourcesFor` stay as fallbacks (phases 5 / 4).
+  - **Now dead, deleted in P1.3**: `src/core/variableInfo.ts` (+ its spec),
+    `lineHasQuotedVariableReference` (+ its spec) — no non-test consumer
+    left. Not deleted yet because P1.3 also removes `regex.ts`/`matching.ts`
+    and it is one cleanup.
+  - **Not verified in a running VS Code yet** — the provider has no unit
+    test (vscode-coupled); needs a manual hover pass.
 - **P1.3 — migrate the remaining consumers** onto the model: go-to-definition,
   find-references, rename, semantic highlighting, F2 empty-varlist +
   duplicate-declaration. Delete `regex.ts` / `matching.ts` /
