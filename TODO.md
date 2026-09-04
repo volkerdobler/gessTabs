@@ -169,29 +169,19 @@ and are marked "(needs P1)" so they are not built twice.
   - **Manually verified 2026-09-04** — hover checked live in the Extension
     Development Host (see P1.3's verification below; hover wasn't re-listed
     separately but shares the same session).
-  - **Known bug, found 2026-09-04 (user report)**: hovering a variable
-    **at its own creating `COMPUTE`** can show an unrelated later
-    `IF … THEN <v> = …` re-assignment as if it were "the" declaration —
-    e.g. `compute esseWagnerMenge = 0;` (the real creator) hovered shows a
-    `if (1 in s10.11mult) then esseWagnerMenge = esseWagnerMenge +
-    anzahl_m01;` line elsewhere in the program under the "Variable" card,
-    when only the VARTEXT/VARTITLE annotations should appear (nothing new
-    to say about the declaration — you're looking right at it). Root
-    cause: `VariableSymbol.definitions` collects **every** defining
-    occurrence in program order — the original `COMPUTE`/`SINGLEQ` *and*
-    every later re-assignment (another `COMPUTE`, or an `IF … THEN <v> =
-    …`, per §3.3 — gessTabs never treats an `IF`-body assignment as a
-    declaration; the variable must already exist or it's a runtime error)
-    — and `variableHoverProvider.ts`'s `defIdx` picks the first entry
-    that *isn't the hovered line*, which is wrong whenever the hovered
-    line is the true (first) definition and a later re-assignment exists
-    elsewhere: it surfaces that re-assignment as an alternate "declaration"
-    instead of recognising there's nothing further to show. Fix: hover
-    should only ever treat `sym.definitions[0]` (the earliest, program-order
-    first) as "the declaration" for both the echo-suppression check and
-    the rendered def — never fall through to a later re-definition entry.
-    Likely one-line-ish fix in `variableHoverProvider.ts`'s `defIdx`/
-    `hoveringOwnDeclaration` computation.
+  - **Bug fixed 2026-09-04 (user report)**: hovering a variable at its own
+    creating `COMPUTE` could show an unrelated later `IF … THEN <v> = …`
+    re-assignment as if it were "the" declaration, instead of nothing
+    (only VARTEXT/VARTITLE should follow — you're looking right at the
+    real declaration already). `variableHoverProvider.ts` now always
+    treats `sym.definitions[0]` (the earliest, program-order first
+    defining occurrence) as "the declaration", for both the
+    echo-suppression check and the rendered def — never falls through to
+    a later re-definition entry (another `COMPUTE`, or an `IF`-THEN body,
+    per §3.3 — gessTabs never treats those as declaring anything). Locked
+    in with a `variableModel.spec.ts` case against the exact reported
+    scenario (`definitions[0]` is always the earliest, regardless of which
+    line is hovered) — the provider itself still has no test.
 - **P1.3 — migrate the remaining consumers** onto the model. **In progress.**
   - **Done 2026-09-04**: go-to-definition (`model.resolve` + `resolveAnywhere`,
     covers the whole §3 inventory the regexes missed), **find-references** and

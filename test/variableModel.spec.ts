@@ -158,6 +158,23 @@ describe('buildVariableModel', () => {
     expect(all).to.have.length(1);
     expect(all[0].definitions).to.have.length(2);
   });
+
+  it('keeps definitions in program order — index 0 is always the earliest (the real hover fix)', () => {
+    // regression: an IF-THEN re-assignment must never be mistaken for an
+    // alternate "declaration" — hovering the true first definition used
+    // to surface it as if it were one (see TODO.md's "Known bug" entry).
+    const m = modelOf(
+      [
+        'compute esseWagnerMenge = 0;',
+        'if (1 in s10) then esseWagnerMenge = esseWagnerMenge + anzahl;',
+      ].join('\n')
+    );
+    const sym = m.resolveAnywhere('esseWagnerMenge');
+    expect(sym?.definitions).to.have.length(2);
+    expect(sym?.definitions[0].line).to.equal(0);
+    expect(sym?.definitions[0].text).to.contain('compute esseWagnerMenge');
+    expect(sym?.definitions[1].line).to.equal(1);
+  });
 });
 
 describe('collectVariableOccurrences', () => {

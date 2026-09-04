@@ -178,19 +178,23 @@ export class GesstabsVariableHoverProvider implements vscode.HoverProvider {
       const annotationsEnabled =
         config.get<boolean>('hover.variableAnnotations', true) !== false;
 
-      // A declaration to echo — one that isn't the very line under the
-      // cursor (that would just repeat what's already on screen).
-      const defIdx =
-        sym?.definitions.findIndex(
-          (d) => !(d.file === currentFile && d.line === position.line)
-        ) ?? -1;
-      const hasShowableDef = !!sym && defIdx >= 0;
+      // "The declaration" is always the *earliest* (program-order first)
+      // defining occurrence — never a later re-definition. `definitions`
+      // holds every defining statement in order, including COMPUTE/IF-THEN
+      // re-assignments of an already-existing variable (defKind
+      // 'assignment', §9 Q3): gessTabs never treats those as declaring
+      // anything (an IF-THEN body only ever *uses* a variable, which must
+      // already exist or it's a compile error), so surfacing one as if it
+      // were an alternate "declaration" — which the naive "first entry
+      // that isn't the hovered line" used to do whenever you hovered the
+      // true first definition and a re-assignment existed elsewhere — is
+      // simply wrong. Echoed only when it isn't the line under the cursor.
+      const primaryDef = sym?.definitions[0];
       const hoveringOwnDeclaration =
-        !!sym &&
-        sym.definitions.length > 0 &&
-        sym.definitions.every(
-          (d) => d.file === currentFile && d.line === position.line
-        );
+        !!primaryDef &&
+        primaryDef.file === currentFile &&
+        primaryDef.line === position.line;
+      const hasShowableDef = !!primaryDef && !hoveringOwnDeclaration;
 
       // No in-script symbol — `word` might be produced by a #MACRO call
       // passing it as the argument for a body statement (phase 5 will fold
@@ -239,7 +243,7 @@ export class GesstabsVariableHoverProvider implements vscode.HoverProvider {
 
       if (isPredefined) {
         md.appendMarkdown(`\n_Systemvariable — ${sym?.predefinedDoc ?? ''}_\n`);
-      } else if (hasShowableDef && sym) {
+      } else if (hasShowableDef && sym && primaryDef) {
         const kindLabel = KIND_LABEL[sym.kind] ?? 'Variable';
         md.appendMarkdown(`\n_${kindLabel}`);
         if (sym.members && sym.members.length) {
@@ -247,16 +251,10 @@ export class GesstabsVariableHoverProvider implements vscode.HoverProvider {
         }
         md.appendMarkdown('_\n');
         md.appendCodeblock(
-          sym.definitionStatements[defIdx] ??
-            sym.definitions[defIdx].text.trim(),
+          sym.definitionStatements[0] ?? primaryDef.text.trim(),
           'gesstabs'
         );
-        md.appendMarkdown(
-          `\n${jumpLink(
-            sym.definitions[defIdx].file,
-            sym.definitions[defIdx].line
-          )}\n`
-        );
+        md.appendMarkdown(`\n${jumpLink(primaryDef.file, primaryDef.line)}\n`);
       } else if (macroDef) {
         const macroNameLink = jumpLink(
           macroDef.macro.file,
