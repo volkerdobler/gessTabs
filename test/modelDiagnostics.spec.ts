@@ -158,11 +158,29 @@ describe('checkSystemVariableRedeclaration', () => {
     expect(checkSystemVariableRedeclaration(model, p('main.tab'))).to.be.empty;
   });
 
-  it('does not flag a COMPUTE (assignment, not declaration) touching the name', () => {
-    // COMPUTE can't legally target a system variable either, but that's a
-    // different, not-yet-implemented "kind-illegal operation" check — this
-    // one is specifically about the declaration-kind statements.
+  it('also flags a COMPUTE target (§3.3: an assignment auto-creates a variable exactly like a declaration does)', () => {
+    // regression: the manual says "generieren" (generate), not
+    // "deklarieren" — COMPUTE generates a variable exactly as much as
+    // SINGLEQ does, so this must be flagged too. Reported: real-world
+    // `compute sysmiss = 1;` slipped through while `singleq sysmiss = 1;`
+    // was caught.
     const idx = indexOf('compute SysMiss = 1;');
+    const model = buildVariableModel(idx);
+    expect(
+      checkSystemVariableRedeclaration(model, p('main.tab'))
+    ).to.have.length(1);
+  });
+
+  it('also flags an IF…THEN target naming a system variable', () => {
+    const idx = indexOf('if x eq 1 then SysMiss = 2;');
+    const model = buildVariableModel(idx);
+    expect(
+      checkSystemVariableRedeclaration(model, p('main.tab'))
+    ).to.have.length(1);
+  });
+
+  it('does not flag a system variable used only as an IF condition (a reference, not a defines target)', () => {
+    const idx = indexOf('if SysMiss eq 1 then x = 2;');
     const model = buildVariableModel(idx);
     expect(checkSystemVariableRedeclaration(model, p('main.tab'))).to.be.empty;
   });

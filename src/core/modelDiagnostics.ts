@@ -71,13 +71,22 @@ export function checkUndefinedVariables(
   return issues;
 }
 
-// Declaring SysMiss/NIL/SystemFileNo/SystemWeight/SystemCaseNo is a syntax
-// error — these can never be (re-)declared, only used. Deliberately reads
-// the classified statements directly rather than the model's own symbols:
-// buildVariableModel's main pass never lets anything overwrite a
-// `predefined` symbol (`existing.origin !== 'predefined'` guards every
-// merge), so a `SINGLEQ SysMiss = 1;` is silently dropped by the model
-// itself — invisible to any check built on `model.all()`/`resolveAnywhere`.
+// Manual, verbatim: "Der Versuch, eigene Variablen mit diesen Namen zu
+// generieren, führt zu einem Fehler." — generating one's own variable
+// under one of these names is the error, not specifically *declaring* one:
+// COMPUTE/IF…THEN generates a variable exactly as much as SINGLEQ does
+// (gessTabs auto-creates on first COMPUTE, §3.3), so both `defKind`s are
+// checked here — a real reported gap, `compute sysmiss = 1;` wasn't
+// flagged while `singleq sysmiss = 1;` was. A mere *use* of the name
+// (`if sysmiss eq 1 then x = 2;` — a `references` span, not `defines`) is
+// completely legal and never touched by this check.
+//
+// Deliberately reads the classified statements directly rather than the
+// model's own symbols: buildVariableModel's main pass never lets anything
+// overwrite a `predefined` symbol (`existing.origin !== 'predefined'`
+// guards every merge), so a `SINGLEQ SysMiss = 1;` (or `COMPUTE SysMiss =
+// 1;`) is silently dropped by the model itself — invisible to any check
+// built on `model.all()`/`resolveAnywhere`.
 export function checkSystemVariableRedeclaration(
   model: VariableModel,
   file: string
@@ -85,7 +94,7 @@ export function checkSystemVariableRedeclaration(
   const issues: DiagnosticIssue[] = [];
   model.statements.forEach((stmt) => {
     const cls = classifyStatement(stmt.text);
-    if (!cls || cls.defKind !== 'declaration') return;
+    if (!cls) return;
     cls.defines.forEach((span) => {
       if (!SYSTEM_VARIABLE_NAMES.has(span.name)) return;
       const loc = locateInStatement(stmt, span.rawStart);
@@ -95,7 +104,7 @@ export function checkSystemVariableRedeclaration(
         startChar: loc.character,
         length: span.rawLength,
         severity: 'error',
-        message: `"${span.raw}" ist eine vordefinierte Systemvariable (SysMiss/NIL/SystemFileNo/SystemWeight/SystemCaseNo) und darf nicht neu deklariert werden.`,
+        message: `"${span.raw}" ist eine vordefinierte Systemvariable (SysMiss/NIL/SystemFileNo/SystemWeight/SystemCaseNo) — eine eigene Variable mit diesem Namen zu erzeugen (Deklaration oder Zuweisung) führt zu einem Fehler.`,
         code: 'system-variable-redeclaration',
       });
     });

@@ -375,20 +375,30 @@ items below are facets of this same problem, marked "(needs P1)".
       Requires the model to be built with `externalNames` **and**
       `macroExpansion: true` or every raw/macro-produced name would
       falsely flag — the caller's job.
-    - `checkSystemVariableRedeclaration(model, file)` — a
-      **declaration**-kind statement naming `SysMiss`/`NIL`/
+    - `checkSystemVariableRedeclaration(model, file)` — any statement
+      that `defines` (not merely `references`) `SysMiss`/`NIL`/
       `SystemFileNo`/`SystemWeight`/`SystemCaseNo` becomes an **Error**
-      `system-variable-redeclaration` (Manual: Systemvariablen; the
-      syntax-error catalog wasn't found to have an exact matching message
-      on a 2026-09-04 check — the wording here is descriptive, not a
-      verbatim compiler message). Deliberately reads the classified
-      statements directly rather than `model.all()`/`resolveAnywhere`:
-      `buildVariableModel`'s main pass never lets anything overwrite a
-      `predefined` symbol, so a `SINGLEQ SysMiss = 1;` is silently dropped
-      by the model itself and invisible to any symbol-table-based check.
-      A mere `COMPUTE`/assignment touching the name is **not** flagged
-      here (illegal too, but that's the separate, not-yet-implemented
-      "kind-illegal operations" check below).
+      `system-variable-redeclaration` (Manual: Systemvariablen, verbatim:
+      *"Der Versuch, eigene Variablen mit diesen Namen zu **generieren**,
+      führt zu einem Fehler."* — the syntax-error catalog wasn't found to
+      have an exact matching message on a 2026-09-04 check, so the wording
+      here is descriptive, not a verbatim compiler message). Deliberately
+      reads the classified statements directly rather than
+      `model.all()`/`resolveAnywhere`: `buildVariableModel`'s main pass
+      never lets anything overwrite a `predefined` symbol, so a `SINGLEQ
+      SysMiss = 1;` is silently dropped by the model itself and invisible
+      to any symbol-table-based check.
+      - **Fixed 2026-09-05, reported the same day**: initially gated on
+        `cls.defKind === 'declaration'`, so `compute sysmiss = 1;` slipped
+        through while `singleq sysmiss = 1;` was caught. The manual says
+        "generieren" (generate), not "deklarieren" — `COMPUTE`/`IF…THEN`
+        generates a variable exactly as much as `SINGLEQ` does (§3.3:
+        gessTabs auto-creates on first `COMPUTE`), so the `defKind` gate
+        was simply wrong; now checks every `defines` span regardless of
+        kind. A mere *use* of the name (a `references` span — `if SysMiss
+        eq 1 then x = 2;`) is completely legal and still never flagged.
+        Two new tests (`COMPUTE` target, `IF…THEN` target) plus one
+        confirming the reference-only case stays clean.
     - Wired into `GesstabsExternalNamesManager.refresh()` (the
       `'gesstabs-datasource'` collection — it already owns the
       "which program(s) own this file / is any of their sources
