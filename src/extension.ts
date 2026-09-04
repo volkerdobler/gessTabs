@@ -781,9 +781,16 @@ class GessTabsWorkspaceSymbolProvider
     model.all().forEach((sym) => {
       if (sym.origin !== 'declared' && sym.origin !== 'virtual') return;
       primaryDefinitions(sym).forEach((d) => {
+        // The declaring statement's own keyword (compute/singleq/
+        // varfamily/…) rather than sym.kind: a bare COMPUTE's targetKind
+        // is 'unknown' until something narrows it (design §3 — COMPUTE
+        // doesn't say ALPHA/OPEN up front), which read as a bare
+        // "unknown" container in the Ctrl+T list with nothing more
+        // useful to show.
+        const declKeyword = classifyStatement(d.statement)?.keyword;
         push(
           vscode.SymbolKind.Variable,
-          sym.kind,
+          declKeyword ?? sym.kind,
           sym.displayName,
           d.line.file,
           d.line.line

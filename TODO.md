@@ -193,14 +193,20 @@ items below are facets of this same problem, marked "(needs P1)".
         first arm — this was the `primaryDefinitions()` over-correction,
         **fixed** (see the F12 bug's follow-up note above; same root
         cause, same fix, both consumers share `primaryDefinitions()`).
-      - A `TABLE` axis name wasn't found at all — **still open**, not yet
-        reproduced (need the exact `TABLE` statement text and search term
-        that failed; the extraction code is the same
-        `cls.kind === 'table'` / `cls.references.filter(mode === 'always')`
-        pass `GesstabsDocumentSymbolProvider` already ships, so either
-        that pass has a real, shared gap never exercised against a real
-        `TABLE` with an axis before, or something in the new provider's
-        wiring around it is off — needs the failing case to tell which).
+      - A `TABLE` axis name wasn't found — **not a bug**: the user
+        confirmed that specific variable is read from the raw dataset,
+        never declared in-script. Expected given P1.4 isn't done yet (raw/
+        external names aren't in the model at all — see P1.4 below); once
+        P1.4 lands, Ctrl+T should find it as an `origin: 'external'`
+        symbol.
+      - **Containers reading "unknown" — fixed 2026-09-05.** A bare
+        `COMPUTE`'s `targetKind` is `'unknown'` until something narrows it
+        (ALPHA/OPEN, design §3.2) — `sym.kind` as the Ctrl+T container
+        showed that raw value verbatim for the (very common) plain-
+        `COMPUTE` case. Now uses the declaring statement's own keyword
+        (`compute`/`singleq`/`varfamily`/…, re-derived from
+        `primaryDefinitions()`'s `statement` text via `classifyStatement`)
+        instead, falling back to `sym.kind` only if that somehow fails.
   - `singleVarDefRe`/`multiVarDefRe`/`computeDefRe`/`tableHeadRe` (their
     only caller was the old `GessTabsWorkspaceSymbolProvider`) join
     `weightcellsRe`/`tableAxisRe` as fully unused dead exports in
