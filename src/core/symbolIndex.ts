@@ -20,6 +20,7 @@ import {
   IncludeGraphOptions,
 } from './includeGraph';
 import { Scope } from './scope';
+import { BranchPath } from './branchPaths';
 import { classifyStatement } from './variableStatements';
 import {
   findMacroDefinitions,
@@ -34,6 +35,9 @@ export interface WorkspaceIndex {
   order: ResolvedLine[];
   // Per-file Scope, for precise isNotInComment checks against `order`.
   scopes: Map<string, Scope>;
+  // Which #ifdef/#ifndef/... arm each `order` entry sits in — see
+  // IncludeGraphResult.branchPaths, merged the same way as `order`/`scopes`.
+  branchPaths: Map<string, BranchPath>;
   // The subset of `files` that were treated as entry points.
   rootFiles: string[];
 }
@@ -64,15 +68,17 @@ export function buildWorkspaceIndex(
 
   const order: ResolvedLine[] = [];
   const scopes = new Map<string, Scope>();
+  const branchPaths = new Map<string, BranchPath>();
 
   rootFiles.forEach((root) => {
     const graph = graphs.get(root);
     if (!graph) return;
     order.push(...graph.order);
     graph.scopes.forEach((scope, file) => scopes.set(file, scope));
+    graph.branchPaths.forEach((path, key) => branchPaths.set(key, path));
   });
 
-  return { order, scopes, rootFiles };
+  return { order, scopes, branchPaths, rootFiles };
 }
 
 export interface MacroProducedDefinition {

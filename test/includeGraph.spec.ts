@@ -2,6 +2,7 @@ import { expect } from 'chai';
 import * as path from 'path';
 import { resolveIncludeGraph, FileReader } from '../src/core/includeGraph';
 import { findMacroDefinitions } from '../src/core/macroExpansion';
+import { branchKey, branchPathsCompatible } from '../src/core/branchPaths';
 
 // Paths are derived through path.resolve/path.join (not hardcoded literal
 // strings) so they match what the module's own path.resolve/path.dirname
@@ -449,5 +450,97 @@ describe('resolveIncludeGraph', () => {
       ).to.equal(false);
       expect(texts(all)).to.deep.equal(['y;']);
     });
+  });
+});
+
+describe('resolveIncludeGraph — branchPaths', () => {
+  it('a line outside any conditional has an empty path', () => {
+    const reader = makeReader({ [p('main.tab')]: 'compute x = 1;' });
+    const result = resolveIncludeGraph(p('main.tab'), reader);
+    expect(result.branchPaths.get(branchKey(p('main.tab'), 0))).to.deep.equal(
+      []
+    );
+  });
+
+  it('mutually exclusive #ifdef/#else arms of the same conditional get incompatible paths', () => {
+    const reader = makeReader({
+      [p('main.tab')]: [
+        '#ifndef DEBUG',
+        'x = 1;',
+        '#else',
+        'x = 2;',
+        '#end',
+      ].join('\n'),
+    });
+    const all = resolveIncludeGraph(p('main.tab'), reader, {
+      conditionalsAllActive: true,
+    });
+    const x1Path = all.branchPaths.get(branchKey(p('main.tab'), 1));
+    const x2Path = all.branchPaths.get(branchKey(p('main.tab'), 3));
+
+    // DEBUG's #ifndef/#else — mutually exclusive.
+    expect(branchPathsCompatible(x1Path!, x2Path!)).to.equal(false);
+  });
+
+  it('known limitation: a conditional does not carry across an INCLUDE boundary', () => {
+    // Each visited file gets its own fresh stack (matching resolveIncludeGraph's
+    // pre-existing per-file gating — an INCLUDE is only followed once its own
+    // line is already known active, so the included file never needed its
+    // caller's stack for *gating*). branchPaths inherits that same shape: a
+    // conditional wrapping two different INCLUDEs of otherwise-unconditional
+    // files is not recognised as making their content mutually exclusive —
+    // both come back with an empty path, same as top-level code. Real-world
+    // #ifdef/#else pairs almost always wrap the affected statements directly
+    // rather than an INCLUDE of them, so this doesn't affect the reported
+    // case (variableModel.spec.ts's "#ifdef/#else COMPUTE" tests) — flagged
+    // here as a known, accepted gap rather than silently unhandled.
+    const reader = makeReader({
+      [p('main.tab')]: [
+        '#ifdef WIN',
+        'INCLUDE = win.inc;',
+        '#else',
+        'INCLUDE = unix.inc;',
+        '#end',
+      ].join('\n'),
+      [p('win.inc')]: 'w = 1;',
+      [p('unix.inc')]: 'u = 1;',
+    });
+    const all = resolveIncludeGraph(p('main.tab'), reader, {
+      conditionalsAllActive: true,
+    });
+    expect(all.branchPaths.get(branchKey(p('win.inc'), 0))).to.deep.equal([]);
+    expect(all.branchPaths.get(branchKey(p('unix.inc'), 0))).to.deep.equal([]);
+  });
+
+  it('a directive line itself never reaches order, so it has no branchPaths entry', () => {
+    const reader = makeReader({
+      [p('main.tab')]: ['#ifdef X', 'compute v = 1;', '#end'].join('\n'),
+    });
+    const all = resolveIncludeGraph(p('main.tab'), reader, {
+      conditionalsAllActive: true,
+    });
+    expect(all.branchPaths.has(branchKey(p('main.tab'), 0))).to.equal(false);
+    expect(all.branchPaths.get(branchKey(p('main.tab'), 1))).to.deep.equal([
+      { group: 0, arm: 'if' },
+    ]);
+  });
+
+  it('nested conditionals build a multi-level path', () => {
+    const reader = makeReader({
+      [p('main.tab')]: [
+        '#ifdef X',
+        '#ifdef Y',
+        'compute v = 1;',
+        '#end',
+        '#end',
+      ].join('\n'),
+    });
+    const all = resolveIncludeGraph(p('main.tab'), reader, {
+      conditionalsAllActive: true,
+    });
+    expect(all.branchPaths.get(branchKey(p('main.tab'), 2))).to.deep.equal([
+      { group: 0, arm: 'if' },
+      { group: 1, arm: 'if' },
+    ]);
   });
 });

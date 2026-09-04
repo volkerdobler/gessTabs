@@ -18,6 +18,7 @@
 import * as path from 'path';
 import { Scope } from './scope';
 import { scanBlockDirectives } from './directives';
+import { BranchArm, BranchPath, branchKey } from './branchPaths';
 
 export type FileReader = (filePath: string) => string[] | undefined;
 
@@ -52,6 +53,18 @@ export interface IncludeGraphResult {
   // when building `order`, but a caller matching a sub-string within a
   // line — e.g. a regex hit — needs the finer-grained check).
   scopes: Map<string, Scope>;
+  // Which #ifdef/#ifndef/... arm each `order` entry sits in, keyed by
+  // branchKey(file, line) — captured straight from the #ifdef/#else/#end
+  // stack this resolver already walks to decide line activity, so it's
+  // exact even under `conditionalsAllActive` (both arms kept, but a
+  // caller — variableModel.ts's primaryDefinitions() — can still tell
+  // "two locations that could both run on some real build" apart from
+  // "two mutually exclusive branches of the same conditional"). A line
+  // outside any conditional maps to an empty path. Note: the #ifdef/
+  // #else/#end directive line itself is consumed by this resolver and
+  // never reaches `order` — branchPaths only has entries for lines that
+  // do.
+  branchPaths: Map<string, BranchPath>;
 }
 
 export interface IncludeGraphOptions {
@@ -152,6 +165,10 @@ interface ConditionalFrame {
   conditionTrue: boolean;
   inElse: boolean;
   parentActive: boolean;
+  // unique per #ifdef/#ifndef/... opening — shared by its #else arm, so
+  // branchPaths can tell "different arms of the same conditional" apart
+  // from "two unrelated conditionals".
+  groupId: number;
 }
 
 function evaluateActive(stack: ConditionalFrame[]): boolean {
@@ -177,7 +194,14 @@ export function resolveIncludeGraph(
   const files: string[] = [];
   const errors: IncludeGraphError[] = [];
   const scopes = new Map<string, Scope>();
+  const branchPaths = new Map<string, BranchPath>();
   const ancestors = new Set<string>();
+  // A plain mutable-property counter rather than a reassigned `let` — the
+  // group-id assignment below sits inside a callback nested in the line
+  // loop, and eslint's no-loop-func rightly distrusts a closure over a
+  // *reassigned* outer binding there (even though this one is only ever
+  // read synchronously, never stashed for later).
+  const groupIdCounter = { next: 0 };
 
   function visit(file: string, depth: number): void {
     if (depth > maxDepth) {
@@ -280,7 +304,9 @@ export function resolveIncludeGraph(
               conditionTrue,
               inElse: false,
               parentActive: frameActive,
+              groupId: groupIdCounter.next,
             });
+            groupIdCounter.next += 1;
           }
           frameActive = allActive || evaluateActive(stack);
         });
@@ -306,6 +332,15 @@ export function resolveIncludeGraph(
       }
 
       order.push({ file, line: i, text: blankComments(scope, i, text) });
+      branchPaths.set(
+        branchKey(file, i),
+        stack.map(
+          (f): BranchArm => ({
+            group: f.groupId,
+            arm: f.inElse ? 'else' : 'if',
+          })
+        )
+      );
     }
 
     ancestors.delete(file);
@@ -313,5 +348,5 @@ export function resolveIncludeGraph(
 
   visit(entryFile, 0);
 
-  return { order, files, errors, scopes };
+  return { order, files, errors, scopes, branchPaths };
 }

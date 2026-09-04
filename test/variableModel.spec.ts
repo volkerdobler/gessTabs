@@ -216,7 +216,7 @@ describe('primaryDefinitions', () => {
         'singleq land = 1 2 3;',
         '#else',
         'singleq land = 4 5 6;',
-        '#endif',
+        '#end',
       ].join('\n')
     );
     const sym = m.resolveAnywhere('land');
@@ -230,6 +230,51 @@ describe('primaryDefinitions', () => {
     // 'assignment') despite gessTabs auto-creating it on first use.
     const m = modelOf('compute x = 1;\ncompute x = x + 1;');
     const sym = m.resolveAnywhere('x');
+    const primary = primaryDefinitions(sym!);
+    expect(primary).to.have.length(1);
+    expect(primary[0].line.line).to.equal(0);
+  });
+
+  it('keeps both COMPUTEs of a name declared once per #ifdef/#else arm — reported after the F12 fix above', () => {
+    // regression: the fix above (fall back to the single earliest entry)
+    // over-corrected — a name created by a bare COMPUTE once in each arm
+    // of an #ifdef/#else is exactly as legitimate as two SINGLEQ
+    // declarations in #ifdef/#else (previous test), just spelled with
+    // COMPUTE (defKind 'assignment' either way, §3.3), and Ctrl+T/F12 was
+    // silently dropping the #else arm's location.
+    const m = modelOf(
+      [
+        '#ifdef DE',
+        'compute land = 1;',
+        '#else',
+        'compute land = 2;',
+        '#end',
+      ].join('\n')
+    );
+    const sym = m.resolveAnywhere('land');
+    const primary = primaryDefinitions(sym!);
+    expect(primary).to.have.length(2);
+    expect(primary.map((d) => d.line.line)).to.deep.equal([1, 3]);
+  });
+
+  it('a second COMPUTE inside the SAME #ifdef arm is still a plain reassignment', () => {
+    const m = modelOf(
+      ['#ifdef DE', 'compute land = 1;', 'compute land = 2;', '#end'].join('\n')
+    );
+    const sym = m.resolveAnywhere('land');
+    const primary = primaryDefinitions(sym!);
+    expect(primary).to.have.length(1);
+    expect(primary[0].line.line).to.equal(1);
+  });
+
+  it('an unconditional COMPUTE dominates a later reassignment inside an #ifdef, even under conditionalsAllActive', () => {
+    // when the #ifdef arm actually compiles, the unconditional COMPUTE
+    // ran first — the conditional one is a real reassignment, not an
+    // alternate creator, regardless of whether the branch is "taken".
+    const m = modelOf(
+      ['compute land = 1;', '#ifdef DE', 'compute land = 2;', '#end'].join('\n')
+    );
+    const sym = m.resolveAnywhere('land');
     const primary = primaryDefinitions(sym!);
     expect(primary).to.have.length(1);
     expect(primary[0].line.line).to.equal(0);

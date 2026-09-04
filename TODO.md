@@ -125,6 +125,43 @@ items below are facets of this same problem, marked "(needs P1)".
     `primaryDefinitions(sym)` instead of `sym.definitions`. Covered by
     three new `variableModel.spec.ts` cases (reassignments dropped,
     multi-declaration kept, bare-COMPUTE fallback).
+    - **Follow-up over-correction, fixed same day (2026-09-05).** The
+      "fall back to the single earliest entry" branch above was too
+      blunt: a name created by a bare `COMPUTE` once in each arm of an
+      `#ifdef`/`#else` (`#ifdef X; compute v = 1; #else; compute v = 2;
+      #end;`) is exactly as legitimate as two real declarations in
+      `#ifdef`/`#else` — just spelled with `COMPUTE` (`defKind:
+      'assignment'` either way, §3.3) — and was silently collapsed to
+      only the first arm, both in the F12 fix above and in Ctrl+T
+      (reported while manually verifying the `GessTabsWorkspaceSymbolProvider`
+      migration below). Root cause: nothing distinguished "two locations
+      that could both run on the same real build, one after the other"
+      (a genuine reassignment) from "two mutually exclusive branches of
+      the same conditional" (each independently *the* creator for
+      whichever arm compiles). Fix: a new `src/core/branchPaths.ts`
+      module (`BranchPath`/`branchPathsCompatible`) plus
+      `IncludeGraphResult.branchPaths` — `resolveIncludeGraph` already
+      walks the `#ifdef`/`#else`/`#end` stack to decide line activity, so
+      it now also records, per line, which arm of which conditional group
+      it's nested in (a `groupId` added to its internal
+      `ConditionalFrame`); threaded through `WorkspaceIndex.branchPaths`
+      into a new parallel `VariableSymbol.definitionBranches` array.
+      `primaryDefinitions()`'s fallback now keeps an assignment-kind entry
+      as primary unless it's execution-compatible with an already-kept
+      one (i.e., could genuinely follow it on some real build) — mutually
+      exclusive branches both survive, a same-path reassignment still
+      doesn't. **Known, accepted gap**: a conditional does not carry
+      across an `INCLUDE` boundary (each visited file gets its own fresh
+      stack, matching the resolver's pre-existing per-file gating) — two
+      different `INCLUDE`s inside `#ifdef`/`#else` arms aren't recognised
+      as mutually exclusive by `branchPaths`; real-world `#ifdef`/`#else`
+      pairs almost always wrap the affected statements directly rather
+      than an `INCLUDE` of them, so this doesn't affect the reported
+      case. Covered by new tests in `test/includeGraph.spec.ts`
+      (`resolveIncludeGraph — branchPaths`), `test/branchPaths.spec.ts`,
+      and three more `variableModel.spec.ts` `primaryDefinitions` cases
+      (kept per `#ifdef`/`#else` arm, still-excluded same-arm reassignment,
+      an unconditional creator still dominating a later conditional touch).
   - Still open (pre-existing, unrelated to the F12 fix above):
   - **`GessTabsWorkspaceSymbolProvider` (Ctrl+T) migrated — done 2026-09-05.**
     Was rebuilding `singleVarDefRe`/`multiVarDefRe`/`computeDefRe`/
@@ -147,8 +184,23 @@ items below are facets of this same problem, marked "(needs P1)".
     filter applied to the full result, not baked into a regex — a
     genuine UX improvement (partial names now match, not just an exact
     whole-word token). The old `spush` name-splitting helper is gone with
-    its regex-based callers. Manual verification of Ctrl+T in the live
-    Extension Development Host still outstanding.
+    its regex-based callers.
+    - **Manual verification 2026-09-05** (live Extension Development
+      Host): substring search, dropping IF-THEN reassignments, and
+      `#MACRO`/`#EXPAND` names all confirmed working. Cross-entry-program
+      lookup not tested. Two problems found:
+      - A name declared once per `#ifdef`/`#else` arm only showed the
+        first arm — this was the `primaryDefinitions()` over-correction,
+        **fixed** (see the F12 bug's follow-up note above; same root
+        cause, same fix, both consumers share `primaryDefinitions()`).
+      - A `TABLE` axis name wasn't found at all — **still open**, not yet
+        reproduced (need the exact `TABLE` statement text and search term
+        that failed; the extraction code is the same
+        `cls.kind === 'table'` / `cls.references.filter(mode === 'always')`
+        pass `GesstabsDocumentSymbolProvider` already ships, so either
+        that pass has a real, shared gap never exercised against a real
+        `TABLE` with an axis before, or something in the new provider's
+        wiring around it is off — needs the failing case to tell which).
   - `singleVarDefRe`/`multiVarDefRe`/`computeDefRe`/`tableHeadRe` (their
     only caller was the old `GessTabsWorkspaceSymbolProvider`) join
     `weightcellsRe`/`tableAxisRe` as fully unused dead exports in

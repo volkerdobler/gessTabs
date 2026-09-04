@@ -29,6 +29,7 @@ import {
   NameMode,
   VariableKind,
 } from './variableStatements';
+import { BranchPath, branchKey, branchPathsCompatible } from './branchPaths';
 
 export type VariableOrigin =
   | 'declared'
@@ -70,6 +71,14 @@ export interface VariableSymbol {
   // anything (§3.3), so a COMPUTE/IF-THEN reassignment elsewhere must never
   // be offered as an alternate go-to-definition target.
   definitionKinds: ('declaration' | 'assignment')[];
+  // which #ifdef/#ifndef/... arm each `definitions` entry sits in, parallel
+  // array — an empty path for a line outside any conditional. Lets
+  // primaryDefinitions() tell a genuine reassignment (same execution path)
+  // apart from an alternate creator in a mutually exclusive branch (an
+  // #ifdef/#else pair of bare COMPUTEs, same shape as an #ifdef/#else pair
+  // of real declarations, just `defKind: 'assignment'`). See
+  // src/core/branchPaths.ts.
+  definitionBranches: BranchPath[];
   annotations: ModelAnnotation[];
   // doc string for a `predefined` system variable.
   predefinedDoc?: string;
@@ -130,11 +139,20 @@ export interface PrimaryDefinition {
 // before it was fixed the same way) is simply wrong, and was a real,
 // reported bug in both. Rule: every `declaration`-kind entry if at least
 // one exists (an #ifdef-per-branch variable can legitimately have more
-// than one real declaration — all of them belong here); otherwise the
-// single *earliest* entry, which — since gessTabs has no forward
-// references — is necessarily the statement that actually created the
-// name, even though its own `defKind` is `'assignment'` (a bare `COMPUTE`,
-// the language's single most common creator).
+// than one real declaration — all of them belong here).
+//
+// Otherwise every entry is `defKind: 'assignment'` (a bare `COMPUTE`, the
+// language's single most common creator, or an IF…THEN). Since gessTabs
+// has no forward references, the *earliest* one is always a real creator
+// — but it isn't necessarily the *only* one: `#ifdef X; compute v = 1;
+// #else; compute v = 2; #end;` creates `v` once per arm, exactly like an
+// #ifdef/#else pair of real declarations would, just spelled with
+// COMPUTE. branchPathsCompatible tells the two shapes apart: an entry is
+// kept as primary unless some earlier-kept entry shares an execution path
+// with it (branchPathsCompatible) — a shared path means one really can
+// run after the other on some real build, so the later one is a
+// reassignment, not a creator; incompatible (mutually exclusive) paths
+// mean each is independently *the* creator for whichever arm compiles.
 export function primaryDefinitions(sym: VariableSymbol): PrimaryDefinition[] {
   const declared = sym.definitions
     .map((line, i) => ({
@@ -143,10 +161,22 @@ export function primaryDefinitions(sym: VariableSymbol): PrimaryDefinition[] {
       kind: sym.definitionKinds[i],
     }))
     .filter((d) => d.kind === 'declaration');
-  if (declared.length > 0) return declared;
-  return sym.definitions.length > 0
-    ? [{ line: sym.definitions[0], statement: sym.definitionStatements[0] }]
-    : [];
+  if (declared.length > 0)
+    return declared.map(({ line, statement }) => ({ line, statement }));
+
+  const primaries: PrimaryDefinition[] = [];
+  const primaryPaths: BranchPath[] = [];
+  sym.definitions.forEach((line, i) => {
+    const branchPath = sym.definitionBranches[i] ?? [];
+    const dominated = primaryPaths.some((p) =>
+      branchPathsCompatible(p, branchPath)
+    );
+    if (!dominated) {
+      primaries.push({ line, statement: sym.definitionStatements[i] });
+      primaryPaths.push(branchPath);
+    }
+  });
+  return primaries;
 }
 
 // ---------------------------------------------------------------------------
@@ -201,6 +231,8 @@ export function buildVariableModel(index: WorkspaceIndex): VariableModel {
   const classified: (ClassifiedStatement | undefined)[] = statements.map((s) =>
     classifyStatement(s.text)
   );
+  const pathAt = (file: string, line: number): BranchPath =>
+    index.branchPaths.get(branchKey(file, line)) ?? [];
 
   const symbols = new Map<string, VariableSymbol>();
   // program index at which each symbol first becomes visible (-1 = seeded).
@@ -231,6 +263,7 @@ export function buildVariableModel(index: WorkspaceIndex): VariableModel {
       definitions: [],
       definitionStatements: [],
       definitionKinds: [],
+      definitionBranches: [],
       annotations: [],
       predefinedDoc: p.doc,
     });
@@ -255,6 +288,7 @@ export function buildVariableModel(index: WorkspaceIndex): VariableModel {
         existing.definitions.push(loc.line);
         existing.definitionStatements.push(stmt.text);
         existing.definitionKinds.push(cls.defKind ?? 'assignment');
+        existing.definitionBranches.push(pathAt(loc.line.file, loc.line.line));
         if (cls.targetKind && cls.targetKind !== 'unknown') {
           existing.kind = cls.targetKind;
         }
@@ -268,6 +302,7 @@ export function buildVariableModel(index: WorkspaceIndex): VariableModel {
           definitions: [loc.line],
           definitionStatements: [stmt.text],
           definitionKinds: [cls.defKind ?? 'assignment'],
+          definitionBranches: [pathAt(loc.line.file, loc.line.line)],
           annotations: [],
           ...(members ? { members } : {}),
         });
@@ -277,14 +312,16 @@ export function buildVariableModel(index: WorkspaceIndex): VariableModel {
 
     (cls.virtualDefines ?? []).forEach((span) => {
       if (symbols.has(span.name)) return;
+      const vLoc = locateInStatement(stmt, span.rawStart).line;
       symbols.set(span.name, {
         name: span.name,
         displayName: span.raw.replace(/^["']|["']$/g, ''),
         kind: 'atomic',
         origin: 'virtual',
-        definitions: [locateInStatement(stmt, span.rawStart).line],
+        definitions: [vLoc],
         definitionStatements: [stmt.text],
         definitionKinds: ['declaration'],
+        definitionBranches: [pathAt(vLoc.file, vLoc.line)],
         annotations: [],
         scope: {
           file: stmt.file,
