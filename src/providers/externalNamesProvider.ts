@@ -33,10 +33,17 @@ import {
   programsForFile,
   DEFAULT_ENTRY_SCRIPT_PATTERNS,
 } from '../core/entryScripts';
+import { buildWorkspaceIndex } from '../core/symbolIndex';
+import { buildVariableModel } from '../core/variableModel';
+import {
+  checkUndefinedVariables,
+  checkSystemVariableRedeclaration,
+} from '../core/modelDiagnostics';
 import { getAllFilenamesInDirectory } from '../util/fsutils';
 import {
   getWorkspaceFolderPath,
   normalizePath,
+  findWorkspaceFiles,
   printDebugMessage,
 } from '../util/workspaceFiles';
 
@@ -291,6 +298,59 @@ export class GesstabsExternalNamesManager {
           diagnostics.push(d);
         }
       });
+
+      // Model-based diagnostics (P1.6) — undefined variable + system-
+      // variable redeclaration. Both need the whole-workspace variable
+      // model (cross-INCLUDE, external/raw-dataset names, macro-produced
+      // names), so they live here rather than in the document-scoped F2
+      // pass (GesstabsDiagnosticsManager). Undefined-variable is skipped
+      // entirely when this document belongs to no known entry program
+      // (an orphan .inc, or one of its owning programs' data sources is
+      // unresolved (design §9 "P1.6 (B)") — a project whose .sav/.csv
+      // isn't on the editing machine must not get false "undefined"
+      // noise. System-variable redeclaration is a pure syntax check,
+      // independent of any of that, so it always runs.
+      const owningPrograms = programsForFile(programs, file);
+      const externalSources = await this.sourcesFor(document);
+      const hasUnresolvedSource = externalSources.some(
+        (s) => s.names === 'unresolved'
+      );
+      try {
+        const fileNames = await findWorkspaceFiles(document);
+        const wsIndex = buildWorkspaceIndex(fileNames, liveFileReader(), {
+          conditionalsAllActive: true,
+        });
+        const model = buildVariableModel(wsIndex, {
+          externalNames: externalSources,
+          macroExpansion: true,
+        });
+
+        const modelIssues =
+          owningPrograms.length > 0 && !hasUnresolvedSource
+            ? checkUndefinedVariables(model, file)
+            : [];
+        modelIssues.push(...checkSystemVariableRedeclaration(model, file));
+
+        modelIssues.forEach((issue) => {
+          const d = new vscode.Diagnostic(
+            new vscode.Range(
+              issue.line,
+              issue.startChar,
+              issue.line,
+              issue.startChar + issue.length
+            ),
+            issue.message,
+            issue.severity === 'error'
+              ? vscode.DiagnosticSeverity.Error
+              : vscode.DiagnosticSeverity.Warning
+          );
+          d.source = 'gesstabs';
+          d.code = issue.code;
+          diagnostics.push(d);
+        });
+      } catch (e) {
+        printDebugMessage(`gesstabs: model diagnostics failed: ${e}`);
+      }
 
       this.collection.set(document.uri, diagnostics);
     } catch (e) {

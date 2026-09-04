@@ -358,14 +358,74 @@ items below are facets of this same problem, marked "(needs P1)".
     called-twice). `#DOMACRO` looping stays P3, but the model's macro
     hook is shaped so that work plugs in without reshaping the symbol
     record.
-- **P1.6** — new model-based diagnostics: undefined variable (a bare reference
-  the model cannot resolve, with no unresolved external source in play);
-  system-variable redeclaration (`SysMiss`, `NIL`, `SystemFileNo`,
-  `SystemWeight`, `SystemCaseNo` — declaring one is a syntax error, Manual:
-  Systemvariablen; the syntax-error catalog (Reference material) wasn't found
-  to have an exact matching message on a 2026-09-04 check — worth another look
-  before wiring the diagnostic's text); kind-illegal operations (`RECODE`/arithmetic on a
-  `VARFAMILY`/`VARGROUP`, an `ALPHA` var in two `AlphaFamily`s, …).
+- **P1.6** — new model-based diagnostics. **Undefined variable +
+  system-variable redeclaration done 2026-09-05**:
+  - New `src/core/modelDiagnostics.ts` — checks that need the
+    whole-workspace variable model (cross-`INCLUDE`, external/raw-dataset
+    names, macro-produced names), unlike `diagnostics.ts`'s document-scoped,
+    classifier-only checks (which explicitly document cross-`INCLUDE` scope
+    as a known gap). Reuses `diagnostics.ts`'s `DiagnosticIssue` shape.
+    - `checkUndefinedVariables(model, file)` — every `cls.references` span
+      (across `model.statements`, filtered to `file`) `model.resolve()`
+      can't resolve at its own position becomes a **Warning**
+      `undefined-variable`. Skips `mode: 'never'`, a `synthetic` span
+      (already covered elsewhere), and — the manual's quoted-token rule,
+      already how `model.references()` itself behaves — an unresolved
+      **quoted** `ifKnown`-mode token (ambiguous label text, not a name).
+      Requires the model to be built with `externalNames` **and**
+      `macroExpansion: true` or every raw/macro-produced name would
+      falsely flag — the caller's job.
+    - `checkSystemVariableRedeclaration(model, file)` — a
+      **declaration**-kind statement naming `SysMiss`/`NIL`/
+      `SystemFileNo`/`SystemWeight`/`SystemCaseNo` becomes an **Error**
+      `system-variable-redeclaration` (Manual: Systemvariablen; the
+      syntax-error catalog wasn't found to have an exact matching message
+      on a 2026-09-04 check — the wording here is descriptive, not a
+      verbatim compiler message). Deliberately reads the classified
+      statements directly rather than `model.all()`/`resolveAnywhere`:
+      `buildVariableModel`'s main pass never lets anything overwrite a
+      `predefined` symbol, so a `SINGLEQ SysMiss = 1;` is silently dropped
+      by the model itself and invisible to any symbol-table-based check.
+      A mere `COMPUTE`/assignment touching the name is **not** flagged
+      here (illegal too, but that's the separate, not-yet-implemented
+      "kind-illegal operations" check below).
+    - Wired into `GesstabsExternalNamesManager.refresh()` (the
+      `'gesstabs-datasource'` collection — it already owns the
+      "which program(s) own this file / is any of their sources
+      unresolved" logic `checkUndefinedVariables`'s suppression rule
+      needs, via the existing `sourcesFor`/`programsForFile`) rather than
+      the separate F2 `GesstabsDiagnosticsManager`, which stays
+      document-scoped/regex-classifier-only. **Suppression** (design §9
+      "P1.6 (B)", settled 2026-09-04): `checkUndefinedVariables` is
+      skipped entirely — not just filtered — when this document belongs
+      to no known entry program (an orphan `.inc`, ambiguous ownership) or
+      any of its owning program(s)' data sources is `'unresolved'`; ships
+      under the existing `gesstabs.diagnostics.enabled` switch (the
+      collection's whole `refresh()` already gates on it).
+      `checkSystemVariableRedeclaration` always runs — a pure syntax
+      check, independent of data-source resolution.
+    - 15 new `modelDiagnostics.spec.ts` cases (in-script resolution,
+      external/macro-produced names silencing false positives, the
+      quoted-token rule holding in both `COMPUTE` and `IF` condition
+      position, no-forward-reference, per-file filtering across an
+      `INCLUDE`, redeclaration case-insensitivity, `COMPUTE` not
+      flagged). Full suite passes (442), lint clean, typechecks clean,
+      compiles. Manual verification in a live Extension Development Host
+      still outstanding — this is the first genuinely new, user-visible
+      diagnostic this phase adds (P1.0–P1.5 were tooling migrations of
+      already-existing features), so it deserves real scripts, not just
+      unit tests, before calling it settled.
+    - Known perf note (not yet a problem, not yet measured): `refresh()`
+      now builds a full `buildWorkspaceIndex` + `buildVariableModel` of
+      its own, on top of what `getPrograms()`/`sourcesFor()` already
+      resolve and what the F2 `GesstabsDiagnosticsManager` and any open
+      hover/go-to-def request separately rebuild — no caching yet
+      anywhere in this pipeline (design §9 "Perf → LRU first, measure").
+  - **Still open**: kind-illegal operations (`RECODE`/arithmetic on a
+    `VARFAMILY`/`VARGROUP`, an `ALPHA` var in two `AlphaFamily`s, …) — a
+    fuzzier, larger effort than the other two (no single "which statement
+    forms are illegal for which kind" list assembled yet), deliberately
+    left for a separate pass.
 
 ---
 

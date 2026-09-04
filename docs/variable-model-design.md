@@ -650,7 +650,11 @@ program) — they are **not** separate work.
 >   **fully suppressed for a program while any of its data sources is
 >   `unresolved`** (so a project whose `.sav`/`.csv` isn't on the editing
 >   machine gets no false "undefined" noise). System-variable redeclaration is
->   an **Error** (the manual says it is one).
+>   an **Error** (the manual says it is one). **Done 2026-09-05**:
+>   `src/core/modelDiagnostics.ts` (`checkUndefinedVariables`,
+>   `checkSystemVariableRedeclaration`), wired into
+>   `GesstabsExternalNamesManager.refresh()`. Kind-illegal operations (the
+>   third P1.6 item) still open — see TODO.md.
 > - **P1.4 (C)** — a shared `.inc` opened with no active `main*.tab`: use the
 >   program the active editor belongs to; if only the `.inc` is open, the
 >   **union** of all programs that include it, with per-name type/kind
