@@ -718,7 +718,7 @@ class GessTabsWorkspaceSymbolProvider
 
     let files: string[];
     try {
-      files = await getAllFilenamesInDirectory(wsfolder, '(tab|inc)');
+      files = await getAllFilenamesInDirectory(wsfolder, '(tab|inc|def)');
     } catch (e) {
       printDebugMessage(`gesstabs: provideWorkspaceSymbols failed: ${e}`);
       return [];
@@ -758,7 +758,7 @@ class GessTabsWorkspaceSymbolProvider
       });
     };
 
-    // Variables — the whole workspace's .tab/.inc set feeds one symbol
+    // Variables — the whole workspace's .tab/.inc/.def set feeds one symbol
     // table (buildWorkspaceIndex treats a file no other file INCLUDEs as
     // its own root, so every independent entry program is covered, not
     // just whichever one is currently open — entry scripts are

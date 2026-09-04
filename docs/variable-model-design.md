@@ -675,7 +675,12 @@ program) — they are **not** separate work.
 6. **`.def` / other include extensions** (Tier 2 doc-review item) — fold the
    language-association + workspace-scan extension list fix into phase 3 (the
    model's file discovery), or keep separate? — *Proposed: fold in; it's the same
-   "which files are part of the program" question.*
+   "which files are part of the program" question.* — **Done 2026-09-05**:
+   `package.json`'s language `extensions` gained `.def`; both
+   `getAllFilenamesInDirectory` workspace-scan call sites
+   (`workspaceFiles.ts`'s `findWorkspaceFiles`, `GessTabsWorkspaceSymbolProvider`)
+   now match `.tab`/`.inc`/`.def`. `resolveIncludeGraph` itself needed no
+   change — it already followed an `INCLUDE` target regardless of extension.
 
 ---
 

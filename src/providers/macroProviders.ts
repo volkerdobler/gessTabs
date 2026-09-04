@@ -371,7 +371,7 @@ export class GesstabsMacroSignatureHelpProvider
 
 // CodeLens on each #MACRO declaration showing how many call sites it has
 // across the resolved workspace (built on F0's include graph, so counts
-// reflect files actually INCLUDE'd, not just any .tab/.inc on disk).
+// reflect files actually INCLUDE'd, not just any .tab/.inc/.def on disk).
 // Includes call sites in currently-inactive #ifdef/#ifndef branches —
 // buildMacroContext resolves with conditionalsAllActive (a macro used
 // only in a branch this build skips is still a usage worth showing).

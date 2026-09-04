@@ -27,7 +27,8 @@
         ],
         "extensions": [
           ".tab",
-          ".inc"
+          ".inc",
+          ".def"
         ],
         "configuration": "./language-configuration.json"
       }

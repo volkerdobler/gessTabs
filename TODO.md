@@ -215,7 +215,21 @@ items below are facets of this same problem, marked "(needs P1)".
     callers elsewhere (`diagnostics.ts`, `symbolIndex.ts`,
     `tableElements.ts` — `usageRe`/`wordDefRe`/`multiVarRe`/`expandRe`/
     `macroOwnDefRe`), so full deletion is still a separate, later step.
-  - Fold in the `.def` / other INCLUDE-extension fix (design §9 Q6).
+  - **`.def` INCLUDE extension — done 2026-09-05 (design §9 Q6).** The
+    manual's own `INCLUDE` example uses it (`INCLUDE = Labels.def;`,
+    "Arbeit mit GESStabs > Das Skript") and `resolveIncludeGraph` never
+    actually restricted an `INCLUDE` target's extension in the first
+    place (it just reads whatever path the statement names) — the one
+    place still gate-kept to `.tab`/`.inc` was the workspace-wide file
+    *discovery* feeding `findWorkspaceFiles`/`GessTabsWorkspaceSymbolProvider`.
+    Fix: `package.json`'s `languages[0].extensions` gained `.def`
+    (syntax highlighting / language mode for `.def` files opened
+    directly); both `getAllFilenamesInDirectory(…, '(tab|inc)')` call
+    sites (`workspaceFiles.ts`'s `findWorkspaceFiles`, used by go-to-def/
+    find-references/rename/macro CodeLens, and
+    `GessTabsWorkspaceSymbolProvider`) now pass `'(tab|inc|def)'`.
+    `entryScripts.ts`'s `.tab`-only entry-point discovery is deliberately
+    untouched — a `.def`/`.inc` file is never its own entry point.
 - **P1.4** — wire P0's external names into the model as `origin: 'external'`
   symbols, seeded before the program-order pass, **preserving the data
   source's own column order** (SPSS field order / CSV header order — needed

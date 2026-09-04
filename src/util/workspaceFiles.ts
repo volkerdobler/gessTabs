@@ -1,6 +1,6 @@
 // Shared vscode-facing file/path helpers used by every provider that
-// needs to read the workspace's .tab/.inc files (definition/reference/
-// rename providers in extension.ts, and the macro providers in
+// needs to read the workspace's .tab/.inc/.def files (definition/
+// reference/rename providers in extension.ts, and the macro providers in
 // macroProviders.ts) — kept in one place so they stay consistent rather
 // than drifting between call sites.
 
@@ -84,11 +84,18 @@ export function resolvedLineRange(resolved: ResolvedLine): vscode.Range {
 // Rekursive, gecachte Dateisuche lebt in src/util/fsutils.ts
 // (getAllFilenamesInDirectory) und nutzt den geteilten TTL-LRU-Cache aus
 // src/util/lru.ts.
+//
+// .def joined .tab/.inc here 2026-09-05 (design §9 Q6) — the manual's own
+// INCLUDE example uses it (`INCLUDE = Labels.def;`, "Arbeit mit GESStabs
+// > Das Skript"), and INCLUDE itself never restricted the target's
+// extension in the first place (resolveIncludeGraph just reads whatever
+// path the statement names) — the workspace-wide file *discovery* this
+// feeds was the one place still gate-kept to .tab/.inc.
 export async function findWorkspaceFiles(
   document: vscode.TextDocument
 ): Promise<string[]> {
   const wsfolder =
     getWorkspaceFolderPath(document.uri) ||
     fixDriveCasingInWindows(path.dirname(document.fileName));
-  return getAllFilenamesInDirectory(wsfolder, '(tab|inc)');
+  return getAllFilenamesInDirectory(wsfolder, '(tab|inc|def)');
 }
