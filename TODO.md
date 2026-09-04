@@ -168,19 +168,26 @@ and are marked "(needs P1)" so they are not built twice.
     and it is one cleanup.
   - **Not verified in a running VS Code yet** — the provider has no unit
     test (vscode-coupled); needs a manual hover pass.
-- **P1.3 — migrate the remaining consumers** onto the model: go-to-definition,
-  find-references, rename, semantic highlighting, F2 empty-varlist +
-  duplicate-declaration. Delete `regex.ts` / `matching.ts` /
-  `collectDeclarationTokens` / `findVariableAnnotations` /
-  `lineHasQuotedVariableReference` once nothing uses them. This step alone also
-  fixes:
-  - **hover / go-to-def on a quoted string that names a variable** — resolved
-    per-position + per-known-symbol instead of the current hand-enumerated
-    positional guess (Manual: Logische Bedingungen). Partly mitigated already
-    (string-scope gate), but the real fix is the model.
-  - **semantic highlighting only marks the _last_ name in a multi-name list**
-    (`VARIABLES a b c = …`, `RECODE`/`VALUELABELS` lists, multi-variable `TABLE`
-    heads) — the classifier hands back every name span with a real offset.
+- **P1.3 — migrate the remaining consumers** onto the model. **In progress.**
+  - **Done 2026-09-04**: go-to-definition (`model.resolve` + `resolveAnywhere`,
+    covers the whole §3 inventory the regexes missed), **find-references** and
+    **rename** (both on `collectVariableOccurrences(index, word)` in
+    `variableModel.ts` — bare tokens always count, quoted tokens only where the
+    model resolves them as a name, so `VALUELABELS status = 1 "region"` no
+    longer renames the `"region"` label text). Classifier gained
+    `WEIGHTCELLS`/`FILTER`/`FACTOR` (reference-only statements) so those varlists
+    are covered. `lineMatchesDefinition` / `findAllUsages` no longer used by
+    `extension.ts`.
+  - **Still open**: semantic highlighting (`semanticTokens.ts` — also fixes the
+    "only the last name in a multi-name list is coloured" bug, the classifier
+    hands back every span), the F2 empty-varlist + duplicate-declaration checks
+    (`diagnostics.ts`), `GesstabsDocumentSymbolProvider` (still on the regex
+    factories), `symbolCompletion.ts`.
+  - **Then delete**: `regex.ts` / `matching.ts` / `collectDeclarationTokens` /
+    `variableInfo.ts` (`findVariableAnnotations` etc.) /
+    `lineHasQuotedVariableReference` / `findAllUsages` — once nothing uses them.
+  - Fold in the `.def` / other INCLUDE-extension fix (design §9 Q6).
+  - Not verified in a running VS Code yet.
 - **P1.4 — wire P0's external names into the model** as `origin: 'external'`
   symbols, seeded before the program-order pass. A later in-script
   `SINGLEQ`/`COMPUTE` of the same name is a re-definition, not a duplicate. This

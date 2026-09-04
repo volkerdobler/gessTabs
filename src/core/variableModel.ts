@@ -16,7 +16,7 @@
 // diagnostics) are migrated onto this in phases 2–3.
 
 import { ResolvedLine } from './includeGraph';
-import { WorkspaceIndex } from './symbolIndex';
+import { WorkspaceIndex, findAllWordRangesInLine } from './symbolIndex';
 import { toLogicalStatements, LogicalStatement } from './statements';
 import {
   classifyStatement,
@@ -392,4 +392,51 @@ export function buildVariableModel(index: WorkspaceIndex): VariableModel {
       ];
     },
   };
+}
+
+export interface VariableOccurrence {
+  line: ResolvedLine;
+  character: number;
+  length: number;
+}
+
+// Every occurrence of `name` across the resolved program that counts as a
+// variable reference, with an exact character range — the source for
+// find-references and rename. A bare token is always a reference in this
+// grammar; a quoted token is one only on a line the model actually
+// resolves `name` as a name (the manual's quoted-token rule — this is what
+// leaves label / title text that merely reads like a variable name
+// alone). Comment-scoped hits are dropped. `excludeDefinitions` skips the
+// statement lines that declare `name` (references' `!includeDeclaration`).
+export function collectVariableOccurrences(
+  index: WorkspaceIndex,
+  name: string,
+  excludeDefinitions = false
+): VariableOccurrence[] {
+  const model = buildVariableModel(index);
+  const refLineKeys = new Set(
+    model.references(name).map((r) => `${r.line.file}:${r.line.line}`)
+  );
+  const defLineKeys = new Set(
+    (model.resolveAnywhere(name)?.definitions ?? []).map(
+      (d) => `${d.file}:${d.line}`
+    )
+  );
+
+  const out: VariableOccurrence[] = [];
+  index.order.forEach((rl) => {
+    const lineKey = `${rl.file}:${rl.line}`;
+    if (excludeDefinitions && defLineKeys.has(lineKey)) return;
+    // a quoted token counts as the name here only on a line the model
+    // resolves it — a reference line, or the line that declares it.
+    const nameOnThisLine = refLineKeys.has(lineKey) || defLineKeys.has(lineKey);
+    const scope = index.scopes.get(rl.file);
+    findAllWordRangesInLine(rl.text, name).forEach(([start, end]) => {
+      if (scope && !scope.isNotInComment(rl.line, start)) return;
+      const quoted = !!scope && scope.isStringScope(rl.line, start);
+      if (quoted && !nameOnThisLine) return;
+      out.push({ line: rl, character: start, length: end - start });
+    });
+  });
+  return out;
 }

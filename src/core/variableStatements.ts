@@ -278,6 +278,11 @@ const COPY_SOURCE_KW = new Set([
 ]);
 const TABLE_KW = new Set(['table', 'overview', 'xoverview', 'gtable']);
 
+// Statements that only reference existing variables (no target, no
+// annotation): the varlist before `=` is `always`-mode, anything after is
+// an `ifKnown` condition/expression.
+const REF_STATEMENT_KW = new Set(['weightcells', 'filter', 'factor']);
+
 const BLOCK_OPEN = new Set(['ifblock', 'whileblock', 'setfilter']);
 const BLOCK_CLOSE = new Set(['endblock', 'endfilter']);
 const BLOCK_MID = new Set(['elseblock']);
@@ -853,6 +858,28 @@ function classifyAnnotation(
   return cls;
 }
 
+function classifyRefStatement(
+  tokens: Token[],
+  keyword: string
+): ClassifiedStatement {
+  // WEIGHTCELLS [AUTOALIGN] ‹v› = …;  FILTER ‹vl› [= ‹cond›] [AS ‹name›];
+  // — the varlist before `=` names existing variables; a `=` RHS is a
+  // condition (ifKnown). No target, no annotation.
+  const cls = base('other', keyword);
+  const eq = topLevelEq(tokens);
+  const end = eq === -1 ? tokens.length : eq;
+  let from = 1;
+  if (keyword === 'weightcells' && kw(tokens[1]) === 'autoalign') from = 2;
+  const { spans } = collectNames(tokens, from, end);
+  cls.references = spans.map((span) => ({ span, mode: 'always' as NameMode }));
+  if (eq !== -1) {
+    cls.references.push(
+      ...collectExprRefs(tokens, eq + 1, tokens.length, 'ifKnown')
+    );
+  }
+  return cls;
+}
+
 function classifyTable(tokens: Token[], keyword: string): ClassifiedStatement {
   // TABLE = <head> BY <axis> [BY …];  — every name is `always`.
   const cls = base('table', keyword);
@@ -1057,6 +1084,11 @@ function classifyDispatch(
   // --- TABLE / OVERVIEW head & axis ---------------------------
   if (TABLE_KW.has(keyword)) {
     return classifyTable(tokens, keyword);
+  }
+
+  // --- reference-only statements (WEIGHTCELLS / FILTER / …) ---
+  if (REF_STATEMENT_KW.has(keyword)) {
+    return classifyRefStatement(tokens, keyword);
   }
 
   // --- standalone OVERCODE / OVEROVERCODE (§3.6) --------------

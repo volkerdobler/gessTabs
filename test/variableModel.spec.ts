@@ -2,20 +2,25 @@ import { expect } from 'chai';
 import * as path from 'path';
 import { FileReader } from '../src/core/includeGraph';
 import { buildWorkspaceIndex } from '../src/core/symbolIndex';
-import { buildVariableModel } from '../src/core/variableModel';
+import {
+  buildVariableModel,
+  collectVariableOccurrences,
+} from '../src/core/variableModel';
 
 const ROOT = path.resolve('/gesstabs-varmodel-test');
 const p = (...s: string[]) => path.join(ROOT, ...s);
 
-const modelOf = (main: string, files: Record<string, string> = {}) => {
+const indexOf = (main: string, files: Record<string, string> = {}) => {
   const all = { [p('main.tab')]: main, ...files };
   const reader: FileReader = (fp) =>
     all[fp] === undefined ? undefined : all[fp].split('\n');
-  const index = buildWorkspaceIndex(Object.keys(all), reader, {
+  return buildWorkspaceIndex(Object.keys(all), reader, {
     conditionalsAllActive: true,
   });
-  return buildVariableModel(index);
 };
+
+const modelOf = (main: string, files: Record<string, string> = {}) =>
+  buildVariableModel(indexOf(main, files));
 
 describe('buildVariableModel', () => {
   it('seeds the predefined system variables', () => {
@@ -152,5 +157,49 @@ describe('buildVariableModel', () => {
     const all = m.all().filter((s) => s.name === 'x');
     expect(all).to.have.length(1);
     expect(all[0].definitions).to.have.length(2);
+  });
+});
+
+describe('collectVariableOccurrences', () => {
+  it('finds every bare occurrence of a name, including twice on one line', () => {
+    const occ = collectVariableOccurrences(
+      indexOf('singleq f24 = 1;\nif f24 eq 1 then f24 = 2;'),
+      'f24'
+    );
+    expect(occ.map((o) => o.line.line)).to.deep.equal([0, 1, 1]);
+  });
+
+  it('excludes the declaration line when excludeDefinitions is set', () => {
+    const occ = collectVariableOccurrences(
+      indexOf('singleq alter = 1;\ncompute x = alter + 1;'),
+      'alter',
+      true
+    );
+    expect(occ.map((o) => o.line.line)).to.deep.equal([1]);
+  });
+
+  it('leaves quoted label text that merely reads like a variable name alone', () => {
+    const occ = collectVariableOccurrences(
+      indexOf('singleq region = 1;\nvaluelabels status = 1 "region";'),
+      'region'
+    );
+    // only the real declaration on line 0 — not the "region" label text
+    expect(occ.map((o) => o.line.line)).to.deep.equal([0]);
+  });
+
+  it("keeps a quoted token that IS used as a name (the manual's rule)", () => {
+    const occ = collectVariableOccurrences(
+      indexOf("compute 'frage 1' = 1;\ncompute x = 'frage 1' + 2;"),
+      'frage 1'
+    );
+    expect(occ.map((o) => o.line.line)).to.deep.equal([0, 1]);
+  });
+
+  it('skips occurrences inside comments', () => {
+    const occ = collectVariableOccurrences(
+      indexOf('singleq alter = 1;\n// alter is nice\ncompute x = alter;'),
+      'alter'
+    );
+    expect(occ.map((o) => o.line.line)).to.deep.equal([0, 2]);
   });
 });

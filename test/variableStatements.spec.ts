@@ -182,6 +182,22 @@ describe('classifyStatement — references & current variable (§4)', () => {
     expect(s.kind).to.equal('table');
     expect(refNames(s)).to.deep.equal(['a', 'b', 'c']);
   });
+
+  it('WEIGHTCELLS [AUTOALIGN] v = … references v, creates nothing', () => {
+    const s = c('weightcells autoalign gewicht = 1 : 50% 2 : 50%;');
+    expect(s.defines).to.be.empty;
+    expect(refNames(s)).to.deep.equal(['gewicht']);
+    expect(s.references[0].mode).to.equal('always');
+  });
+
+  it('FILTER vl = cond — varlist is always-mode, condition vars ifKnown', () => {
+    const s = c('filter west ost = region eq 1;');
+    expect(s.defines).to.be.empty;
+    const west = s.references.find((r) => r.span.name === 'west');
+    expect(west?.mode).to.equal('always');
+    const region = s.references.find((r) => r.span.name === 'region');
+    expect(region?.mode).to.equal('ifKnown');
+  });
 });
 
 describe('classifyStatement — blocks (§2.4)', () => {

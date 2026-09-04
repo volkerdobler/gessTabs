@@ -17,15 +17,16 @@ import {
   tableHeadRe,
   tableAxisRe,
 } from './core/regex';
-import { matchInScope, lineMatchesDefinition } from './core/matching';
+import { matchInScope } from './core/matching';
 import { getAllFilenamesInDirectory } from './util/fsutils';
 import {
   buildWorkspaceIndex,
-  findDefinitionLine,
   findMacroProducedDefinition,
-  findAllUsages,
-  findAllWordRangesInLine,
 } from './core/symbolIndex';
+import {
+  buildVariableModel,
+  collectVariableOccurrences,
+} from './core/variableModel';
 import {
   fixDriveCasingInWindows,
   getWorkspaceFolderPath,
@@ -415,18 +416,27 @@ class GesstabsDefintionProvider implements vscode.DefinitionProvider {
       { conditionalsAllActive: true }
     );
     const currentFile = normalizePath(document.uri.fsPath);
-    const def = findDefinitionLine(index, currentFile, position.line, word);
-    if (def) {
-      return new vscode.Location(
-        vscode.Uri.file(def.file),
-        resolvedLineRange(def)
+
+    // The variable model resolves the whole §3 definition inventory —
+    // COMPUTE without a sub-keyword, MAKESINGLE, VARGROUP/GROUPS/INTERVALS,
+    // DATA <method>, the statistical creators, IF … THEN <var> = … — none
+    // of which findDefinitionLine's regexes cover. Position-aware first
+    // (no forward reference), then a whole-program fallback.
+    const model = buildVariableModel(index);
+    const sym =
+      model.resolve(word, currentFile, position.line) ??
+      model.resolveAnywhere(word);
+    if (sym && sym.definitions.length > 0) {
+      return sym.definitions.map(
+        (d) =>
+          new vscode.Location(vscode.Uri.file(d.file), resolvedLineRange(d))
       );
     }
 
-    // No literal declaration anywhere — `word` might still be produced by
-    // a #MACRO call site passing it as the argument for a body statement
-    // like `compute &fr = 2;`. Point at both: the macro body line that
-    // actually declares it, and the call site that supplied the name.
+    // No modelled declaration — `word` might still be produced by a #MACRO
+    // call site passing it as the argument for a body statement like
+    // `compute &fr = 2;`. Point at both: the macro body line that actually
+    // declares it, and the call site that supplied the name.
     const macroDef = findMacroProducedDefinition(
       index,
       currentFile,
@@ -515,35 +525,20 @@ class GesstabsReferenceProvider implements vscode.ReferenceProvider {
       makeWorkspaceReader(document),
       { conditionalsAllActive: true }
     );
-    const usages = findAllUsages(index, word);
-    const locations: vscode.Location[] = [];
-    usages.forEach((usage) => {
-      const scope = index.scopes.get(usage.file);
-      const isNotInComment = (searchIndex: number) =>
-        !scope || scope.isNotInComment(usage.line, searchIndex);
-      if (
-        !context.includeDeclaration &&
-        lineMatchesDefinition(usage.text, word, isNotInComment)
-      ) {
-        return;
-      }
-      // One Location per occurrence on the line, not one spanning the
-      // whole line — a line like `IF (… in f24) THEN f24 = 2;` mentions
-      // the variable twice, same as rename handles it.
-      findAllWordRangesInLine(usage.text, word).forEach(([start, end]) => {
-        if (!isNotInComment(start)) return;
-        locations.push(
-          new vscode.Location(
-            vscode.Uri.file(usage.file),
-            new vscode.Range(
-              new vscode.Position(usage.line, start),
-              new vscode.Position(usage.line, end)
-            )
+    return collectVariableOccurrences(
+      index,
+      word,
+      !context.includeDeclaration
+    ).map(
+      ({ line, character, length }) =>
+        new vscode.Location(
+          vscode.Uri.file(line.file),
+          new vscode.Range(
+            new vscode.Position(line.line, character),
+            new vscode.Position(line.line, character + length)
           )
-        );
-      });
-    });
-    return locations;
+        )
+    );
   }
 }
 
@@ -579,25 +574,19 @@ class GesstabsRenameProvider implements vscode.RenameProvider {
       makeWorkspaceReader(document),
       { conditionalsAllActive: true }
     );
-    const usages = findAllUsages(index, word);
-    if (usages.length === 0) return null;
+    const occurrences = collectVariableOccurrences(index, word, false);
+    if (occurrences.length === 0) return null;
 
     const edit = new vscode.WorkspaceEdit();
-    usages.forEach((usage) => {
-      const scope = index.scopes.get(usage.file);
-      // Rename every occurrence on the line, not just the first — a line
-      // like `IF (… in f24) THEN f24 = 2;` mentions the variable twice.
-      findAllWordRangesInLine(usage.text, word).forEach(([start, end]) => {
-        if (scope && !scope.isNotInComment(usage.line, start)) return;
-        edit.replace(
-          vscode.Uri.file(usage.file),
-          new vscode.Range(
-            new vscode.Position(usage.line, start),
-            new vscode.Position(usage.line, end)
-          ),
-          newName
-        );
-      });
+    occurrences.forEach(({ line, character, length }) => {
+      edit.replace(
+        vscode.Uri.file(line.file),
+        new vscode.Range(
+          new vscode.Position(line.line, character),
+          new vscode.Position(line.line, character + length)
+        ),
+        newName
+      );
     });
     return edit;
   }
