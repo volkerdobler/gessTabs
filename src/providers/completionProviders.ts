@@ -10,7 +10,8 @@
 
 import * as vscode from 'vscode';
 import { buildWorkspaceIndex } from '../core/symbolIndex';
-import { collectDefinedNamesBefore } from '../core/symbolCompletion';
+import { buildVariableModel } from '../core/variableModel';
+import { collectCompletionNames } from '../core/symbolCompletion';
 import { findMacroDefinitions } from '../core/macroExpansion';
 import {
   makeWorkspaceReader,
@@ -41,15 +42,11 @@ export class GesstabsSymbolCompletionProvider
       if (token && token.isCancellationRequested) return [];
 
       const currentFile = normalizePath(document.uri.fsPath);
-      const pos = index.order.findIndex(
-        (l) => l.file === currentFile && l.line === position.line
-      );
-      const cursorIndex = pos === -1 ? index.order.length : pos;
-      const orderTexts = index.order.map((rl) => rl.text);
-
-      const variableItems = collectDefinedNamesBefore(
-        orderTexts,
-        cursorIndex
+      const model = buildVariableModel(index);
+      const variableItems = collectCompletionNames(
+        model,
+        currentFile,
+        position.line
       ).map(
         (name) =>
           new vscode.CompletionItem(name, vscode.CompletionItemKind.Variable)

@@ -3,29 +3,30 @@
 // wiring counterpart) so it can be unit-tested directly, same split as
 // src/core/macroExpansion.ts/src/providers/macroProviders.ts.
 //
-// Reuses src/core/semanticTokens.ts's collectSemanticTokens to find
-// variable/table NAME tokens — the exact same "which lines define a
-// variable" regex-based recognition the document/workspace symbol
-// providers and semantic highlighting already share — rather than a
-// third reimplementation of that matching.
+// Built on the variable model (src/core/variableModel.ts): a program
+// point's `ProgramPointView.all()` already *is* "every name visible here,
+// no forward reference" — exactly what completion needs, natively,
+// without a separate regex-based re-scan (the old
+// collectSemanticTokens-based version this replaced).
 
-import { collectSemanticTokens } from './semanticTokens';
-
-const alwaysNotInComment = () => true;
+import { VariableModel } from './variableModel';
 
 // gessTabs has no forward references: a variable/table name is only ever
 // a valid completion once it has already been defined earlier in the
-// resolved (INCLUDE/#ifdef-aware) program order relative to the cursor —
-// mirrors symbolIndex.ts's findDefinitionLine backward-scan rule.
-export function collectDefinedNamesBefore(
-  orderTexts: string[],
-  beforeLine: number
+// resolved (INCLUDE/#ifdef-aware) program order relative to the cursor.
+// Queried at `line - 1` (not `line`) — `model.at()` is inclusive of a
+// symbol declared *on* the queried line itself (right for hover, which
+// wants "resolve what's under the cursor including its own declaration"),
+// but completion must not offer a name still being typed on the current
+// line as a suggestion for itself. Returns each symbol's first-seen
+// display casing, deduplicated by name.
+export function collectCompletionNames(
+  model: VariableModel,
+  file: string,
+  line: number
 ): string[] {
-  const tokens = collectSemanticTokens(orderTexts, alwaysNotInComment);
-  const names = new Set<string>();
-  tokens.forEach((t) => {
-    if (t.type !== 'variable' || t.line >= beforeLine) return;
-    names.add(orderTexts[t.line].substr(t.startChar, t.length));
-  });
-  return Array.from(names);
+  return model
+    .at(file, line - 1)
+    .all()
+    .map((s) => s.displayName);
 }

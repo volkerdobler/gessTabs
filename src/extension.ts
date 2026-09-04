@@ -10,12 +10,10 @@ import {
   constVarName,
   singleVarDefRe,
   multiVarDefRe,
-  multiVarRe,
   computeDefRe,
   macroDefRe,
   expandDefRe,
   tableHeadRe,
-  tableAxisRe,
 } from './core/regex';
 import { matchInScope } from './core/matching';
 import { getAllFilenamesInDirectory } from './util/fsutils';
@@ -27,6 +25,9 @@ import {
   buildVariableModel,
   collectVariableOccurrences,
 } from './core/variableModel';
+import { blankComments, ResolvedLine } from './core/includeGraph';
+import { toLogicalStatements } from './core/statements';
+import { classifyStatement } from './core/variableStatements';
 import {
   fixDriveCasingInWindows,
   getWorkspaceFolderPath,
@@ -605,166 +606,115 @@ class GesstabsDocumentSymbolProvider implements vscode.DocumentSymbolProvider {
         return;
       }
       const symbols: vscode.SymbolInformation[] = [];
-
-      function pushDocSymbol(
+      const push = (
         kind: vscode.SymbolKind,
         container: string,
-        m1: string,
-        m2: string,
-        m3: string,
-        uri: vscode.Uri,
+        name: string,
         range: vscode.Range
-      ): void {
-        function lpush(input: string): void {
-          if (input && input.length > 0) {
-            symbols.push({
-              name: input.trim(),
-              kind,
-              location: new vscode.Location(uri, range),
-              containerName: container,
-            });
-          }
-        }
+      ): void => {
+        if (!name) return;
+        symbols.push({
+          name,
+          kind,
+          location: new vscode.Location(document.uri, range),
+          containerName: container,
+        });
+      };
 
-        lpush(m1);
-        lpush(m2);
-        lpush(m3);
-      }
-
-      const singleVarRegExp: RegExp = singleVarDefRe('');
-      const multiVarRegExp: RegExp = multiVarRe('');
-      const multiVarDefRegExp: RegExp = multiVarDefRe('');
-      const computeRegExp: RegExp = computeDefRe('');
       const macroRegExp: RegExp = macroDefRe('');
       const expandRegExp: RegExp = expandDefRe('');
-      const tableHeadRegExp: RegExp = tableHeadRe('');
-      const tableAxisRegExp: RegExp = tableAxisRe('');
-
       const scope = new sc.Scope(document);
+      const lines: string[] = [];
+      for (let i = 0; i < document.lineCount; i += 1) {
+        lines.push(document.lineAt(i).text);
+      }
 
-      for (let i = 0; i < document.lineCount; i++) {
-        const line = document.lineAt(i);
-
-        if (token && token.isCancellationRequested) {
-          resolve([]);
-          return;
-        }
-
-        if (line.text.length === 0) {
-          continue;
-        }
-
-        const notInComment = (searchIndex: number) =>
-          scope.isNotInComment(i, searchIndex);
+      // Macro / #EXPAND definitions — unrelated to the variable model,
+      // unchanged line-based regex scan.
+      lines.forEach((lineText, i) => {
+        if (token && token.isCancellationRequested) return;
+        if (lineText.length === 0) return;
         const normalScope = (searchIndex: number) =>
           scope.isNormalScope(i, searchIndex);
-        const groups234 = (lineMatch: RegExpMatchArray) =>
-          (lineMatch[2] || '') + (lineMatch[3] || '') + (lineMatch[4] || '');
+        const { range } = document.lineAt(i);
 
-        let lineMatch = matchInScope(line.text, singleVarRegExp, notInComment);
-        if (lineMatch) {
-          pushDocSymbol(
-            vscode.SymbolKind.Variable,
-            'variable',
-            `${lineMatch[2]} [${lineMatch[1].toLocaleLowerCase()}]`,
-            '',
-            '',
-            document.uri,
-            line.range
-          );
-        }
-
-        lineMatch = matchInScope(line.text, multiVarRegExp, notInComment);
-        if (lineMatch) {
-          pushDocSymbol(
-            vscode.SymbolKind.Variable,
-            'variable',
-            `${groups234(lineMatch)} [${lineMatch[1].toLocaleLowerCase()}]`,
-            '',
-            '',
-            document.uri,
-            line.range
-          );
-        }
-
-        lineMatch = matchInScope(line.text, multiVarDefRegExp, notInComment);
-        if (lineMatch) {
-          pushDocSymbol(
-            vscode.SymbolKind.Variable,
-            'variable',
-            `${groups234(lineMatch)} [${lineMatch[1].toLocaleLowerCase()}]`,
-            '',
-            '',
-            document.uri,
-            line.range
-          );
-        }
-
-        lineMatch = matchInScope(line.text, computeRegExp, normalScope);
-        if (lineMatch) {
-          pushDocSymbol(
-            vscode.SymbolKind.Variable,
-            'variable',
-            `${groups234(lineMatch)} [${lineMatch[1].toLocaleLowerCase()}]`,
-            '',
-            '',
-            document.uri,
-            line.range
-          );
-        }
-
-        lineMatch = matchInScope(line.text, macroRegExp, normalScope);
-        if (lineMatch && lineMatch.length >= 2 && lineMatch[2].length > 0) {
-          pushDocSymbol(
+        const macroMatch = matchInScope(lineText, macroRegExp, normalScope);
+        if (macroMatch && macroMatch[2]) {
+          push(
             vscode.SymbolKind.Function,
             'definition',
-            `${lineMatch[2]} [macro]`,
-            '',
-            '',
-            document.uri,
-            line.range
+            `${macroMatch[2]} [macro]`,
+            range
           );
         }
-
-        lineMatch = matchInScope(line.text, expandRegExp, normalScope);
-        if (lineMatch && lineMatch.length >= 2 && lineMatch[2].length > 0) {
-          pushDocSymbol(
+        const expandMatch = matchInScope(lineText, expandRegExp, normalScope);
+        if (expandMatch && expandMatch[2]) {
+          push(
             vscode.SymbolKind.Function,
             'definition',
-            `${lineMatch[2]} [expand]`,
-            '',
-            '',
-            document.uri,
-            line.range
+            `${expandMatch[2]} [expand]`,
+            range
           );
         }
-
-        lineMatch = matchInScope(line.text, tableHeadRegExp, normalScope);
-        if (lineMatch) {
-          pushDocSymbol(
-            vscode.SymbolKind.Variable,
-            'table',
-            `${groups234(lineMatch)} [head]`,
-            '',
-            '',
-            document.uri,
-            line.range
-          );
-        }
-
-        lineMatch = matchInScope(line.text, tableAxisRegExp, normalScope);
-        if (lineMatch) {
-          pushDocSymbol(
-            vscode.SymbolKind.Variable,
-            'table',
-            `${groups234(lineMatch)} [axis]`,
-            '',
-            '',
-            document.uri,
-            line.range
-          );
-        }
+      });
+      if (token && token.isCancellationRequested) {
+        resolve([]);
+        return;
       }
+
+      // Variable / table names — the statement classifier, one entry per
+      // name (replacing the old regex pass' "only the last name in a
+      // multi-name list" / "whole varlist crammed into one blob" gaps, and
+      // now covering the full §3 declaration inventory — COMPUTE without a
+      // sub-keyword, MAKESINGLE's no-`=` form, VARFAMILY/VARGROUP/GROUPS/
+      // INTERVALS/INDEXVAR/the statistical creators/DATA, … — none of
+      // which the old singleVarDefRe/computeDefRe/multiVarDefRe set
+      // actually matched). Document-scoped, like the rest of this
+      // provider — no workspace/INCLUDE resolution.
+      const order: ResolvedLine[] = lines.map((text, i) => ({
+        file: 'document',
+        line: i,
+        text: blankComments(scope, i, text),
+      }));
+      toLogicalStatements(order).forEach((stmt) => {
+        const cls = classifyStatement(stmt.text);
+        if (!cls) return;
+        const { range } = document.lineAt(stmt.startLine);
+
+        cls.defines.forEach((span) => {
+          push(
+            vscode.SymbolKind.Variable,
+            'variable',
+            `${span.raw} [${cls.keyword}]`,
+            range
+          );
+        });
+
+        // VARTITLE/VARTEXT/VALUELABELS (& synonyms)/COPY* re-mentioning an
+        // existing variable — not a declaration, but a meaningful Outline
+        // landmark, same as the old multiVarRe-based entries.
+        if (cls.kind === 'annotation') {
+          cls.references
+            .filter((r) => r.mode === 'always')
+            .forEach((r) => {
+              push(
+                vscode.SymbolKind.Variable,
+                'variable',
+                `${r.span.raw} [${cls.keyword}]`,
+                range
+              );
+            });
+        }
+
+        // TABLE/OVERVIEW head + axis names.
+        if (cls.kind === 'table') {
+          cls.references
+            .filter((r) => r.mode === 'always')
+            .forEach((r) => {
+              push(vscode.SymbolKind.Variable, 'table', r.span.raw, range);
+            });
+        }
+      });
 
       resolve(symbols);
     });
