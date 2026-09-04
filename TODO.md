@@ -289,6 +289,19 @@ items below are facets of this same problem, marked "(needs P1)".
       `'external'`. An already-`declared` symbol (a real in-script
       declaration re-defined it, see `primaryDefinitions`) renames
       normally — only a still-purely-external name is blocked.
+      - **UX follow-up, fixed same day**: without a `prepareRename`
+        method, VS Code unconditionally opens the rename input box (plus
+        its own rename-suggestions popup) the instant F2 is pressed, and
+        only calls `provideRenameEdits` — and shows its thrown error —
+        once the user commits a name. Reported: on an external variable,
+        the rejection *did* show, but a few seconds later the rename box
+        reopened/lingered and covered it. Added `prepareRename`, running
+        the identical origin check the moment F2 is pressed — throwing
+        there shows the reason immediately, inline, and the input box
+        never opens at all. `GesstabsExternalNamesManager`'s own program/
+        bytes caches make the repeated `sourcesFor` lookup inside
+        `provideRenameEdits` afterward (kept as defense in depth for
+        programmatic callers) effectively free.
     - `GessTabsWorkspaceSymbolProvider` (Ctrl+T) also takes it; since
       Ctrl+T is workspace-wide (no single "current document" to scope
       `sourcesFor` to), it instead unions every entry program's sources

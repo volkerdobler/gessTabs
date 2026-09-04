@@ -536,6 +536,58 @@ class GesstabsReferenceProvider implements vscode.ReferenceProvider {
 class GesstabsRenameProvider implements vscode.RenameProvider {
   constructor(private readonly externalNames?: GesstabsExternalNamesManager) {}
 
+  // Runs the moment F2 is pressed, before VS Code ever opens the rename
+  // input box. Rejecting here — same check provideRenameEdits does — shows
+  // the reason immediately, inline, with no input box/rename-suggestions
+  // popup to open and then get replaced a few seconds later once
+  // provideRenameEdits itself finally rejects (the reported UX: the error
+  // was there, then another window covered it — that "other window" was
+  // this very rename box, which VS Code opens unconditionally when a
+  // provider has no prepareRename). GesstabsExternalNamesManager's own
+  // program/bytes caches make this basically free the second time
+  // provideRenameEdits repeats the same lookup.
+  public async prepareRename(
+    document: vscode.TextDocument,
+    position: vscode.Position,
+    token: vscode.CancellationToken
+  ): Promise<vscode.Range> {
+    const wordAtPosition = getWordAtPosition(document, position);
+    const wordRange = document.getWordRangeAtPosition(
+      position,
+      new RegExp(constVarName, 'i')
+    );
+    if (!wordAtPosition[0] || !wordRange) {
+      throw new Error('Hier befindet sich kein umbenennbares Element.');
+    }
+    const word = wordAtPosition[1];
+
+    let fileNames: string[];
+    try {
+      fileNames = await findWorkspaceFiles(document);
+    } catch (e) {
+      printDebugMessage(`gesstabs: prepareRename failed: ${e}`);
+      return wordRange;
+    }
+    if (token && token.isCancellationRequested) return wordRange;
+
+    const index = buildWorkspaceIndex(
+      fileNames,
+      makeWorkspaceReader(document),
+      { conditionalsAllActive: true }
+    );
+    const externalSources = this.externalNames
+      ? await this.externalNames.sourcesFor(document)
+      : [];
+    if (token && token.isCancellationRequested) return wordRange;
+    const model = buildVariableModel(index, { externalNames: externalSources });
+    if (model.resolveAnywhere(word)?.origin === 'external') {
+      throw new Error(
+        `"${word}" ist eine Rohvariable aus der Datenquelle (CSVINFILE/SPSSINFILE/DATAFILE) — sie kann hier nicht umbenannt werden, da der Name in der Datendatei selbst nicht mit geändert wird.`
+      );
+    }
+    return wordRange;
+  }
+
   public async provideRenameEdits(
     document: vscode.TextDocument,
     position: vscode.Position,
