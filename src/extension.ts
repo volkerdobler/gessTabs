@@ -335,6 +335,33 @@ function getWordAtPosition(
   return [true, word, resultPosition];
 }
 
+// The header-cell Location(s) for a raw dataset column named `word` —
+// every resolved data source that positively knows its exact character
+// range (a delimited CSVINFILE/DATAFILE/INFILE source; SPSSINFILE has no
+// per-column range in v1, see savDictionary.ts). §11.7 "CSV-header-cell
+// go-to-definition".
+function headerCellLocations(
+  word: string,
+  sources: ExternalNameSource[]
+): vscode.Location[] {
+  const key = word.toLowerCase();
+  const out: vscode.Location[] = [];
+  sources.forEach((src) => {
+    const range = src.columnRanges?.[key];
+    if (!src.absPath || !range) return;
+    out.push(
+      new vscode.Location(
+        vscode.Uri.file(src.absPath),
+        new vscode.Range(
+          new vscode.Position(0, range.start),
+          new vscode.Position(0, range.end)
+        )
+      )
+    );
+  });
+  return out;
+}
+
 // Allow the user to see the definition of variables/functions/methods
 // right where the variables / functions / methods are being used.
 class GesstabsDefintionProvider implements vscode.DefinitionProvider {
@@ -398,13 +425,23 @@ class GesstabsDefintionProvider implements vscode.DefinitionProvider {
       // go-to-definition target just because it also touches `sym`.
       const primary = primaryDefinitions(sym);
       if (primary.length > 0) {
-        return primary.map(
+        const locations = primary.map(
           (d) =>
             new vscode.Location(
               vscode.Uri.file(d.line.file),
               resolvedLineRange(d.line)
             )
         );
+        // A raw dataset column additionally jumps straight to its own
+        // header cell in the CSV/DATAFILE itself (§11.7 "CSV-header-cell
+        // go-to-definition"), alongside the CSVINFILE/DATAFILE statement
+        // location above — not instead of it, since the statement is
+        // still the "real" declaration and the only target for a source
+        // (e.g. SPSSINFILE) with no per-column character range.
+        if (sym.origin === 'external') {
+          locations.push(...headerCellLocations(word, externalSources));
+        }
+        return locations;
       }
     }
 

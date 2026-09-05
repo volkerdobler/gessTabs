@@ -11,23 +11,45 @@ citations point at the local mirror in `dokumentation/online-manual/` (see
 
 ## P0 — Read the dataset's raw variables
 
-**Done 2026-09-03/04** (`src/core/externalNames.ts` / `savDictionary.ts` /
-`entryScripts.ts` / `src/providers/externalNamesProvider.ts`, the
-`gesstabs.dataInput.entryScriptPatterns` setting). Design:
-**[docs/variable-model-design.md §11](docs/variable-model-design.md)**.
+**Done 2026-09-03/04** (first cut) **and 2026-09-05** (the §11.7 follow-up
+list, closing P0 out completely): `src/core/externalNames.ts` /
+`savDictionary.ts` / `entryScripts.ts` / `src/providers/externalNamesProvider.ts`
+/ `src/util/glob.ts`, the `gesstabs.dataInput.entryScriptPatterns` setting.
+Design: **[docs/variable-model-design.md §11](docs/variable-model-design.md)**.
 
-Still open (design doc §11.7):
+The 2026-09-05 pass closed every item on the follow-up list:
 
-- CSV-header-cell go-to-definition
-- wildcard-path resolution
-- column-fixed `DATAFILE` (`INPUT = ….inc;` vardef — `INFILE` is a documented
-  synonym for `DATAFILE`, same deferred column-fixed case)
-- multi-line input statements
-- the `ENCODING <filetype> = …` override
-- per-workspace-folder cache for multi-root workspaces
+- **CSV-header-cell go-to-definition** — `ExternalNameSource.columnRanges`
+  (each header name's exact character range on line 0 of the CSV/DATAFILE)
+  feeds `GesstabsDefintionProvider`'s new `headerCellLocations`, which jumps
+  straight into the data file's own header cell, alongside (not instead of)
+  the CSVINFILE/DATAFILE statement location.
+- **Wildcard-path resolution** — `resolveWildcard` in `externalNames.ts`
+  unions every OS-wildcard-matching file's header, alphabetically (the
+  manual's own documented order), via the new `ExternalNamesIO.listFiles`;
+  `unresolved` only when nothing matches or `listFiles` isn't available.
+- **Column-fixed `DATAFILE`/`INFILE`** — `INFILE` is now recognized as
+  `DATAFILE`'s documented synonym; `hasVardefStatements` detects a `VARNAME`
+  vardef (`VARNAME = <name> <startcol> <width>;`) anywhere in the resolved
+  program to tell a genuinely column-fixed `DATAFILE` (still deferred, §6)
+  apart from one whose format simply can't be determined.
+- **Multi-line input statements** — `findDataSourceStatements` now matches
+  whole logical statements (reusing `toLogicalStatements`/`locateInStatement`
+  from `src/core/statements.ts`), so a statement wrapped across several
+  physical lines is still found; `DataSourceStatement.pathLine`/`pathChar`
+  track exactly where the `<filepath>` token itself sits, for the
+  DocumentLink.
+- **`ENCODING <filetype> = …` override** — `findEncodingOverride` reads an
+  `ENCODING DATAFILE = LATIN1|UTF8|UTF16LE|UTF16BE;` statement and forces
+  that encoding over the auto-detection for every CSVINFILE/DATAFILE/INFILE
+  header read.
+- **Per-workspace-folder cache** — `GesstabsExternalNamesManager` now keys
+  its `EntryProgram[]` cache and `FileSystemWatcher` per workspace folder
+  (`Map<folder, …>`) instead of one shared `scanRoot`/`programs` pair, which
+  used to thrash a full rescan every time the active editor switched
+  between two folders of a multi-root workspace.
 
-Once these land, P1.4 already knows how to wire the names into the model as
-`origin: 'external'`.
+P1.4 already wires the names into the model as `origin: 'external'`.
 
 Not doing: SPSS variable/value labels — gessTabs scripts (re)define them,
 directly or via `#define … syntax`, so this isn't an extension task. ZSAV

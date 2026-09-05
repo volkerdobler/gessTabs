@@ -717,12 +717,15 @@ program) — they are **not** separate work.
 Concrete plan for reading the "raw" variable names a script pulls in from its data
 source. Raised and scoped 2026-09-03.
 
-> **Status: first cut implemented 2026-09-03.** `src/core/externalNames.ts` +
-> `src/core/savDictionary.ts` + `src/core/entryScripts.ts` +
-> `src/providers/externalNamesProvider.ts` + the
+> **Status: first cut implemented 2026-09-03; the §11.7 follow-up list closed
+> out 2026-09-05 — P0 (TODO.md) is now fully done.** `src/core/externalNames.ts`
+> + `src/core/savDictionary.ts` + `src/core/entryScripts.ts` +
+> `src/providers/externalNamesProvider.ts` + `src/util/glob.ts` + the
 > `gesstabs.dataInput.entryScriptPatterns` setting. Covers §11.1–§11.6 and
-> §11.9; the §11.7 open questions are the follow-up list. Not yet wired into a
-> variable model (that is P1.4 / §8 phase 4).
+> §11.9; §11.7 Q3/Q4/Q6 and the multi-line-statement / `ENCODING` override /
+> per-folder-cache gaps below are all resolved (Q5, the one genuinely open
+> question left, is a P1.4/model-layer concern, not a P0 one). Already wired
+> into the variable model as `origin: 'external'` (P1.4 / §8 phase 4).
 
 **Decisions taken (2026-09-03):**
 
@@ -934,11 +937,25 @@ Wildcard path (`data*.csv`): try the union of `fs`-matching files' headers; only
 2. **ZSAV (`$FL3`)** — *resolved: nothing to do.* The front-of-file dictionary is
    uncompressed even in ZSAV (only the case data is compressed), so `readSavDictionary`
    already handles the `$FL3` magic and returns names + type. No zlib inflate needed.
-3. **Header-cell / offset jump** — worth building the CSV-column and `.sav`-record
-   location tracking for go-to-definition, or is landing on the input statement
-   enough? *Proposed: keep the column index around (cheap), wire the jump later.*
-4. **Wildcard data paths** — union of matches, or `unresolved`? *Proposed: union
-   for CSV headers, `unresolved` if no match.*
+3. **Header-cell / offset jump** — *resolved 2026-09-05, the CSV half.*
+   `fieldRanges` (`externalNames.ts`) computes each header name's exact
+   character range on the delimited file's first line; `ExternalNameSource
+   .columnRanges` carries it, and `GesstabsDefintionProvider`'s
+   `headerCellLocations` (extension.ts) jumps straight into that cell,
+   alongside the CSVINFILE/DATAFILE statement location it already returned.
+   The `.sav`-record half stays deferred — SPSSINFILE sources still only land
+   on the input statement (no per-column byte-offset tracking in
+   `savDictionary.ts`; not asked for and a fair bit more work for a format
+   users rarely go hunting through column-by-column).
+4. **Wildcard data paths** — *resolved 2026-09-05: union of matches, per the
+   proposal.* `resolveWildcard` (`externalNames.ts`) lists the containing
+   directory via the new `ExternalNamesIO.listFiles`, matches the basename
+   glob (`src/util/glob.ts`'s `globToRegExp`, shared with
+   `entryScripts.ts`'s own pattern matching), sorts alphabetically (the
+   manual's own documented order for `DATAFILE = "WELLE.*";`) and unions
+   every matched file's header; `'unresolved'` only when nothing matches or
+   the injected `ExternalNamesIO` doesn't implement `listFiles` (the live
+   provider's `CachingBytesIO` does, via `fs.readdirSync`).
 5. **The variable model when there is more than one entry program.** The model
    is one symbol table per entry program (§11.5). Two things still to decide:
    - **A shared `.inc` opened on its own** — no active `main*.tab` context. Which
@@ -948,10 +965,21 @@ Wildcard path (`data*.csv`): try the union of `fs`-matching files' headers; only
    - **Cost** — N entry programs ⇒ N model builds instead of one. *Proposed:
      build lazily on first query into a program, cache keyed by that program's
      file set + external-file mtimes, drop on a watcher event.*
-6. **Exact `DATAFILE` / vardef-include shape** — confirm the `INPUT = <…>.inc;`
-   vs. `INCLUDE = <…>.inc;` spelling and how a column-fixed `DATAFILE` names its
-   variable definitions, from `csv.html` / `handhabung-von-ascii-daten.html`
-   (not yet mirrored). Only matters for the deferred column-fixed branch.
+   Still open — a P1.4/model-layer question, not a P0 one; unlike Q3/Q4/Q6 it
+   was never on TODO.md's P0 follow-up list.
+6. **Exact `DATAFILE` / vardef-include shape** — *resolved 2026-09-05.* The
+   manual's real syntax (`Anhang > Historisches > Handhabung von ASCII-Daten
+   > Daten-Input`, now mirrored) is `DATAFILE [FILEKEY <k>] [ALLOWEMPTY] =
+   <filepath>;` / `INFILE [FILEKEY <k>] [ALLOWEMPTY] = <filepath>;` — `INFILE`
+   is `DATAFILE`'s own documented synonym (same keyword-data entry), not a
+   separate vardef-include statement; `findDataSourceStatements` now
+   recognizes both. The vardef itself is a `VARNAME = <name> <startcol>
+   <width>;` statement (confirmed against the `VARNAME` keyword entry's own
+   examples, e.g. `VARNAME = Alter 101 1;`) — `hasVardefStatements` detects
+   one anywhere in the resolved program and `resolveKnownFile` uses that to
+   tell "column-fixed, deferred to §6" apart from "format cannot be
+   determined at all" when a `DATAFILE`/`INFILE`'s first line carries
+   neither `;` nor `,`.
 
 ### 11.8 Caching & performance
 
@@ -961,6 +989,12 @@ Wildcard path (`data*.csv`): try the union of `fs`-matching files' headers; only
 - **Never** parse on keystroke. The model (later) takes the already-parsed
   `ExternalNameSource[]` as an input (`buildVariableModel` `opts.externalNames`),
   so its hot path stays file-free.
+- *Resolved 2026-09-05:* one `FileSystemWatcher` **and** one `EntryProgram[]`
+  cache entry **per workspace folder**, keyed in a `Map<folder, …>` inside
+  `GesstabsExternalNamesManager` — a single shared `scanRoot`/`programs` pair
+  used to force a full rescan every time the active editor switched between
+  two folders of a multi-root workspace, since each switch looked like "the
+  scan root changed" and evicted the other folder's (perfectly valid) cache.
 
 ### 11.9 New module surface (additive, no consumer churn)
 
@@ -980,4 +1014,15 @@ Wildcard path (`data*.csv`): try the union of `fs`-matching files' headers; only
   (`string[]`, default `["main.tab", "main*.tab", "*.tab"]`).
 - `test/entryScripts.spec.ts`, `test/externalNames.spec.ts` with tiny real
   `.csv` / `.sav` fixtures under `test/fixtures/`.
+- *Added 2026-09-05:* `src/util/glob.ts` — `globToRegExp`/`matchesAnyPattern`,
+  factored out of `entryScripts.ts` (still re-exported from there) so
+  `externalNames.ts`'s wildcard-path resolution can share the same glob
+  semantics rather than duplicating them. `ExternalNamesIO` gained an
+  optional `listFiles(dirAbsPath)`; `ExternalNameSource` gained
+  `columnRanges` (header-cell character ranges) and `matchedPaths` (every
+  file an OS-wildcard path matched); `DataSourceStatement` gained
+  `pathLine`/`pathChar` (where `<filepath>` sits when it isn't on the
+  statement's own first line). `hasVardefStatements` and
+  `findEncodingOverride` are new exports consumed internally by
+  `readExternalNames`.
 

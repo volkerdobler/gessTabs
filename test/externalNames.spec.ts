@@ -9,6 +9,8 @@ import {
   resolveExternalNames,
   readExternalNames,
   collectExternalNames,
+  hasVardefStatements,
+  findEncodingOverride,
   ExternalNamesIO,
 } from '../src/core/externalNames';
 
@@ -19,7 +21,10 @@ function order(file: string, lines: string[]): ResolvedLine[] {
   return lines.map((text, i) => ({ file, line: i, text }));
 }
 
-function io(files: Record<string, Uint8Array | string>): ExternalNamesIO {
+function io(
+  files: Record<string, Uint8Array | string>,
+  dirs: Record<string, string[]> = {}
+): ExternalNamesIO {
   return {
     readBytes(absPath: string) {
       const f = files[absPath];
@@ -27,6 +32,9 @@ function io(files: Record<string, Uint8Array | string>): ExternalNamesIO {
       return typeof f === 'string'
         ? Uint8Array.from(Buffer.from(f, 'utf8'))
         : f;
+    },
+    listFiles(dirAbsPath: string) {
+      return dirs[dirAbsPath] ?? [];
     },
   };
 }
@@ -62,6 +70,34 @@ describe('findDataSourceStatements', () => {
     ]);
     expect(findDataSourceStatements(o)).to.have.length(1);
     expect(findDataSourceStatements(commented)).to.have.length(0);
+  });
+
+  it('treats INFILE as a documented synonym for DATAFILE', () => {
+    const st = findDataSourceStatements(
+      order(p('main.tab'), ['INFILE = old.dat;'])
+    );
+    expect(st).to.have.length(1);
+    expect(st[0]).to.include({ kind: 'datafile', rawPath: 'old.dat' });
+  });
+
+  it('finds a statement wrapped across several physical lines and locates the path token', () => {
+    const o = order(p('main.tab'), [
+      'CSVINFILE',
+      '  FILEKEY w1',
+      '  = "data/w1.csv";',
+    ]);
+    const st = findDataSourceStatements(o);
+    expect(st).to.have.length(1);
+    expect(st[0]).to.include({
+      kind: 'csv',
+      rawPath: 'data/w1.csv',
+      fileKey: 'w1',
+      line: 0, // the statement starts on line 0 ...
+      pathLine: 2, // ... but the path token itself sits on line 2
+    });
+    expect(st[0].pathChar).to.equal(
+      o[2].text.indexOf('data/w1.csv')
+    );
   });
 });
 
@@ -134,6 +170,29 @@ describe('resolveExternalNames', () => {
     expect(sources[0].columnIndex).to.deep.equal({ id: 0, age: 1, region: 2 });
   });
 
+  it('records each header name\'s character range for a header-cell go-to-definition jump', () => {
+    const st = findDataSourceStatements(
+      order(p('main.tab'), ['CSVINFILE = w1.csv;'])
+    );
+    const [s] = resolveExternalNames(
+      st,
+      io({ [p('w1.csv')]: '"id";"Alter";region\n1;2;3\n' })
+    );
+    const firstLine = '"id";"Alter";region';
+    expect(s.columnRanges?.id).to.deep.equal({
+      start: firstLine.indexOf('id'),
+      end: firstLine.indexOf('id') + 2,
+    });
+    expect(s.columnRanges?.alter).to.deep.equal({
+      start: firstLine.indexOf('Alter'),
+      end: firstLine.indexOf('Alter') + 5,
+    });
+    expect(s.columnRanges?.region).to.deep.equal({
+      start: firstLine.indexOf('region'),
+      end: firstLine.indexOf('region') + 6,
+    });
+  });
+
   it('marks a missing data file unresolved with a reason', () => {
     const st = findDataSourceStatements(
       order(p('main.tab'), ['CSVINFILE = missing.csv;'])
@@ -150,15 +209,41 @@ describe('resolveExternalNames', () => {
     expect(resolveExternalNames(st, io({}))[0].reason).to.match(/statisch/);
   });
 
-  it('marks a column-fixed DATAFILE (no ; or ,) unresolved', () => {
+  it('marks a column-fixed DATAFILE (no ; or ,, a VARNAME vardef present) unresolved', () => {
     const st = findDataSourceStatements(
       order(p('main.tab'), ['DATAFILE = fixed.dat;'])
     );
     const [s] = resolveExternalNames(
       st,
-      io({ [p('fixed.dat')]: '0001JOHN    0034\n0002JANE    0029\n' })
+      io({ [p('fixed.dat')]: '0001JOHN    0034\n0002JANE    0029\n' }),
+      { hasVardefInclude: true }
     );
     expect(s.names).to.equal('unresolved');
+    expect(s.reason).to.match(/spaltenfixiert/);
+  });
+
+  it('marks a DATAFILE with no ; or , and no VARNAME vardef unresolved with a different reason', () => {
+    const st = findDataSourceStatements(
+      order(p('main.tab'), ['DATAFILE = fixed.dat;'])
+    );
+    const [s] = resolveExternalNames(
+      st,
+      io({ [p('fixed.dat')]: '0001JOHN    0034\n' })
+    );
+    expect(s.names).to.equal('unresolved');
+    expect(s.reason).to.match(/kann nicht bestimmt/);
+  });
+
+  it('readExternalNames detects a VARNAME vardef anywhere in the whole order', () => {
+    const o = order(p('main.tab'), [
+      'DATAFILE = fixed.dat;',
+      'VARNAME = Alter 101 1;',
+    ]);
+    expect(hasVardefStatements(o)).to.equal(true);
+    const [s] = readExternalNames(
+      o,
+      io({ [p('fixed.dat')]: '0001JOHN    0034\n' })
+    );
     expect(s.reason).to.match(/spaltenfixiert/);
   });
 
@@ -227,5 +312,81 @@ describe('resolveExternalNames', () => {
     const { names, hasUnresolved } = collectExternalNames(sources);
     expect(names).to.deep.equal(['id', 'age', 'newvar']);
     expect(hasUnresolved).to.equal(true);
+  });
+
+  it('resolves an OS-wildcard DATAFILE path to the union of every matching file, alphabetically', () => {
+    const st = findDataSourceStatements(
+      order(p('main.tab'), ['DATAFILE = "WELLE.*";'])
+    );
+    const [s] = resolveExternalNames(
+      st,
+      io(
+        {
+          [p('WELLE.1')]: 'id;age\n',
+          [p('WELLE.2')]: 'id;age;region\n',
+          [p('WELLE.10')]: 'id;newest\n',
+        },
+        { [p()]: ['WELLE.2', 'WELLE.10', 'WELLE.1', 'unrelated.txt'] }
+      )
+    );
+    // union in alphabetical match order (WELLE.1, WELLE.10, WELLE.2) — each
+    // file's new names appended the first time they're seen.
+    expect(s.names).to.deep.equal(['id', 'age', 'newest', 'region']);
+    // alphabetically first match ("WELLE.1") supplies absPath/columnIndex.
+    expect(s.absPath).to.equal(p('WELLE.1'));
+    expect(s.matchedPaths).to.deep.equal([
+      p('WELLE.1'),
+      p('WELLE.10'),
+      p('WELLE.2'),
+    ]);
+  });
+
+  it('marks a wildcard path with no filesystem matches unresolved', () => {
+    const st = findDataSourceStatements(
+      order(p('main.tab'), ['DATAFILE = "WELLE.*";'])
+    );
+    const [s] = resolveExternalNames(st, io({}, { [p()]: ['unrelated.txt'] }));
+    expect(s.names).to.equal('unresolved');
+    expect(s.reason).to.match(/Wildcard/);
+  });
+
+  it('marks a wildcard path unresolved when the I/O has no listFiles', () => {
+    const st = findDataSourceStatements(
+      order(p('main.tab'), ['DATAFILE = "WELLE.*";'])
+    );
+    const [s] = resolveExternalNames(st, {
+      readBytes: () => undefined,
+    });
+    expect(s.names).to.equal('unresolved');
+  });
+});
+
+describe('findEncodingOverride', () => {
+  it('finds the last ENCODING DATAFILE = ...; override in program order', () => {
+    const o = order(p('main.tab'), [
+      'ENCODING DATAFILE = LATIN1;',
+      'DATAFILE = a.dat;',
+      'ENCODING DATAFILE = UTF8;',
+    ]);
+    expect(findEncodingOverride(o, 'DATAFILE')).to.equal('utf8');
+    expect(findEncodingOverride(o, 'OPENQFILE')).to.equal(undefined);
+  });
+
+  it('is applied when reading a delimited DATAFILE header, overriding auto-detection', () => {
+    const o = order(p('main.tab'), [
+      'ENCODING DATAFILE = LATIN1;',
+      'DATAFILE = w.dat;',
+    ]);
+    // Valid UTF-8 bytes for "Größe;age" — auto-detection alone would read
+    // this correctly as UTF-8. Forcing the LATIN1 override instead
+    // mis-decodes the multi-byte characters as separate Windows-1252
+    // characters, proving the override — not the auto-fallback — is what
+    // fired. The mis-decoded form is computed via decodeText itself
+    // (not hand-guessed), just called directly with the override.
+    const bytes = Uint8Array.from(Buffer.from('Größe;age\n', 'utf8'));
+    const mojibake = decodeText(bytes, 'latin1').split(/\r?\n/)[0];
+    const sources = readExternalNames(o, io({ [p('w.dat')]: bytes }));
+    expect(sources[0].names).to.deep.equal([mojibake.split(';')[0], 'age']);
+    expect(sources[0].names[0]).to.not.equal('Größe');
   });
 });

@@ -109,6 +109,18 @@ class CachingBytesIO implements ExternalNamesIO {
     this.cache.set(absPath, { key, bytes });
     return bytes;
   }
+
+  // Lists a directory's entries for an OS-wildcard DATAFILE/INFILE/CSVINFILE
+  // path (e.g. "WELLE.*", §11.7 "wildcard-path resolution"). Not cached —
+  // directory listings are cheap and only hit once per data-source
+  // statement per diagnostics/hover pass.
+  public listFiles(dirAbsPath: string): string[] {
+    try {
+      return fs.readdirSync(dirAbsPath);
+    } catch {
+      return [];
+    }
+  }
 }
 
 function documentOrder(document: vscode.TextDocument): ResolvedLine[] {
@@ -125,11 +137,16 @@ export class GesstabsExternalNamesManager {
     'gesstabs-datasource'
   );
 
-  private watcher: vscode.FileSystemWatcher | undefined;
+  // Keyed by workspace-folder path — a multi-root workspace has one
+  // independent EntryProgram[] + FileSystemWatcher per folder, so switching
+  // the active editor between two open folders never busts the other
+  // folder's cache or thrashes rebuilding it (each folder's programs, once
+  // built, stay cached until *that* folder's own watcher fires).
+  private readonly watchers = new Map<string, vscode.FileSystemWatcher>();
 
-  private programs: EntryProgram[] | undefined;
+  private readonly programsByRoot = new Map<string, EntryProgram[]>();
 
-  private scanRoot: string | undefined;
+  private readonly buildsByRoot = new Map<string, Promise<EntryProgram[]>>();
 
   private onChangeCb: (() => void) | undefined;
 
@@ -141,11 +158,15 @@ export class GesstabsExternalNamesManager {
 
   public dispose(): void {
     this.collection.dispose();
-    this.watcher?.dispose();
+    this.watchers.forEach((w) => w.dispose());
+    this.watchers.clear();
   }
 
+  // Invalidates every cached folder — used when a setting that affects
+  // every folder alike (gesstabs.dataInput.entryScriptPatterns) changes.
   public invalidate(): void {
-    this.programs = undefined;
+    this.programsByRoot.clear();
+    this.buildsByRoot.clear();
     this.bytesIO.clear();
   }
 
@@ -167,34 +188,51 @@ export class GesstabsExternalNamesManager {
       (hint ? path.dirname(hint.fsPath) : undefined);
     if (!folder) return [];
     this.ensureWatcher(folder);
-    if (this.programs && this.scanRoot === folder) return this.programs;
+    const cached = this.programsByRoot.get(folder);
+    if (cached) return cached;
 
-    this.scanRoot = folder;
-    const tabs = (await getAllFilenamesInDirectory(folder, 'tab')).map(
-      normalizePath
-    );
-    this.programs = buildEntryPrograms(
-      tabs,
-      GesstabsExternalNamesManager.patterns(),
-      liveFileReader(),
-      this.bytesIO
-    );
-    return this.programs;
+    // Two near-simultaneous callers for the same not-yet-cached folder
+    // (e.g. two documents opened together) share one in-flight scan+build
+    // rather than each kicking off their own.
+    const inFlight = this.buildsByRoot.get(folder);
+    if (inFlight) return inFlight;
+
+    const build = (async (): Promise<EntryProgram[]> => {
+      const tabs = (await getAllFilenamesInDirectory(folder, 'tab')).map(
+        normalizePath
+      );
+      const programs = buildEntryPrograms(
+        tabs,
+        GesstabsExternalNamesManager.patterns(),
+        liveFileReader(),
+        this.bytesIO
+      );
+      this.programsByRoot.set(folder, programs);
+      return programs;
+    })();
+    this.buildsByRoot.set(folder, build);
+    try {
+      return await build;
+    } finally {
+      this.buildsByRoot.delete(folder);
+    }
   }
 
   private ensureWatcher(folder: string): void {
-    if (this.watcher && this.scanRoot === folder) return;
-    this.watcher?.dispose();
-    this.watcher = vscode.workspace.createFileSystemWatcher(
+    if (this.watchers.has(folder)) return;
+    const watcher = vscode.workspace.createFileSystemWatcher(
       new vscode.RelativePattern(folder, '**/*.{tab,inc,def,csv,sav,dat,txt}')
     );
     const bust = (): void => {
-      this.invalidate();
+      this.programsByRoot.delete(folder);
+      this.buildsByRoot.delete(folder);
+      this.bytesIO.clear();
       this.onChangeCb?.();
     };
-    this.watcher.onDidCreate(bust);
-    this.watcher.onDidChange(bust);
-    this.watcher.onDidDelete(bust);
+    watcher.onDidCreate(bust);
+    watcher.onDidChange(bust);
+    watcher.onDidDelete(bust);
+    this.watchers.set(folder, watcher);
   }
 
   // The resolved sources visible from `document` — every source of every
@@ -380,17 +418,27 @@ export class GesstabsDataSourceLinkProvider
       const scope = new Scope(document);
       const links: vscode.DocumentLink[] = [];
       findDataSourceStatements(documentOrder(document)).forEach((st) => {
-        const { text } = document.lineAt(st.line);
-        const col = text.search(/\S/);
-        if (col === -1 || !scope.isNotInComment(st.line, col)) return;
+        // The comment-scope guard always checks the statement's own first
+        // line — a proxy for "is this statement commented out at all",
+        // cheap and correct for the overwhelmingly common single-line
+        // shape. The link itself, though, sits on `pathLine`/`pathChar`
+        // when the statement wraps across lines (§11.7 "multi-line input
+        // statements") — the physical line/column <filepath> is actually
+        // written on, which can differ from the statement's start line.
+        const { text: startText } = document.lineAt(st.line);
+        const scopeCol = startText.search(/\S/);
+        if (scopeCol === -1 || !scope.isNotInComment(st.line, scopeCol)) return;
         if (/[#&*?]/.test(st.rawPath)) return;
-        const start = text.indexOf(st.rawPath);
+        const lineNo = st.pathLine ?? st.line;
+        const lineText =
+          lineNo === st.line ? startText : document.lineAt(lineNo).text;
+        const start = st.pathChar ?? lineText.indexOf(st.rawPath);
         if (start === -1) return;
         const target = vscode.Uri.file(
           path.resolve(path.dirname(document.uri.fsPath), st.rawPath)
         );
         const link = new vscode.DocumentLink(
-          new vscode.Range(st.line, start, st.line, start + st.rawPath.length),
+          new vscode.Range(lineNo, start, lineNo, start + st.rawPath.length),
           target
         );
         link.tooltip = 'Datenquelle öffnen';
