@@ -9,55 +9,6 @@ citations point at the local mirror in `dokumentation/online-manual/` (see
 
 ---
 
-## P0 — Read the dataset's raw variables
-
-**Done 2026-09-03/04** (first cut) **and 2026-09-05** (the §11.7 follow-up
-list, closing P0 out completely): `src/core/externalNames.ts` /
-`savDictionary.ts` / `entryScripts.ts` / `src/providers/externalNamesProvider.ts`
-/ `src/util/glob.ts`, the `gesstabs.dataInput.entryScriptPatterns` setting.
-Design: **[docs/variable-model-design.md §11](docs/variable-model-design.md)**.
-
-The 2026-09-05 pass closed every item on the follow-up list:
-
-- **CSV-header-cell go-to-definition** — `ExternalNameSource.columnRanges`
-  (each header name's exact character range on line 0 of the CSV/DATAFILE)
-  feeds `GesstabsDefintionProvider`'s new `headerCellLocations`, which jumps
-  straight into the data file's own header cell, alongside (not instead of)
-  the CSVINFILE/DATAFILE statement location.
-- **Wildcard-path resolution** — `resolveWildcard` in `externalNames.ts`
-  unions every OS-wildcard-matching file's header, alphabetically (the
-  manual's own documented order), via the new `ExternalNamesIO.listFiles`;
-  `unresolved` only when nothing matches or `listFiles` isn't available.
-- **Column-fixed `DATAFILE`/`INFILE`** — `INFILE` is now recognized as
-  `DATAFILE`'s documented synonym; `hasVardefStatements` detects a `VARNAME`
-  vardef (`VARNAME = <name> <startcol> <width>;`) anywhere in the resolved
-  program to tell a genuinely column-fixed `DATAFILE` (still deferred, §6)
-  apart from one whose format simply can't be determined.
-- **Multi-line input statements** — `findDataSourceStatements` now matches
-  whole logical statements (reusing `toLogicalStatements`/`locateInStatement`
-  from `src/core/statements.ts`), so a statement wrapped across several
-  physical lines is still found; `DataSourceStatement.pathLine`/`pathChar`
-  track exactly where the `<filepath>` token itself sits, for the
-  DocumentLink.
-- **`ENCODING <filetype> = …` override** — `findEncodingOverride` reads an
-  `ENCODING DATAFILE = LATIN1|UTF8|UTF16LE|UTF16BE;` statement and forces
-  that encoding over the auto-detection for every CSVINFILE/DATAFILE/INFILE
-  header read.
-- **Per-workspace-folder cache** — `GesstabsExternalNamesManager` now keys
-  its `EntryProgram[]` cache and `FileSystemWatcher` per workspace folder
-  (`Map<folder, …>`) instead of one shared `scanRoot`/`programs` pair, which
-  used to thrash a full rescan every time the active editor switched
-  between two folders of a multi-root workspace.
-
-P1.4 already wires the names into the model as `origin: 'external'`.
-
-Not doing: SPSS variable/value labels — gessTabs scripts (re)define them,
-directly or via `#define … syntax`, so this isn't an extension task. ZSAV
-inflate — the `.sav` dictionary is uncompressed even in ZSAV, so names + type
-already work without it.
-
----
-
 ## P1 — Variable model rebuild
 
 The single biggest structural gap: "what counts as a variable definition vs. a
@@ -65,56 +16,12 @@ reference" used to be spread across eleven regex factories, OR-ed per line,
 and consumed by go-to-definition, find-references, rename, hover and the F2
 diagnostics through three disagreeing notions of "definition". Design pass:
 **[docs/variable-model-design.md](docs/variable-model-design.md)**. P1.0–P1.6
-are effectively **done** (go-to-def/find-refs/rename/semantic highlighting/F2
-checks/document & workspace symbols all migrated onto one model; external
-raw-dataset names and macro-produced names wired in; undefined-variable and
-system-variable-redeclaration diagnostics shipped), and a 2026-09-05 pass
-closed out every reported false positive plus most of the smaller remaining
-gaps in one go — see git log for the detailed history. Fixed that day: a
-column-1 macro call needing no trailing `;` (was fusing itself with
-everything after it into one garbled statement); the "data source
-unreadable" diagnostic ignoring `#ifdef`/`#define` entirely; a real
-three-state `#ifdef`/`#ifndef` in `resolveIncludeGraph` (confidently
-defined / confidently not / never mentioned anywhere → `uncertain`, keep
-both arms — such a switch is routinely set from outside the script, plus a
-related latent `#IF[N]EMPTY`/`#IF[N]EXIST`+`#else` bug the new tests caught
-along the way); `classifyTable` sweeping a `FILTER`/`IN`/`#name(...)`
-cell-content clause's own keywords in as phantom references; `LABELVALUE`/
-`SINGLEFROMSTRING` and the THEN-less `IF … ASSERT … TITLE` variant missing
-from the classifier; ten dead `regex.ts` exports (more than the one item
-originally tracked here — nothing outside its own tests imports them any
-more); and malformed statements (`groups sysmiss;`, missing `=`) never
-surfacing as a diagnostic. The `kMarkenAbCode1` false-positive report is
-presumed (not re-confirmed) fixed by the macro-semicolon fix; the
-`#meantest`/`filter`/`in` report is confirmed fixed by the `classifyTable`
-fix, covered directly by its own test.
-
-**Also done 2026-09-05**: `classifyTable` rewritten into a real parser
-against the manual's full `TABLE`/`OVERVIEW`/`XOVERVIEW` grammar
-(`dokumentation/online-manual/md/Datenauswertung _ Kreuztabelle _
-Syntax.md`) instead of the previous keyword-allowlist scan —
-`taboptions` (`ADD`/`NAME <tablename>`/`TITLE`/`CELLELEMENTS(…)`/
-`FRAMEELEMENTS(…)`/`TABLEFORMATS(…)`/`CONTENTKEY`/`HIDDEN(…)`/`SORT AS
-<tablename>`) are now fully consumed without leaking into `references`;
-each `part`'s `content` recognizes a bare `<varname>`, a
-`<cellelement>( <varname> [<varname>] [BY <varname>] )` call (the
-cellelement keyword itself is never a phantom ref — fixes e.g. `TABLE = a
-MEAN(v1) BY c;` wrongly referencing `mean`), and the
-`:DESCRIPTION`/`:USEVARTITLE`/`:FORMAT` suffix (confirmed from the manual's
-own worked examples to sit *before* the `(…)`, not after, contrary to its
-own ambiguous EBNF table row); `FILTER <condition> |` refs are `ifKnown`,
-matching `classifyIf`'s existing condition convention; the part-option
-`SORT sorttype [DESCEND] [PANE…] [TOP|BOTTOM|EXTREME|SLICE|LSLICE|RANGE…]`
-clause never produces a reference. `NAME`/`SORT AS <tablename>` are
-recognized and excluded (a table name is a different kind of symbol than a
-variable, out of scope for the variable model itself) without being
-modeled as their own symbol kind. Known remaining imprecision: a bare
-`CELLELEMENT`-style keyword used as `content` with no `(...)` args (e.g.
-`MEANTEST` in `TABLE = v1 BY v1 MEANTEST;`) is indistinguishable from a
-real `<varname>` without a maintained keyword allowlist — falls through to
-the `<varname>` rule, same as today's `IF`/`FILTER` condition parsing does
-for its own bare words; not attempted here, same class of problem as the
-keyword-allowlist question kind-illegal-operations below would also need.
+are done — go-to-def/find-refs/rename/semantic highlighting/F2 checks/document
+& workspace symbols all migrated onto one model; external raw-dataset names,
+macro-produced names, and the full `TABLE`/`OVERVIEW`/`XOVERVIEW` grammar wired
+in; undefined-variable and system-variable-redeclaration diagnostics shipped.
+See git log for the detailed history (P0's read-the-dataset work and every
+P1.0–P1.6 fix/rewrite along the way).
 
 Still open:
 
@@ -136,45 +43,48 @@ Still open:
 
 ## P2 — Diagnostics & block constructs
 
-- **Runtime-block folding + unmatched-block diagnostics** for
-  `IFBLOCK`/`ELSEBLOCK`/`ENDBLOCK` (nesting depth up to 512),
-  `WHILEBLOCK <cond> DO … ENDBLOCK`, `SETFILTER [name] … ENDFILTER [name]` (a
-  named `ENDFILTER` closes every `SETFILTER` down to the named one, and errors if
-  that name is not on the stack) and `#STARTEXPORT`/`#ENDEXPORT`. Today only
-  `#MACRO`/`#IFDEF` blocks fold and get checked. Consumes P1.1's `block` flags.
-- **Cross-`INCLUDE` scope for the F2 diagnostics.** `checkDuplicateDeclarations`
-  and `checkDefineCaseMismatch` are document-scoped, so a duplicate declaration
-  or `#define`-case mismatch across an `INCLUDE` boundary is missed.
-  `includeGraph.ts` / `symbolIndex.ts` already resolve the workspace; running
-  that on every keystroke across the whole resolved program is the open
-  design/performance question.
-- **`CALCULATECOLUMN` / `COLUMNSUMMARY` single-`CELLELEMENT` rule** — the
-  preceding table must carry exactly one elementary `CELLELEMENT`
-  (`COLUMNPERCENT` **or** `ABSOLUTE`, not both, and no composite like
-  `ABSCOLPERCENT`). Purely syntactic against the effective `CELLELEMENTS` the
-  extension already computes for its hover. (Manual: Berechnung von
-  Tabelleninhalten.)
-- **Mutually-exclusive cell-option diagnostics** beyond the existing
-  `CELLSET`/`INVERTOUT`+`UPDATEINVERT` check: `HARMONICMEAN`/`GEOMETRICMEAN` with
-  other cell contents, `MEDIAN` beyond frequencies/percentiles,
-  `COLUMNPERCENT100` with a multi-response variable — the last needs the model to
-  know which variables are `MULTIQ`. (The `HARMONICMEAN`/`GEOMETRICMEAN`/
-  `MEDIAN` rules and the existing `CELLSET` allow-list are independently
-  confirmed against `Datenauswertung > Statistische Maßzahlen > Zellenelemente >
-  Besonderheiten`, now mirrored.)
-- **Cheap syntactic checks** in the spirit of the current F2 set:
-  `VALUELABELS <a> <b> = ADD …` (a varlist with `ADD` → Syntaxerror 528; `ADD` is
-  one-variable-only); `OVERCODE <a> : <b>` where the range span exceeds 100 000
-  (error) / 5 000 (warning) — same shape as `checkRecodeBounds`.
-- **Deprecated-keyword diagnostic** — flag retired keywords. Full list now
-  mined from the newly-mirrored `Anhang > Historisches > Abgelöste Befehle`
-  page into `keywordData.ts`: `AutoClear`, `AutoOverSort` (+
-  `IndentAutoOversort`), `CalcColLowAccuracy`,
-  `CHIQUMinimum`/`ChiQUColMinumum`/`ChiQURowMinimum`, `LowerCase`, `MarkCells`
-  (alte Version), `Nominations`/`NominationsTitle`, `Outfile`, `TableType`,
-  `UseFilter`/`MakeFilter`, `YSignifInFront` — each names its replacement on
-  that page; read it for the exact "use X instead" wording per keyword before
-  writing the diagnostic message.
+Runtime-block folding + unmatched-block diagnostics (`IFBLOCK`/`ELSEBLOCK`/
+`ENDBLOCK`/`WHILEBLOCK`/named-and-unnamed `SETFILTER`/`ENDFILTER`/
+`#STARTEXPORT`/`#ENDEXPORT`), the cross-INCLUDE half of
+`checkDuplicateDeclarations`, the `CALCULATECOLUMN` single-`CELLELEMENT`
+rule, the `HARMONICMEAN`/`GEOMETRICMEAN`/`MEDIAN` cell-option
+incompatibilities, and the `VALUELABELS … = ADD`/`OVERCODE` range-span
+cheap syntactic checks are done — see git log for the detailed history
+(2026-09-05).
+
+Still open:
+
+- **`checkDefineCaseMismatch`'s own cross-INCLUDE half** — unlike
+  duplicate-declaration, `#define` visibility isn't tracked by the
+  `VariableModel` at all; `includeGraph.ts`'s `DefineSet` only exists
+  within `resolveIncludeGraph`'s own single pass, not exposed per-file.
+  Own follow-up, not attempted yet.
+- **`COLUMNPERCENT100` with a multi-response variable** — turned out
+  fuzzier than "needs the model to know which variables are `MULTIQ`" on
+  inspection: `keywordData.ts`'s own `COLUMNPERCENT100` entry names *four*
+  different "not suitable for" conditions (multi-response vars,
+  `OVERCODE`s, tables with suppressed `MISSING VALUES`, "selectively built
+  variables"), phrased as a caveat rather than a hard error, and only one
+  of the four is the `MULTIQ` check this item originally asked for. Left
+  out rather than coding a rule the source doesn't actually specify that
+  precisely.
+- **Deprecated-keyword diagnostic** — flagging retired keywords. **Reading
+  `Anhang > Historisches > Abgelöste Befehle` directly (2026-09-05) changes
+  this significantly**: of the 11 keywords originally listed here, only
+  `UseFilter`/`MakeFilter` is actually described as no longer working
+  ("seit Version 2.82 außer Dienst gestellt"). Every other one —
+  `AutoClear`, `AutoOverSort` (+ `IndentAutoOversort`), `CalcColLowAccuracy`,
+  `CHIQUMinimum`/`ChiQUColMinumum`/`ChiQURowMinimum`, `LowerCase`,
+  `MarkCells` (alte Version), `Nominations`/`NominationsTitle`, `Outfile`,
+  `TableType`, `YSignifInFront` — is explicitly described as **still
+  supported**, just superseded by a newer/preferred mechanism (e.g.
+  "`LOWERCASE` gibt es also zwar noch in GESStabs, aber nur aus Gründen der
+  Kompatibilität"; `MARKCELLS` alte Version "wird gegenwärtig noch
+  unterstützt"; `Outfile`/`TableType`/`NominationsTitle` are just permanent
+  synonyms; `AutoOverSort` legally coexists with the newer `AutoSortTree`).
+  A diagnostic flagging all 11 as "deprecated" would misinform users about
+  10 of them. If this is still wanted, scope it to just `UseFilter`/
+  `MakeFilter` rather than the full original list.
 
 ---
 
@@ -245,7 +155,7 @@ committed. When looking something up, use these in order (most useful first):
    `dokumentation/online-manual/_convert.py` (bs4 + markdownify, git-ignored
    along with the rest of `dokumentation/`) regenerates `md/<name>.md` from
    any `<name>.html` — run it again after saving a new or updated page. Not
-   mirrored yet and needed for P1.4/P0's SPSS/CSV follow-ups: `csv.html`,
+   mirrored yet and needed for P1.4's SPSS/CSV follow-ups: `csv.html`,
    `spss2.html`, `invertierte-datensaetze.html`, `openq-files.html`,
    `assoc.html`, `dbase-input.html`, `columnbinary-format.html` (all linked
    from `In- und Output von Datensätzen`, none saved yet).

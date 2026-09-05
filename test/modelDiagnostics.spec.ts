@@ -7,6 +7,7 @@ import { buildVariableModel } from '../src/core/variableModel';
 import {
   checkUndefinedVariables,
   checkSystemVariableRedeclaration,
+  checkDuplicateDeclarations,
 } from '../src/core/modelDiagnostics';
 
 const ROOT = path.resolve('/gesstabs-modeldiag-test');
@@ -189,5 +190,100 @@ describe('checkSystemVariableRedeclaration', () => {
     const idx = indexOf('singleq alter = 1;');
     const model = buildVariableModel(idx);
     expect(checkSystemVariableRedeclaration(model, p('main.tab'))).to.be.empty;
+  });
+});
+
+describe('checkDuplicateDeclarations', () => {
+  it('flags a variable declared twice', () => {
+    const idx = indexOf('variable x = 1;\nvariable x = 2;');
+    const model = buildVariableModel(idx);
+    const issues = checkDuplicateDeclarations(model, p('main.tab'));
+    expect(issues).to.have.length(1);
+    expect(issues[0]).to.deep.include({
+      line: 1,
+      code: 'duplicate-declaration',
+    });
+  });
+
+  it('does not flag a VARTITLE re-mentioning an existing variable', () => {
+    const idx = indexOf('variable x = 1;\nvartitle x = "Title";');
+    const model = buildVariableModel(idx);
+    expect(checkDuplicateDeclarations(model, p('main.tab'))).to.be.empty;
+  });
+
+  it('does not flag a WEIGHTCELLS re-mentioning an existing variable', () => {
+    const idx = indexOf(
+      [
+        'singleq geschl = 1;',
+        'weightcells geschl = 1:48% 2:52%;',
+        'weightcells autoalign geschl = 1:48% 2:52%;',
+      ].join('\n')
+    );
+    const model = buildVariableModel(idx);
+    expect(checkDuplicateDeclarations(model, p('main.tab'))).to.be.empty;
+  });
+
+  it('is case-insensitive', () => {
+    const idx = indexOf('variable X = 1;\nvariable x = 2;');
+    const model = buildVariableModel(idx);
+    expect(
+      checkDuplicateDeclarations(model, p('main.tab'))
+    ).to.have.length(1);
+  });
+
+  it('does not flag COMPUTE ADD re-assigning an existing variable — legal, not a duplicate declaration (§9 Q3)', () => {
+    const idx = indexOf('compute add x = 1;\ncompute add x = 2;');
+    const model = buildVariableModel(idx);
+    expect(checkDuplicateDeclarations(model, p('main.tab'))).to.be.empty;
+  });
+
+  it('does not flag a plain COMPUTE (no sub-keyword) re-assignment either', () => {
+    const idx = indexOf('compute x = 1;\ncompute x = 2;');
+    const model = buildVariableModel(idx);
+    expect(checkDuplicateDeclarations(model, p('main.tab'))).to.be.empty;
+  });
+
+  it('does not flag an IF-THEN re-assignment of an already-declared variable', () => {
+    const idx = indexOf('singleq x = 1;\nif x eq 1 then x = 2;');
+    const model = buildVariableModel(idx);
+    expect(checkDuplicateDeclarations(model, p('main.tab'))).to.be.empty;
+  });
+
+  it('flags a VARFAMILY declared twice — a declaration form the old regex pass never covered', () => {
+    const idx = indexOf('varfamily f = a b c;\nvarfamily f = d e;');
+    const model = buildVariableModel(idx);
+    const issues = checkDuplicateDeclarations(model, p('main.tab'));
+    expect(issues).to.have.length(1);
+    expect(issues[0]).to.deep.include({
+      line: 1,
+      code: 'duplicate-declaration',
+    });
+  });
+
+  it('flags a same-file duplicate inside an INCLUDEd (non-entry) file', () => {
+    const idx = indexOf('include = vars.inc;\nvariable y = 1;', {
+      [p('vars.inc')]: 'variable x = 1;\nvariable x = 2;',
+    });
+    const model = buildVariableModel(idx);
+    const issues = checkDuplicateDeclarations(model, p('vars.inc'));
+    expect(issues).to.have.length(1);
+    expect(issues[0]).to.deep.include({
+      line: 1,
+      code: 'duplicate-declaration',
+    });
+    expect(issues[0].message).to.include('line 1');
+    expect(issues[0].message).not.to.include('vars.inc');
+  });
+
+  it('flags a duplicate whose first declaration lives in a different (INCLUDEd) file, naming that file', () => {
+    const idx = indexOf('include = vars.inc;\nvariable x = 2;', {
+      [p('vars.inc')]: 'variable x = 1;',
+    });
+    const model = buildVariableModel(idx);
+    const mainIssues = checkDuplicateDeclarations(model, p('main.tab'));
+    expect(mainIssues).to.have.length(1);
+    expect(mainIssues[0].message).to.include('vars.inc:line 1');
+    // The INCLUDEd file itself has no duplicate on its own side.
+    expect(checkDuplicateDeclarations(model, p('vars.inc'))).to.be.empty;
   });
 });

@@ -5,7 +5,6 @@ import {
   findLastDeclaredVariableBefore,
   hasStrictVarlistEnabled,
   checkUnmatchedBlocks,
-  checkDuplicateDeclarations,
   checkRecodeBounds,
   checkCardOrdering,
   checkWeightcellsPercentages,
@@ -17,6 +16,10 @@ import {
   scanBlockCommentGroups,
   findEnclosingBlockCommentGroup,
   checkMalformedStatements,
+  checkCellElementIncompatibilities,
+  checkCalculateColumnSingleCellElement,
+  checkValuelabelsAddSingleVar,
+  checkOvercodeRangeSpan,
   computeDiagnostics,
 } from '../src/core/diagnostics';
 
@@ -277,63 +280,112 @@ describe('checkUnmatchedBlocks', () => {
     expect(issues).to.have.length(1);
     expect(issues[0]).to.deep.include({ line: 1, code: 'unmatched-end' });
   });
-});
 
-describe('checkDuplicateDeclarations', () => {
-  it('flags a variable declared twice', () => {
-    const lines = ['variable x = 1;', 'variable x = 2;'];
-    const issues = checkDuplicateDeclarations(lines, alwaysNotInComment);
-    expect(issues).to.have.length(1);
-    expect(issues[0]).to.deep.include({
-      line: 1,
-      code: 'duplicate-declaration',
-    });
+  it('does not flag a properly matched #STARTEXPORT/#ENDEXPORT', () => {
+    const lines = ['#startexport', 'x;', '#endexport'];
+    expect(checkUnmatchedBlocks(lines, alwaysCode)).to.be.empty;
   });
 
-  it('does not flag a VARTITLE re-mentioning an existing variable', () => {
-    const lines = ['variable x = 1;', 'vartitle x = "Title";'];
-    expect(checkDuplicateDeclarations(lines, alwaysNotInComment)).to.be.empty;
+  it('flags an unclosed #STARTEXPORT and a stray #ENDEXPORT', () => {
+    const unclosed = checkUnmatchedBlocks(['#startexport', 'x;'], alwaysCode);
+    expect(unclosed).to.have.length(1);
+    expect(unclosed[0]).to.deep.include({ line: 0, code: 'unclosed-export' });
+
+    const stray = checkUnmatchedBlocks(['#endexport'], alwaysCode);
+    expect(stray).to.have.length(1);
+    expect(stray[0].code).to.equal('unmatched-endexport');
   });
 
-  it('does not flag a WEIGHTCELLS re-mentioning an existing variable', () => {
+  it('accepts a properly matched IFBLOCK … ELSEBLOCK … ENDBLOCK', () => {
     const lines = [
-      'singleq geschl = 1;',
-      'weightcells geschl = 1:48% 2:52%;',
-      'weightcells autoalign geschl = 1:48% 2:52%;',
+      'ifblock x eq 1 then',
+      'compute y = 1;',
+      'elseblock',
+      'compute y = 2;',
+      'endblock',
     ];
-    expect(checkDuplicateDeclarations(lines, alwaysNotInComment)).to.be.empty;
+    expect(checkUnmatchedBlocks(lines, alwaysCode)).to.be.empty;
   });
 
-  it('is case-insensitive', () => {
-    const lines = ['variable X = 1;', 'variable x = 2;'];
-    expect(
-      checkDuplicateDeclarations(lines, alwaysNotInComment)
-    ).to.have.length(1);
+  it('accepts nested IFBLOCK/WHILEBLOCK', () => {
+    const lines = [
+      'ifblock x eq 1 then',
+      'whileblock y eq 1 do',
+      'compute y = 0;',
+      'endblock',
+      'endblock',
+    ];
+    expect(checkUnmatchedBlocks(lines, alwaysCode)).to.be.empty;
   });
 
-  it('does not flag COMPUTE ADD re-assigning an existing variable — legal, not a duplicate declaration (§9 Q3)', () => {
-    const lines = ['compute add x = 1;', 'compute add x = 2;'];
-    expect(checkDuplicateDeclarations(lines, alwaysNotInComment)).to.be.empty;
+  it('flags an unclosed IFBLOCK and a stray ENDBLOCK', () => {
+    const unclosed = checkUnmatchedBlocks(
+      ['ifblock x eq 1 then', 'compute y = 1;'],
+      alwaysCode
+    );
+    expect(unclosed).to.have.length(1);
+    expect(unclosed[0]).to.deep.include({ line: 0, code: 'unclosed-ifblock' });
+
+    const stray = checkUnmatchedBlocks(['endblock;'], alwaysCode);
+    expect(stray).to.have.length(1);
+    expect(stray[0].code).to.equal('unmatched-endblock');
   });
 
-  it('does not flag a plain COMPUTE (no sub-keyword) re-assignment either', () => {
-    const lines = ['compute x = 1;', 'compute x = 2;'];
-    expect(checkDuplicateDeclarations(lines, alwaysNotInComment)).to.be.empty;
-  });
-
-  it('does not flag an IF-THEN re-assignment of an already-declared variable', () => {
-    const lines = ['singleq x = 1;', 'if x eq 1 then x = 2;'];
-    expect(checkDuplicateDeclarations(lines, alwaysNotInComment)).to.be.empty;
-  });
-
-  it('flags a VARFAMILY declared twice — a declaration form the old regex pass never covered', () => {
-    const lines = ['varfamily f = a b c;', 'varfamily f = d e;'];
-    const issues = checkDuplicateDeclarations(lines, alwaysNotInComment);
+  it('flags a stray ELSEBLOCK with nothing open', () => {
+    const issues = checkUnmatchedBlocks(['elseblock'], alwaysCode);
     expect(issues).to.have.length(1);
-    expect(issues[0]).to.deep.include({
-      line: 1,
-      code: 'duplicate-declaration',
+    expect(issues[0].code).to.equal('unmatched-elseblock');
+  });
+
+  it('accepts an unnamed SETFILTER … ENDFILTER', () => {
+    const lines = ['setfilter = x eq 1;', 'endfilter;'];
+    expect(checkUnmatchedBlocks(lines, alwaysCode)).to.be.empty;
+  });
+
+  it('accepts a named SETFILTER … ENDFILTER', () => {
+    const lines = ['setfilter myfilter = x eq 1;', 'endfilter myfilter;'];
+    expect(checkUnmatchedBlocks(lines, alwaysCode)).to.be.empty;
+  });
+
+  it('does not mistake SETFILTER TEXT "…" for a named filter called TEXT', () => {
+    const lines = ['setfilter text "Mein Filter" = x eq 1;', 'endfilter;'];
+    expect(checkUnmatchedBlocks(lines, alwaysCode)).to.be.empty;
+  });
+
+  it('a named ENDFILTER closes every SETFILTER down to the named one', () => {
+    const lines = [
+      'setfilter a = x eq 1;',
+      'setfilter b = y eq 1;',
+      'setfilter c = z eq 1;',
+      'endfilter a;',
+    ];
+    expect(checkUnmatchedBlocks(lines, alwaysCode)).to.be.empty;
+  });
+
+  it('errors when a named ENDFILTER matches nothing on the stack', () => {
+    const issues = checkUnmatchedBlocks(
+      ['setfilter a = x eq 1;', 'endfilter nosuchname;'],
+      alwaysCode
+    );
+    expect(issues).to.have.length(2);
+    expect(issues[0].code).to.equal('unmatched-endfilter');
+    expect(issues[1].code).to.equal('unclosed-setfilter');
+  });
+
+  it('flags an unclosed SETFILTER and a stray ENDFILTER', () => {
+    const unclosed = checkUnmatchedBlocks(
+      ['setfilter a = x eq 1;'],
+      alwaysCode
+    );
+    expect(unclosed).to.have.length(1);
+    expect(unclosed[0]).to.deep.include({
+      line: 0,
+      code: 'unclosed-setfilter',
     });
+
+    const stray = checkUnmatchedBlocks(['endfilter;'], alwaysCode);
+    expect(stray).to.have.length(1);
+    expect(stray[0].code).to.equal('unmatched-endfilter');
   });
 });
 
@@ -661,11 +713,202 @@ describe('checkMalformedStatements', () => {
   });
 });
 
+describe('checkCellElementIncompatibilities', () => {
+  it('does not flag HARMONICMEAN/GEOMETRICMEAN alone', () => {
+    const lines = ['CELLELEMENTS = HARMONICMEAN;'];
+    expect(checkCellElementIncompatibilities(lines, alwaysNotInComment)).to.be
+      .empty;
+  });
+
+  it('flags HARMONICMEAN combined with another cell content (standalone assignment)', () => {
+    const lines = ['CELLELEMENTS = HARMONICMEAN ABSOLUTE;'];
+    const issues = checkCellElementIncompatibilities(
+      lines,
+      alwaysNotInComment
+    );
+    expect(issues).to.have.length(1);
+    expect(issues[0].code).to.equal('cellelement-incompatible-harmonicgeometric');
+  });
+
+  it('flags GEOMETRICMEAN combined with another cell content (inline taboption)', () => {
+    const lines = ['table cellelements( geometricmean absolute ) = a by b;'];
+    const issues = checkCellElementIncompatibilities(
+      lines,
+      alwaysNotInComment
+    );
+    expect(issues).to.have.length(1);
+    expect(issues[0].code).to.equal('cellelement-incompatible-harmonicgeometric');
+  });
+
+  it('does not flag MEDIAN alone or combined with frequencies/percentiles', () => {
+    expect(
+      checkCellElementIncompatibilities(
+        ['CELLELEMENTS = MEDIAN;'],
+        alwaysNotInComment
+      )
+    ).to.be.empty;
+    expect(
+      checkCellElementIncompatibilities(
+        ['CELLELEMENTS = MEDIAN ABSOLUTE PCNTL1;'],
+        alwaysNotInComment
+      )
+    ).to.be.empty;
+  });
+
+  it('flags MEDIAN combined with a mean/sum/dispersion measure', () => {
+    const issues = checkCellElementIncompatibilities(
+      ['CELLELEMENTS = MEDIAN MEAN;'],
+      alwaysNotInComment
+    );
+    expect(issues).to.have.length(1);
+    expect(issues[0].code).to.equal('cellelement-incompatible-median');
+    expect(issues[0].message).to.include('MEAN');
+  });
+
+  it('does not flag an ordinary combination unrelated to either rule', () => {
+    const lines = ['CELLELEMENTS = ABSOLUTE COLUMNPERCENT;'];
+    expect(checkCellElementIncompatibilities(lines, alwaysNotInComment)).to.be
+      .empty;
+  });
+});
+
+describe('checkCalculateColumnSingleCellElement', () => {
+  it('does not flag a preceding table with exactly one elementary inline CELLELEMENTS', () => {
+    const lines = [
+      'table cellelements( absolute ) = a by b;',
+      'calculatecolumn <2 3> = <1 2> - <1 1>;',
+    ];
+    expect(
+      checkCalculateColumnSingleCellElement(lines, alwaysNotInComment)
+    ).to.be.empty;
+  });
+
+  it('flags a preceding table whose inline CELLELEMENTS has more than one elementary element', () => {
+    const lines = [
+      'table cellelements( absolute columnpercent ) = a by b;',
+      'calculatecolumn <2 3> = <1 2> - <1 1>;',
+    ];
+    const issues = checkCalculateColumnSingleCellElement(
+      lines,
+      alwaysNotInComment
+    );
+    expect(issues).to.have.length(1);
+    expect(issues[0]).to.deep.include({
+      line: 1,
+      code: 'calculatecolumn-multiple-cellelements',
+    });
+  });
+
+  it('flags a preceding table whose inline CELLELEMENTS is a composite (not elementary)', () => {
+    const lines = [
+      'table cellelements( abscolpercent ) = a by b;',
+      'calculatecolumn <2 3> = <1 2> - <1 1>;',
+    ];
+    const issues = checkCalculateColumnSingleCellElement(
+      lines,
+      alwaysNotInComment
+    );
+    expect(issues).to.have.length(1);
+  });
+
+  it('falls back to the standalone global CELLELEMENTS default when the table has no inline clause', () => {
+    const okLines = [
+      'CELLELEMENTS = ABSOLUTE;',
+      'table = a by b;',
+      'calculatecolumn <2 3> = <1 2> - <1 1>;',
+    ];
+    expect(
+      checkCalculateColumnSingleCellElement(okLines, alwaysNotInComment)
+    ).to.be.empty;
+
+    const badLines = [
+      'CELLELEMENTS = ABSOLUTE COLUMNPERCENT;',
+      'table = a by b;',
+      'calculatecolumn <2 3> = <1 2> - <1 1>;',
+    ];
+    const issues = checkCalculateColumnSingleCellElement(
+      badLines,
+      alwaysNotInComment
+    );
+    expect(issues).to.have.length(1);
+  });
+
+  it('does not flag when no CELLELEMENTS is in effect at all (the documented implicit-ABSOLUTE default)', () => {
+    const lines = ['table = a by b;', 'calculatecolumn <2 3> = <1 2> - <1 1>;'];
+    expect(
+      checkCalculateColumnSingleCellElement(lines, alwaysNotInComment)
+    ).to.be.empty;
+  });
+
+  it('does not flag a CALCULATECOLUMN with no preceding table at all', () => {
+    const lines = ['calculatecolumn <2 3> = <1 2> - <1 1>;'];
+    expect(
+      checkCalculateColumnSingleCellElement(lines, alwaysNotInComment)
+    ).to.be.empty;
+  });
+});
+
+describe('checkValuelabelsAddSingleVar', () => {
+  it('flags VALUELABELS ADD with more than one variable (Syntaxerror 528)', () => {
+    const lines = ['VALUELABELS a b = ADD 1 "eins";'];
+    const issues = checkValuelabelsAddSingleVar(lines, alwaysNotInComment);
+    expect(issues).to.have.length(1);
+    expect(issues[0].code).to.equal('valuelabels-add-multi-var');
+    expect(issues[0].message).to.include('528');
+  });
+
+  it('does not flag VALUELABELS ADD with exactly one variable', () => {
+    const lines = ['VALUELABELS a = ADD 1 "eins";'];
+    expect(checkValuelabelsAddSingleVar(lines, alwaysNotInComment)).to.be
+      .empty;
+  });
+
+  it('does not flag several variables without ADD', () => {
+    const lines = ['VALUELABELS a b = 1 "eins";'];
+    expect(checkValuelabelsAddSingleVar(lines, alwaysNotInComment)).to.be
+      .empty;
+  });
+
+  it('also recognizes the LABELS synonym', () => {
+    const lines = ['LABELS a b = ADD 1 "eins";'];
+    expect(
+      checkValuelabelsAddSingleVar(lines, alwaysNotInComment)
+    ).to.have.length(1);
+  });
+});
+
+describe('checkOvercodeRangeSpan', () => {
+  it('flags a range span over 100,000 as an error', () => {
+    const lines = ['OVERCODE myoc 1:100002 "Text";'];
+    const issues = checkOvercodeRangeSpan(lines, alwaysNotInComment);
+    expect(issues).to.have.length(1);
+    expect(issues[0]).to.deep.include({
+      severity: 'error',
+      code: 'overcode-range-too-large',
+    });
+  });
+
+  it('flags a range span over 5,000 (but under 100,000) as a warning', () => {
+    const lines = ['OVERCODE myoc 1:6000 "Text";'];
+    const issues = checkOvercodeRangeSpan(lines, alwaysNotInComment);
+    expect(issues).to.have.length(1);
+    expect(issues[0]).to.deep.include({
+      severity: 'warning',
+      code: 'overcode-range-large',
+    });
+  });
+
+  it('does not flag a small range span', () => {
+    const lines = ['OVERCODE myoc 1:100 "Text";'];
+    expect(checkOvercodeRangeSpan(lines, alwaysNotInComment)).to.be.empty;
+  });
+});
+
 describe('computeDiagnostics', () => {
   it('aggregates issues from every check', () => {
-    const lines = ['VARTITLE = "x";', 'variable x = 1;', 'variable x = 2;'];
+    const lines = ['VARTITLE = "x";', '#endmacro'];
     const issues = computeDiagnostics(lines, alwaysNotInComment);
     const codes = issues.map((i) => i.code).sort();
-    expect(codes).to.deep.equal(['duplicate-declaration', 'empty-varlist']);
+    expect(codes).to.deep.equal(['empty-varlist', 'unmatched-endmacro']);
   });
 });

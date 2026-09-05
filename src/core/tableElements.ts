@@ -12,12 +12,16 @@
 // (computeDefRe, tableHeadRe, ...): "CELLELEMENTS = <values>;" is assumed
 // to fit on one line, matching every documented example.
 //
-// Only the standalone "CELLELEMENTS = ...;" assignment form is
-// recognized here, not the inline per-table "CELLELEMENTS( ... )" clause
-// embedded within a TABLE/OVERCODE statement (e.g. `table = ... by ...
-// cellelements( absolute );`) — that form doesn't change the *global*
-// default the way the standalone assignment does, so it's out of scope
-// for "what's in effect here".
+// `findEffectiveElements` only recognizes the standalone "CELLELEMENTS =
+// ...;" assignment form, not the inline per-table "CELLELEMENTS( ... )"
+// taboption clause (e.g. `TABLE CELLELEMENTS( ABSOLUTE ) = a BY b;`) —
+// that form doesn't change the *global* default the way the standalone
+// assignment does, so it's out of scope for "what's in effect here" (a
+// later table with no inline clause of its own still falls back to the
+// standalone default, not to some other table's inline one). The inline
+// form itself is recognized separately by `extractInlineCellElements`,
+// for consumers that specifically need *this table's own* CELLELEMENTS
+// (e.g. the CALCULATECOLUMN single-CELLELEMENT diagnostic).
 
 import { ResolvedLine } from './includeGraph';
 
@@ -51,6 +55,25 @@ export function extractElementsValue(
       : frameElementsAssignmentRe;
   const m = lineText.match(re);
   return m ? m[1].trim() : '';
+}
+
+// The *inline* per-table `CELLELEMENTS( <cellelements> )` taboption clause
+// (e.g. `TABLE CELLELEMENTS( ABSOLUTE COLUMNPERCENT ) = a BY b;`) — the one
+// form `findEffectiveElements` deliberately does not resolve (see the
+// header comment above). Single-line, like every other regex here.
+// Returns the lowercased element names, or undefined if this line has no
+// such clause.
+const inlineCellElementsRe = /\bcellelements\s*\(([^)]*)\)/i;
+
+export function extractInlineCellElements(
+  lineText: string
+): string[] | undefined {
+  const m = lineText.match(inlineCellElementsRe);
+  if (!m) return undefined;
+  return m[1]
+    .split(/[\s,]+/)
+    .map((s) => s.trim().toLowerCase())
+    .filter((s) => s.length > 0);
 }
 
 export interface EffectiveElements {

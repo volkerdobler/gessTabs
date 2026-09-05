@@ -2,18 +2,26 @@
 // itself calls out (often with its own compiler-level mitigation flag),
 // not a speculative lint rule. Pure, per-document, unit-tested — same
 // split as the rest of this codebase's checks. Deliberately scoped to the
-// *current document only* for this first pass (like the document symbol/
-// semantic-token providers), not the full resolved INCLUDE/#ifdef
-// workspace — a real script's variables/#defines can span files, but
-// resolving the whole workspace on every keystroke for eight independent
-// checks is a bigger design (and performance) undertaking than this pass
-// attempts; a duplicate declaration or #define reference across an
-// INCLUDE boundary is a known, accepted gap.
+// *current document only* — a real script's variables/#defines can span
+// files, but resolving the whole workspace on every keystroke for every
+// check here is a bigger design (and performance) undertaking than this
+// pass attempts. Duplicate-declaration got its cross-INCLUDE fix anyway —
+// see `checkDuplicateDeclarations` in modelDiagnostics.ts, which reuses
+// the whole-workspace `VariableModel` already rebuilt per keystroke for
+// P1.6's undefined-variable/system-variable-redeclaration checks, so the
+// performance question was already answered there. A `#define`-case
+// mismatch across an INCLUDE boundary remains a known, accepted gap.
 
 import { scanBlockDirectives } from './directives';
 import { ResolvedLine } from './includeGraph';
 import { toLogicalStatements, locateInStatement } from './statements';
 import { classifyStatement } from './variableStatements';
+import {
+  isTableOrOverviewStatement,
+  extractElementsValue,
+  extractInlineCellElements,
+  findEffectiveElements,
+} from './tableElements';
 
 export type DiagnosticSeverity = 'error' | 'warning';
 
@@ -171,10 +179,39 @@ export function hasStrictVarlistEnabled(
   );
 }
 
-// --- 2. Unmatched #MACRO/#ENDMACRO and #IFDEF-family/#END blocks ---------
+// --- 2. Unmatched #MACRO/#ENDMACRO, #STARTEXPORT/#ENDEXPORT and ----------
+//        #IFDEF-family/#END directives, plus the runtime IFBLOCK/
+//        WHILEBLOCK/SETFILTER block keywords.
 // Directive recognition (single-line `#ifnempty … #else … #end`, and
 // directives sitting in a trailing `// …` comment / string) lives in
 // src/core/directives.ts, shared with foldingRanges.ts / formatter.ts.
+//
+// The runtime block keywords (real statements, not `#`-preprocessor
+// directives) are recognized line-anchored here instead, like every other
+// multi-keyword check in this file — deliberately NOT run through
+// toLogicalStatements/classifyStatement even though
+// `ClassifiedStatement.block` already tags them (design doc P1.1):
+// IFBLOCK/WHILEBLOCK/ELSEBLOCK have no terminating `;` in real gessTabs
+// syntax (manual: `IFBLOCK <bedingung> THEN` / `WHILEBLOCK <bedingung>
+// DO` / bare `ELSEBLOCK`, confirmed by every worked example), and
+// toLogicalStatements finds statement boundaries purely by `;` — so
+// feeding these through it would silently merge an open with everything
+// up to the *next unrelated statement's* `;`, hiding any nested block
+// inside that merged blob. ENDBLOCK/SETFILTER/ENDFILTER do end with `;`,
+// but are kept on the same simple line-anchored footing for consistency
+// (and because SETFILTER/ENDFILTER's own optional `<filtername>` isn't
+// part of `ClassifiedStatement` anyway — it's not a variable).
+const ifOrWhileBlockRe = /^\s*(?:ifblock|whileblock)\b/i;
+const elseblockRe = /^\s*elseblock\b/i;
+const endblockRe = /^\s*endblock\b/i;
+// `SETFILTER [<filtername>] [TEXT "…"] = <cond>;` — the name is optional,
+// so a bare `SETFILTER TEXT "…" = …;`/`SETFILTER = …;` must not mistake
+// TEXT (or `=`) for the name.
+const setfilterStartRe = /^\s*setfilter\b/i;
+const setfilterNameRe = /^\s*setfilter\s+(?!text\b)([A-Za-z_]\w*)/i;
+const endfilterStartRe = /^\s*endfilter\b/i;
+const endfilterNameRe = /^\s*endfilter\s+([A-Za-z_]\w*)/i;
+
 export function checkUnmatchedBlocks(
   lines: string[],
   isNotInComment: IsNotInComment
@@ -186,6 +223,7 @@ export function checkUnmatchedBlocks(
   // page: "Man kann ein Macro auch innerhalb eines Macros definieren …
   // funktioniert rekursiv"). So track opens on a stack, like #IFDEF.
   const macroStack: number[] = [];
+  const exportStack: number[] = [];
 
   const issueAt = (
     line: number,
@@ -237,6 +275,21 @@ export function checkUnmatchedBlocks(
             macroStack.pop();
           }
           break;
+        case 'export-start':
+          exportStack.push(i);
+          break;
+        case 'export-end':
+          if (exportStack.length === 0) {
+            issueAt(
+              i,
+              'error',
+              '#ENDEXPORT with no matching #STARTEXPORT before it.',
+              'unmatched-endexport'
+            );
+          } else {
+            exportStack.pop();
+          }
+          break;
         case 'conditional-else':
           break;
         default:
@@ -261,52 +314,120 @@ export function checkUnmatchedBlocks(
       'unclosed-macro'
     )
   );
-
-  return issues;
-}
-
-// --- 3. Duplicate variable declaration ------------------------------------
-// Mirrors compiler error 8: "variable declared twice". Built on the
-// statement classifier's `defKind` (design doc §9 Q3): only a real
-// **declaration** (SINGLEQ/VARIABLE(S)/MAKE*/VARFAMILY/VARGROUP/GROUPS/
-// INTERVALS/INDEXVAR/the statistical creators/DATA/…) can be a duplicate.
-// COMPUTE/FCOMPUTE and an IF-THEN assignment are always `assignment` kind
-// and never counted, even when re-using an existing name — that's normal,
-// legal re-assignment, not a duplicate (the old regex-based version
-// mis-flagged e.g. `compute add x = 1; compute add x = 2;` as one, since
-// computeDefRe matches any COMPUTE-with-sub-keyword regardless of intent).
-// A VARTITLE/VARTEXT/VALUELABELS/WEIGHTCELLS re-mention (`annotation`/
-// reference-only kinds) was never counted either, before or now.
-export function checkDuplicateDeclarations(
-  lines: string[],
-  isNotInComment: IsNotInComment
-): DiagnosticIssue[] {
-  const issues: DiagnosticIssue[] = [];
-  const statements = toLogicalStatements(
-    toClassifierOrder(lines, isNotInComment)
+  exportStack.forEach((line) =>
+    issueAt(
+      line,
+      'error',
+      'Unclosed #STARTEXPORT block — no matching #ENDEXPORT found before the end of the file.',
+      'unclosed-export'
+    )
   );
-  const firstSeenAt = new Map<string, number>();
 
-  statements.forEach((stmt) => {
-    const cls = classifyStatement(stmt.text);
-    if (!cls || cls.defKind !== 'declaration') return;
-    cls.defines.forEach((span) => {
-      const loc = locateInStatement(stmt, span.rawStart);
-      const firstLine = firstSeenAt.get(span.name);
-      if (firstLine === undefined) {
-        firstSeenAt.set(span.name, loc.line.line);
+  // --- runtime blocks: IFBLOCK/WHILEBLOCK…ENDBLOCK, ELSEBLOCK, -----------
+  //     SETFILTER…ENDFILTER (named or not)
+  //
+  // Line-anchored, like every other multi-keyword check in this file
+  // (checkRecodeBounds, checkCellsetElements, …) — NOT run through
+  // toLogicalStatements/classifyStatement, even though
+  // ClassifiedStatement.block already tags these (design doc P1.1):
+  // IFBLOCK/WHILEBLOCK/ELSEBLOCK have no terminating `;` in real gessTabs
+  // syntax (manual: `IFBLOCK <bedingung> THEN` / `WHILEBLOCK <bedingung>
+  // DO` / bare `ELSEBLOCK`, confirmed by every worked example) —
+  // toLogicalStatements finds statement boundaries purely by `;`, so
+  // feeding these through it would silently merge an IFBLOCK/WHILEBLOCK
+  // open with everything up to the *next unrelated statement's* `;`,
+  // hiding any nested block inside that merged blob from ever being seen.
+  const blockStack: number[] = [];
+  const filterStack: { line: number; name?: string }[] = [];
+
+  lines.forEach((lineText, i) => {
+    if (lineText.length === 0) return;
+    if (!isNotInComment(i, firstNonWs(lineText))) return;
+
+    if (ifOrWhileBlockRe.test(lineText)) {
+      blockStack.push(i);
+      return;
+    }
+    if (elseblockRe.test(lineText)) {
+      if (blockStack.length === 0) {
+        issueAt(
+          i,
+          'error',
+          'ELSEBLOCK with no matching IFBLOCK/WHILEBLOCK before it.',
+          'unmatched-elseblock'
+        );
+      }
+      return;
+    }
+    if (endblockRe.test(lineText)) {
+      if (blockStack.length === 0) {
+        issueAt(
+          i,
+          'error',
+          'ENDBLOCK with no matching IFBLOCK/WHILEBLOCK before it.',
+          'unmatched-endblock'
+        );
+      } else {
+        blockStack.pop();
+      }
+      return;
+    }
+    const setfilterMatch = lineText.match(setfilterNameRe);
+    if (setfilterStartRe.test(lineText)) {
+      filterStack.push({ line: i, name: setfilterMatch?.[1] });
+      return;
+    }
+    const endfilterMatch = lineText.match(endfilterNameRe);
+    if (endfilterStartRe.test(lineText)) {
+      const name = endfilterMatch?.[1];
+      if (filterStack.length === 0) {
+        issueAt(
+          i,
+          'error',
+          'ENDFILTER with no matching SETFILTER before it.',
+          'unmatched-endfilter'
+        );
         return;
       }
-      issues.push({
-        line: loc.line.line,
-        startChar: loc.character,
-        length: span.rawLength,
-        severity: 'warning',
-        message: `"${span.raw}" was already declared at line ${firstLine + 1}.`,
-        code: 'duplicate-declaration',
-      });
-    });
+      if (!name) {
+        filterStack.pop();
+        return;
+      }
+      const matchIdx = [...filterStack]
+        .reverse()
+        .findIndex((f) => f.name === name);
+      if (matchIdx === -1) {
+        issueAt(
+          i,
+          'error',
+          `ENDFILTER ${name} has no matching SETFILTER ${name} on the stack.`,
+          'unmatched-endfilter'
+        );
+        return;
+      }
+      // Pop every frame down to and including the matching one.
+      filterStack.length = filterStack.length - 1 - matchIdx;
+    }
   });
+
+  blockStack.forEach((line) =>
+    issueAt(
+      line,
+      'error',
+      'Unclosed IFBLOCK/WHILEBLOCK — no matching ENDBLOCK found before the end of the file.',
+      'unclosed-ifblock'
+    )
+  );
+  filterStack.forEach(({ line, name }) =>
+    issueAt(
+      line,
+      'error',
+      `Unclosed SETFILTER${
+        name ? ` ${name}` : ''
+      } — no matching ENDFILTER found before the end of the file.`,
+      'unclosed-setfilter'
+    )
+  );
 
   return issues;
 }
@@ -459,18 +580,24 @@ export function checkWeightcellsPercentages(
 }
 
 // --- 7. Mutually-exclusive table/cell-option diagnostics ------------------
-// Scoped down from the full TODO item to the pairs that are objectively,
-// syntactically checkable without workspace-wide semantic classification
-// (e.g. "is this a multi-response variable" needs tracking every MULTIQ
-// declaration across the resolved workspace — a bigger scope than a
-// per-document pass): CELLSET's own fixed allow-list of element types
-// (handbook line ~11453-11460, an exhaustive enumeration) and the
-// INVERTOUT/UPDATEINVERT combination (GESStabs_InvertierteDateien.md:195,
-// "nicht erlaubt"). The HARMONICMEAN/GEOMETRICMEAN/MEDIAN/COLUMNPERCENT100
-// combinations from the TODO item are NOT implemented here for that
-// reason.
+// Scoped down from the full TODO item to what's objectively, syntactically
+// checkable without workspace-wide semantic classification: CELLSET's own
+// fixed allow-list of element types (handbook line ~11453-11460, an
+// exhaustive enumeration), the INVERTOUT/UPDATEINVERT combination
+// (GESStabs_InvertierteDateien.md:195, "nicht erlaubt"), and — since 2026-
+// 09-05 — the two crisp, closed HARMONICMEAN/GEOMETRICMEAN and MEDIAN
+// incompatibility rules from `Zellenelemente _ Besonderheiten.md`.
+// COLUMNPERCENT100's own "not suitable for …" caveat is deliberately left
+// out — `keywordData.ts`'s own entry names four different, non-error
+// conditions (multi-response vars, OVERCODEs, suppressed MISSING VALUES,
+// "selectively built variables"), not a single hard rule this check could
+// implement without guessing.
 const cellsetStartRe = /^\s*cellset\b/i;
-const cellsetAllowedElements = new Set([
+// The single-value, non-composite CELLELEMENT names — CELLSET's own
+// "erlaubt sind" enumeration and CALCULATECOLUMN's "nur ein elementares
+// CELLELEMENT" condition (see checkCalculateColumnSingleCellElement below)
+// independently land on the same set.
+export const elementaryCellElements = new Set([
   'absolute',
   'physicalrecords',
   'columnpercent',
@@ -516,7 +643,7 @@ export function checkCellsetElements(
     const seen = new Set<string>();
     while (m !== null) {
       const name = m[1].toLowerCase();
-      if (!cellsetAllowedElements.has(name) && !seen.has(name)) {
+      if (!elementaryCellElements.has(name) && !seen.has(name)) {
         seen.add(name);
         issues.push({
           line: startLine,
@@ -884,6 +1011,263 @@ export function checkMalformedStatements(
   return issues;
 }
 
+// --- 12. Cell-content diagnostics ------------------------------------------
+
+// `MEDIAN` is "nur mit Häufigkeiten und den Perzentilen kompatibel" —
+// Häufigkeiten is exactly the "Zellenelemente > Zählergebnisse" manual
+// page's category (ABSOLUTE/DELTAEXPECT/ESS/EXPECT/PHYSICALRECORDS/
+// PROJECTION), plus the percentiles (PCNTL1-4) already tracked above.
+const medianCompatibleElements = new Set([
+  'median',
+  'absolute',
+  'physicalrecords',
+  'deltaexpect',
+  'ess',
+  'expect',
+  'projection',
+  'pcntl1',
+  'pcntl2',
+  'pcntl3',
+  'pcntl4',
+]);
+
+function checkElementListIncompatibilities(
+  elements: string[],
+  line: number,
+  lines: string[],
+  issues: DiagnosticIssue[]
+): void {
+  const lower = elements.map((e) => e.toLowerCase());
+  const upper = () => lower.map((e) => e.toUpperCase()).join(' ');
+  if (
+    lower.length > 1 &&
+    (lower.includes('harmonicmean') || lower.includes('geometricmean'))
+  ) {
+    issues.push({
+      line,
+      startChar: firstNonWs(lines[line]),
+      length: 'CELLELEMENTS'.length,
+      severity: 'error',
+      message: `HARMONICMEAN/GEOMETRICMEAN cannot be combined with any other cell content — found "${upper()}".`,
+      code: 'cellelement-incompatible-harmonicgeometric',
+    });
+  }
+  if (lower.includes('median')) {
+    const incompatible = lower.filter((e) => !medianCompatibleElements.has(e));
+    if (incompatible.length > 0) {
+      issues.push({
+        line,
+        startChar: firstNonWs(lines[line]),
+        length: 'CELLELEMENTS'.length,
+        severity: 'error',
+        message: `MEDIAN is only compatible with frequencies (ABSOLUTE/PHYSICALRECORDS/…) and percentiles (PCNTL1-4), not other sum/mean/dispersion measures — found "${incompatible
+          .map((e) => e.toUpperCase())
+          .join(' ')}" alongside it.`,
+        code: 'cellelement-incompatible-median',
+      });
+    }
+  }
+}
+
+// Scans every CELLELEMENTS-list occurrence, both forms: the standalone
+// `CELLELEMENTS = <list>;` assignment (may wrap lines) and the inline
+// per-table `CELLELEMENTS(…)` taboption clause (single-line, via
+// tableElements.ts's `extractInlineCellElements`). Manual:
+// `Zellenelemente _ Besonderheiten.md`.
+const cellElementsAssignStartRe = /^\s*cellelements\s*=/i;
+
+export function checkCellElementIncompatibilities(
+  lines: string[],
+  isNotInComment: IsNotInComment
+): DiagnosticIssue[] {
+  const issues: DiagnosticIssue[] = [];
+  let startLine: number | undefined;
+  let buffer = '';
+
+  lines.forEach((lineText, i) => {
+    if (lineText.length === 0) return;
+    if (!isNotInComment(i, firstNonWs(lineText))) return;
+
+    const inline = extractInlineCellElements(lineText);
+    if (inline) {
+      checkElementListIncompatibilities(inline, i, lines, issues);
+    }
+
+    if (startLine === undefined) {
+      if (!cellElementsAssignStartRe.test(lineText)) return;
+      startLine = i;
+    }
+    buffer += ` ${lineText}`;
+    if (!lineText.includes(';')) return;
+
+    const value = extractElementsValue(buffer, 'cellelements');
+    const list = value
+      .split(/[\s,]+/)
+      .map((s) => s.trim().toLowerCase())
+      .filter((s) => s.length > 0);
+    checkElementListIncompatibilities(list, startLine, lines, issues);
+    startLine = undefined;
+    buffer = '';
+  });
+
+  return issues;
+}
+
+// The manual's "Bedingungen zur Anwendung von CalculateColumn" documents
+// this condition only for CALCULATECOLUMN, not COLUMNSUMMARY — scoped
+// accordingly. Resolves "the preceding table"'s effective CELLELEMENTS:
+// its own inline `CELLELEMENTS(…)` clause if present, else the standalone
+// global default (tableElements.ts's `findEffectiveElements`) — no
+// CELLELEMENTS in effect at all means the documented default, a single
+// implicit ABSOLUTE, so that case is never flagged.
+const calculateColumnStartRe = /^\s*calculatecolumn\b/i;
+
+export function checkCalculateColumnSingleCellElement(
+  lines: string[],
+  isNotInComment: IsNotInComment
+): DiagnosticIssue[] {
+  const issues: DiagnosticIssue[] = [];
+  const order = toClassifierOrder(lines, isNotInComment);
+
+  lines.forEach((lineText, i) => {
+    if (lineText.length === 0) return;
+    if (!isNotInComment(i, firstNonWs(lineText))) return;
+    if (!calculateColumnStartRe.test(lineText)) return;
+
+    let tableLine: number | undefined;
+    for (let j = i - 1; j >= 0; j -= 1) {
+      if (!isNotInComment(j, firstNonWs(lines[j]))) continue;
+      if (isTableOrOverviewStatement(lines[j])) {
+        tableLine = j;
+        break;
+      }
+    }
+    if (tableLine === undefined) return;
+
+    let elements = extractInlineCellElements(lines[tableLine]);
+    if (!elements) {
+      const { cellElements } = findEffectiveElements(
+        order,
+        'document',
+        tableLine
+      );
+      if (cellElements) {
+        const value = extractElementsValue(cellElements.text, 'cellelements');
+        elements = value
+          .split(/[\s,]+/)
+          .map((s) => s.trim().toLowerCase())
+          .filter((s) => s.length > 0);
+      }
+    }
+    if (!elements) return;
+
+    const elementary = elements.filter((e) => elementaryCellElements.has(e));
+    const nonElementary = elements.filter(
+      (e) => !elementaryCellElements.has(e)
+    );
+    if (elementary.length !== 1 || nonElementary.length > 0) {
+      issues.push({
+        line: i,
+        startChar: firstNonWs(lineText),
+        length: 'CALCULATECOLUMN'.length,
+        severity: 'error',
+        message: `CALCULATECOLUMN requires its preceding table to carry exactly one elementary CELLELEMENT (e.g. COLUMNPERCENT or ABSOLUTE, not both, and no composite like ABSCOLPERCENT) — found "${elements
+          .map((e) => e.toUpperCase())
+          .join(' ')}".`,
+        code: 'calculatecolumn-multiple-cellelements',
+      });
+    }
+  });
+
+  return issues;
+}
+
+// `VALUELABELS <VarList> = [ ADD ] …` — ADD is one-variable-only
+// (`keywordData.ts`'s own syntax entry), Syntaxerror 528: "VALUELABELS
+// ... ADD works only with one single variable" (Anhang > Liste aller
+// Syntaxfehlermeldungen).
+export function checkValuelabelsAddSingleVar(
+  lines: string[],
+  isNotInComment: IsNotInComment
+): DiagnosticIssue[] {
+  const issues: DiagnosticIssue[] = [];
+  const statements = toLogicalStatements(
+    toClassifierOrder(lines, isNotInComment)
+  );
+
+  statements.forEach((stmt) => {
+    const cls = classifyStatement(stmt.text);
+    if (!cls) return;
+    if (cls.keyword !== 'valuelabels' && cls.keyword !== 'labels') return;
+    if (cls.references.length <= 1) return;
+    if (!/=\s*add\b/i.test(stmt.text)) return;
+    const loc = locateInStatement(stmt, 0);
+    issues.push({
+      line: loc.line.line,
+      startChar: loc.character,
+      length: cls.keyword.length,
+      severity: 'error',
+      message:
+        'Syntaxerror 528: VALUELABELS ... ADD works only with one single variable — split this into one VALUELABELS ... = ADD statement per variable.',
+      code: 'valuelabels-add-multi-var',
+    });
+  });
+
+  return issues;
+}
+
+// OVERCODE's own value-range span sanity — same shape as
+// checkRecodeBounds above (reuses its `rangeRe`), tracking "inside an
+// OVERCODE statement" instead of RECODE.
+const overcodeStartRe = /^\s*overcode\b/i;
+
+export function checkOvercodeRangeSpan(
+  lines: string[],
+  isNotInComment: IsNotInComment
+): DiagnosticIssue[] {
+  const issues: DiagnosticIssue[] = [];
+  let inOvercode = false;
+
+  lines.forEach((lineText, i) => {
+    if (lineText.length === 0) return;
+    if (!isNotInComment(i, firstNonWs(lineText))) return;
+    if (!inOvercode && overcodeStartRe.test(lineText)) inOvercode = true;
+    if (!inOvercode) return;
+
+    rangeRe.lastIndex = 0;
+    let m = rangeRe.exec(lineText);
+    while (m !== null) {
+      if (isNotInComment(i, m.index)) {
+        const span = Number(m[2]) - Number(m[1]);
+        if (span > 100000) {
+          issues.push({
+            line: i,
+            startChar: m.index,
+            length: m[0].length,
+            severity: 'error',
+            message: `OVERCODE range ${m[1]}:${m[2]} spans ${span} values, over the 100,000 limit.`,
+            code: 'overcode-range-too-large',
+          });
+        } else if (span > 5000) {
+          issues.push({
+            line: i,
+            startChar: m.index,
+            length: m[0].length,
+            severity: 'warning',
+            message: `OVERCODE range ${m[1]}:${m[2]} spans ${span} values — over 5,000 is unusual, double-check this is intentional.`,
+            code: 'overcode-range-large',
+          });
+        }
+      }
+      m = rangeRe.exec(lineText);
+    }
+
+    if (lineText.includes(';')) inOvercode = false;
+  });
+
+  return issues;
+}
+
 export function computeDiagnostics(
   lines: string[],
   isNotInComment: IsNotInComment,
@@ -894,7 +1278,6 @@ export function computeDiagnostics(
   return [
     ...checkEmptyVarlist(lines, isNotInComment),
     ...checkUnmatchedBlocks(lines, isNotInComment),
-    ...checkDuplicateDeclarations(lines, isNotInComment),
     ...checkRecodeBounds(lines, isNotInComment),
     ...checkCardOrdering(lines, isNotInComment),
     ...checkWeightcellsPercentages(lines, isNotInComment),
@@ -904,5 +1287,9 @@ export function computeDiagnostics(
     ...checkParenBalance(lines, isNormalScope),
     ...checkNestedBlockComments(lines),
     ...checkMalformedStatements(lines, isNotInComment),
+    ...checkCellElementIncompatibilities(lines, isNotInComment),
+    ...checkCalculateColumnSingleCellElement(lines, isNotInComment),
+    ...checkValuelabelsAddSingleVar(lines, isNotInComment),
+    ...checkOvercodeRangeSpan(lines, isNotInComment),
   ];
 }

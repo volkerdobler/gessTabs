@@ -15,11 +15,20 @@ describe('scanBlockDirectives', () => {
     expect(kinds('#macro #m( &p )')).to.deep.equal(['macro-start']);
     expect(kinds('#endmacro')).to.deep.equal(['macro-end']);
     expect(kinds('#macroend')).to.deep.equal(['macro-end']);
+    expect(kinds('#startexport')).to.deep.equal(['export-start']);
+    expect(kinds('#endexport')).to.deep.equal(['export-end']);
   });
 
   it('does not confuse #endmacro/#macroend with #macro or #end', () => {
     expect(scanBlockDirectives('#macroend')[0].kind).to.equal('macro-end');
     expect(scanBlockDirectives('#endmacro')[0].kind).to.equal('macro-end');
+  });
+
+  it('does not confuse #endexport/#startexport with #end/#else', () => {
+    expect(kinds('#startexport #endexport')).to.deep.equal([
+      'export-start',
+      'export-end',
+    ]);
   });
 
   it('finds every directive on a single line, in source order', () => {

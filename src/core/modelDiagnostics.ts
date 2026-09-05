@@ -19,6 +19,7 @@
 //   - system-variable redeclaration is severity Error (the manual documents
 //     it as a real syntax error).
 
+import * as path from 'path';
 import { locateInStatement } from './statements';
 import { classifyStatement } from './variableStatements';
 import { VariableModel } from './variableModel';
@@ -109,5 +110,50 @@ export function checkSystemVariableRedeclaration(
       });
     });
   });
+  return issues;
+}
+
+// Mirrors compiler error 8: "variable declared twice" — the cross-INCLUDE
+// version of diagnostics.ts's former document-scoped
+// `checkDuplicateDeclarations` (removed there; this is a strict superset,
+// since `model.statements` already spans every INCLUDEd/entry file). Same
+// `defKind === 'declaration'` gate (design doc §9 Q3): a COMPUTE/IF…THEN
+// re-assignment is never counted, even reusing an existing name — that's
+// normal, legal re-assignment.
+export function checkDuplicateDeclarations(
+  model: VariableModel,
+  file: string
+): DiagnosticIssue[] {
+  const issues: DiagnosticIssue[] = [];
+  const firstSeenAt = new Map<string, { file: string; line: number }>();
+
+  model.statements.forEach((stmt) => {
+    const cls = classifyStatement(stmt.text);
+    if (!cls || cls.defKind !== 'declaration') return;
+    cls.defines.forEach((span) => {
+      const loc = locateInStatement(stmt, span.rawStart);
+      const first = firstSeenAt.get(span.name);
+      if (!first) {
+        firstSeenAt.set(span.name, {
+          file: loc.line.file,
+          line: loc.line.line,
+        });
+        return;
+      }
+      if (loc.line.file !== file) return;
+      const elsewhere = first.file !== file;
+      issues.push({
+        line: loc.line.line,
+        startChar: loc.character,
+        length: span.rawLength,
+        severity: 'warning',
+        message: `"${span.raw}" was already declared at ${
+          elsewhere ? `${path.basename(first.file)}:` : ''
+        }line ${first.line + 1}.`,
+        code: 'duplicate-declaration',
+      });
+    });
+  });
+
   return issues;
 }

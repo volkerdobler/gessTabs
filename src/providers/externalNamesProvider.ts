@@ -37,6 +37,7 @@ import { buildVariableModel } from '../core/variableModel';
 import {
   checkUndefinedVariables,
   checkSystemVariableRedeclaration,
+  checkDuplicateDeclarations,
 } from '../core/modelDiagnostics';
 import { getAllFilenamesInDirectory } from '../util/fsutils';
 import {
@@ -343,17 +344,21 @@ export class GesstabsExternalNamesManager {
         }
       });
 
-      // Model-based diagnostics (P1.6) — undefined variable + system-
-      // variable redeclaration. Both need the whole-workspace variable
-      // model (cross-INCLUDE, external/raw-dataset names, macro-produced
-      // names), so they live here rather than in the document-scoped F2
-      // pass (GesstabsDiagnosticsManager). Undefined-variable is skipped
-      // entirely when this document belongs to no known entry program
-      // (an orphan .inc, or one of its owning programs' data sources is
-      // unresolved (design §9 "P1.6 (B)") — a project whose .sav/.csv
-      // isn't on the editing machine must not get false "undefined"
-      // noise. System-variable redeclaration is a pure syntax check,
-      // independent of any of that, so it always runs.
+      // Model-based diagnostics (P1.6 + the P2 cross-INCLUDE fix) —
+      // undefined variable, system-variable redeclaration, and (now)
+      // cross-INCLUDE duplicate declaration. All three need the
+      // whole-workspace variable model (cross-INCLUDE, external/raw-
+      // dataset names, macro-produced names), so they live here rather
+      // than in the document-scoped F2 pass (GesstabsDiagnosticsManager,
+      // which only ever saw one document's own lines — see its own
+      // header comment for why duplicate-declaration moved here).
+      // Undefined-variable is skipped entirely when this document belongs
+      // to no known entry program (an orphan .inc, or one of its owning
+      // programs' data sources is unresolved (design §9 "P1.6 (B)") — a
+      // project whose .sav/.csv isn't on the editing machine must not get
+      // false "undefined" noise. System-variable redeclaration and
+      // duplicate-declaration are pure syntax checks, independent of any
+      // of that, so they always run.
       const owningPrograms = programsForFile(programs, file);
       const hasUnresolvedSource = externalSources.some(
         (s) => s.names === 'unresolved'
@@ -373,6 +378,7 @@ export class GesstabsExternalNamesManager {
             ? checkUndefinedVariables(model, file)
             : [];
         modelIssues.push(...checkSystemVariableRedeclaration(model, file));
+        modelIssues.push(...checkDuplicateDeclarations(model, file));
 
         modelIssues.forEach((issue) => {
           const d = new vscode.Diagnostic(

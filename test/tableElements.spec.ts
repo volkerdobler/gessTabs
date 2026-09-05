@@ -3,6 +3,7 @@ import {
   isTableOrOverviewStatement,
   isTableOrOverviewKeyword,
   extractElementsValue,
+  extractInlineCellElements,
   findEffectiveElements,
 } from '../src/core/tableElements';
 import { ResolvedLine } from '../src/core/includeGraph';
@@ -82,6 +83,35 @@ describe('extractElementsValue', () => {
         'cellelements'
       )
     ).to.equal('');
+  });
+});
+
+describe('extractInlineCellElements', () => {
+  it('extracts the inline per-table CELLELEMENTS( ... ) clause', () => {
+    expect(
+      extractInlineCellElements(
+        'table cellelements( absolute columnpercent ) = f1 by f2;'
+      )
+    ).to.deep.equal(['absolute', 'columnpercent']);
+  });
+
+  it('is case-insensitive and lowercases the result', () => {
+    expect(
+      extractInlineCellElements('TABLE CELLELEMENTS(ABSOLUTE) = f1 BY f2;')
+    ).to.deep.equal(['absolute']);
+  });
+
+  it('returns undefined when there is no inline clause on this line', () => {
+    expect(extractInlineCellElements('table = f1 by f2;')).to.be.undefined;
+    expect(
+      extractInlineCellElements('cellelements = absolute;')
+    ).to.be.undefined;
+  });
+
+  it('does not match a standalone CELLELEMENTS = ...; assignment (no parens)', () => {
+    expect(
+      extractInlineCellElements('CELLELEMENTS = COLUMNPERCENT ABSOLUTE;')
+    ).to.be.undefined;
   });
 });
 

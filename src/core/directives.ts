@@ -1,5 +1,6 @@
 // Shared recognition of the block-structuring preprocessor directives —
-// #MACRO/#ENDMACRO and the #IFDEF-family/#ELSE/#END — for every consumer
+// #MACRO/#ENDMACRO, #STARTEXPORT/#ENDEXPORT, and the #IFDEF-family/#ELSE/
+// #END — for every consumer
 // that cares about their *nesting*: the F2 "unmatched block" diagnostic
 // (src/core/diagnostics.ts), F5 code folding (src/core/foldingRanges.ts), the F5
 // formatter's indent-by-depth pass (src/core/formatter.ts), and the
@@ -30,6 +31,8 @@
 export type BlockDirectiveKind =
   | 'macro-start'
   | 'macro-end'
+  | 'export-start'
+  | 'export-end'
   | 'conditional-start'
   | 'conditional-else'
   | 'conditional-end';
@@ -51,6 +54,11 @@ export interface BlockDirective {
 //                                   start, matching prior behaviour)
 //  - #endmacro | #macroend       -> macro-end   (before #end, which is a
 //                                   prefix of neither but shares '#end…')
+//  - #startexport                -> export-start
+//  - #endexport                  -> export-end  (before #end — `\b` alone
+//                                   wouldn't confuse the two since "d"/"e"
+//                                   share no word boundary, but listed
+//                                   explicitly for clarity)
 //  - #if[n]def | #if[n]empty
 //      | #if[n]exist[s]          -> conditional-start
 //  - #else                       -> conditional-else
@@ -59,6 +67,8 @@ const directiveRe = new RegExp(
   [
     '#macro\\s+#\\S+\\s*\\(',
     '#(?:endmacro|macroend)\\b',
+    '#startexport\\b',
+    '#endexport\\b',
     '#if(?:n?def|n?empty|n?exists?)\\b',
     '#else\\b',
     '#end\\b',
@@ -69,10 +79,12 @@ const directiveRe = new RegExp(
 function classify(token: string): BlockDirectiveKind {
   const t = token.toLowerCase();
   // #endmacro / #macroend before #macro (both start with "#macro…"),
-  // and #endmacro before #end (it starts "#end…").
+  // and #endmacro/#endexport before #end (both start with "#end…").
   if (t.startsWith('#endmacro') || t.startsWith('#macroend'))
     return 'macro-end';
   if (t.startsWith('#macro')) return 'macro-start';
+  if (t.startsWith('#startexport')) return 'export-start';
+  if (t.startsWith('#endexport')) return 'export-end';
   if (t.startsWith('#else')) return 'conditional-else';
   if (t.startsWith('#end')) return 'conditional-end';
   return 'conditional-start';

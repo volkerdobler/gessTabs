@@ -102,4 +102,68 @@ describe('findFoldRanges', () => {
       { startLine: 1, endLine: 2, kind: 'macro' },
     ]);
   });
+
+  it('folds a #STARTEXPORT/#ENDEXPORT block', () => {
+    const lines = ['#startexport', 'x;', '#endexport'];
+    expect(findFoldRanges(lines)).to.deep.equal([
+      { startLine: 0, endLine: 2, kind: 'export' },
+    ]);
+  });
+
+  it('folds an IFBLOCK…ENDBLOCK and nested WHILEBLOCK independently', () => {
+    const lines = [
+      'ifblock x eq 1 then',
+      'whileblock y eq 1 do',
+      'compute y = 0;',
+      'endblock',
+      'endblock',
+    ];
+    expect(findFoldRanges(lines)).to.deep.equal([
+      { startLine: 1, endLine: 3, kind: 'block' },
+      { startLine: 0, endLine: 4, kind: 'block' },
+    ]);
+  });
+
+  it('does not fold an unclosed IFBLOCK, and ELSEBLOCK never opens its own fold', () => {
+    expect(findFoldRanges(['ifblock x eq 1 then', 'compute y = 1;'])).to.be
+      .empty;
+    const lines = [
+      'ifblock x eq 1 then',
+      'compute y = 1;',
+      'elseblock',
+      'compute y = 2;',
+      'endblock',
+    ];
+    expect(findFoldRanges(lines)).to.deep.equal([
+      { startLine: 0, endLine: 4, kind: 'block' },
+    ]);
+  });
+
+  it('folds an unnamed SETFILTER…ENDFILTER', () => {
+    const lines = ['setfilter = x eq 1;', 'endfilter;'];
+    expect(findFoldRanges(lines)).to.deep.equal([
+      { startLine: 0, endLine: 1, kind: 'filter' },
+    ]);
+  });
+
+  it('a named ENDFILTER folds every SETFILTER it closes, not just the innermost', () => {
+    const lines = [
+      'setfilter a = x eq 1;',
+      'setfilter b = y eq 1;',
+      'setfilter c = z eq 1;',
+      'endfilter a;',
+    ];
+    expect(findFoldRanges(lines)).to.deep.equal([
+      { startLine: 0, endLine: 3, kind: 'filter' },
+      { startLine: 1, endLine: 3, kind: 'filter' },
+      { startLine: 2, endLine: 3, kind: 'filter' },
+    ]);
+  });
+
+  it('does not mistake SETFILTER TEXT "…" for a named filter called TEXT', () => {
+    const lines = ['setfilter text "Mein Filter" = x eq 1;', 'endfilter;'];
+    expect(findFoldRanges(lines)).to.deep.equal([
+      { startLine: 0, endLine: 1, kind: 'filter' },
+    ]);
+  });
 });
