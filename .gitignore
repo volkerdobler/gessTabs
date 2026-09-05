@@ -60,3 +60,5 @@ dokumentation/**
 
 # Packaged extension (build artifact of `vsce package`)
 *.vsix
+.ps_history
+.vscode/mcp.json
