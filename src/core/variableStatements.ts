@@ -293,6 +293,38 @@ const COPY_SOURCE_KW = new Set([
 ]);
 const TABLE_KW = new Set(['table', 'overview', 'xoverview', 'gtable']);
 
+// Keywords that can appear in a TABLE/OVERVIEW/XOVERVIEW statement's
+// `taboptions` region (before the top-level `=`, design doc §9 Q2 /
+// manual page "Datenauswertung > Kreuztabelle > Syntax"). `sort` only
+// ever means `SORT AS <tablename>` here — the full `SORT <sorttype> …`
+// option grammar exists only inside a *part*, after `=`.
+const TABOPTION_KW = new Set([
+  'add',
+  'name',
+  'title',
+  'cellelements',
+  'frameelements',
+  'tableformats',
+  'contentkey',
+  'hidden',
+  'sort',
+]);
+// A `content`'s `:DESCRIPTION "…"` / `:USEVARTITLE ‹v›` / `:FORMAT "…"`
+// suffix — per the manual's own worked examples (not its ambiguous EBNF
+// table row) this sits *before* the cellelement's `(…)`, e.g.
+// `MEAN :DESCRIPTION "Mittelwert" ( v1 )`.
+const CONTENT_SUFFIX_KW = new Set(['description', 'usevartitle', 'format']);
+// A part's `SORT` option's `cut` clause (design doc §9 Q2 / manual page
+// above) — each takes purely numeric argument(s), never a variable name.
+const SORT_CUT_KW = new Set([
+  'top',
+  'bottom',
+  'extreme',
+  'slice',
+  'lslice',
+  'range',
+]);
+
 // Statements that only reference existing variables (no target, no
 // annotation): the varlist before `=` is `always`-mode, anything after is
 // an `ifKnown` condition/expression.
@@ -979,34 +1011,167 @@ function classifyRefStatement(
   return cls;
 }
 
-// Structural keywords that can appear inside a TABLE/OVERVIEW/XOVERVIEW
-// statement's own grammar (not just the simple `= head BY axis;` shape —
-// e.g. an `ADD`/cell-content clause's own `FILTER [range] IN var | BY …`)
-// and must never be swept in as a name reference alongside `by`. Not a
-// full model of that clause's grammar (still TODO — design doc §4 only
-// covers the plain head/axis row); just the keywords confirmed to appear
-// there in a real reported false-positive.
-const TABLE_CLAUSE_KEYWORDS = new Set(['by', 'filter', 'in']);
+// Index just past the `)` matching the `(` at tokens[open]. tokens.length
+// if unterminated.
+function skipParenGroup(tokens: Token[], open: number): number {
+  let depth = 0;
+  let i = open;
+  for (; i < tokens.length; i++) {
+    const v = tokens[i].value;
+    if (v === '(') depth += 1;
+    else if (v === ')') {
+      depth -= 1;
+      if (depth === 0) return i + 1;
+    }
+  }
+  return i;
+}
+
+// TABLE/OVERVIEW/XOVERVIEW `taboptions` (before the top-level `=`, manual
+// page "Datenauswertung > Kreuztabelle > Syntax") — never produce a
+// variable reference; consumes every recognized form so nothing leaks
+// through as a phantom ref. `NAME`/`SORT AS` name a *table*, a different
+// kind of symbol than a variable (design doc §9 Q2) — out of scope for
+// the variable model, so just excluded here rather than modeled.
+function parseTabOptions(tokens: Token[], from: number, to: number): void {
+  let i = from;
+  while (i < to) {
+    const k = kw(tokens[i]);
+    if (k === 'add') {
+      i += 1;
+    } else if (k === 'name') {
+      i += 2; // NAME <tablename>
+    } else if (k === 'sort' && kw(tokens[i + 1]) === 'as') {
+      i += 3; // SORT AS <tablename>
+    } else if (k === 'title' || k === 'contentkey') {
+      i += 1; // TITLE/CONTENTKEY <text> — runs until the next taboption
+      while (i < to && !TABOPTION_KW.has(kw(tokens[i]))) i += 1;
+    } else if (
+      k === 'cellelements' ||
+      k === 'frameelements' ||
+      k === 'tableformats' ||
+      k === 'hidden'
+    ) {
+      i += 1;
+      if (tokens[i]?.value === '(') i = skipParenGroup(tokens, i);
+    } else {
+      i += 1;
+    }
+  }
+}
+
+// The `parts` region after a TABLE/OVERVIEW/XOVERVIEW statement's `=` —
+// `parts ::= part {part}*`, `part ::= content [filter] [option]`, groups
+// `BY`-separated into head/axis (and further) parts (manual page above).
+function collectTableParts(
+  tokens: Token[],
+  from: number,
+  to: number
+): StatementReference[] {
+  const refs: StatementReference[] = [];
+  let i = from;
+  while (i < to) {
+    const t = tokens[i];
+    const k = kw(t);
+    if (k === 'by') {
+      i += 1;
+      continue;
+    }
+    if (k === 'filter') {
+      // filter ::= FILTER <condition> |  — condition refs are `ifKnown`,
+      // same convention classifyIf already uses for a condition.
+      i += 1;
+      const start = i;
+      while (i < to && tokens[i].value !== '|' && kw(tokens[i]) !== 'by') {
+        i += 1;
+      }
+      refs.push(...collectExprRefs(tokens, start, i, 'ifKnown'));
+      if (i < to && tokens[i].value === '|') i += 1;
+      continue;
+    }
+    if (k === 'sort') {
+      // option ::= SORT sorttype [DESCEND] [PANE <n> CODE <n>] [cut] —
+      // every slot here is a format keyword or a number, never a ref.
+      i += 1;
+      if (isWordOrString(tokens[i])) i += 1; // sorttype
+      if (kw(tokens[i]) === 'descend') i += 1;
+      if (kw(tokens[i]) === 'pane') {
+        i += 1;
+        if (tokens[i]?.type === 'number') i += 1;
+        if (kw(tokens[i]) === 'code') {
+          i += 1;
+          if (tokens[i]?.type === 'number') i += 1;
+        }
+      }
+      if (SORT_CUT_KW.has(kw(tokens[i]))) {
+        i += 1;
+        while (i < to && tokens[i].type === 'number') i += 1;
+      }
+      continue;
+    }
+    // A macro/#expand call's own "#name"/"&param" is never itself a
+    // variable name — its arguments (inside its own "(...)") still flow
+    // through this same loop on the following iterations.
+    if (
+      t.type === 'word' &&
+      (t.value.startsWith('#') || t.value.startsWith('&'))
+    ) {
+      i += 1;
+      continue;
+    }
+    const hasSuffix =
+      tokens[i + 1]?.value === ':' && CONTENT_SUFFIX_KW.has(kw(tokens[i + 2]));
+    if (isWordOrString(t) && (tokens[i + 1]?.value === '(' || hasSuffix)) {
+      // <cellelement> [ :DESCRIPTION <text> | :USEVARTITLE ‹v› | :FORMAT
+      // <text> ] ( <varname> [<varname>] [BY <varname>] ) — per the
+      // manual's own worked examples the `:suffix` sits *before* the
+      // parens (its EBNF table row is ambiguous/wrong on this point).
+      i += 1;
+      if (hasSuffix) {
+        const suffix = kw(tokens[i + 1]);
+        i += 2;
+        if (suffix === 'usevartitle' && isWordOrString(tokens[i])) {
+          refs.push({ span: spanOf(tokens[i]), mode: 'always' });
+          i += 1;
+        } else if (isWordOrString(tokens[i])) {
+          i += 1; // :DESCRIPTION/:FORMAT text — never
+        }
+      }
+      if (tokens[i]?.value === '(') {
+        const close = skipParenGroup(tokens, i);
+        for (let j = i + 1; j < close - 1; j++) {
+          const arg = tokens[j];
+          if (kw(arg) === 'by') continue;
+          if (isWordOrString(arg))
+            refs.push({ span: spanOf(arg), mode: 'always' });
+        }
+        i = close;
+        continue;
+      }
+      // suffix present but no `(` followed (malformed) — nothing more to
+      // do for this content; `t` itself was still consumed above.
+      continue;
+    }
+    if (isWordOrString(t)) {
+      // content ::= <constant> | <varname> — numbers are already excluded
+      // (tokenizer type 'number'), so anything left here is a varname.
+      refs.push({ span: spanOf(t), mode: 'always' });
+      i += 1;
+      continue;
+    }
+    i += 1;
+  }
+  return refs;
+}
 
 function classifyTable(tokens: Token[], keyword: string): ClassifiedStatement {
-  // TABLE = <head> BY <axis> [BY …];  — every name is `always`. Also seen
-  // here in practice (not yet its own grammar, see TABLE_CLAUSE_KEYWORDS):
-  // an `ADD`/cell-content clause with its own `FILTER`/`IN`/range-bracket/
-  // `|`-separated sub-grammar and a `#name(...)` macro/#expand call.
+  // TABLE [ taboptions ] = <parts> BY <parts>;  (design doc §9 Q2, manual
+  // page "Datenauswertung > Kreuztabelle > Syntax").
   const cls = base('table', keyword);
   const eq = topLevelEq(tokens);
   if (eq === -1) return cls;
-  for (let i = eq + 1; i < tokens.length; i++) {
-    const t = tokens[i];
-    if (TABLE_CLAUSE_KEYWORDS.has(kw(t))) continue;
-    // A macro/#expand call's own "#name" is never itself a variable name
-    // (gessTabs names never start with "#") — its arguments (the tokens
-    // inside its "(...)") are unaffected by this and still walk through
-    // the loop normally, becoming references just like any other name.
-    if (t.type === 'word' && t.value.startsWith('#')) continue;
-    if (isWordOrString(t))
-      cls.references.push({ span: spanOf(t), mode: 'always' });
-  }
+  parseTabOptions(tokens, 1, eq);
+  cls.references = collectTableParts(tokens, eq + 1, tokens.length);
   return cls;
 }
 

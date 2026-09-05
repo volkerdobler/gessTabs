@@ -230,6 +230,76 @@ describe('classifyStatement — references & current variable (§4)', () => {
     expect(refNames(s)).to.deep.equal(['f13mult', 'f71_m1.1.1', 'f71_m1.2.1']);
   });
 
+  it("TABLE = a MEAN(v1) BY c — a cellelement(...) call's own keyword is not a phantom ref, its varname arg is", () => {
+    const s = c('table = a mean(v1) by c;');
+    expect(refNames(s)).to.deep.equal(['a', 'v1', 'c']);
+  });
+
+  it('TABLE = a MEAN(v1 v2 BY v3) BY c — the two-varname-plus-BY cellelement form', () => {
+    const s = c('table = a mean(v1 v2 by v3) by c;');
+    expect(refNames(s)).to.deep.equal(['a', 'v1', 'v2', 'v3', 'c']);
+  });
+
+  it('TABLE NAME <tablename> HIDDEN(...) = a BY b — a taboption never names a variable', () => {
+    const s = c('table name sortsource hidden(ps pdf) = a by b;');
+    expect(refNames(s)).to.deep.equal(['a', 'b']);
+  });
+
+  it('TABLE CELLELEMENTS(...) FRAMEELEMENTS(...) TITLE "…" = a BY b — taboption argument lists are opaque, not refs', () => {
+    const s = c(
+      'table cellelements(absolute columnpercent) frameelements(absrow) title "Titel" = a by b;'
+    );
+    expect(refNames(s)).to.deep.equal(['a', 'b']);
+  });
+
+  it('TABLE SORT AS <tablename> = a BY b — the taboption form of SORT AS, not the part-option SORT', () => {
+    const s = c('table sort as overbase = a by b;');
+    expect(refNames(s)).to.deep.equal(['a', 'b']);
+  });
+
+  it('TABLE = a MEAN :DESCRIPTION "…" (v1) BY c — the :suffix sits before the parens (per the manual\'s worked examples, not its EBNF table row)', () => {
+    const s = c('table = a mean :description "Mittelwert" (v1) by c;');
+    expect(refNames(s)).to.deep.equal(['a', 'v1', 'c']);
+  });
+
+  it('TABLE = a MEAN :USEVARTITLE x1 (v1) BY c — :USEVARTITLE\'s argument is a real varname ref, unlike :DESCRIPTION/:FORMAT\'s text', () => {
+    const s = c('table = a mean :usevartitle x1 (v1) by c;');
+    expect(refNames(s)).to.deep.equal(['a', 'x1', 'v1', 'c']);
+  });
+
+  it('TABLE = a BY c SORT ABSOLUTE DESCEND TOP 80 — a part-option SORT clause has no variable refs', () => {
+    const s = c('table = a by c sort absolute descend top 80;');
+    expect(refNames(s)).to.deep.equal(['a', 'c']);
+  });
+
+  it("TABLE = V1 FILTER geschl EQ 1 | V1 FILTER geschl EQ 2 | BY V1 MEANTEST — FILTER's condition refs are ifKnown, part content stays always", () => {
+    const s = c(
+      'table = v1 filter geschl eq 1 | v1 filter geschl eq 2 | by v1 meantest;'
+    );
+    // A bare CELLELEMENT-style keyword with no "(...)" args (MEANTEST
+    // here) is indistinguishable from a real <varname> without a
+    // maintained keyword allowlist (out of scope for this grammar pass,
+    // same as item 2's kind-illegal-operations list) — it legitimately
+    // falls through to the <varname> content rule, same as a real
+    // variable would.
+    expect(refNames(s)).to.deep.equal([
+      'v1',
+      'geschl',
+      'v1',
+      'geschl',
+      'v1',
+      'meantest',
+    ]);
+    const conditionRefs = s.references.filter((r) =>
+      ['geschl'].includes(r.span.name)
+    );
+    expect(conditionRefs.every((r) => r.mode === 'ifKnown')).to.be.true;
+    const contentRefs = s.references.filter(
+      (r) => r.span.name === 'v1' || r.span.name === 'meantest'
+    );
+    expect(contentRefs.every((r) => r.mode === 'always')).to.be.true;
+  });
+
   it('WEIGHTCELLS [AUTOALIGN] v = … references v, creates nothing', () => {
     const s = c('weightcells autoalign gewicht = 1 : 50% 2 : 50%;');
     expect(s.defines).to.be.empty;

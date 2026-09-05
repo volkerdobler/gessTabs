@@ -89,43 +89,43 @@ presumed (not re-confirmed) fixed by the macro-semicolon fix; the
 `#meantest`/`filter`/`in` report is confirmed fixed by the `classifyTable`
 fix, covered directly by its own test.
 
+**Also done 2026-09-05**: `classifyTable` rewritten into a real parser
+against the manual's full `TABLE`/`OVERVIEW`/`XOVERVIEW` grammar
+(`dokumentation/online-manual/md/Datenauswertung _ Kreuztabelle _
+Syntax.md`) instead of the previous keyword-allowlist scan —
+`taboptions` (`ADD`/`NAME <tablename>`/`TITLE`/`CELLELEMENTS(…)`/
+`FRAMEELEMENTS(…)`/`TABLEFORMATS(…)`/`CONTENTKEY`/`HIDDEN(…)`/`SORT AS
+<tablename>`) are now fully consumed without leaking into `references`;
+each `part`'s `content` recognizes a bare `<varname>`, a
+`<cellelement>( <varname> [<varname>] [BY <varname>] )` call (the
+cellelement keyword itself is never a phantom ref — fixes e.g. `TABLE = a
+MEAN(v1) BY c;` wrongly referencing `mean`), and the
+`:DESCRIPTION`/`:USEVARTITLE`/`:FORMAT` suffix (confirmed from the manual's
+own worked examples to sit *before* the `(…)`, not after, contrary to its
+own ambiguous EBNF table row); `FILTER <condition> |` refs are `ifKnown`,
+matching `classifyIf`'s existing condition convention; the part-option
+`SORT sorttype [DESCEND] [PANE…] [TOP|BOTTOM|EXTREME|SLICE|LSLICE|RANGE…]`
+clause never produces a reference. `NAME`/`SORT AS <tablename>` are
+recognized and excluded (a table name is a different kind of symbol than a
+variable, out of scope for the variable model itself) without being
+modeled as their own symbol kind. Known remaining imprecision: a bare
+`CELLELEMENT`-style keyword used as `content` with no `(...)` args (e.g.
+`MEANTEST` in `TABLE = v1 BY v1 MEANTEST;`) is indistinguishable from a
+real `<varname>` without a maintained keyword allowlist — falls through to
+the `<varname>` rule, same as today's `IF`/`FILTER` condition parsing does
+for its own bare words; not attempted here, same class of problem as the
+keyword-allowlist question kind-illegal-operations below would also need.
+
 Still open:
 
-- **A full `TABLE`/`OVERVIEW`/`XOVERVIEW` grammar model — `$`-member spans,
-  `POSTPROCESS` clause-local virtuals, `IN`/`IS`/`[ … ]` set-test handling,
-  and now `classifyTable`'s real `part`/`filter`/`option` grammar too**
-  (design doc §5/§9 Q2) — not yet precisely modeled; needs a full
-  table-driven spec pass (one case per §3/§4 row). Large — no further
-  slice of this attempted yet.
-  - **Authoritative source identified 2026-09-05**: `dokumentation/
-    online-manual/md/Datenauswertung _ Kreuztabelle _ Syntax.md` (local
-    mirror of the online manual's `TABLE` syntax page) gives the *complete*
-    formal grammar — `TABLE [ taboptions ] = <parts> BY <parts>;` with
-    `taboptions` (`ADD`/`NAME`/`TITLE`/`CELLELEMENTS(…)`/`FRAMEELEMENTS(…)`/
-    `TABLEFORMATS(…)`/`CONTENTKEY`/`HIDDEN(…)`), each `part` being
-    `content [filter] [option]` where `content` is a constant, a bare
-    `<varname>`, or `<cellelement>( <varname> [<varname>] [BY <varname>] )`
-    (optionally followed by `:DESCRIPTION`/`:USEVARTITLE`/`:FORMAT`),
-    `filter` is `FILTER <condition> |`, and `option` is the `SORT`/
-    `TOP`/`BOTTOM`/`EXTREME`/`SLICE`/`LSLICE`/`RANGE` family. This is what
-    `classifyTable`'s eventual real rewrite should parse against, instead
-    of the narrow keyword-allow-list patch above. Confirmed directly from
-    this page: a `TABLE`/`OVERVIEW`/`XOVERVIEW` statement **never declares
-    a variable** — every `<varname>` slot (head/axis content, a
-    `<cellelement>(...)`'s argument(s), a `FILTER <condition>`) is a
-    reference to an existing variable, full stop. `diagnostics.ts`/
-    `modelDiagnostics.ts` (undefined-variable, kind-illegal-operations once
-    that exists) and — the maintainer's specific emphasis — go-to-definition
-    and especially **find-references** for a `<varname>` occurring in a
-    table statement should all be built directly against this grammar once
-    modeled, rather than the current best-effort keyword scan. `NAME
-    <tablename>` is the one thing this grammar *does* name/define (a table
-    name, referenced later via `SORT AS <tablename>`) — a different kind of
-    symbol than a variable, out of scope for the variable model itself but
-    worth keeping in mind so it isn't mistaken for a stray variable
-    reference once this is modeled. See also the sibling page
-    `Datenauswertung _ Kreuztabelle _ Weitere Optionen.md` for whatever it
-    adds beyond this syntax page.
+- **`$`-member spans, `POSTPROCESS` clause-local virtuals, and precise
+  `IN`/`IS`/`[ … ]` set-test handling** (design doc §5/§9 Q2) — not yet
+  precisely modeled in `variableModel.ts`; a separate effort from the
+  `TABLE`-statement grammar above (now done). Needs a full table-driven
+  spec pass (one case per §3/§4 row). Large — no further slice of this
+  attempted yet. See also the sibling manual page `Datenauswertung _
+  Kreuztabelle _ Weitere Optionen.md` for whatever it adds beyond the
+  `TABLE` syntax page already mined above.
 - **Kind-illegal operations** (`RECODE`/arithmetic on a `VARFAMILY`/
   `VARGROUP`, an `ALPHA` var in two `AlphaFamily`s, …) — a fuzzier, larger
   effort than the diagnostics already shipped; no single "which statement
