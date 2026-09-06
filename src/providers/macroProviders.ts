@@ -7,7 +7,11 @@
 
 import * as vscode from 'vscode';
 import { Scope } from '../core/scope';
-import { buildWorkspaceIndex, WorkspaceIndex } from '../core/symbolIndex';
+import {
+  buildWorkspaceIndex,
+  collectAllMacroCalls,
+  WorkspaceIndex,
+} from '../core/symbolIndex';
 import {
   findMacroDefinitions,
   findMacroCalls,
@@ -19,6 +23,15 @@ import {
   findHashNameAt,
   isExpandDefinitionNameAt,
   isReservedDirectiveKeyword,
+  parseDomacroStatement,
+  domacroGeneratedCalls,
+  DomacroStatement,
+  findExpandInTokenDefinitions,
+  findExpandInTokenRefAt,
+  isExpandInTokenDefinitionNameAt,
+  findExpandIncDefinitions,
+  isExpandIncDefinitionNameAt,
+  resolveExpandIncValueAt,
   MacroDefinition,
 } from '../core/macroExpansion';
 import {
@@ -45,6 +58,8 @@ async function buildMacroContext(document: vscode.TextDocument) {
     defs,
     macroIndex: buildMacroIndex(defs),
     expandDefs: findExpandDefinitions(index.order),
+    expandInTokenDefs: findExpandInTokenDefinitions(index.order),
+    expandIncDefs: findExpandIncDefinitions(index.order),
     reader,
   };
 }
@@ -175,6 +190,34 @@ function hoverSettingEnabled(kind: 'macros' | 'expands'): boolean {
   return config.get<boolean>(`hover.${kind}`, true) !== false;
 }
 
+const MAX_DOMACRO_PREVIEW = 5;
+
+// Hovering a "#DOMACRO(...)"/"#DOMACRO2(...)" statement shows the calls it
+// actually generates — one per loop item, constant parameters (if any)
+// appended — capped so a 200-iteration loop doesn't flood the hover.
+function domacroPreviewMarkdown(
+  stmt: DomacroStatement,
+  raw: string
+): vscode.MarkdownString {
+  const generated = domacroGeneratedCalls(stmt);
+  const shown = generated
+    .slice(0, MAX_DOMACRO_PREVIEW)
+    .map((c) => `#${c.name}( ${c.args.join(' ')} )`);
+  if (generated.length > MAX_DOMACRO_PREVIEW) {
+    shown.push(`… (${generated.length - MAX_DOMACRO_PREVIEW} more)`);
+  }
+
+  const md = new vscode.MarkdownString();
+  md.appendMarkdown(
+    `**${stmt.variant === 2 ? '#DOMACRO2' : '#DOMACRO'}** \`${raw}\`\n\n` +
+      `Expands to ${generated.length} call${
+        generated.length === 1 ? '' : 's'
+      } of \`#${stmt.macroName}\`:\n`
+  );
+  md.appendCodeblock(shown.join('\n'), 'gesstabs');
+  return md;
+}
+
 // "Show expanded macro": hovering a #name(...) call site shows this one
 // macro's body with the call's arguments substituted into its &params.
 // Nested #other(...) calls in the body are left as literal calls (hover
@@ -207,12 +250,66 @@ export class GesstabsMacroHoverProvider implements vscode.HoverProvider {
       }
 
       const lineText = document.lineAt(position.line).text;
+
+      // #EXPANDINTOKEN's own "&search&" reference shape is unrelated to a
+      // macro call and can sit embedded anywhere in a line (e.g. mid-
+      // DATAFILE path), not just at column 1 — checked before the call/
+      // #EXPAND branches below since it's an entirely different construct.
+      const tokenRef = findExpandInTokenRefAt(lineText, position.character);
+      if (
+        tokenRef &&
+        !isExpandInTokenDefinitionNameAt(lineText, position.character)
+      ) {
+        if (!hoverSettingEnabled('expands')) return null;
+        const { expandInTokenDefs } = await buildMacroContext(document);
+        if (token && token.isCancellationRequested) return null;
+        const localDefs = findExpandInTokenDefinitions(
+          document
+            .getText()
+            .split(/\r?\n/)
+            .map((text, line) => ({
+              file: normalizePath(document.uri.fsPath),
+              line,
+              text,
+            }))
+        );
+        const allTokenDefs = new Map([...expandInTokenDefs, ...localDefs]);
+        const value = allTokenDefs.get(tokenRef);
+        if (value === undefined) {
+          printDebugMessage(
+            `gesstabs: hover - "&${tokenRef}&" has no "#expandintoken &${tokenRef}& ..." definition`
+          );
+          return null;
+        }
+        const md = new vscode.MarkdownString();
+        md.appendMarkdown(`**EXPANDINTOKEN** \`&${tokenRef}&\`\n`);
+        md.appendCodeblock(value === '' ? ' ' : value, 'gesstabs');
+        return new vscode.Hover(md);
+      }
+
       const call = callAtPosition(lineText, position.character);
 
       // A directive keyword (#DEFINE, #MACRO, #ENDMACRO, ...) syntactically
       // looks exactly like a macro call or #EXPAND reference, but is
-      // neither — it's the preprocessor's own vocabulary.
+      // neither — it's the preprocessor's own vocabulary. #DOMACRO/
+      // #DOMACRO2 are the one exception: they're reserved, but still worth
+      // a hover of their own (what they actually expand to).
       if (call && isReservedDirectiveKeyword(call.name)) {
+        const domacroName = call.name.toLowerCase();
+        if (domacroName === 'domacro' || domacroName === 'domacro2') {
+          if (!hoverSettingEnabled('macros')) return null;
+          const stmt = parseDomacroStatement(call.raw);
+          if (stmt) {
+            const range = new vscode.Range(
+              new vscode.Position(position.line, call.index),
+              new vscode.Position(position.line, call.index + call.raw.length)
+            );
+            return new vscode.Hover(
+              domacroPreviewMarkdown(stmt, call.raw),
+              range
+            );
+          }
+        }
         printDebugMessage(
           `gesstabs: hover - "#${call.name}" is a gessTabs directive keyword, not a macro call, skipping`
         );
@@ -233,19 +330,47 @@ export class GesstabsMacroHoverProvider implements vscode.HoverProvider {
           return null;
         }
 
-        // Hovering the "#name" that THIS "#expand #name value" line itself
-        // declares would just echo the value already sitting right there —
-        // not useful, even if the same name also has another definition
-        // earlier or later in the program.
-        if (isExpandDefinitionNameAt(lineText, position.character)) {
+        // Hovering the "#name" that THIS "#expand #name value" (or
+        // "#expandinc #name value") line itself declares would just echo
+        // the value already sitting right there — not useful, even if the
+        // same name also has another definition earlier or later in the
+        // program.
+        if (
+          isExpandDefinitionNameAt(lineText, position.character) ||
+          isExpandIncDefinitionNameAt(lineText, position.character)
+        ) {
           printDebugMessage(
-            `gesstabs: hover - "#${hashName}" at ${position.line}:${position.character} is the name this "#expand" line itself defines, not a reference, skipping`
+            `gesstabs: hover - "#${hashName}" at ${position.line}:${position.character} is the name this "#expand"/"#expandinc" line itself defines, not a reference, skipping`
           );
           return null;
         }
 
-        const { expandDefs } = await buildMacroContext(document);
+        const { expandDefs, expandIncDefs, index } = await buildMacroContext(
+          document
+        );
         if (token && token.isCancellationRequested) return null;
+
+        // #EXPANDINC takes precedence over a plain #EXPAND with the same
+        // name — its counter reference shows the value this occurrence
+        // would actually resolve to (see resolveExpandIncValueAt), not a
+        // static text substitution.
+        const incDef = expandIncDefs.get(hashName);
+        if (incDef) {
+          const value = resolveExpandIncValueAt(
+            index.order,
+            incDef,
+            normalizePath(document.uri.fsPath),
+            position.line,
+            position.character
+          );
+          const md = new vscode.MarkdownString();
+          md.appendMarkdown(`**EXPANDINC** \`#${hashName}\`\n`);
+          md.appendCodeblock(
+            value !== undefined ? String(value) : '(unresolved)',
+            'gesstabs'
+          );
+          return new vscode.Hover(md);
+        }
 
         // Merge the workspace-resolved definitions with a direct scan of
         // the current document: an `#expand #name …` in *this* file must
@@ -405,13 +530,21 @@ export class GesstabsMacroCodeLensProvider implements vscode.CodeLensProvider {
     const ownDefs = context.defs.filter((d) => d.file === currentFile);
     if (ownDefs.length === 0) return [];
 
+    // Every call this workspace's compile could actually produce — a
+    // literal "#name(args)" call site, a #DOMACRO/#DOMACRO2 loop's own
+    // generated calls, and any further call those (or a literal call's)
+    // expanded body produces in turn (the handbook's indirect #call
+    // idiom). Counted once here rather than per-def below since it's the
+    // same whole-workspace pass regardless of which def is being counted.
+    const allCalls = collectAllMacroCalls(context.index, context.macroIndex);
+    const countByName = new Map<string, number>();
+    allCalls.forEach(({ macro }) => {
+      const key = macro.name.toLowerCase();
+      countByName.set(key, (countByName.get(key) ?? 0) + 1);
+    });
+
     return ownDefs.map((def) => {
-      const count = context.index.order.reduce((total, rl) => {
-        const calls = findMacroCalls(rl.text).filter(
-          (c) => c.name.toLowerCase() === def.name.toLowerCase()
-        );
-        return total + calls.length;
-      }, 0);
+      const count = countByName.get(def.name.toLowerCase()) ?? 0;
       const range = new vscode.Range(
         new vscode.Position(def.defLine, 0),
         new vscode.Position(def.defLine, 0)

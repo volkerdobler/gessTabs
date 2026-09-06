@@ -62,6 +62,7 @@ import {
   GesstabsExternalNamesManager,
   GesstabsDataSourceLinkProvider,
 } from './providers/externalNamesProvider';
+import { GesstabsFileReferenceLinkProvider } from './providers/fileReferenceLinkProvider';
 
 // this method is called when your extension is activated
 // your extension is activated the very first time the command is executed
@@ -228,6 +229,13 @@ export function activate(context: vscode.ExtensionContext) {
     vscode.languages.registerDocumentLinkProvider(
       { language: 'gesstabs', scheme: 'file' },
       new GesstabsDataSourceLinkProvider()
+    )
+  );
+
+  context.subscriptions.push(
+    vscode.languages.registerDocumentLinkProvider(
+      { language: 'gesstabs', scheme: 'file' },
+      new GesstabsFileReferenceLinkProvider()
     )
   );
 

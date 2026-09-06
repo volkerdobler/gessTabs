@@ -231,6 +231,62 @@ describe('findAllMacroProducedNames', () => {
     );
     expect(findAllMacroProducedNames(index)).to.have.length(0);
   });
+
+  it('collects the names a #DOMACRO loop produces, one call per loop item', () => {
+    const files = {
+      [p('main.tab')]: [
+        '#macro #mitOC( &varname )',
+        'compute &varname_OC = &varname;',
+        '#endmacro',
+        '#domacro( mitOC F1 F2 F3 )',
+      ].join('\n'),
+    };
+    const index = buildWorkspaceIndex([p('main.tab')], makeReader(files));
+    const names = findAllMacroProducedNames(index);
+    expect(names.map((n) => n.name)).to.deep.equal([
+      'f1_oc',
+      'f2_oc',
+      'f3_oc',
+    ]);
+    // Every generated call is attributed to the one #DOMACRO statement.
+    expect(names.every((n) => n.callSite.line === 3)).to.be.true;
+  });
+
+  it('collects the names a #DOMACRO2 loop produces, constant params included', () => {
+    const files = {
+      [p('main.tab')]: [
+        '#macro #stat( &index &namepart &statistik )',
+        'compute &namepart&index_result = 1;',
+        '#endmacro',
+        '#domacro2( stat 1 : 3 ; Var mean )',
+      ].join('\n'),
+    };
+    const index = buildWorkspaceIndex([p('main.tab')], makeReader(files));
+    const names = findAllMacroProducedNames(index);
+    expect(names.map((n) => n.name)).to.deep.equal([
+      'var1_result',
+      'var2_result',
+      'var3_result',
+    ]);
+  });
+
+  it('follows the handbook #call indirect-call idiom through to the real variable', () => {
+    const files = {
+      [p('main.tab')]: [
+        '#macro #call( &index &namepart &macroname )',
+        '#&macroname( &namepart&index )',
+        '#endmacro',
+        '#macro #mitOC( &varname )',
+        'compute &varname_OC = &varname;',
+        '#endmacro',
+        '#call( 1 F mitOC )',
+      ].join('\n'),
+    };
+    const index = buildWorkspaceIndex([p('main.tab')], makeReader(files));
+    const names = findAllMacroProducedNames(index);
+    expect(names.map((n) => n.name)).to.deep.equal(['f1_oc']);
+    expect(names[0].callSite.text).to.equal('#call( 1 F mitOC )');
+  });
 });
 
 describe('findAllWordRangesInLine', () => {

@@ -27,6 +27,10 @@ import {
   findMacroCalls,
   buildMacroIndex,
   expandLines,
+  parseDomacroStatement,
+  domacroGeneratedCalls,
+  flattenMacroCalls,
+  isReservedDirectiveKeyword,
   MacroDefinition,
 } from './macroExpansion';
 
@@ -93,6 +97,55 @@ export interface MacroProducedDefinition {
 
 const stripQuotes = (s: string) => s.replace(/^["']|["']$/g, '');
 
+export interface ResolvedMacroCall {
+  macro: MacroDefinition;
+  args: string[];
+  // The real, literal source line responsible for this call — either a
+  // direct "#name(args)" call site, or a "#DOMACRO"/"#DOMACRO2" statement
+  // whose loop generated it (possibly several ResolvedMacroCalls share the
+  // same callSite, one per loop item).
+  callSite: ResolvedLine;
+}
+
+// Every macro call this workspace's compile could actually produce — not
+// just the ones written out literally as "#name(args)". Also walks:
+//   - a "#DOMACRO"/"#DOMACRO2" statement's own generated calls (one per
+//     loop item, see macroExpansion.ts's domacroGeneratedCalls) — a plain
+//     per-line findMacroCalls scan never sees these, since the callee name
+//     never appears literally as "#macroname(" anywhere in the source;
+//   - any further call a resolved call's own expanded body produces in
+//     turn (flattenMacroCalls) — including the handbook's
+//     `#call(&index &namepart &macroname)` indirect-call idiom, where the
+//     callee name only becomes literal after substitution.
+// Feeds findAllMacroProducedNames/findMacroProducedDefinition below (P1.5)
+// and the macro-usage CodeLens (src/providers/macroProviders.ts).
+export function collectAllMacroCalls(
+  index: WorkspaceIndex,
+  macroIndex: Map<string, MacroDefinition>
+): ResolvedMacroCall[] {
+  const out: ResolvedMacroCall[] = [];
+  index.order.forEach((rl) => {
+    const direct = findMacroCalls(rl.text)[0];
+    let roots: { name: string; args: string[] }[];
+    if (direct && !isReservedDirectiveKeyword(direct.name)) {
+      roots = [{ name: direct.name, args: direct.args }];
+    } else {
+      const domacro = parseDomacroStatement(rl.text);
+      roots = domacro ? domacroGeneratedCalls(domacro) : [];
+    }
+
+    roots.forEach((root) => {
+      const macro = macroIndex.get(root.name.toLowerCase());
+      if (!macro) return;
+      out.push({ macro, args: root.args, callSite: rl });
+      flattenMacroCalls(macro, root.args, macroIndex).forEach((fc) => {
+        out.push({ macro: fc.macro, args: fc.args, callSite: rl });
+      });
+    });
+  });
+  return out;
+}
+
 // Whether `lineText` is a statement whose `defines` declare `word` exactly
 // — the statement classifier (src/core/variableStatements.ts), covering
 // the whole §3 inventory rather than the old regex-based
@@ -117,7 +170,9 @@ function bodyLineDeclaresName(lineText: string, word: string): boolean {
 // checks whether the *expanded* line now defines `word`. Mirrors
 // findDefinitionLine's backward, no-forward-reference scan so the two
 // agree on which call site is "the" one when a macro is called more than
-// once with the same argument.
+// once with the same argument. Calls come from collectAllMacroCalls, so a
+// #DOMACRO/#DOMACRO2-generated or indirectly-flattened call is found here
+// too, not just a literal "#name(args)" one.
 export function findMacroProducedDefinition(
   index: WorkspaceIndex,
   fromFile: string,
@@ -130,15 +185,12 @@ export function findMacroProducedDefinition(
   const pos = index.order.findIndex(
     (l) => l.file === fromFile && l.line === fromLine
   );
-  const searchSpace = pos === -1 ? index.order : index.order.slice(0, pos);
+  const searchIndex: WorkspaceIndex =
+    pos === -1 ? index : { ...index, order: index.order.slice(0, pos) };
+  const calls = collectAllMacroCalls(searchIndex, macroIndex);
 
-  for (let i = searchSpace.length - 1; i >= 0; i--) {
-    const rl = searchSpace[i];
-    const call = findMacroCalls(rl.text)[0];
-    if (!call) continue;
-    const macro = macroIndex.get(call.name.toLowerCase());
-    if (!macro) continue;
-
+  for (let i = calls.length - 1; i >= 0; i--) {
+    const { macro, args, callSite } = calls[i];
     const bodyLines = index.order.filter(
       (l) =>
         l.file === macro.file &&
@@ -148,14 +200,14 @@ export function findMacroProducedDefinition(
     const substituted = expandLines(
       bodyLines.map((l) => l.text),
       macro.params,
-      call.args
+      args
     );
     for (let j = 0; j < bodyLines.length; j++) {
       if (bodyLineDeclaresName(substituted[j], word)) {
         return {
           macro,
           bodyLine: { ...bodyLines[j], text: substituted[j] },
-          callSite: rl,
+          callSite,
         };
       }
     }
@@ -198,39 +250,36 @@ export function findAllMacroProducedNames(
   if (macroIndex.size === 0) return [];
 
   const out: MacroProducedName[] = [];
-  index.order.forEach((rl) => {
-    const call = findMacroCalls(rl.text)[0];
-    if (!call) return;
-    const macro = macroIndex.get(call.name.toLowerCase());
-    if (!macro) return;
-
-    const bodyLines = index.order.filter(
-      (l) =>
-        l.file === macro.file &&
-        l.line > macro.defLine &&
-        l.line < macro.endLine
-    );
-    const substituted = expandLines(
-      bodyLines.map((l) => l.text),
-      macro.params,
-      call.args
-    );
-    bodyLines.forEach((bl, j) => {
-      const cls = classifyStatement(substituted[j]);
-      if (!cls) return;
-      cls.defines.forEach((span) => {
-        out.push({
-          name: span.name,
-          raw: span.raw.replace(/^["']|["']$/g, ''),
-          defKind: cls.defKind ?? 'assignment',
-          targetKind: cls.targetKind ?? 'unknown',
-          callSite: rl,
-          bodyLine: { ...bl, text: substituted[j] },
-          bodyText: substituted[j],
+  collectAllMacroCalls(index, macroIndex).forEach(
+    ({ macro, args, callSite }) => {
+      const bodyLines = index.order.filter(
+        (l) =>
+          l.file === macro.file &&
+          l.line > macro.defLine &&
+          l.line < macro.endLine
+      );
+      const substituted = expandLines(
+        bodyLines.map((l) => l.text),
+        macro.params,
+        args
+      );
+      bodyLines.forEach((bl, j) => {
+        const cls = classifyStatement(substituted[j]);
+        if (!cls) return;
+        cls.defines.forEach((span) => {
+          out.push({
+            name: span.name,
+            raw: span.raw.replace(/^["']|["']$/g, ''),
+            defKind: cls.defKind ?? 'assignment',
+            targetKind: cls.targetKind ?? 'unknown',
+            callSite,
+            bodyLine: { ...bl, text: substituted[j] },
+            bodyText: substituted[j],
+          });
         });
       });
-    });
-  });
+    }
+  );
   return out;
 }
 

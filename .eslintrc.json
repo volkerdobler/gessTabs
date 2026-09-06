@@ -88,6 +88,12 @@
       }
     },
     {
+      "files": ["src/providers/fileReferenceLinkProvider.ts"],
+      "rules": {
+        "class-methods-use-this": "off"
+      }
+    },
+    {
       "files": ["src/providers/diagnosticsProvider.ts"],
       "rules": {
         "max-classes-per-file": ["error", 4],

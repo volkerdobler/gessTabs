@@ -12,6 +12,17 @@ import {
   findHashNameAt,
   isExpandDefinitionNameAt,
   isReservedDirectiveKeyword,
+  expandLoopList,
+  parseDomacroStatement,
+  domacroGeneratedCalls,
+  flattenMacroCalls,
+  findExpandInTokenDefinitions,
+  findExpandInTokenRefAt,
+  isExpandInTokenDefinitionNameAt,
+  resolveExpandInTokens,
+  findExpandIncDefinitions,
+  isExpandIncDefinitionNameAt,
+  resolveExpandIncValueAt,
   MacroSourceLine,
 } from '../src/core/macroExpansion';
 
@@ -483,5 +494,279 @@ describe('isExpandDefinitionNameAt', () => {
 
   it('is true even when the definition value is empty', () => {
     expect(isExpandDefinitionNameAt('#expand #kopf', 10)).to.be.true;
+  });
+});
+
+describe('expandLoopList', () => {
+  it('splits a plain whitespace-separated list (handbook #mitOC)', () => {
+    expect(expandLoopList('F1 F2 F3 F4 F5')).to.deep.equal([
+      'F1',
+      'F2',
+      'F3',
+      'F4',
+      'F5',
+    ]);
+  });
+
+  it('expands a "1:100"-shaped range with no surrounding spaces', () => {
+    expect(expandLoopList('1:5')).to.deep.equal(['1', '2', '3', '4', '5']);
+  });
+
+  it('expands a "1 : 100"-shaped range with surrounding spaces (handbook spelling)', () => {
+    expect(expandLoopList('1 : 5')).to.deep.equal(['1', '2', '3', '4', '5']);
+  });
+
+  it('leaves a malformed range (b < a) as a literal token', () => {
+    expect(expandLoopList('5:1')).to.deep.equal(['5:1']);
+  });
+
+  it('leaves a non-numeric range as a literal token', () => {
+    expect(expandLoopList('a:b')).to.deep.equal(['a:b']);
+  });
+
+  it('honours a quoted token as one item', () => {
+    expect(expandLoopList('F1 "F 2" F3')).to.deep.equal(['F1', 'F 2', 'F3']);
+  });
+});
+
+describe('parseDomacroStatement', () => {
+  it('parses a plain #DOMACRO (handbook #mitOC)', () => {
+    const stmt = parseDomacroStatement('#domacro( mitOC F1 F2 F3 F4 F5 )');
+    expect(stmt).to.deep.equal({
+      variant: 1,
+      macroName: 'mitOC',
+      loopItems: ['F1', 'F2', 'F3', 'F4', 'F5'],
+      constParams: [],
+    });
+  });
+
+  it('parses a #DOMACRO with a numeric range (handbook #mitOC_F)', () => {
+    const stmt = parseDomacroStatement('#domacro(  mitOC_F 1:100 )');
+    expect(stmt?.macroName).to.equal('mitOC_F');
+    expect(stmt?.loopItems).to.have.length(100);
+    expect(stmt?.loopItems[0]).to.equal('1');
+    expect(stmt?.loopItems[99]).to.equal('100');
+  });
+
+  it('parses a #DOMACRO2 with a range and constant parameters (handbook #call)', () => {
+    const stmt = parseDomacroStatement(
+      '#domacro2( call 1 : 200 ; Var mitOC )'
+    );
+    expect(stmt?.variant).to.equal(2);
+    expect(stmt?.macroName).to.equal('call');
+    expect(stmt?.loopItems).to.have.length(200);
+    expect(stmt?.constParams).to.deep.equal(['Var', 'mitOC']);
+  });
+
+  it('parses a #DOMACRO2 whose constant parameter is a quoted, colon-containing token', () => {
+    const stmt = parseDomacroStatement(
+      `#domacro2( stat 1:200 ; Var "Meantest :format '#,#'" )`
+    );
+    expect(stmt?.constParams).to.deep.equal(['Var', "Meantest :format '#,#'"]);
+  });
+
+  it('is case-insensitive on the keyword itself', () => {
+    expect(parseDomacroStatement('#DOMACRO( mitOC F1 )')?.macroName).to.equal(
+      'mitOC'
+    );
+  });
+
+  it('returns undefined for a #DOMACRO3/#DOMACRO4 statement (CSV-driven, out of scope)', () => {
+    expect(parseDomacroStatement('#domacro3( mitOC data.csv )')).to.be
+      .undefined;
+    expect(parseDomacroStatement('#domacro4( data.csv )')).to.be.undefined;
+  });
+
+  it('returns undefined for an unrelated statement', () => {
+    expect(parseDomacroStatement('compute a = 1;')).to.be.undefined;
+  });
+});
+
+describe('domacroGeneratedCalls', () => {
+  it('generates one call per loop item for a #DOMACRO', () => {
+    const stmt = parseDomacroStatement('#domacro( mitOC F1 F2 )')!;
+    expect(domacroGeneratedCalls(stmt)).to.deep.equal([
+      { name: 'mitOC', args: ['F1'] },
+      { name: 'mitOC', args: ['F2'] },
+    ]);
+  });
+
+  it('appends the constant parameters to every generated #DOMACRO2 call', () => {
+    const stmt = parseDomacroStatement(
+      '#domacro2( call 1 : 2 ; Var mitOC )'
+    )!;
+    expect(domacroGeneratedCalls(stmt)).to.deep.equal([
+      { name: 'call', args: ['1', 'Var', 'mitOC'] },
+      { name: 'call', args: ['2', 'Var', 'mitOC'] },
+    ]);
+  });
+});
+
+describe('flattenMacroCalls', () => {
+  it('resolves the handbook #call indirect-call idiom into a real #mitOC call', () => {
+    const lines = src(
+      [
+        '#macro #call( &index &namepart &macroname )',
+        '#&macroname( &namepart&index )',
+        '#endmacro',
+        '#macro #mitOC( &varname )',
+        'compute &varname_OC = &varname;',
+        '#endmacro',
+      ].join('\n')
+    );
+    const defs = findMacroDefinitions(lines);
+    const macroIndex = buildMacroIndex(defs);
+    const callDef = defs.find((d) => d.name === 'call')!;
+
+    const flattened = flattenMacroCalls(callDef, ['1', 'F', 'mitOC'], macroIndex);
+    expect(flattened).to.have.length(1);
+    expect(flattened[0].macro.name).to.equal('mitOC');
+    expect(flattened[0].args).to.deep.equal(['F1']);
+  });
+
+  it('resolves a plain nested literal call in a macro body', () => {
+    const lines = src(
+      [
+        '#macro #outer( &v )',
+        '#inner( &v )',
+        '#endmacro',
+        '#macro #inner( &v )',
+        'compute &v = 1;',
+        '#endmacro',
+      ].join('\n')
+    );
+    const defs = findMacroDefinitions(lines);
+    const macroIndex = buildMacroIndex(defs);
+    const outer = defs.find((d) => d.name === 'outer')!;
+
+    const flattened = flattenMacroCalls(outer, ['x'], macroIndex);
+    expect(flattened).to.have.length(1);
+    expect(flattened[0].macro.name).to.equal('inner');
+    expect(flattened[0].args).to.deep.equal(['x']);
+  });
+
+  it('does not loop on a macro that (transitively) calls itself', () => {
+    const lines = src(
+      [
+        '#macro #a( &v )',
+        '#b( &v )',
+        '#endmacro',
+        '#macro #b( &v )',
+        '#a( &v )',
+        '#endmacro',
+      ].join('\n')
+    );
+    const defs = findMacroDefinitions(lines);
+    const macroIndex = buildMacroIndex(defs);
+    const a = defs.find((d) => d.name === 'a')!;
+
+    const flattened = flattenMacroCalls(a, ['x'], macroIndex);
+    // #a -> #b -> #a is reported once; recursing into that second #a is
+    // where the cycle guard stops it (it's already on the path).
+    expect(flattened.map((f) => f.macro.name)).to.deep.equal(['b', 'a']);
+  });
+
+  it('returns nothing for a macro with no calls in its body', () => {
+    const lines = src('#macro #leaf( &v )\ncompute &v = 1;\n#endmacro');
+    const defs = findMacroDefinitions(lines);
+    const macroIndex = buildMacroIndex(defs);
+    expect(flattenMacroCalls(defs[0], ['x'], macroIndex)).to.deep.equal([]);
+  });
+});
+
+describe('#EXPANDINTOKEN', () => {
+  it('finds a definition and resolves it (handbook example)', () => {
+    const lines = src('#expandintoken &land& germany');
+    const defs = findExpandInTokenDefinitions(lines);
+    expect(defs.get('land')).to.equal('germany');
+    expect(
+      resolveExpandInTokens('DATAFILE = study&land&.dat;', defs)
+    ).to.equal('DATAFILE = studygermany.dat;');
+  });
+
+  it('leaves an unknown search token untouched', () => {
+    const defs = findExpandInTokenDefinitions(src('#expandintoken &x& y'));
+    expect(resolveExpandInTokens('a&unknown&b', defs)).to.equal(
+      'a&unknown&b'
+    );
+  });
+
+  it('findExpandInTokenRefAt finds the reference at a given position', () => {
+    const text = 'DATAFILE = study&land&.dat;';
+    // "&land&" spans indices 16-22
+    expect(findExpandInTokenRefAt(text, 18)).to.equal('land');
+    expect(findExpandInTokenRefAt(text, 0)).to.be.undefined;
+  });
+
+  it('never confuses a single-sided macro "&param" with a "&search&" token', () => {
+    expect(findExpandInTokenRefAt('compute &varname_OC = &varname;', 10)).to
+      .be.undefined;
+  });
+
+  it('isExpandInTokenDefinitionNameAt is true on the declared name, false elsewhere', () => {
+    const line = '#expandintoken &land& germany';
+    expect(isExpandInTokenDefinitionNameAt(line, 17)).to.be.true;
+    expect(isExpandInTokenDefinitionNameAt(line, 25)).to.be.false;
+  });
+});
+
+describe('#EXPANDINC', () => {
+  it('finds a definition (handbook #keyvalue example)', () => {
+    const lines = src('#expandinc #keyvalue 1000');
+    const defs = findExpandIncDefinitions(lines);
+    expect(defs.get('keyvalue')).to.deep.equal({
+      name: 'keyvalue',
+      start: 1000,
+      file: '/main.tab',
+      line: 0,
+    });
+  });
+
+  it('increments before every subsequent reference (1001, 1002, 1003 — handbook example)', () => {
+    const lines = src(
+      [
+        '#expandinc #keyvalue 1000',
+        'title = "#keyvalue";',
+        'title = "#keyvalue";',
+        'title = "#keyvalue";',
+      ].join('\n')
+    );
+    const def = findExpandIncDefinitions(lines).get('keyvalue')!;
+    expect(resolveExpandIncValueAt(lines, def, '/main.tab', 1, 15)).to.equal(
+      1001
+    );
+    expect(resolveExpandIncValueAt(lines, def, '/main.tab', 2, 15)).to.equal(
+      1002
+    );
+    expect(resolveExpandIncValueAt(lines, def, '/main.tab', 3, 15)).to.equal(
+      1003
+    );
+  });
+
+  it('counts only references at or before the given character on the target line', () => {
+    const lines = src('title = "#keyvalue #keyvalue #keyvalue";');
+    const def = findExpandIncDefinitions(
+      src('#expandinc #keyvalue 1000\n' + lines[0].text)
+    ).get('keyvalue')!;
+    const fullLines = src(
+      '#expandinc #keyvalue 1000\ntitle = "#keyvalue #keyvalue #keyvalue";'
+    );
+    // second "#keyvalue" starts at index 19 on line 1
+    expect(
+      resolveExpandIncValueAt(fullLines, def, '/main.tab', 1, 19)
+    ).to.equal(1002);
+  });
+
+  it('returns undefined when the name is never referenced', () => {
+    const lines = src('#expandinc #keyvalue 1000\ntitle = "nothing";');
+    const def = findExpandIncDefinitions(lines).get('keyvalue')!;
+    expect(resolveExpandIncValueAt(lines, def, '/main.tab', 1, 5)).to.be
+      .undefined;
+  });
+
+  it('isExpandIncDefinitionNameAt is true on the declared name', () => {
+    const line = '#expandinc #keyvalue 1000';
+    expect(isExpandIncDefinitionNameAt(line, 14)).to.be.true;
+    expect(isExpandIncDefinitionNameAt(line, 22)).to.be.false;
   });
 });

@@ -22,17 +22,18 @@
 // case-insensitivity — unlike #define/#ifdef/#expand names, which the
 // compiler documents as case-sensitive; see src/core/includeGraph.ts).
 //
-// Deliberately out of scope, same spirit as the rest of this codebase's
-// documented simplifications:
-// - #DOMACRO/#DOMACRO2/#DOMACRO3/#DOMACRO4 looping expansion (repeats a
-//   call over a range/list/CSV file) — only plain #name(args) direct
-//   calls are handled.
-// - A macro whose own name is itself a parameter (e.g. the handbook's
-//   `#call(&index &namepart &macroname)` expanding to
-//   `#&macroname(&namepart&index)`) — the callee name doesn't appear
-//   literally in the source, so it can't be resolved without a full
-//   expansion engine tracking argument bindings across calls. Calls like
-//   this are simply not recognized as calls to a *known* macro.
+// #DOMACRO/#DOMACRO2 looping expansion (parseDomacroStatement,
+// domacroGeneratedCalls) and the indirect-call idiom where a macro body's
+// own call target is itself a parameter — the handbook's
+// `#call(&index &namepart &macroname)` expanding to
+// `#&macroname(&namepart&index)`, which only becomes a literal call once
+// substituted — are both handled (flattenMacroCalls resolves the latter by
+// re-scanning a macro's already-substituted body for further calls).
+//
+// Still out of scope, same spirit as the rest of this codebase's documented
+// simplifications: #DOMACRO3/#DOMACRO4 (the parameter list comes from a CSV
+// file rather than the source text itself — genuine file I/O, which this
+// module deliberately stays free of; see the module doc comment above).
 
 export interface MacroDefinition {
   name: string;
@@ -72,6 +73,47 @@ const hashNameRe = /#([A-Za-z_]\w*)/g;
 // silently ignored (which looked like "#name isn't an #EXPAND at all").
 const expandDefinitionRe = /^\s*#expand\s+#(\S+)(?:[ \t]+(.*))?\s*$/i;
 
+// The preprocessor/macro-engine's own directive keywords — #DEFINE,
+// #MACRO, #IFDEF, #ENDMACRO, etc. — syntactically look exactly like a
+// macro call ("#name(") or a bare #EXPAND reference ("#name"), but are
+// neither: they're the engine's own vocabulary, not a user-defined name.
+// Confirmed directly by a gessTabs developer as the reserved set to treat
+// this way. Matched case-insensitively — this is about recognizing the
+// keyword itself, not a user-defined #define/#ifdef *name* (which the
+// compiler does document as case-sensitive; see the module doc comment).
+// Defined this early in the file (rather than near stripExpandComments,
+// where it more naturally reads) purely so flattenMacroCalls below can
+// call it without a lexical use-before-define.
+const reservedDirectiveKeywords = new Set([
+  'define',
+  'domacro',
+  'domacro2',
+  'domacro3',
+  'domacro4',
+  'else',
+  'end',
+  'endmacro',
+  'expand',
+  'expandinc',
+  'expandindomacro',
+  'expandintoken',
+  'ifdef',
+  'ifempty',
+  'ifexist',
+  'ifndef',
+  'ifnempty',
+  'ifnexist',
+  'ifnexists',
+  'ignorecase',
+  'macro',
+  'macroend',
+  'undefine',
+]);
+
+export function isReservedDirectiveKeyword(name: string): boolean {
+  return reservedDirectiveKeywords.has(name.toLowerCase());
+}
+
 // Scans forward from `openIndex` (the position of an already-matched "(")
 // for its matching ")", tracking nesting depth and skipping over anything
 // inside a '...'/"..." string — gessTabs call arguments are routinely
@@ -109,7 +151,7 @@ function findMatchingParen(
 // compiler actually substitutes into a macro body. An empty quoted token
 // ("") is a real, deliberate empty argument and must still be kept —
 // `hasToken` (rather than `current.length > 0`) tracks that distinction.
-function parseTokenList(raw: string): string[] {
+export function parseTokenList(raw: string): string[] {
   const tokens: string[] = [];
   let current = '';
   let quote: string | null = null;
@@ -229,6 +271,131 @@ export function findMacroCalls(text: string): MacroCall[] {
   ];
 }
 
+// A "1:100"-shaped range token in a #DOMACRO/#DOMACRO2 looplist (manual:
+// "Solche Zahlenfolgen kann man ... durch die Form 1 : 100 abkürzen") — the
+// space around ":" is optional, both "1:100" and "1 : 100" appear in the
+// handbook's own examples.
+const rangeTokenRe = /^(\d+)\s*:\s*(\d+)$/;
+
+// Splits a #DOMACRO/#DOMACRO2 looplist into its individual items,
+// expanding any "a:b" range inline. parseTokenList already tokenizes on
+// whitespace (honouring quoted tokens), so "1 : 100" first comes back as
+// three separate tokens ("1", ":", "100") — re-merged here before the
+// range check. A malformed range (non-numeric, or b < a) is left as a
+// literal token rather than silently dropped, same "don't guess" spirit
+// as the rest of this module.
+export function expandLoopList(raw: string): string[] {
+  const rawTokens = parseTokenList(raw);
+  const merged: string[] = [];
+  for (let i = 0; i < rawTokens.length; i += 1) {
+    if (rawTokens[i] === ':' && merged.length > 0 && i + 1 < rawTokens.length) {
+      merged[merged.length - 1] = `${merged[merged.length - 1]}:${
+        rawTokens[i + 1]
+      }`;
+      i += 1;
+      continue;
+    }
+    merged.push(rawTokens[i]);
+  }
+
+  const out: string[] = [];
+  merged.forEach((tok) => {
+    const m = tok.match(rangeTokenRe);
+    if (!m) {
+      out.push(tok);
+      return;
+    }
+    const from = parseInt(m[1], 10);
+    const to = parseInt(m[2], 10);
+    if (Number.isNaN(from) || Number.isNaN(to) || to < from) {
+      out.push(tok);
+      return;
+    }
+    for (let n = from; n <= to; n += 1) out.push(String(n));
+  });
+  return out;
+}
+
+export interface DomacroStatement {
+  // 1 for #DOMACRO( macroname looplist ), 2 for
+  // #DOMACRO2( macroname looplist ; constparams ).
+  variant: 1 | 2;
+  macroName: string;
+  loopItems: string[];
+  // Only ever non-empty for variant 2 — the parameters after the ";",
+  // appended to every generated call alongside its own loop item (manual:
+  // "danach können weitere 'konstante' Parameter übergeben werden").
+  constParams: string[];
+}
+
+// #DOMACRO( <macroname> <looplist> ) / #DOMACRO2( <macroname> <looplist> ;
+// <constparams> ) — same column-1 "self-terminating at its own balanced
+// ')'" call shape as an ordinary macro call (see the module doc comment),
+// so this expects to be given one already-isolated statement's text (e.g.
+// a LogicalStatement.text from statements.ts, or a single source line for
+// the common single-line shape) rather than scanning for it itself.
+const domacroRe = /^\s*#domacro\s*\(\s*(\S+)\s+([\s\S]*?)\s*\)\s*$/i;
+const domacro2Re = /^\s*#domacro2\s*\(\s*(\S+)\s+([\s\S]*?)\s*\)\s*$/i;
+
+// Splits "<looplist> ; <constparams>" on the first top-level ";" (a
+// #DOMACRO2 argument never legitimately contains one otherwise) — a plain
+// scan rather than parseTokenList's tokenizer, since ";" isn't whitespace
+// and would otherwise end up glued to a neighbouring token.
+function splitOnSemicolon(text: string): [string, string | undefined] {
+  let quote: string | null = null;
+  for (let i = 0; i < text.length; i += 1) {
+    const ch = text[i];
+    if (quote) {
+      if (ch === quote) quote = null;
+      continue;
+    }
+    if (ch === '"' || ch === "'") {
+      quote = ch;
+      continue;
+    }
+    if (ch === ';') return [text.slice(0, i), text.slice(i + 1)];
+  }
+  return [text, undefined];
+}
+
+export function parseDomacroStatement(
+  text: string
+): DomacroStatement | undefined {
+  const m2 = text.match(domacro2Re);
+  if (m2) {
+    const [loopPart, constPart] = splitOnSemicolon(m2[2]);
+    return {
+      variant: 2,
+      macroName: m2[1].replace(/^#/, ''),
+      loopItems: expandLoopList(loopPart),
+      constParams: constPart !== undefined ? parseTokenList(constPart) : [],
+    };
+  }
+  const m1 = text.match(domacroRe);
+  if (m1) {
+    return {
+      variant: 1,
+      macroName: m1[1].replace(/^#/, ''),
+      loopItems: expandLoopList(m1[2]),
+      constParams: [],
+    };
+  }
+  return undefined;
+}
+
+// The individual macro calls a #DOMACRO/#DOMACRO2 statement expands to —
+// one per loop item, each with the constant parameters (if any) appended
+// (manual §"Makros": "#call( 1 Var mitOC )" for
+// "#domacro2( call 1 : 200 ; Var mitOC )"'s first iteration).
+export function domacroGeneratedCalls(
+  stmt: DomacroStatement
+): { name: string; args: string[] }[] {
+  return stmt.loopItems.map((item) => ({
+    name: stmt.macroName,
+    args: [item, ...stmt.constParams],
+  }));
+}
+
 function substituteParams(
   line: string,
   params: string[],
@@ -268,6 +435,70 @@ export function expandLines(
 // lines. See expandLines for what is and isn't done.
 export function expandMacro(macro: MacroDefinition, args: string[]): string[] {
   return expandLines(macro.body, macro.params, args);
+}
+
+export interface FlattenedCall {
+  macro: MacroDefinition;
+  args: string[];
+  // Macro names from (but not including) the root call down to this one,
+  // lower-cased — used as this function's own cycle guard, and available
+  // to callers that want to show the chain.
+  path: string[];
+}
+
+// Expands `macro` with `args` and re-scans the resulting body for further
+// calls to a *known* macro — including one whose name only becomes literal
+// after this very substitution, the handbook's indirect-call idiom:
+// `#macro #call( &index &namepart &macroname )` / `#&macroname( &namepart&index )`
+// `#endmacro` — hovering/counting `#call( 1 F mitOC )` alone never shows
+// that it also calls `#mitOC`, because "#mitOC(" never appears literally
+// anywhere in the source; it only exists once `&macroname` has been
+// substituted. `findMacroCalls` doesn't care that its input came from a
+// substitution rather than a real document line, so simply re-running it
+// against each expanded body line finds these.
+//
+// A nested *literal* `#other(...)` call written directly in a macro body
+// (unrelated to the indirect idiom above) is resolved the same way — see
+// the macro hover's own doc comment for why the hover itself deliberately
+// does NOT do this (a preview should show one macro's body, not a fully-
+// flattened compile); this function is for callers that need the real
+// transitive call set (usage counts, macro-produced-name enumeration), not
+// a preview.
+//
+// `path` guards against a macro (directly or transitively) calling itself;
+// `maxDepth` backstops any other runaway chain. Neither situation is
+// expected in practice — no handbook example nests this deep — but both
+// are cheap to guard against.
+export function flattenMacroCalls(
+  macro: MacroDefinition,
+  args: string[],
+  macroIndex: Map<string, MacroDefinition>,
+  maxDepth = 10,
+  path: string[] = []
+): FlattenedCall[] {
+  const key = macro.name.toLowerCase();
+  if (maxDepth <= 0 || path.includes(key)) return [];
+  const nextPath = [...path, key];
+
+  const out: FlattenedCall[] = [];
+  expandMacro(macro, args).forEach((line) => {
+    findMacroCalls(line).forEach((call) => {
+      if (isReservedDirectiveKeyword(call.name)) return;
+      const target = macroIndex.get(call.name.toLowerCase());
+      if (!target) return;
+      out.push({ macro: target, args: call.args, path: nextPath });
+      out.push(
+        ...flattenMacroCalls(
+          target,
+          call.args,
+          macroIndex,
+          maxDepth - 1,
+          nextPath
+        )
+      );
+    });
+  });
+  return out;
 }
 
 // Resolves a "&paramname" reference at a given character offset back to
@@ -372,44 +603,6 @@ export function findHashNameAt(
   return undefined;
 }
 
-// The preprocessor/macro-engine's own directive keywords — #DEFINE,
-// #MACRO, #IFDEF, #ENDMACRO, etc. — syntactically look exactly like a
-// macro call ("#name(") or a bare #EXPAND reference ("#name"), but are
-// neither: they're the engine's own vocabulary, not a user-defined name.
-// Confirmed directly by a gessTabs developer as the reserved set to treat
-// this way. Matched case-insensitively — this is about recognizing the
-// keyword itself, not a user-defined #define/#ifdef *name* (which the
-// compiler does document as case-sensitive; see the module doc comment).
-const reservedDirectiveKeywords = new Set([
-  'define',
-  'domacro',
-  'domacro2',
-  'domacro3',
-  'domacro4',
-  'else',
-  'end',
-  'endmacro',
-  'expand',
-  'expandinc',
-  'expandindomacro',
-  'expandintoken',
-  'ifdef',
-  'ifempty',
-  'ifexist',
-  'ifndef',
-  'ifnempty',
-  'ifnexist',
-  'ifnexists',
-  'ignorecase',
-  'macro',
-  'macroend',
-  'undefine',
-]);
-
-export function isReservedDirectiveKeyword(name: string): boolean {
-  return reservedDirectiveKeywords.has(name.toLowerCase());
-}
-
 const expandBlockCommentRe = /\{[^{}]*\}/g;
 const expandLineCommentRe = /\/\/.*$/;
 
@@ -462,4 +655,162 @@ export function resolveExpandValue(
   };
 
   return expand(root, maxDepth, new Set([name]));
+}
+
+// #EXPANDINTOKEN &<search>& <replace> — like #EXPAND, but the reference
+// delimiter is "&search&" (leading AND trailing "&", unlike a macro
+// parameter's own "&param") and it substitutes inside a larger token
+// rather than requiring the whole token to match — the handbook's own
+// example: `#EXPANDINTOKEN &land& germany` turns
+// `DATAFILE = study&land&.dat;` into `DATAFILE = studygermany.dat;`.
+// Names are matched case-sensitively, same convention as #EXPAND (see
+// findExpandDefinitions above).
+const expandInTokenDefinitionRe =
+  /^\s*#expandintoken\s+&(\S+?)&(?:[ \t]+(.*))?\s*$/i;
+
+export function findExpandInTokenDefinitions(
+  lines: MacroSourceLine[]
+): Map<string, string> {
+  const defs = new Map<string, string>();
+  lines.forEach((l) => {
+    const m = l.text.match(expandInTokenDefinitionRe);
+    if (m) defs.set(m[1], stripExpandComments(m[2] ?? ''));
+  });
+  return defs;
+}
+
+// A "&search&" reference — distinct from a macro parameter's "&param"
+// (single leading "&" only) precisely because both delimiters are
+// required, so the two shapes never collide.
+const tokenRefRe = /&([^&\s]+)&/g;
+
+export function findExpandInTokenRefAt(
+  lineText: string,
+  charIndex: number
+): string | undefined {
+  tokenRefRe.lastIndex = 0;
+  let m = tokenRefRe.exec(lineText);
+  while (m !== null) {
+    if (charIndex >= m.index && charIndex <= m.index + m[0].length) {
+      return m[1];
+    }
+    m = tokenRefRe.exec(lineText);
+  }
+  return undefined;
+}
+
+// True when `charIndex` sits on the "&name&" that this very
+// "#expandintoken &name& replace" line itself declares — mirrors
+// isExpandDefinitionNameAt's reasoning for the plain #EXPAND case.
+const expandInTokenDefNameRe = /^\s*#expandintoken\s+(&\S+?&)/i;
+
+export function isExpandInTokenDefinitionNameAt(
+  lineText: string,
+  charIndex: number
+): boolean {
+  const m = lineText.match(expandInTokenDefNameRe);
+  if (!m) return false;
+  const nameStart = m[0].length - m[1].length;
+  const nameEnd = m[0].length;
+  return charIndex >= nameStart && charIndex <= nameEnd;
+}
+
+// Resolves every "&search&" occurrence in `text` via `defs` — a plain,
+// single-pass substring replace (no recursive nesting; not documented for
+// this directive, unlike #EXPAND). An unknown search name is left as
+// written, same as an unresolved #EXPAND reference.
+export function resolveExpandInTokens(
+  text: string,
+  defs: Map<string, string>
+): string {
+  return text.replace(tokenRefRe, (whole, name: string) =>
+    defs.has(name) ? (defs.get(name) as string) : whole
+  );
+}
+
+// #EXPANDINC #<name> <value> — "at its core this is an #EXPAND", but
+// <value> must be a whole number, and every later bare "#name" reference
+// increments the stored counter by 1 *before* substituting it (manual:
+// "#EXPANDINC #keyvalue 1000" then "#keyvalue" reads 1001 the first time,
+// 1002 the second, …) — the literal seed itself is never what a reference
+// resolves to.
+export interface ExpandIncDefinition {
+  name: string;
+  start: number;
+  file: string;
+  line: number;
+}
+
+const expandIncDefinitionRe = /^\s*#expandinc\s+#(\S+)\s+(-?\d+)\s*$/i;
+
+export function findExpandIncDefinitions(
+  lines: MacroSourceLine[]
+): Map<string, ExpandIncDefinition> {
+  const defs = new Map<string, ExpandIncDefinition>();
+  lines.forEach((l) => {
+    const m = l.text.match(expandIncDefinitionRe);
+    if (m) {
+      defs.set(m[1], {
+        name: m[1],
+        start: parseInt(m[2], 10),
+        file: l.file,
+        line: l.line,
+      });
+    }
+  });
+  return defs;
+}
+
+// True when `charIndex` sits on the "#name" that this very "#expandinc
+// #name value" line itself declares — mirrors isExpandDefinitionNameAt's
+// reasoning for the plain #EXPAND case.
+const expandIncDefNameRe = /^\s*#expandinc\s+#(\S+)/i;
+
+export function isExpandIncDefinitionNameAt(
+  lineText: string,
+  charIndex: number
+): boolean {
+  const m = lineText.match(expandIncDefNameRe);
+  if (!m) return false;
+  const nameStart = m[0].length - m[1].length - 1; // position of the '#'
+  const nameEnd = m[0].length;
+  return charIndex >= nameStart && charIndex <= nameEnd;
+}
+
+const hashNameGlobalRe = /#([A-Za-z_]\w*)/g;
+
+// The value #EXPANDINC's counter would hold at one particular "#name"
+// occurrence (`atFile`/`atLine`/`atChar`) — every bare reference to `name`
+// in program order (skipping the "#expandinc #name start" line itself)
+// increments the count by 1 before it, so the Nth reference reads
+// `start + N`, never the literal seed (see the module-level doc comment on
+// ExpandIncDefinition). `lines` must be in real program order (e.g. a
+// WorkspaceIndex's own `order`) for this to mean anything; a reference that
+// isn't found by the time `atLine`/`atChar` is reached returns undefined
+// (shouldn't happen for a real cursor position, but guards a caller passing
+// mismatched inputs).
+export function resolveExpandIncValueAt(
+  lines: MacroSourceLine[],
+  def: ExpandIncDefinition,
+  atFile: string,
+  atLine: number,
+  atChar: number
+): number | undefined {
+  let count = 0;
+  // .some() rather than .forEach() so the scan can stop the moment the
+  // target line has been processed — no need to keep counting references
+  // past the position being resolved.
+  lines.some((l) => {
+    if (l.file === def.file && l.line === def.line) return false;
+    const isTarget = l.file === atFile && l.line === atLine;
+
+    hashNameGlobalRe.lastIndex = 0;
+    let m = hashNameGlobalRe.exec(l.text);
+    while (m !== null) {
+      if (m[1] === def.name && (!isTarget || m.index <= atChar)) count += 1;
+      m = hashNameGlobalRe.exec(l.text);
+    }
+    return isTarget;
+  });
+  return count > 0 ? def.start + count : undefined;
 }

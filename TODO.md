@@ -90,21 +90,21 @@ Still open:
 
 ## P3 — Editor niceties (independent, opportunistic)
 
-- **`DocumentLink` provider for filename references** — `INCLUDE = <file>;`,
-  `VALUELABELS … = LABELFROMFILE <file>;`, `#DOMACRO3( name, <file>.csv )` /
-  `#DOMACRO4( <file>.csv )`, `DATAFILE`/`CSVINFILE`/`SPSSINFILE`/`SYNTAX = <file>`
-  — none are clickable today. Pairs naturally with P1.4, which already resolves
-  the data-source paths.
-- **`#DOMACRO`/`#DOMACRO2`/`#DOMACRO3`/`#DOMACRO4` looping expansion** and the
-  `#call( &index &namepart &macroname )` indirect-call pattern (the callee name
-  is itself a parameter and never appears literally at the call site) — not
-  recognized by the macro hover / expansion engine, nor by P1.5's macro-produced-
-  name enumeration.
-- **`#EXPANDINTOKEN &search& <replace>` and `#EXPANDINC`** — `#EXPANDINTOKEN`
-  uses `&search&` delimiters (trailing `&` too, unlike a `&param` macro name) and
-  rewrites inside tokens (`DATAFILE = study&land&.dat;`); `#EXPANDINC` increments
-  its integer value on each expansion (the expand hover should reflect that, not
-  the literal seed).
+`DocumentLink` for filename references (`INCLUDE`, `VALUELABELS …
+LABELFROMFILE`, `#DOMACRO3`/`#DOMACRO4`'s CSV argument, `SYNTAX`), `#DOMACRO`/
+`#DOMACRO2` looping expansion, the `#call(&index &namepart &macroname)`
+indirect-call idiom, and `#EXPANDINTOKEN`/`#EXPANDINC` are done — including
+wiring the loop/indirect-call expansion into P1.5's macro-produced-name
+enumeration, so a variable only reachable that way is no longer flagged as
+undefined. See git log for the detailed history (2026-09-06).
+
+Still open:
+
+- **`#DOMACRO3`/`#DOMACRO4`'s own looping expansion** — unlike their filename
+  argument (handled by the DocumentLink provider above), the parameter list
+  itself comes from a CSV file rather than the source text, genuine file I/O
+  that `macroExpansion.ts` deliberately stays free of (same split as
+  `externalNames.ts`/`externalNamesProvider.ts`). Not attempted.
 - **Formatter: align `=` in option lists, wrap long `TABLEFORMAT`/`CELLELEMENTS`
   flag lists** — deferred; no authoritative gessTabs style guide to formalize
   against, so today only mechanical whitespace/indent changes are made.
