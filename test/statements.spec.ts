@@ -55,6 +55,20 @@ describe('toLogicalStatements', () => {
     expect(out[1]).to.include({ file: 'a.tab', startLine: 1 });
   });
 
+  it('a whitespace-only tail after a ; (a blanked trailing comment) does not become the next statement\'s start line', () => {
+    // `document = "";` on line 1 ends with a blanked `// comment` tail;
+    // lines 2-4 are dropped by the include resolver (comments / #ifdef),
+    // so the next line the scanner sees is `spssinfile = ...;` on line 5.
+    // The blanked tail must NOT anchor that statement to line 1.
+    const out = toLogicalStatements([
+      { file: 'a.tab', line: 0, text: 'header = "x";' },
+      { file: 'a.tab', line: 1, text: 'document = "";        ' },
+      { file: 'a.tab', line: 5, text: 'spssinfile = "d.sav";' },
+    ]);
+    expect(out.map((s) => s.startLine)).to.deep.equal([0, 1, 5]);
+    expect(out[2].text).to.equal('spssinfile = "d.sav";');
+  });
+
   // A column-1 macro/preprocessor call (#name(...), #DOMACRO(...) & co.) is
   // self-terminating at its own balanced ")" and, per the real reported
   // case, must NOT be followed by a ";" — without this, the scan below

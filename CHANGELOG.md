@@ -2,6 +2,13 @@
 
 All notable changes to the "GESStabs" extension will be documented in this file (last change first).
 
+## 0.99.4
+
+- Go to Definition / hover on a raw dataset variable (one from `CSVINFILE`/`SPSSINFILE`/`DATAFILE`) sometimes jumped a few lines above the real data-source statement — e.g. onto a `document = "";` line just before it. Root cause: a trailing `// comment` after a statement's `;`, once blanked, was mistakenly treated as the start of the next statement, so every statement after such a line was recorded a few lines too early. Also fixed two ways the data-source information could go stale: the entry-program cache is now rebuilt after in-editor edits (not only on save), and the workspace reader now sees the live buffer of *every* open file, not just the focused one.
+- Variable hover: a variable that a `#MACRO` body produces (passed in as an argument) no longer shows the macro body / call-site expansion — that belongs to the macro hover (hover the `#name(...)` call). A raw dataset column that the script later re-assigns is now described by its data source ("aus …sav"), not as a plain in-script "Variable".
+- Variable hover: the blocks are shown in a fixed order — definition, then `VARTEXT`, `VARTITLE`, `VALUELABELS` — instead of whatever order the statements happened to sit in the script.
+- Hover settings consolidated. The flat `gesstabs.hover.macros` / `.expands` / `.keywords` / `.variables` / `.variableAnnotations` / `.effectiveElements` / `.macroExpansionStyle` are replaced by two grouped settings: `gesstabs.hover.show` (`{ keywords, variables, tableDefaults: boolean; macros: "short" | "full" }`) and `gesstabs.hover.variableContent` (`{ definition, text, title, valueLabels: boolean }` — pick which blocks of the variable hover appear). `gesstabs.hover.enabled` and `gesstabs.hover.language` are unchanged. Old keys still in `settings.json` are honoured as a fallback.
+
 ## 0.99.0-beta
 
 Internal beta ahead of 1.0.0 — large feature update built on a new INCLUDE/#ifdef-graph model that resolves files in real compile order instead of scanning the workspace unordered.

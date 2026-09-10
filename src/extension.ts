@@ -263,9 +263,17 @@ export function activate(context: vscode.ExtensionContext) {
     vscode.workspace.onDidOpenTextDocument(scheduleDiagnostics)
   );
   context.subscriptions.push(
-    vscode.workspace.onDidChangeTextDocument((e) =>
-      scheduleDiagnostics(e.document)
-    )
+    vscode.workspace.onDidChangeTextDocument((e) => {
+      // A gessTabs edit can move the CSVINFILE/SPSSINFILE/DATAFILE line (or
+      // an INCLUDE), so the entry-program cache — and every statement line
+      // number go-to-definition / hover read out of it for a raw dataset
+      // variable — must not be trusted until it is rebuilt from the live
+      // buffer. Cheap: just marks it stale, the rebuild is lazy.
+      if (e.document.languageId === 'gesstabs') {
+        externalNamesManager.noteDocumentsChanged();
+      }
+      scheduleDiagnostics(e.document);
+    })
   );
   context.subscriptions.push(
     vscode.workspace.onDidCloseTextDocument((document) => {
@@ -453,13 +461,40 @@ class GesstabsDefintionProvider implements vscode.DefinitionProvider {
       // go-to-definition target just because it also touches `sym`.
       const primary = primaryDefinitions(sym);
       if (primary.length > 0) {
-        const locations = primary.map(
-          (d) =>
-            new vscode.Location(
-              vscode.Uri.file(d.line.file),
-              resolvedLineRange(d.line)
-            )
-        );
+        const locations = primary.map((d) => {
+          // A raw dataset column's only "declaration" is the
+          // CSVINFILE/SPSSINFILE/DATAFILE statement, whose synthetic
+          // ResolvedLine is anchored to the statement's *start* line. When
+          // that statement wraps across physical lines (§11.7 "multi-line
+          // input statements") the start line is the bare `csvinfile`
+          // keyword — jumping there lands "a few lines too high". Prefer
+          // the physical line/column the <filepath> token actually sits
+          // on, exactly as the data-source DocumentLink already does.
+          if (sym.origin === 'external') {
+            const src = externalSources.find(
+              (s) =>
+                s.statement.file === d.line.file &&
+                s.statement.line === d.line.line
+            );
+            if (src && src.statement.pathLine !== undefined) {
+              const ch = src.statement.pathChar ?? 0;
+              return new vscode.Location(
+                vscode.Uri.file(d.line.file),
+                new vscode.Range(
+                  new vscode.Position(src.statement.pathLine, ch),
+                  new vscode.Position(
+                    src.statement.pathLine,
+                    ch + src.statement.rawPath.length
+                  )
+                )
+              );
+            }
+          }
+          return new vscode.Location(
+            vscode.Uri.file(d.line.file),
+            resolvedLineRange(d.line)
+          );
+        });
         // A raw dataset column additionally jumps straight to its own
         // header cell in the CSV/DATAFILE itself (§11.7 "CSV-header-cell
         // go-to-definition"), alongside the CSVINFILE/DATAFILE statement

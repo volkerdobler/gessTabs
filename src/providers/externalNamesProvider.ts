@@ -149,12 +149,34 @@ export class GesstabsExternalNamesManager {
 
   private readonly buildsByRoot = new Map<string, Promise<EntryProgram[]>>();
 
+  // Bumped on every in-editor edit of a gessTabs document (see
+  // noteDocumentsChanged / extension.ts's onDidChangeTextDocument). The
+  // FileSystemWatcher only fires on *disk* events, so without this a
+  // cached EntryProgram[] — and every statement line number in it — went
+  // stale the moment the user edited (but hadn't saved) a .tab/.inc in the
+  // graph. Every other provider reads live editor buffers via
+  // makeWorkspaceReader; go-to-definition on a raw dataset variable then
+  // mixed a fresh in-buffer model with a stale CSVINFILE/SPSSINFILE line,
+  // jumping "a few lines off" after any unsaved insertion above it.
+  // `getPrograms` rebuilds (from live buffers, liveFileReader) whenever the
+  // generation moved since the cached build — lazily, only when actually
+  // asked, so a burst of typing costs nothing until something queries.
+  private changeGeneration = 0;
+
+  private readonly builtGenByRoot = new Map<string, number>();
+
   private onChangeCb: (() => void) | undefined;
 
   private readonly bytesIO = new CachingBytesIO();
 
   public setOnChange(cb: () => void): void {
     this.onChangeCb = cb;
+  }
+
+  // Called (cheaply) for every gessTabs onDidChangeTextDocument — marks
+  // every folder's cached programs as needing a rebuild on next query.
+  public noteDocumentsChanged(): void {
+    this.changeGeneration += 1;
   }
 
   public dispose(): void {
@@ -190,7 +212,9 @@ export class GesstabsExternalNamesManager {
     if (!folder) return [];
     this.ensureWatcher(folder);
     const cached = this.programsByRoot.get(folder);
-    if (cached) return cached;
+    if (cached && this.builtGenByRoot.get(folder) === this.changeGeneration) {
+      return cached;
+    }
 
     // Two near-simultaneous callers for the same not-yet-cached folder
     // (e.g. two documents opened together) share one in-flight scan+build
@@ -198,6 +222,10 @@ export class GesstabsExternalNamesManager {
     const inFlight = this.buildsByRoot.get(folder);
     if (inFlight) return inFlight;
 
+    // Captured now, stamped onto the result after — an edit *during* the
+    // async scan leaves builtGen behind changeGeneration, so the next call
+    // rebuilds rather than trusting a build that raced the edit.
+    const builtAtGen = this.changeGeneration;
     const build = (async (): Promise<EntryProgram[]> => {
       const tabs = (await getAllFilenamesInDirectory(folder, 'tab')).map(
         normalizePath
@@ -209,6 +237,7 @@ export class GesstabsExternalNamesManager {
         this.bytesIO
       );
       this.programsByRoot.set(folder, programs);
+      this.builtGenByRoot.set(folder, builtAtGen);
       return programs;
     })();
     this.buildsByRoot.set(folder, build);
@@ -473,15 +502,19 @@ export function renderExternalSourceLines(
       const kw = src.statement.kind.toUpperCase();
       const idx = src.columnIndex?.[word.toLowerCase()];
       const col = idx === undefined ? '' : `, Spalte ${idx + 1}`;
+      // Land on the physical line the <filepath> token sits on when the
+      // statement wraps across lines (§11.7) — the start line is just the
+      // bare `csvinfile` keyword, "a few lines too high".
+      const jumpLine = src.statement.pathLine ?? src.statement.line;
       const args = encodeURIComponent(
         JSON.stringify([
           vscode.Uri.file(src.statement.file).toString(),
-          src.statement.line,
+          jumpLine,
         ])
       );
       return `\n_aus \`${base}\` (${kw}${col}) — [${path.basename(
         src.statement.file
-      )}:${src.statement.line + 1}](command:gesstabs.revealLine?${args})_\n`;
+      )}:${jumpLine + 1}](command:gesstabs.revealLine?${args})_\n`;
     })
     .join('');
 }

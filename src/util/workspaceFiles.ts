@@ -55,17 +55,24 @@ export function normalizePath(filePath: string): string {
   return fixDriveCasingInWindows(path.resolve(filePath));
 }
 
-// Reads every candidate file from disk, except the currently-open
-// document, which is read from its live editor buffer so a user's own
-// unsaved edits are always visible to go-to-definition/references/
-// rename/macro tooling. Other files reflect their last-saved state — the
-// same thing the real gessTabs compiler would see if it ran right now.
+// Reads each file from its live editor buffer when it is open (the
+// currently-focused document included), else from disk. Any open file's
+// unsaved edits are visible to go-to-definition / references / rename /
+// hover / macro tooling — not just the focused one: navigating *from*
+// cleaning.inc *to* an edited-but-unsaved main.tab must land on the line
+// the user currently sees, not the last-saved one. Matches
+// externalNamesProvider.ts's own `liveFileReader`.
 export function makeWorkspaceReader(document: vscode.TextDocument): FileReader {
   const currentPath = normalizePath(document.uri.fsPath);
   return (filePath: string): string[] | undefined => {
-    if (normalizePath(filePath) === currentPath) {
+    const norm = normalizePath(filePath);
+    if (norm === currentPath) {
       return document.getText().split(/\r\n|\r|\n/);
     }
+    const open = vscode.workspace.textDocuments.find(
+      (d) => normalizePath(d.uri.fsPath) === norm
+    );
+    if (open) return open.getText().split(/\r\n|\r|\n/);
     try {
       return fs.readFileSync(filePath, 'utf8').split(/\r\n|\r|\n/);
     } catch (_e) {

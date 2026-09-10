@@ -26,10 +26,7 @@ import * as vscode from 'vscode';
 import * as path from 'path';
 import { Scope } from '../core/scope';
 import { constVarName } from '../core/regex';
-import {
-  buildWorkspaceIndex,
-  findMacroProducedDefinition,
-} from '../core/symbolIndex';
+import { buildWorkspaceIndex } from '../core/symbolIndex';
 import { buildVariableModel, ModelAnnotation } from '../core/variableModel';
 import { findLogicalStatement } from '../core/statements';
 import { classifyStatement } from '../core/variableStatements';
@@ -41,6 +38,12 @@ import {
   normalizePath,
   printDebugMessage,
 } from '../util/workspaceFiles';
+import {
+  hoverEnabled,
+  hoverShows,
+  variableContentShows,
+  VariableContentPart,
+} from '../util/config';
 import {
   GesstabsExternalNamesManager,
   renderExternalSourceLines,
@@ -76,6 +79,34 @@ const KIND_LABEL: Record<string, string> = {
   unknown: 'Variable',
 };
 
+// The order the annotation blocks are shown in the hover, after the
+// definition: VARTEXT, then VARTITLE, then VALUELABELS, then anything
+// else (OVERCODE / other). The model hands them back in program order —
+// whatever order the statements happen to sit in the script — which the
+// user found arbitrary ("starts with labels"). Sorted by this rank, with
+// program order kept as the tiebreak within a kind (Array.sort is stable).
+const ANNOTATION_ORDER: Record<ModelAnnotation['kind'], number> = {
+  vartext: 0,
+  vartitle: 1,
+  valuelabels: 2,
+  overcode: 3,
+  other: 4,
+};
+
+// Which `gesstabs.hover.variableContent` toggle gates each annotation
+// kind. OVERCODE and the catch-all `other` have no dedicated toggle —
+// they ride along whenever any annotation is shown at all.
+const ANNOTATION_PART: Record<
+  ModelAnnotation['kind'],
+  VariableContentPart | null
+> = {
+  vartext: 'text',
+  vartitle: 'title',
+  valuelabels: 'valueLabels',
+  overcode: null,
+  other: null,
+};
+
 const COPY_KEYWORD: Record<string, string> = {
   vartitle: 'COPYTITLE',
   vartext: 'COPYTEXT',
@@ -97,9 +128,8 @@ export class GesstabsVariableHoverProvider implements vscode.HoverProvider {
     token: vscode.CancellationToken
   ): Promise<vscode.Hover | null> {
     try {
-      const config = vscode.workspace.getConfiguration('gesstabs');
-      if (config.get<boolean>('hover.enabled', true) === false) return null;
-      if (config.get<boolean>('hover.variables', true) === false) return null;
+      if (!hoverEnabled()) return null;
+      if (!hoverShows('variables')) return null;
 
       const scope = new Scope(document);
       if (!scope.isNotInComment(position.line, position.character)) return null;
@@ -145,7 +175,21 @@ export class GesstabsVariableHoverProvider implements vscode.HoverProvider {
 
       const currentFile = normalizePath(document.uri.fsPath);
       const key = word.toLowerCase();
-      const model = buildVariableModel(index);
+
+      // Seed the model with the data-source (CSVINFILE/SPSSINFILE/DATAFILE)
+      // column names, exactly as go-to-definition / references do — without
+      // this a raw dataset variable that a later `COMPUTE` / `IF … THEN`
+      // (re-)assigns would be modelled as a freshly *declared* in-script
+      // variable (origin 'declared', kind 'unknown'), so the hover called it
+      // a plain "Variable" and its jump link pointed at the assignment line
+      // instead of the CSVINFILE statement that really introduces it.
+      const externalSourceList = this.externalNames
+        ? await this.externalNames.sourcesFor(document)
+        : [];
+      if (token && token.isCancellationRequested) return null;
+      const model = buildVariableModel(index, {
+        externalNames: externalSourceList,
+      });
 
       const sym =
         model.resolve(word, currentFile, position.line) ??
@@ -168,8 +212,8 @@ export class GesstabsVariableHoverProvider implements vscode.HoverProvider {
 
       if (isQuoted && !usedAsNameHere) return null;
 
-      const annotationsEnabled =
-        config.get<boolean>('hover.variableAnnotations', true) !== false;
+      // gesstabs.hover.variableContent — which blocks of this hover are on.
+      const showDefinition = variableContentShows('definition');
 
       // "The declaration" is always the *earliest* (program-order first)
       // defining occurrence — never a later re-definition. `definitions`
@@ -187,43 +231,53 @@ export class GesstabsVariableHoverProvider implements vscode.HoverProvider {
         !!primaryDef &&
         primaryDef.file === currentFile &&
         primaryDef.line === position.line;
-      const hasShowableDef = !!primaryDef && !hoveringOwnDeclaration;
 
-      // No in-script symbol — `word` might be produced by a #MACRO call
-      // passing it as the argument for a body statement (phase 5 will fold
-      // this into the model; until then keep the dedicated fallback).
-      const macroDef = sym
-        ? undefined
-        : findMacroProducedDefinition(
-            index,
-            currentFile,
-            position.line,
-            word
-          ) ?? findMacroProducedDefinition(index, currentFile, -1, word);
+      // A raw dataset column the script also (re-)assigns is still
+      // fundamentally the data source's own variable (variableModel keeps
+      // `origin: 'external'` for a mere COMPUTE / IF … THEN touch, §3.3) —
+      // render it through the external-source path below, never as an
+      // in-script declaration whose "definition" is the assignment line.
+      const isExternal = sym?.origin === 'external';
+      const hasShowableDef =
+        showDefinition &&
+        !!primaryDef &&
+        !hoveringOwnDeclaration &&
+        !isExternal;
 
-      // Still nothing — is it a raw variable from the data source?
+      // A variable that a #MACRO body produces (passed in as an argument)
+      // is deliberately NOT described here: the macro body / call-site
+      // expansion belongs to the macro hover — hover the `#name(...)` call
+      // itself to see it. Repeating it on every plain variable occurrence
+      // was noise (user feedback 2026-09-10). Go-to-definition keeps its
+      // own macro-produced fallback.
+
+      // Nothing in-script — is it a raw variable from the data source? Also
+      // taken when the model *did* resolve it but as `origin: 'external'`
+      // (a raw column the script later assigns): the hover still describes
+      // it by its data source, not by that assignment.
       const externalSources =
-        !sym && !macroDef && this.externalNames
+        showDefinition && (!sym || isExternal) && this.externalNames
           ? await this.externalNames.externalSourcesFor(document, word)
           : [];
 
-      // The variable's VARTITLE/VARTEXT/VALUELABELS — including any on a
-      // name the script never declares (a dataset variable) — minus the
-      // one on the line under the cursor.
-      const annotations = annotationsEnabled
-        ? model
-            .annotationsFor(word)
-            .filter(
-              (a) => !(a.file === currentFile && a.line === position.line)
-            )
-        : [];
+      // The variable's VARTEXT / VARTITLE / VALUELABELS — including any on
+      // a name the script never declares (a dataset variable) — minus the
+      // one on the line under the cursor, minus any kind the user turned
+      // off in gesstabs.hover.variableContent, ordered by ANNOTATION_ORDER.
+      const annotations = model
+        .annotationsFor(word)
+        .filter((a) => !(a.file === currentFile && a.line === position.line))
+        .filter((a) => {
+          const part = ANNOTATION_PART[a.kind];
+          return part === null || variableContentShows(part);
+        })
+        .sort((a, b) => ANNOTATION_ORDER[a.kind] - ANNOTATION_ORDER[b.kind]);
 
-      const isPredefined = sym?.origin === 'predefined';
+      const isPredefined = showDefinition && sym?.origin === 'predefined';
 
       if (
         !hasShowableDef &&
         !isPredefined &&
-        !macroDef &&
         annotations.length === 0 &&
         externalSources.length === 0
       ) {
@@ -248,26 +302,9 @@ export class GesstabsVariableHoverProvider implements vscode.HoverProvider {
           'gesstabs'
         );
         md.appendMarkdown(`\n${jumpLink(primaryDef.file, primaryDef.line)}\n`);
-      } else if (macroDef) {
-        const macroNameLink = jumpLink(
-          macroDef.macro.file,
-          macroDef.macro.defLine,
-          `#${macroDef.macro.name}`
-        );
-        md.appendMarkdown(
-          `\n_produced by a ${macroNameLink} macro call — not written literally in the script_\n`
-        );
-        md.appendCodeblock(macroDef.bodyLine.text.trim(), 'gesstabs');
-        md.appendMarkdown(
-          `\n${jumpLink(macroDef.bodyLine.file, macroDef.bodyLine.line)}\n`
-        );
-        md.appendCodeblock(macroDef.callSite.text.trim(), 'gesstabs');
-        md.appendMarkdown(
-          `\n${jumpLink(macroDef.callSite.file, macroDef.callSite.line)}\n`
-        );
       } else if (externalSources.length > 0) {
         md.appendMarkdown(renderExternalSourceLines(word, externalSources));
-      } else if (!hoveringOwnDeclaration) {
+      } else if (showDefinition && !hoveringOwnDeclaration) {
         md.appendMarkdown(
           '\n_not declared in the script — probably a dataset variable_\n'
         );

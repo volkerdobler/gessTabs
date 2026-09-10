@@ -268,6 +268,19 @@ describe('buildVariableModel — external names (P1.4)', () => {
     expect(sym?.definitions).to.have.length(2);
   });
 
+  it('an IF … THEN re-assignment of a raw column: primaryDefinitions is the data-source line, not the assignment (the hover "external, not Variable" fix)', () => {
+    const m = buildVariableModel(
+      indexOf('compute f1 = 1;\nif f1 eq 1 then alter = 2;'),
+      { externalNames: [externalSource(['alter'])] }
+    );
+    const sym = m.resolveAnywhere('alter')!;
+    expect(sym.origin).to.equal('external');
+    const primary = primaryDefinitions(sym);
+    expect(primary).to.have.length(1);
+    // main.tab:0 — the CSVINFILE statement, never the IF … THEN line (1).
+    expect(primary[0].line.line).to.equal(0);
+  });
+
   it('an unresolved source contributes no symbols, without crashing', () => {
     const m = buildVariableModel(indexOf('compute y = 1;'), {
       externalNames: [externalSource('unresolved')],

@@ -13,6 +13,7 @@ import {
   keywordLookupKeyAt,
 } from '../keywords/keywordDatabaseTypes';
 import { printDebugMessage } from '../util/workspaceFiles';
+import { hoverEnabled, hoverShows } from '../util/config';
 
 // Picks the effective keyword-doc language from gesstabs.hover.language
 // (falling back to vscode.env.language for "auto") and returns an index of
@@ -55,9 +56,8 @@ export class GesstabsKeywordHoverProvider implements vscode.HoverProvider {
     position: vscode.Position
   ): vscode.Hover | null {
     try {
-      const config = vscode.workspace.getConfiguration('gesstabs');
-      if (config.get<boolean>('hover.enabled', true) === false) return null;
-      if (config.get<boolean>('hover.keywords', true) === false) return null;
+      if (!hoverEnabled()) return null;
+      if (!hoverShows('keywords')) return null;
 
       // A keyword is always a bare code token — never legitimately written
       // inside a string literal — so both comment AND string scope are

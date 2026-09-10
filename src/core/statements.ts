@@ -143,7 +143,21 @@ export function toLogicalStatements(order: ResolvedLine[]): LogicalStatement[] {
       }
     }
     if (segStart < text.length) {
-      pieces.push({ line: rl, text: text.slice(segStart) });
+      const frag = text.slice(segStart);
+      // A whitespace-only tail — most often what a trailing `// …` comment
+      // becomes once blankComments() has run (e.g. `document = "";   // note`)
+      // — must NOT open a fresh statement. If it did, it became that
+      // statement's `pieces[0]`, anchoring the NEXT real statement's
+      // `startLine` to the line of the *previous* statement's `;`. With
+      // skipped lines (comments, #ifdef directives) in between, the next
+      // statement could be reported many lines too early — a real bug:
+      // go-to-definition / hover on a raw dataset variable jumped to the
+      // CSVINFILE/SPSSINFILE line's predecessor. A whitespace tail mid-
+      // statement (a blank line inside a GROUPS body) is still kept — it
+      // keeps `locateInStatement`'s newline math aligned.
+      if (pieces.length > 0 || /\S/.test(frag)) {
+        pieces.push({ line: rl, text: frag });
+      }
     }
   }
 

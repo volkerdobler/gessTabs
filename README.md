@@ -11,7 +11,7 @@ VS Code language support for the GESStabs tabulation language from [gessgroup.de
 - **Macro hover, signature help, and usage-count CodeLens** — see what a `#name(...)` call expands to, parameter hints while typing a call, and a usage count on each `#MACRO` declaration.
 - **`#EXPAND` hover** — hovering a bare `#name` shows its resolved value: nested `#EXPAND`s are substituted recursively and `{ … }`/`// …` comments in the definition are stripped, so `#expand #y #x { def } ghi` (with `#expand #x abc`) hovers as `abc ghi`.
 - **Effective CELLELEMENTS/FRAMEELEMENTS hover** — hovering the `TABLE`/`OVERVIEW`/`XOVERVIEW` **keyword** shows which `CELLELEMENTS`/`FRAMEELEMENTS` defaults are in effect at that point (they persist until the next such assignment, not scoped to one table). Hovering a variable or `#EXPAND` reference on the same line no longer also shows it.
-- **Variable hover** — hovering a plain variable name shows a `VARIABLE <name>` header, its declaration (when the script defines it — the same lookup as Go to Definition) and, unless turned off, the `VARTITLE`/`VARTEXT`/`VALUELABELS` statements that annotate it, each in full (multi-line lists included) with a `file:line` link that jumps to it.
+- **Variable hover** — hovering a plain variable name shows a `VARIABLE <name>` header, its origin (its declaration line when the script defines it — the same lookup as Go to Definition — or `aus <datei>.sav` for a raw dataset variable) and the `VARTEXT`/`VARTITLE`/`VALUELABELS` statements that annotate it, each in full (multi-line lists included) with a `file:line` link that jumps to it. Which blocks appear is controlled by `gesstabs.hover.variableContent`.
 - **Code folding** for `#MACRO`/`#ENDMACRO` and `#IFDEF`-family/`#END` blocks.
 - **Semantic highlighting** distinguishing variable/macro/table names from keywords (layered on top of the syntax grammar).
 - **Basic formatter** (`Format Document`) — trims trailing whitespace, collapses blank-line runs, and reindents `#MACRO`/`#IFDEF`-family blocks by nesting depth. Statement content itself is left untouched.
@@ -29,15 +29,12 @@ No requirements or dependencies.
 - `gesstabs.debugMode` (boolean, default `false`) — enable debug messages in the Output console.
 - `gesstabs.diagnostics.enabled` (boolean, default `true`) — flag documented GESStabs pitfalls in the Problems panel.
 - `gesstabs.hover.enabled` (boolean, default `true`) — master switch for all GESStabs hovers.
-- `gesstabs.hover.macros` (boolean, default `true`) — show the expanded body when hovering a `#name(...)` macro call.
-- `gesstabs.hover.expands` (boolean, default `true`) — show the defined value when hovering a bare `#name` `#EXPAND` reference.
-- `gesstabs.hover.effectiveElements` (boolean, default `true`) — show the effective `CELLELEMENTS`/`FRAMEELEMENTS` defaults when hovering the `TABLE`/`OVERVIEW`/`XOVERVIEW` keyword.
-- `gesstabs.hover.variables` (boolean, default `true`) — show the declaration line for the variable under the cursor (when the script defines it).
-- `gesstabs.hover.variableAnnotations` (boolean, default `true`) — also list the `VARTITLE`/`VARTEXT`/`VALUELABELS` statements for that variable. No effect if `gesstabs.hover.variables` is off.
-- `gesstabs.hover.macroExpansionStyle` (`"short"` | `"normal"`, default `"short"`) — `short` hides blank lines and comment-only lines from the macro's source in the expanded-body hover; `normal` shows the body exactly as written, blank lines and comments included.
-- `gesstabs.hover.keywords` (boolean, default `true`) — show syntax + description for the GESStabs keyword under the cursor.
+- `gesstabs.hover.show` (object) — which hovers are shown. Keys: `keywords` (boolean, default `true`), `variables` (boolean, default `true`), `tableDefaults` (boolean, default `true` — effective `CELLELEMENTS`/`FRAMEELEMENTS` on a `TABLE`/`OVERVIEW`/`XOVERVIEW` keyword), and `macros` (`"short"` | `"full"`, default `"short"` — the `#name(...)` expansion / `#EXPAND` value hover; `"short"` trims blank and comment-only lines from the macro body, `"full"` shows it verbatim).
+- `gesstabs.hover.variableContent` (object) — which blocks the variable hover shows, always in this order. Keys, all boolean and default `true`: `definition` (the variable's origin — its declaration line, or `aus <datei>.sav (SPSS, Spalte N)` for a raw dataset variable), `text` (`VARTEXT`), `title` (`VARTITLE`), `valueLabels` (`VALUELABELS`). Needs `gesstabs.hover.show` → `variables` on.
 - `gesstabs.hover.language` (`"auto"` | `"de"` | `"en"`, default `"auto"`) — which manual's descriptions to show; `"auto"` follows VS Code's own display language.
 - `gesstabs.autocomplete.enabled` (boolean, default `true`) — suggest keywords, macro names, and previously-defined variable/table names while typing.
+
+> The pre-0.99.4 flat `gesstabs.hover.macros` / `.expands` / `.keywords` / `.variables` / `.variableAnnotations` / `.effectiveElements` / `.macroExpansionStyle` settings were replaced by the two objects above. Any still in your `settings.json` are honoured as a fallback but should be migrated.
 
 ## Known Issues
 

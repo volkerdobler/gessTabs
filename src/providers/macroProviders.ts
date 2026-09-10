@@ -40,6 +40,7 @@ import {
   normalizePath,
   printDebugMessage,
 } from '../util/workspaceFiles';
+import { hoverEnabled, macroHoverStyle } from '../util/config';
 import { FileReader } from '../core/includeGraph';
 
 async function buildMacroContext(document: vscode.TextDocument) {
@@ -67,7 +68,7 @@ async function buildMacroContext(document: vscode.TextDocument) {
 // "short" (the default) shows the macro's already-filtered `body` — blank
 // lines and comment-only lines never made it in, because resolveIncludeGraph
 // dropped them while building the resolved workspace order that
-// findMacroDefinitions parsed. "normal" instead re-reads the macro's own
+// findMacroDefinitions parsed. "full" instead re-reads the macro's own
 // line range straight from its source file (its own live editor buffer if
 // it's the current document, last-saved disk content otherwise, exactly
 // like the rest of this module's file access), preserving blank lines and
@@ -82,14 +83,6 @@ function macroPreviewBody(
   const lines = reader(macro.file);
   if (!lines) return macro.body;
   return lines.slice(macro.defLine + 1, macro.endLine);
-}
-
-function macroExpansionStyleIsNormal(): boolean {
-  return (
-    vscode.workspace
-      .getConfiguration('gesstabs')
-      .get<string>('hover.macroExpansionStyle', 'short') === 'normal'
-  );
 }
 
 function callAtPosition(lineText: string, character: number) {
@@ -182,14 +175,10 @@ function diagnoseMissingMacro(
   return lines.join('\n');
 }
 
-// Master on/off switch plus independent per-kind toggles, mirroring how
-// printDebugMessage already reads gesstabs.debugMode.
-function hoverSettingEnabled(kind: 'macros' | 'expands'): boolean {
-  const config = vscode.workspace.getConfiguration('gesstabs');
-  if (config.get<boolean>('hover.enabled', true) === false) return false;
-  return config.get<boolean>(`hover.${kind}`, true) !== false;
-}
-
+// The macro-call (#name(...) → expansion) and #EXPAND (#name → value)
+// hovers share the single `gesstabs.hover.show.macros` control: as of
+// 0.99.4 it only chooses the expansion *style* ("short" / "full"), so the
+// one on/off left for both is the master `gesstabs.hover.enabled`.
 const MAX_DOMACRO_PREVIEW = 5;
 
 // Hovering a "#DOMACRO(...)"/"#DOMACRO2(...)" statement shows the calls it
@@ -231,8 +220,7 @@ export class GesstabsMacroHoverProvider implements vscode.HoverProvider {
     token: vscode.CancellationToken
   ): Promise<vscode.Hover | null> {
     try {
-      const config = vscode.workspace.getConfiguration('gesstabs');
-      if (config.get<boolean>('hover.enabled', true) === false) return null;
+      if (!hoverEnabled()) return null;
 
       // Something that merely *looks* like a macro call or #expand
       // reference inside a comment/string isn't one — check the scope at
@@ -260,7 +248,6 @@ export class GesstabsMacroHoverProvider implements vscode.HoverProvider {
         tokenRef &&
         !isExpandInTokenDefinitionNameAt(lineText, position.character)
       ) {
-        if (!hoverSettingEnabled('expands')) return null;
         const { expandInTokenDefs } = await buildMacroContext(document);
         if (token && token.isCancellationRequested) return null;
         const localDefs = findExpandInTokenDefinitions(
@@ -297,7 +284,6 @@ export class GesstabsMacroHoverProvider implements vscode.HoverProvider {
       if (call && isReservedDirectiveKeyword(call.name)) {
         const domacroName = call.name.toLowerCase();
         if (domacroName === 'domacro' || domacroName === 'domacro2') {
-          if (!hoverSettingEnabled('macros')) return null;
           const stmt = parseDomacroStatement(call.raw);
           if (stmt) {
             const range = new vscode.Range(
@@ -320,8 +306,6 @@ export class GesstabsMacroHoverProvider implements vscode.HoverProvider {
       // "#name" #EXPAND reference (gessTabs treats every "#name" that
       // isn't a column-1 macro call as an #EXPAND reference).
       if (!call) {
-        if (!hoverSettingEnabled('expands')) return null;
-
         const hashName = findHashNameAt(lineText, position.character);
         if (!hashName || isReservedDirectiveKeyword(hashName)) {
           printDebugMessage(
@@ -413,8 +397,6 @@ export class GesstabsMacroHoverProvider implements vscode.HoverProvider {
         return new vscode.Hover(md);
       }
 
-      if (!hoverSettingEnabled('macros')) return null;
-
       const { index, macroIndex, reader } = await buildMacroContext(document);
       if (token && token.isCancellationRequested) return null;
 
@@ -424,13 +406,14 @@ export class GesstabsMacroHoverProvider implements vscode.HoverProvider {
         return null;
       }
 
-      const expanded = macroExpansionStyleIsNormal()
-        ? expandLines(
-            macroPreviewBody(target, reader),
-            target.params,
-            call.args
-          )
-        : expandMacro(target, call.args);
+      const expanded =
+        macroHoverStyle() === 'full'
+          ? expandLines(
+              macroPreviewBody(target, reader),
+              target.params,
+              call.args
+            )
+          : expandMacro(target, call.args);
       const range = new vscode.Range(
         new vscode.Position(position.line, call.index),
         new vscode.Position(position.line, call.index + call.raw.length)

@@ -2,7 +2,7 @@
   "name": "gesstabs",
   "displayName": "GESStabs",
   "description": "GESStabs Support",
-  "version": "0.99.3",
+  "version": "0.99.4",
   "publisher": "volkerdobler",
   "engines": {
     "vscode": "^1.109.0"
@@ -63,32 +63,81 @@
         "gesstabs.hover.enabled": {
           "type": "boolean",
           "default": true,
-          "description": "Master switch for all GESStabs hovers (macro-call expansion and #EXPAND value hovers). Disable to turn off hovers entirely regardless of the per-kind settings below."
+          "description": "Master switch for all GESStabs hovers. Turn this off to disable hovers entirely, regardless of gesstabs.hover.show."
         },
-        "gesstabs.hover.macros": {
-          "type": "boolean",
-          "default": true,
-          "description": "Show the expanded macro body when hovering a #name(...) macro call. Has no effect if gesstabs.hover.enabled is false."
+        "gesstabs.hover.show": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "keywords": {
+              "type": "boolean",
+              "default": true,
+              "description": "Hover a GESStabs keyword to see its syntax and manual description."
+            },
+            "variables": {
+              "type": "boolean",
+              "default": true,
+              "description": "Hover a variable to see where it comes from and its VARTEXT / VARTITLE / VALUELABELS (pick which blocks with gesstabs.hover.variableContent)."
+            },
+            "tableDefaults": {
+              "type": "boolean",
+              "default": true,
+              "description": "Hover a TABLE / OVERVIEW / XOVERVIEW keyword to see the effective CELLELEMENTS / FRAMEELEMENTS defaults."
+            },
+            "macros": {
+              "type": "string",
+              "enum": [
+                "short",
+                "full"
+              ],
+              "enumDescriptions": [
+                "Expanded macro body with blank and comment-only lines removed.",
+                "Expanded macro body exactly as the macro's source is written."
+              ],
+              "default": "short",
+              "description": "Hover a #name(...) call to see its expanded body (and a bare #name to see its #EXPAND value). \"short\" trims blank / comment-only lines from the body, \"full\" keeps them."
+            }
+          },
+          "default": {
+            "keywords": true,
+            "variables": true,
+            "tableDefaults": true,
+            "macros": "short"
+          },
+          "markdownDescription": "Which GESStabs hovers are shown. `#gesstabs.hover.enabled#` must be on for any of these."
         },
-        "gesstabs.hover.expands": {
-          "type": "boolean",
-          "default": true,
-          "description": "Show the defined value when hovering a bare #name that refers to a \"#EXPAND #name value\" definition. Has no effect if gesstabs.hover.enabled is false."
-        },
-        "gesstabs.hover.keywords": {
-          "type": "boolean",
-          "default": true,
-          "description": "Show syntax + description for the GESStabs keyword under the cursor. Has no effect if gesstabs.hover.enabled is false."
-        },
-        "gesstabs.hover.variables": {
-          "type": "boolean",
-          "default": true,
-          "description": "Show the declaration line for the variable under the cursor (when the script defines it). Has no effect if gesstabs.hover.enabled is false."
-        },
-        "gesstabs.hover.variableAnnotations": {
-          "type": "boolean",
-          "default": true,
-          "description": "Also list the VARTITLE/VARTEXT/VALUELABELS statements for the variable in its hover. Has no effect if gesstabs.hover.enabled or gesstabs.hover.variables is false."
+        "gesstabs.hover.variableContent": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "definition": {
+              "type": "boolean",
+              "default": true,
+              "description": "The variable's origin — its SINGLEQ / COMPUTE / … declaration line, or \"aus <datei>.sav (SPSS, Spalte N)\" for a raw dataset variable."
+            },
+            "text": {
+              "type": "boolean",
+              "default": true,
+              "description": "The variable's VARTEXT statement."
+            },
+            "title": {
+              "type": "boolean",
+              "default": true,
+              "description": "The variable's VARTITLE statement."
+            },
+            "valueLabels": {
+              "type": "boolean",
+              "default": true,
+              "description": "The variable's VALUELABELS statement."
+            }
+          },
+          "default": {
+            "definition": true,
+            "text": true,
+            "title": true,
+            "valueLabels": true
+          },
+          "markdownDescription": "Which blocks the variable hover shows (always in this order: definition, VARTEXT, VARTITLE, VALUELABELS). Needs `#gesstabs.hover.show#` → `variables` on."
         },
         "gesstabs.hover.language": {
           "type": "string",
@@ -109,24 +158,6 @@
           "type": "boolean",
           "default": true,
           "description": "Suggest GESStabs keywords, previously-defined variable/table names, and macro names while typing."
-        },
-        "gesstabs.hover.effectiveElements": {
-          "type": "boolean",
-          "default": true,
-          "description": "Show the effective CELLELEMENTS/FRAMEELEMENTS defaults when hovering a TABLE/OVERVIEW/XOVERVIEW statement. Has no effect if gesstabs.hover.enabled is false."
-        },
-        "gesstabs.hover.macroExpansionStyle": {
-          "type": "string",
-          "enum": [
-            "short",
-            "normal"
-          ],
-          "enumDescriptions": [
-            "Hide blank lines and comment-only lines from the macro's original source when showing its expanded body.",
-            "Show the expanded body exactly as the macro's source is written, including blank lines and comments."
-          ],
-          "default": "short",
-          "description": "How much of the macro's original formatting to preserve in the \"Expanded #name(...)\" hover."
         },
         "gesstabs.dataInput.entryScriptPatterns": {
           "type": "array",

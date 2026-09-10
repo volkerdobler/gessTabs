@@ -21,6 +21,7 @@ import {
   normalizePath,
   printDebugMessage,
 } from '../util/workspaceFiles';
+import { hoverEnabled, hoverShows } from '../util/config';
 
 export class GesstabsEffectiveElementsHoverProvider
   implements vscode.HoverProvider
@@ -31,11 +32,8 @@ export class GesstabsEffectiveElementsHoverProvider
     token: vscode.CancellationToken
   ): Promise<vscode.Hover | null> {
     try {
-      const config = vscode.workspace.getConfiguration('gesstabs');
-      if (config.get<boolean>('hover.enabled', true) === false) return null;
-      if (config.get<boolean>('hover.effectiveElements', true) === false) {
-        return null;
-      }
+      if (!hoverEnabled()) return null;
+      if (!hoverShows('tableDefaults')) return null;
 
       // The TABLE/OVERVIEW/XOVERVIEW statement keyword this hover reports
       // on is always a bare code token — never legitimately written inside
