@@ -62,3 +62,5 @@ dokumentation/**
 *.vsix
 .ps_history
 .vscode/mcp.json
+
+.claude/**
