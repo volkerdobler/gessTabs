@@ -20,6 +20,20 @@ export function printDebugMessage(message: string): void {
   }
 }
 
+// `basename:line` (or a custom `label`) rendered as a markdown link that
+// opens `file` at `line` (0-based). Uses the `gesstabs.revealLine`
+// command rather than the built-in `vscode.open`, whose `selection`
+// option is ignored when the target file is already open. The hover's
+// MarkdownString must opt in via
+// `md.isTrusted = { enabledCommands: ['gesstabs.revealLine'] }`.
+export function jumpLink(file: string, line: number, label?: string): string {
+  const args = encodeURIComponent(
+    JSON.stringify([vscode.Uri.file(file).toString(), line])
+  );
+  const text = label ?? `${path.basename(file)}:${line + 1}`;
+  return `[${text}](command:gesstabs.revealLine?${args})`;
+}
+
 // Workaround for issue in https://github.com/Microsoft/vscode/issues/9448#issuecomment-244804026
 export function fixDriveCasingInWindows(pathToFix: string): string {
   return process.platform === 'win32' && pathToFix

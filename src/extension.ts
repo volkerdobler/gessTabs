@@ -6,6 +6,7 @@ import * as path from 'path';
 import * as sc from './core/scope';
 import { constVarName, macroDefRe, expandDefRe } from './core/regex';
 import { matchInScope } from './core/matching';
+import { findMatchingDirectiveLine } from './core/matchingDirective';
 import { getAllFilenamesInDirectory } from './util/fsutils';
 import {
   buildWorkspaceIndex,
@@ -92,6 +93,44 @@ export function activate(context: vscode.ExtensionContext) {
         await vscode.window.showTextDocument(document, {
           selection: new vscode.Range(position, position),
         });
+      }
+    )
+  );
+
+  // The #-block analogue of the built-in "Go to Bracket"
+  // (editor.action.jumpToBracket, Ctrl+Shift+\), which only pairs bracket
+  // characters: on a #MACRO/#ENDMACRO line — or #IFDEF-family/#END,
+  // #STARTEXPORT/#ENDEXPORT, IFBLOCK|WHILEBLOCK/ENDBLOCK,
+  // SETFILTER/ENDFILTER — it jumps to the matching delimiter; anywhere
+  // else it defers to the built-in, so the same keystroke still does
+  // normal bracket matching everywhere it used to.
+  context.subscriptions.push(
+    vscode.commands.registerCommand(
+      'gesstabs.jumpToMatchingDirective',
+      async () => {
+        const editor = vscode.window.activeTextEditor;
+        if (!editor || editor.document.languageId !== 'gesstabs') {
+          await vscode.commands.executeCommand('editor.action.jumpToBracket');
+          return;
+        }
+        const scope = new sc.Scope(editor.document);
+        const lines: string[] = [];
+        for (let i = 0; i < editor.document.lineCount; i += 1) {
+          lines.push(editor.document.lineAt(i).text);
+        }
+        const target = findMatchingDirectiveLine(
+          lines,
+          editor.selection.active.line,
+          (line, char) => scope.isNotInComment(line, char)
+        );
+        if (target === undefined) {
+          await vscode.commands.executeCommand('editor.action.jumpToBracket');
+          return;
+        }
+        const indent = editor.document.lineAt(target).text.search(/\S/);
+        const pos = new vscode.Position(target, Math.max(indent, 0));
+        editor.selection = new vscode.Selection(pos, pos);
+        editor.revealRange(new vscode.Range(pos, pos));
       }
     )
   );

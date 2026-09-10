@@ -7,6 +7,8 @@ import {
   expandLines,
   findParamReferenceAt,
   findExpandDefinitions,
+  findExpandDefinitionSites,
+  findExpandInTokenDefinitionSites,
   stripExpandComments,
   resolveExpandValue,
   findHashNameAt,
@@ -403,6 +405,39 @@ describe('findExpandDefinitions', () => {
   it('recognizes a short single-letter name', () => {
     const defs = findExpandDefinitions(src('#expand #s totalcol( 1 )'));
     expect(defs.get('s')).to.equal('totalcol( 1 )');
+  });
+});
+
+describe('findExpandDefinitionSites', () => {
+  it('records the file and line of each "#expand #name" definition', () => {
+    const sites = findExpandDefinitionSites(
+      src(
+        'variable a = 1;\n#expand #land germany\n#expand #greeting hi',
+        '/inc/defs.inc'
+      )
+    );
+    expect(sites.get('land')).to.deep.equal({ file: '/inc/defs.inc', line: 1 });
+    expect(sites.get('greeting')).to.deep.equal({
+      file: '/inc/defs.inc',
+      line: 2,
+    });
+  });
+
+  it('is case-sensitive and keeps the last definition when a name repeats', () => {
+    const sites = findExpandDefinitionSites(
+      src('#expand #x a\n#expand #X b\n#expand #x c')
+    );
+    expect(sites.get('x')).to.deep.equal({ file: '/main.tab', line: 2 });
+    expect(sites.get('X')).to.deep.equal({ file: '/main.tab', line: 1 });
+  });
+});
+
+describe('findExpandInTokenDefinitionSites', () => {
+  it('records the file and line of each "#expandintoken &name&" definition', () => {
+    const sites = findExpandInTokenDefinitionSites(
+      src('#expandintoken &land& germany', '/inc/tok.inc')
+    );
+    expect(sites.get('land')).to.deep.equal({ file: '/inc/tok.inc', line: 0 });
   });
 });
 

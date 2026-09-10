@@ -559,6 +559,35 @@ export function findExpandDefinitions(
   return defs;
 }
 
+// Where each `#expand #name …` / `#expandintoken &name& …` line sits, for
+// a hover's "jump to definition" link. Kept separate from the value maps
+// above (findExpandDefinitions / findExpandInTokenDefinitions) so those
+// stay plain `name → value` for the recursive resolvers that don't care
+// where a definition lives. Last write wins, mirroring the value maps:
+// the site returned is the one whose value also won.
+export interface ExpandDefinitionSite {
+  file: string;
+  line: number;
+}
+
+function findDefinitionSites(
+  lines: MacroSourceLine[],
+  re: RegExp
+): Map<string, ExpandDefinitionSite> {
+  const sites = new Map<string, ExpandDefinitionSite>();
+  lines.forEach((l) => {
+    const m = l.text.match(re);
+    if (m) sites.set(m[1], { file: l.file, line: l.line });
+  });
+  return sites;
+}
+
+export function findExpandDefinitionSites(
+  lines: MacroSourceLine[]
+): Map<string, ExpandDefinitionSite> {
+  return findDefinitionSites(lines, expandDefinitionRe);
+}
+
 // A "#(\S+)" right after "#expand" — same shape as expandDefinitionRe's
 // own first capture, kept separate so callers can ask "is the cursor on
 // *this* token" without needing the rest of expandDefinitionRe's
@@ -677,6 +706,12 @@ export function findExpandInTokenDefinitions(
     if (m) defs.set(m[1], stripExpandComments(m[2] ?? ''));
   });
   return defs;
+}
+
+export function findExpandInTokenDefinitionSites(
+  lines: MacroSourceLine[]
+): Map<string, ExpandDefinitionSite> {
+  return findDefinitionSites(lines, expandInTokenDefinitionRe);
 }
 
 // A "&search&" reference — distinct from a macro parameter's "&param"

@@ -46,6 +46,20 @@
         "path": "./snippets/snippets.json"
       }
     ],
+    "commands": [
+      {
+        "command": "gesstabs.jumpToMatchingDirective",
+        "title": "Go to Matching Directive (#MACRO/#ENDMACRO, #IFDEF/#END, …)",
+        "category": "GESStabs"
+      }
+    ],
+    "keybindings": [
+      {
+        "command": "gesstabs.jumpToMatchingDirective",
+        "key": "ctrl+shift+\\",
+        "when": "editorTextFocus && editorLangId == gesstabs"
+      }
+    ],
     "configuration": {
       "type": "object",
       "title": "GESStabs Configuration",

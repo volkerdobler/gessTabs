@@ -23,7 +23,6 @@
 // ones (vscode merges every registered provider's result).
 
 import * as vscode from 'vscode';
-import * as path from 'path';
 import { Scope } from '../core/scope';
 import { constVarName } from '../core/regex';
 import {
@@ -40,6 +39,7 @@ import {
   findWorkspaceFiles,
   normalizePath,
   printDebugMessage,
+  jumpLink,
 } from '../util/workspaceFiles';
 import {
   hoverEnabled,
@@ -53,19 +53,6 @@ import {
 } from './externalNamesProvider';
 
 const keywordNames = new Set(keywordData.map((k) => keywordLookupKey(k.name)));
-
-// `basename:line` (or a custom `label`) rendered as a link that opens that
-// file at that line. Uses the `gesstabs.revealLine` command (needs the
-// MarkdownString's `isTrusted` allow-list) rather than the built-in
-// `vscode.open`, whose `selection` option is ignored when the target file
-// is already open — it would just focus the tab without moving the cursor.
-function jumpLink(file: string, line: number, label?: string): string {
-  const args = encodeURIComponent(
-    JSON.stringify([vscode.Uri.file(file).toString(), line])
-  );
-  const text = label ?? `${path.basename(file)}:${line + 1}`;
-  return `[${text}](command:gesstabs.revealLine?${args})`;
-}
 
 const KIND_LABEL: Record<string, string> = {
   atomic: 'Variable',

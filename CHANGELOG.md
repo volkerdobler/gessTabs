@@ -2,6 +2,11 @@
 
 All notable changes to the "GESStabs" extension will be documented in this file (last change first).
 
+## Unreleased
+
+- New command **Go to Matching Directive**, bound to `Ctrl+Shift+\` (the built-in _Go to Bracket_ key) for `.tab`/`.inc`/`.def` files. On a `#MACRO`/`#ENDMACRO` line — and `#IFDEF`-family/`#END`, `#STARTEXPORT`/`#ENDEXPORT`, `IFBLOCK`/`WHILEBLOCK`…`ENDBLOCK`, `SETFILTER`/`ENDFILTER` — it jumps to the matching delimiter (nesting-aware, comment-aware, reusing the folding pairing). On any other line it falls through to the built-in bracket jump, so the keystroke is unchanged everywhere it already worked.
+- Macro-call hover now also shows the macro's declaration — `#macro #name(&p1 &p2 …)` — and a `file:line` link to its definition, above the expanded body. The `#EXPAND`, `#EXPANDINC` and `#EXPANDINTOKEN` hovers gained the same jump-to-definition link.
+
 ## 0.99.6
 
 - Variable hover: a variable passed to a `#MACRO` call is shown as itself (declaration + `VARTEXT`/`VARTITLE`/`VALUELABELS`) when it is already defined elsewhere; when the variable is *created inside* the macro body (e.g. `MAKEFAMILY &1 = …`) the hover instead points at the macro and the body line that produces it. Previously the macro block was either always shown (noise) or never (missing for macro-created names).

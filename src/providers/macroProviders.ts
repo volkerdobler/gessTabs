@@ -19,6 +19,7 @@ import {
   expandMacro,
   expandLines,
   findExpandDefinitions,
+  findExpandDefinitionSites,
   resolveExpandValue,
   findHashNameAt,
   isExpandDefinitionNameAt,
@@ -27,6 +28,7 @@ import {
   domacroGeneratedCalls,
   DomacroStatement,
   findExpandInTokenDefinitions,
+  findExpandInTokenDefinitionSites,
   findExpandInTokenRefAt,
   isExpandInTokenDefinitionNameAt,
   findExpandIncDefinitions,
@@ -39,9 +41,33 @@ import {
   findWorkspaceFiles,
   normalizePath,
   printDebugMessage,
+  jumpLink,
 } from '../util/workspaceFiles';
 import { hoverEnabled, macroHoverStyle } from '../util/config';
 import { FileReader } from '../core/includeGraph';
+
+// The current document's own lines as MacroSourceLine[] — for merging a
+// direct scan of this file into the workspace-resolved definition maps,
+// so an `#expand` / `#expandintoken` in *this* file always resolves even
+// when the INCLUDE graph doesn't reach it (orphaned during editing, an
+// unresolved INCLUDE path, …).
+function documentSourceLines(document: vscode.TextDocument) {
+  return document
+    .getText()
+    .split(/\r?\n/)
+    .map((text, line) => ({
+      file: normalizePath(document.uri.fsPath),
+      line,
+      text,
+    }));
+}
+
+// A `basename:line` "jump to definition" link for a hover, or an empty
+// string when the site is unknown (so it can be dropped into a template
+// unconditionally). `md.isTrusted` must enable `gesstabs.revealLine`.
+function definitionLink(site: { file: string; line: number } | undefined) {
+  return site ? ` — ${jumpLink(site.file, site.line)}` : '';
+}
 
 async function buildMacroContext(document: vscode.TextDocument) {
   const fileNames = await findWorkspaceFiles(document);
@@ -59,7 +85,9 @@ async function buildMacroContext(document: vscode.TextDocument) {
     defs,
     macroIndex: buildMacroIndex(defs),
     expandDefs: findExpandDefinitions(index.order),
+    expandDefSites: findExpandDefinitionSites(index.order),
     expandInTokenDefs: findExpandInTokenDefinitions(index.order),
+    expandInTokenDefSites: findExpandInTokenDefinitionSites(index.order),
     expandIncDefs: findExpandIncDefinitions(index.order),
     reader,
   };
@@ -256,19 +284,18 @@ export class GesstabsMacroHoverProvider implements vscode.HoverProvider {
         tokenRef &&
         !isExpandInTokenDefinitionNameAt(lineText, position.character)
       ) {
-        const { expandInTokenDefs } = await buildMacroContext(document);
+        const { expandInTokenDefs, expandInTokenDefSites } =
+          await buildMacroContext(document);
         if (token && token.isCancellationRequested) return null;
-        const localDefs = findExpandInTokenDefinitions(
-          document
-            .getText()
-            .split(/\r?\n/)
-            .map((text, line) => ({
-              file: normalizePath(document.uri.fsPath),
-              line,
-              text,
-            }))
-        );
-        const allTokenDefs = new Map([...expandInTokenDefs, ...localDefs]);
+        const docLines = documentSourceLines(document);
+        const allTokenDefs = new Map([
+          ...expandInTokenDefs,
+          ...findExpandInTokenDefinitions(docLines),
+        ]);
+        const allTokenDefSites = new Map([
+          ...expandInTokenDefSites,
+          ...findExpandInTokenDefinitionSites(docLines),
+        ]);
         const value = allTokenDefs.get(tokenRef);
         if (value === undefined) {
           printDebugMessage(
@@ -277,7 +304,11 @@ export class GesstabsMacroHoverProvider implements vscode.HoverProvider {
           return null;
         }
         const md = new vscode.MarkdownString();
-        md.appendMarkdown(`**EXPANDINTOKEN** \`&${tokenRef}&\`\n`);
+        md.isTrusted = { enabledCommands: ['gesstabs.revealLine'] };
+        md.appendMarkdown(
+          `**EXPANDINTOKEN** \`&${tokenRef}&\`` +
+            `${definitionLink(allTokenDefSites.get(tokenRef))}\n`
+        );
         md.appendCodeblock(value === '' ? ' ' : value, 'gesstabs');
         return new vscode.Hover(md);
       }
@@ -337,10 +368,11 @@ export class GesstabsMacroHoverProvider implements vscode.HoverProvider {
           return null;
         }
 
-        const { expandDefs, expandIncDefs, index } = await buildMacroContext(
-          document
-        );
+        const { expandDefs, expandDefSites, expandIncDefs, index } =
+          await buildMacroContext(document);
         if (token && token.isCancellationRequested) return null;
+
+        const docLines = documentSourceLines(document);
 
         // #EXPANDINC takes precedence over a plain #EXPAND with the same
         // name — its counter reference shows the value this occurrence
@@ -356,7 +388,10 @@ export class GesstabsMacroHoverProvider implements vscode.HoverProvider {
             position.character
           );
           const md = new vscode.MarkdownString();
-          md.appendMarkdown(`**EXPANDINC** \`#${hashName}\`\n`);
+          md.isTrusted = { enabledCommands: ['gesstabs.revealLine'] };
+          md.appendMarkdown(
+            `**EXPANDINC** \`#${hashName}\`${definitionLink(incDef)}\n`
+          );
           md.appendCodeblock(
             value !== undefined ? String(value) : '(unresolved)',
             'gesstabs'
@@ -371,17 +406,14 @@ export class GesstabsMacroHoverProvider implements vscode.HoverProvider {
         // an unresolved INCLUDE path, …). The merged map also feeds the
         // recursive resolution below, where a nested `#other` may live in
         // either place.
-        const localDefs = findExpandDefinitions(
-          document
-            .getText()
-            .split(/\r?\n/)
-            .map((text, line) => ({
-              file: normalizePath(document.uri.fsPath),
-              line,
-              text,
-            }))
-        );
-        const allExpandDefs = new Map([...expandDefs, ...localDefs]);
+        const allExpandDefs = new Map([
+          ...expandDefs,
+          ...findExpandDefinitions(docLines),
+        ]);
+        const allExpandDefSites = new Map([
+          ...expandDefSites,
+          ...findExpandDefinitionSites(docLines),
+        ]);
 
         if (!allExpandDefs.has(hashName)) {
           printDebugMessage(
@@ -396,7 +428,11 @@ export class GesstabsMacroHoverProvider implements vscode.HoverProvider {
         const value = resolveExpandValue(hashName, allExpandDefs) ?? '';
 
         const md = new vscode.MarkdownString();
-        md.appendMarkdown(`**EXPAND** \`#${hashName}\`\n`);
+        md.isTrusted = { enabledCommands: ['gesstabs.revealLine'] };
+        md.appendMarkdown(
+          `**EXPAND** \`#${hashName}\`` +
+            `${definitionLink(allExpandDefSites.get(hashName))}\n`
+        );
         if (value === '') {
           md.appendMarkdown('\n_(expands to nothing)_');
         } else {
@@ -431,7 +467,16 @@ export class GesstabsMacroHoverProvider implements vscode.HoverProvider {
         new vscode.Position(position.line, hashPos + 1 + call.name.length)
       );
       const md = new vscode.MarkdownString();
-      md.appendMarkdown(`**MACRO** \`${call.raw}\`\n`);
+      md.isTrusted = { enabledCommands: ['gesstabs.revealLine'] };
+      md.appendMarkdown(`**MACRO** \`${call.raw}\`\n\n`);
+      // How the macro is declared, and where — the call site alone never
+      // shows the `#macro #name( … )` signature or which file it lives in.
+      const signature = `#macro #${target.name}(${target.params
+        .map((p) => `&${p}`)
+        .join(' ')})`;
+      md.appendMarkdown(
+        `\`${signature}\` — ${jumpLink(target.file, target.defLine)}\n`
+      );
       md.appendCodeblock(expanded.join('\n'), 'gesstabs');
       return new vscode.Hover(md, range);
     } catch (e) {
