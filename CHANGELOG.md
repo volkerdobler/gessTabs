@@ -2,6 +2,11 @@
 
 All notable changes to the "GESStabs" extension will be documented in this file (last change first).
 
+## 0.99.6
+
+- Variable hover: a variable passed to a `#MACRO` call is shown as itself (declaration + `VARTEXT`/`VARTITLE`/`VALUELABELS`) when it is already defined elsewhere; when the variable is *created inside* the macro body (e.g. `MAKEFAMILY &1 = …`) the hover instead points at the macro and the body line that produces it. Previously the macro block was either always shown (noise) or never (missing for macro-created names).
+- Fixed: the first real statement after a `#MACRO … #ENDMACRO` block (and the first body line after `#MACRO`) was silently glued onto the directive line and lost — so a variable declared right after a macro block was invisible to Go to Definition, Find All References, rename, the variable hover, and diagnostics. Macro bodies are now skipped as the substitution templates they are (nested `#MACRO` blocks included).
+
 ## 0.99.4
 
 - Go to Definition / hover on a raw dataset variable (one from `CSVINFILE`/`SPSSINFILE`/`DATAFILE`) sometimes jumped a few lines above the real data-source statement — e.g. onto a `document = "";` line just before it. Root cause: a trailing `// comment` after a statement's `;`, once blanked, was mistakenly treated as the start of the next statement, so every statement after such a line was recorded a few lines too early. Also fixed two ways the data-source information could go stale: the entry-program cache is now rebuilt after in-editor edits (not only on save), and the workspace reader now sees the live buffer of *every* open file, not just the focused one.

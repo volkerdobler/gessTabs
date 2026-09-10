@@ -26,7 +26,10 @@ import * as vscode from 'vscode';
 import * as path from 'path';
 import { Scope } from '../core/scope';
 import { constVarName } from '../core/regex';
-import { buildWorkspaceIndex } from '../core/symbolIndex';
+import {
+  buildWorkspaceIndex,
+  findMacroProducedDefinition,
+} from '../core/symbolIndex';
 import { buildVariableModel, ModelAnnotation } from '../core/variableModel';
 import { findLogicalStatement } from '../core/statements';
 import { classifyStatement } from '../core/variableStatements';
@@ -244,19 +247,36 @@ export class GesstabsVariableHoverProvider implements vscode.HoverProvider {
         !hoveringOwnDeclaration &&
         !isExternal;
 
-      // A variable that a #MACRO body produces (passed in as an argument)
-      // is deliberately NOT described here: the macro body / call-site
-      // expansion belongs to the macro hover — hover the `#name(...)` call
-      // itself to see it. Repeating it on every plain variable occurrence
-      // was noise (user feedback 2026-09-10). Go-to-definition keeps its
-      // own macro-produced fallback.
+      // `word` has no in-script / dataset symbol of its own — but it may be
+      // a name a #MACRO *body* produces once this call's arguments are
+      // substituted (e.g. `#mkfam( geschl )` where the body is
+      // `makefamily &1 = …`). Only in that case (`!sym`) does the variable
+      // hover describe the macro: an argument that is *already* a real
+      // variable is shown as itself (its declaration + annotations), never
+      // with the macro on top — the macro-call hover, restricted to the
+      // `#name` token, is where a caller sees the expansion instead. The
+      // position-aware lookup excludes the call's own line, so the second,
+      // whole-program call is what catches "hovering the argument on the
+      // call line itself".
+      const macroDef =
+        showDefinition && !sym
+          ? findMacroProducedDefinition(
+              index,
+              currentFile,
+              position.line,
+              word
+            ) ?? findMacroProducedDefinition(index, currentFile, -1, word)
+          : undefined;
 
-      // Nothing in-script — is it a raw variable from the data source? Also
-      // taken when the model *did* resolve it but as `origin: 'external'`
-      // (a raw column the script later assigns): the hover still describes
-      // it by its data source, not by that assignment.
+      // Nothing in-script or macro-produced — is it a raw variable from the
+      // data source? Also taken when the model *did* resolve it but as
+      // `origin: 'external'` (a raw column the script later assigns): the
+      // hover still describes it by its data source, not by that assignment.
       const externalSources =
-        showDefinition && (!sym || isExternal) && this.externalNames
+        showDefinition &&
+        !macroDef &&
+        (!sym || isExternal) &&
+        this.externalNames
           ? await this.externalNames.externalSourcesFor(document, word)
           : [];
 
@@ -278,6 +298,7 @@ export class GesstabsVariableHoverProvider implements vscode.HoverProvider {
       if (
         !hasShowableDef &&
         !isPredefined &&
+        !macroDef &&
         annotations.length === 0 &&
         externalSources.length === 0
       ) {
@@ -302,6 +323,23 @@ export class GesstabsVariableHoverProvider implements vscode.HoverProvider {
           'gesstabs'
         );
         md.appendMarkdown(`\n${jumpLink(primaryDef.file, primaryDef.line)}\n`);
+      } else if (macroDef) {
+        const macroNameLink = jumpLink(
+          macroDef.macro.file,
+          macroDef.macro.defLine,
+          `#${macroDef.macro.name}`
+        );
+        md.appendMarkdown(
+          `\n_von einem ${macroNameLink}-Makroaufruf erzeugt — nicht wörtlich im Skript_\n`
+        );
+        md.appendCodeblock(macroDef.bodyLine.text.trim(), 'gesstabs');
+        md.appendMarkdown(
+          `\n${jumpLink(macroDef.bodyLine.file, macroDef.bodyLine.line)}\n`
+        );
+        md.appendCodeblock(macroDef.callSite.text.trim(), 'gesstabs');
+        md.appendMarkdown(
+          `\n${jumpLink(macroDef.callSite.file, macroDef.callSite.line)}\n`
+        );
       } else if (externalSources.length > 0) {
         md.appendMarkdown(renderExternalSourceLines(word, externalSources));
       } else if (showDefinition && !hoveringOwnDeclaration) {

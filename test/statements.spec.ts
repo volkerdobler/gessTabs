@@ -55,7 +55,7 @@ describe('toLogicalStatements', () => {
     expect(out[1]).to.include({ file: 'a.tab', startLine: 1 });
   });
 
-  it('a whitespace-only tail after a ; (a blanked trailing comment) does not become the next statement\'s start line', () => {
+  it("a whitespace-only tail after a ; (a blanked trailing comment) does not become the next statement's start line", () => {
     // `document = "";` on line 1 ends with a blanked `// comment` tail;
     // lines 2-4 are dropped by the include resolver (comments / #ifdef),
     // so the next line the scanner sees is `spssinfile = ...;` on line 5.
@@ -67,6 +67,34 @@ describe('toLogicalStatements', () => {
     ]);
     expect(out.map((s) => s.startLine)).to.deep.equal([0, 1, 5]);
     expect(out[2].text).to.equal('spssinfile = "d.sav";');
+  });
+
+  it('skips a #macro … #endmacro body and does not glue it to the surrounding statements', () => {
+    const out = toLogicalStatements([
+      { file: 'a.tab', line: 0, text: 'compute before = 1;' },
+      { file: 'a.tab', line: 1, text: '#macro #foo( &a )' },
+      { file: 'a.tab', line: 2, text: 'makefamily &a = &a.x &a.y;' },
+      { file: 'a.tab', line: 3, text: '#endmacro' },
+      { file: 'a.tab', line: 4, text: 'singleq region = 1 2 3;' },
+    ]);
+    expect(out.map((s) => s.text)).to.deep.equal([
+      'compute before = 1;',
+      'singleq region = 1 2 3;',
+    ]);
+    expect(out[1].startLine).to.equal(4);
+  });
+
+  it('handles legally nested #macro blocks', () => {
+    const out = toLogicalStatements([
+      { file: 'a.tab', line: 0, text: '#macro #out( &o )' },
+      { file: 'a.tab', line: 1, text: '#macro #in( &i )' },
+      { file: 'a.tab', line: 2, text: 'variable fz&i = &i;' },
+      { file: 'a.tab', line: 3, text: '#endmacro' },
+      { file: 'a.tab', line: 4, text: '#in( &o )' },
+      { file: 'a.tab', line: 5, text: '#endmacro' },
+      { file: 'a.tab', line: 6, text: 'compute after = 1;' },
+    ]);
+    expect(out.map((s) => s.text)).to.deep.equal(['compute after = 1;']);
   });
 
   // A column-1 macro/preprocessor call (#name(...), #DOMACRO(...) & co.) is

@@ -54,6 +54,19 @@ const MAX_STATEMENT_LINES = 200;
 // convention — never triggers mid-line after a preceding `;`.
 const macroCallStartRe = /^\s*#[A-Za-z_][\w.]*\s*\(/;
 
+// `#macro <#name>( … )` opens a macro-definition body; `#endmacro` /
+// `#macroend` closes it (nesting is legal — see the diagnostics tests).
+// The body is a substitution template, not a run of program statements:
+// its `&1` / `&param` tokens would be misread as variable names by every
+// classifier consumer, and — worse — a `#macro`/`#endmacro` line has no
+// `;`, so without this the first real statement after `#endmacro` (and
+// the first body line after `#macro`) got glued onto the directive line
+// and lost. macroExpansion.ts parses macro bodies separately from its own
+// line scan, so nothing here needs them. `#endmacro` is tested before
+// `#macro` since `#macroend` starts with `#macro`.
+const macroBlockStartRe = /^\s*#macro\b/i;
+const macroBlockEndRe = /^\s*#(?:endmacro|macroend)\b/i;
+
 interface Piece {
   line: ResolvedLine;
   text: string;
@@ -88,6 +101,11 @@ export function toLogicalStatements(order: ResolvedLine[]): LogicalStatement[] {
   // depth instead of scanning for `;` — the statement ends the moment it
   // returns to 0, `;` or not (see the module doc comment above).
   let macroCallDepth: number | null = null;
+  // >0 while inside one or more nested `#macro … #endmacro` blocks; those
+  // body lines are skipped entirely. Reset on a file change — an unclosed
+  // `#macro` never spans files.
+  let macroBlockDepth = 0;
+  let prevFile: string | undefined;
 
   const endStatement = (terminated: boolean) => {
     flush(pieces, terminated, out);
@@ -98,6 +116,23 @@ export function toLogicalStatements(order: ResolvedLine[]): LogicalStatement[] {
 
   for (let i = 0; i < order.length; i++) {
     const rl = order[i];
+
+    if (prevFile !== undefined && prevFile !== rl.file) macroBlockDepth = 0;
+    prevFile = rl.file;
+
+    // A `#macro … #endmacro` body is a template, not statements — skip it,
+    // flushing any half-open statement at the block's edges.
+    if (macroBlockEndRe.test(rl.text)) {
+      if (macroBlockDepth > 0) macroBlockDepth -= 1;
+      if (macroBlockDepth === 0) endStatement(false);
+      continue;
+    }
+    if (macroBlockStartRe.test(rl.text)) {
+      if (macroBlockDepth === 0) endStatement(false);
+      macroBlockDepth += 1;
+      continue;
+    }
+    if (macroBlockDepth > 0) continue;
 
     // A file boundary or an over-long run interrupts an unterminated
     // statement — emit what we have as truncated and start fresh.
