@@ -76,6 +76,26 @@ export function activate(context: vscode.ExtensionContext) {
   const externalNamesManager = new GesstabsExternalNamesManager();
   context.subscriptions.push(externalNamesManager);
 
+  // Used by the variable-hover jump links (src/providers/variableHoverProvider.ts,
+  // src/providers/externalNamesProvider.ts) instead of the built-in `vscode.open`
+  // command: `vscode.open`'s `selection` option is unreliably applied when the
+  // target file is already open in an editor — it just focuses the existing tab
+  // without moving the cursor. `showTextDocument`'s `selection` option doesn't
+  // have that problem, open or not.
+  context.subscriptions.push(
+    vscode.commands.registerCommand(
+      'gesstabs.revealLine',
+      async (uriString: string, line: number) => {
+        const uri = vscode.Uri.parse(uriString);
+        const document = await vscode.workspace.openTextDocument(uri);
+        const position = new vscode.Position(line, 0);
+        await vscode.window.showTextDocument(document, {
+          selection: new vscode.Range(position, position),
+        });
+      }
+    )
+  );
+
   context.subscriptions.push(
     vscode.languages.registerDefinitionProvider(
       {

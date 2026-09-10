@@ -476,17 +476,12 @@ export function renderExternalSourceLines(
       const args = encodeURIComponent(
         JSON.stringify([
           vscode.Uri.file(src.statement.file).toString(),
-          {
-            selection: {
-              start: { line: src.statement.line, character: 0 },
-              end: { line: src.statement.line, character: 0 },
-            },
-          },
+          src.statement.line,
         ])
       );
       return `\n_aus \`${base}\` (${kw}${col}) — [${path.basename(
         src.statement.file
-      )}:${src.statement.line + 1}](command:vscode.open?${args})_\n`;
+      )}:${src.statement.line + 1}](command:gesstabs.revealLine?${args})_\n`;
     })
     .join('');
 }

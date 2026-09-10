@@ -49,23 +49,16 @@ import {
 const keywordNames = new Set(keywordData.map((k) => keywordLookupKey(k.name)));
 
 // `basename:line` (or a custom `label`) rendered as a link that opens that
-// file at that line. Uses the `vscode.open` command (needs the
-// MarkdownString's `isTrusted` allow-list) so the line selection is
-// honoured — a bare `file:` link doesn't reliably jump to the line.
+// file at that line. Uses the `gesstabs.revealLine` command (needs the
+// MarkdownString's `isTrusted` allow-list) rather than the built-in
+// `vscode.open`, whose `selection` option is ignored when the target file
+// is already open — it would just focus the tab without moving the cursor.
 function jumpLink(file: string, line: number, label?: string): string {
   const args = encodeURIComponent(
-    JSON.stringify([
-      vscode.Uri.file(file).toString(),
-      {
-        selection: {
-          start: { line, character: 0 },
-          end: { line, character: 0 },
-        },
-      },
-    ])
+    JSON.stringify([vscode.Uri.file(file).toString(), line])
   );
   const text = label ?? `${path.basename(file)}:${line + 1}`;
-  return `[${text}](command:vscode.open?${args})`;
+  return `[${text}](command:gesstabs.revealLine?${args})`;
 }
 
 const KIND_LABEL: Record<string, string> = {
@@ -238,7 +231,7 @@ export class GesstabsVariableHoverProvider implements vscode.HoverProvider {
       }
 
       const md = new vscode.MarkdownString();
-      md.isTrusted = { enabledCommands: ['vscode.open'] };
+      md.isTrusted = { enabledCommands: ['gesstabs.revealLine'] };
       md.appendMarkdown(`**VARIABLE** \`${word}\`\n`);
 
       if (isPredefined) {
