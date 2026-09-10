@@ -85,10 +85,18 @@ function macroPreviewBody(
   return lines.slice(macro.defLine + 1, macro.endLine);
 }
 
+// The macro-call hover fires only when the cursor is on the call's own
+// `#name` token — not anywhere inside its `( … )` argument list. A macro
+// argument is (almost always) a variable / value the caller passes in;
+// hovering it should show *that* (the variable hover's job), not re-show
+// the macro body on top. An argument that is itself a `#name` #EXPAND
+// reference still gets its own hover via the `if (!call)` branch below.
 function callAtPosition(lineText: string, character: number) {
-  return findMacroCalls(lineText).find(
-    (c) => character >= c.index && character <= c.index + c.raw.length
-  );
+  return findMacroCalls(lineText).find((c) => {
+    const hashPos = c.index + c.raw.indexOf('#');
+    const nameEnd = hashPos + 1 + c.name.length;
+    return character >= hashPos && character <= nameEnd;
+  });
 }
 
 // A call resolved to no known macro is the confusing case in practice —
@@ -414,9 +422,13 @@ export class GesstabsMacroHoverProvider implements vscode.HoverProvider {
               call.args
             )
           : expandMacro(target, call.args);
+      // Anchor the hover to the `#name` token only (callAtPosition already
+      // restricts triggering to it) — not the whole `#name( … )` span,
+      // whose argument list has its own per-argument hovers.
+      const hashPos = call.index + call.raw.indexOf('#');
       const range = new vscode.Range(
-        new vscode.Position(position.line, call.index),
-        new vscode.Position(position.line, call.index + call.raw.length)
+        new vscode.Position(position.line, hashPos),
+        new vscode.Position(position.line, hashPos + 1 + call.name.length)
       );
       const md = new vscode.MarkdownString();
       md.appendMarkdown(`**MACRO** \`${call.raw}\`\n`);
