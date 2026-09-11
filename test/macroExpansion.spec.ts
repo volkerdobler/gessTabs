@@ -25,6 +25,7 @@ import {
   findExpandIncDefinitions,
   isExpandIncDefinitionNameAt,
   resolveExpandIncValueAt,
+  findHashNameOccurrences,
   MacroSourceLine,
 } from '../src/core/macroExpansion';
 
@@ -506,6 +507,55 @@ describe('findHashNameAt', () => {
 
   it('returns undefined when the cursor is not on a #token', () => {
     expect(findHashNameAt('variable a = 1;', 3)).to.be.undefined;
+  });
+});
+
+describe('findHashNameOccurrences', () => {
+  // Reproduces the reported bug: "Find All References" on "#powerchartoutput"
+  // (an #EXPAND name, defined via "#expand #powerchartoutput ...") found
+  // nothing at all — the ordinary variable-reference scan only knows the
+  // "#"-less variable grammar and explicitly excludes a "#"-prefixed hit.
+  it('finds the #expand declaration and a later bare reference', () => {
+    const lines = src(
+      [
+        '#expand #powerchartoutput "filename"',
+        'x;', // an unrelated line in between, own file elsewhere in program order
+      ].join('\n'),
+      '/main.tab'
+    ).concat(
+      src('powerpointfilename = #powerchartoutput ;', '/powerchartmacros.inc')
+    );
+
+    const occ = findHashNameOccurrences(lines, 'powerchartoutput', true);
+    expect(occ).to.have.length(2);
+    expect(occ[0]).to.include({
+      file: '/main.tab',
+      line: 0,
+      isDeclaration: true,
+    });
+    expect(occ[1]).to.include({
+      file: '/powerchartmacros.inc',
+      line: 0,
+      isDeclaration: false,
+    });
+  });
+
+  it('is case-sensitive by default, matching the #expand naming convention', () => {
+    const lines = src('#expand #Foo 1\nx = #foo;');
+    expect(findHashNameOccurrences(lines, 'Foo', true)).to.have.length(1);
+  });
+
+  it('is case-insensitive when the caller says so (a macro name)', () => {
+    const lines = src('#macro #Foo()\n1;\n#endmacro\n#foo();');
+    const occ = findHashNameOccurrences(lines, 'foo', false);
+    expect(occ).to.have.length(2);
+    expect(occ[0].isDeclaration).to.be.true;
+    expect(occ[1].isDeclaration).to.be.false;
+  });
+
+  it('does not match a longer name sharing the same prefix', () => {
+    const lines = src('#expand #kopf 1\ntitle "#kopfzeile";');
+    expect(findHashNameOccurrences(lines, 'kopf', true)).to.have.length(1);
   });
 });
 

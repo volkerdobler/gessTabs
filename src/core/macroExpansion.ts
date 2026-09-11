@@ -632,6 +632,86 @@ export function findHashNameAt(
   return undefined;
 }
 
+export interface HashNameOccurrence {
+  file: string;
+  line: number;
+  character: number;
+  length: number;
+  // True for the "#name" this specific line itself declares — the name
+  // right after "#macro"/"#expand"/"#expandinc" — as opposed to a call
+  // site or #EXPAND/#EXPANDINC reference elsewhere. Mirrors
+  // isExpandDefinitionNameAt/isExpandIncDefinitionNameAt's "declaring vs
+  // referencing" distinction, generalised to also cover a "#macro #name("
+  // declaration and computed for every line up front instead of one
+  // position at a time.
+  isDeclaration: boolean;
+}
+
+// A "#macro #name(" / "#expand #name …" / "#expandinc #name …"
+// declaration's own name — same shape as macroStartRe/expandDefinitionRe's
+// first capture group, but matched against a caller-supplied `name`
+// (rather than any name) so the declaration's exact character offset can
+// be compared against findHashNameOccurrences' own per-match offsets
+// below.
+function hashDeclarationOffset(
+  text: string,
+  escapedName: string,
+  flags: string
+): number {
+  const re = new RegExp(
+    `^\\s*#(?:macro\\s+|expand(?:inc)?\\s+)(#${escapedName})\\b`,
+    flags
+  );
+  const m = text.match(re);
+  return m && m.index !== undefined ? m.index + m[0].indexOf(m[1]) : -1;
+}
+
+// Every literal "#name" occurrence across `lines` — a macro call's own
+// "#name(", the "#macro #name(" declaration itself, a bare #EXPAND/
+// #EXPANDINC reference, and the "#expand"/"#expandinc #name" declaration
+// line. Used by "Find All References" (extension.ts's
+// GesstabsReferenceProvider): the ordinary variable-reference scan
+// (variableModel.ts's collectVariableOccurrences, built on
+// findAllWordRangesInLine) only knows the COMPUTE/GROUPS/... variable
+// grammar — its word regex has no "#" in it at all, and its own lookbehind
+// deliberately *excludes* a hit immediately preceded by "#" (a `.`/`#`/`&`-
+// qualified name is a different reference shape) — so a macro/#EXPAND
+// "#name" never showed up in "Find All References" before this existed.
+//
+// `caseSensitive` mirrors the language's own convention: a macro name is
+// matched case-insensitively (see the module doc comment, buildMacroIndex),
+// an #EXPAND/#EXPANDINC name case-sensitively — callers pick by checking
+// whether `name` resolves in a macro index first.
+export function findHashNameOccurrences(
+  lines: MacroSourceLine[],
+  name: string,
+  caseSensitive: boolean
+): HashNameOccurrence[] {
+  const escaped = name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const occRe = new RegExp(`#${escaped}(?![\\w.])`, caseSensitive ? 'g' : 'gi');
+  const declFlags = caseSensitive ? '' : 'i';
+  const out: HashNameOccurrence[] = [];
+
+  lines.forEach((l) => {
+    const declStart = hashDeclarationOffset(l.text, escaped, declFlags);
+    occRe.lastIndex = 0;
+    let m = occRe.exec(l.text);
+    while (m !== null) {
+      out.push({
+        file: l.file,
+        line: l.line,
+        character: m.index,
+        length: m[0].length,
+        isDeclaration: m.index === declStart,
+      });
+      if (m.index === occRe.lastIndex) occRe.lastIndex += 1;
+      m = occRe.exec(l.text);
+    }
+  });
+
+  return out;
+}
+
 const expandBlockCommentRe = /\{[^{}]*\}/g;
 const expandLineCommentRe = /\/\/.*$/;
 

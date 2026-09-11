@@ -19,7 +19,11 @@
 import * as vscode from 'vscode';
 import * as fs from 'fs';
 import * as path from 'path';
-import { FileReader, ResolvedLine } from '../core/includeGraph';
+import {
+  FileReader,
+  ResolvedLine,
+  cleanedDocumentOrder,
+} from '../core/includeGraph';
 import { Scope } from '../core/scope';
 import {
   ExternalNamesIO,
@@ -46,6 +50,23 @@ import {
   findWorkspaceFiles,
   printDebugMessage,
 } from '../util/workspaceFiles';
+import { resolveWildcardPath } from '../util/glob';
+
+// listFiles for resolveWildcardPath: a plain synchronous directory read,
+// same fallback-to-empty-on-error convention as CachingBytesIO.listFiles
+// below (a missing/unreadable directory just means "no wildcard match",
+// not a thrown error).
+function listDirEntries(dirAbsPath: string): string[] {
+  try {
+    return fs.readdirSync(dirAbsPath);
+  } catch {
+    return [];
+  }
+}
+
+// An OS-wildcard character — `*`/`?`, same convention as
+// core/externalNames.ts's own (private) WILDCARD_TOKEN.
+const WILDCARD_TOKEN = /[*?]/;
 
 // Enough to cover any CSV header line and virtually every .sav dictionary
 // (the dictionary sits at the front of the file).
@@ -124,13 +145,19 @@ class CachingBytesIO implements ExternalNamesIO {
   }
 }
 
+// cleanedDocumentOrder (not a bare per-line dump): findDataSourceStatements
+// runs on toLogicalStatements, which needs comments already blanked and
+// bare directive lines (#ifdef/#else/#end/...) already dropped, exactly as
+// resolveIncludeGraph's own `order` is — see that function's doc comment in
+// core/includeGraph.ts for the concrete breakage a raw per-line dump caused
+// elsewhere (fileReferenceLinkProvider.ts) for the same underlying reason.
 function documentOrder(document: vscode.TextDocument): ResolvedLine[] {
   const file = normalizePath(document.uri.fsPath);
-  const out: ResolvedLine[] = [];
+  const lines: string[] = [];
   for (let i = 0; i < document.lineCount; i += 1) {
-    out.push({ file, line: i, text: document.lineAt(i).text });
+    lines.push(document.lineAt(i).text);
   }
-  return out;
+  return cleanedDocumentOrder(file, lines);
 }
 
 export class GesstabsExternalNamesManager {
@@ -463,15 +490,23 @@ export class GesstabsDataSourceLinkProvider
         const { text: startText } = document.lineAt(st.line);
         const scopeCol = startText.search(/\S/);
         if (scopeCol === -1 || !scope.isNotInComment(st.line, scopeCol)) return;
-        if (/[#&*?]/.test(st.rawPath)) return;
+        if (/[#&]/.test(st.rawPath)) return; // not statically resolvable
         const lineNo = st.pathLine ?? st.line;
         const lineText =
           lineNo === st.line ? startText : document.lineAt(lineNo).text;
         const start = st.pathChar ?? lineText.indexOf(st.rawPath);
         if (start === -1) return;
-        const target = vscode.Uri.file(
-          path.resolve(path.dirname(document.uri.fsPath), st.rawPath)
-        );
+        // An OS-wildcard path ("*cmpl_base.dat") has no single literal file
+        // to link to — resolve it against the real directory contents,
+        // same match/sort convention resolveWildcard already uses for
+        // raw-name extraction (§11.7). No match on disk: no link, same as
+        // any other unresolvable path.
+        const dir = path.dirname(document.uri.fsPath);
+        const absTarget = WILDCARD_TOKEN.test(st.rawPath)
+          ? resolveWildcardPath(dir, st.rawPath, listDirEntries)
+          : path.resolve(dir, st.rawPath);
+        if (!absTarget) return;
+        const target = vscode.Uri.file(absTarget);
         const link = new vscode.DocumentLink(
           new vscode.Range(lineNo, start, lineNo, start + st.rawPath.length),
           target

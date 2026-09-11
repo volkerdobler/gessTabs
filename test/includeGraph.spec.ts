@@ -1,8 +1,13 @@
 import { expect } from 'chai';
 import * as path from 'path';
-import { resolveIncludeGraph, FileReader } from '../src/core/includeGraph';
+import {
+  resolveIncludeGraph,
+  cleanedDocumentOrder,
+  FileReader,
+} from '../src/core/includeGraph';
 import { findMacroDefinitions } from '../src/core/macroExpansion';
 import { branchKey, branchPathsCompatible } from '../src/core/branchPaths';
+import { toLogicalStatements } from '../src/core/statements';
 
 // Paths are derived through path.resolve/path.join (not hardcoded literal
 // strings) so they match what the module's own path.resolve/path.dirname
@@ -655,5 +660,69 @@ describe('resolveIncludeGraph — branchPaths', () => {
       { group: 0, arm: 'if' },
       { group: 1, arm: 'if' },
     ]);
+  });
+});
+
+describe('cleanedDocumentOrder', () => {
+  // Reproduces the reported bug: GesstabsFileReferenceLinkProvider /
+  // GesstabsDataSourceLinkProvider build their own single-document
+  // ResolvedLine[] (no wider INCLUDE graph to resolve) and feed it straight
+  // into toLogicalStatements. Before cleanedDocumentOrder existed, that
+  // per-line dump kept every #ifdef/#else/#end line (no ";", so it glued
+  // onto the next statement) and every trailing "// …" comment (not
+  // blanked, so its own non-whitespace tail became a bogus leading
+  // statement fragment too) — between them, almost every INCLUDE in a
+  // typical entry script like this one silently stopped resolving to a
+  // link.
+  it('keeps an INCLUDE right after #ifdef/#else/#end resolvable as its own statement', () => {
+    const lines = [
+      '#ifdef SPSSfile',
+      'include = "a.inc"; // bei SPSS',
+      '#else',
+      'include = "b.inc";       // über den',
+      'include = "c.inc";        // Syntaxbefehl erzeugte',
+      '#end',
+      '',
+      'include = "d.inc";              // Enthält die DEFINE-Steuerungen',
+      'include = "e.inc";   // Enthält Macros',
+    ];
+    const order = cleanedDocumentOrder(p('main.tab'), lines);
+    const stmts = toLogicalStatements(order).map((s) => s.text);
+    expect(stmts).to.deep.equal([
+      'include = "a.inc";',
+      'include = "b.inc";',
+      'include = "c.inc";',
+      'include = "d.inc";',
+      'include = "e.inc";',
+    ]);
+  });
+
+  it('drops a directive-only line but keeps #macro/#endmacro for toLogicalStatements own handling', () => {
+    const lines = [
+      '#define X',
+      '#macro #m()',
+      'compute &a = 1;',
+      '#endmacro',
+      'compute v = 1;',
+    ];
+    const order = cleanedDocumentOrder(p('main.tab'), lines);
+    expect(order.map((l) => l.text.trim())).to.deep.equal([
+      '#macro #m()',
+      'compute &a = 1;',
+      '#endmacro',
+      'compute v = 1;',
+    ]);
+    // The macro body never leaks out as an ordinary statement — same
+    // toLogicalStatements handling as resolveIncludeGraph's own `order`.
+    const stmts = toLogicalStatements(order).map((s) => s.text);
+    expect(stmts).to.deep.equal(['compute v = 1;']);
+  });
+
+  it('blanks a trailing comment rather than leaving it to glue onto the next statement', () => {
+    const raw = 'include = "a.inc"; // note';
+    const order = cleanedDocumentOrder(p('main.tab'), [raw]);
+    expect(order[0].text.trimEnd()).to.equal('include = "a.inc";');
+    expect(order[0].text.length).to.equal(raw.length);
+    expect(order[0].text).to.not.include('note');
   });
 });

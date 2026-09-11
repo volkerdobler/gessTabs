@@ -130,6 +130,57 @@ function makeScopeDoc(lines: string[]) {
   };
 }
 
+// Cleans one document's own raw lines the same way `resolveIncludeGraph`
+// cleans the `order` it builds by walking the wider INCLUDE graph — comments
+// blanked out (blankComments), and any line that is only a preprocessor
+// directive (#ifdef/#ifndef/#if[n]empty/#if[n]exist(s)/#else/#end/#define/
+// #undefine/#ignorecase) dropped entirely — WITHOUT evaluating #ifdef/
+// #define state: both branches always show through, same spirit as
+// `conditionalsAllActive`. #macro/#endmacro lines are deliberately kept
+// as-is (blanked, not dropped) — `toLogicalStatements` (statements.ts) has
+// its own dedicated handling for those.
+//
+// For a single-document consumer that has no wider INCLUDE graph to
+// resolve (a DocumentLink provider resolving a link relative to the file
+// that contains the statement, e.g. GesstabsFileReferenceLinkProvider /
+// GesstabsDataSourceLinkProvider) and so builds its `ResolvedLine[]`
+// straight from `document.lineAt` instead of `resolveIncludeGraph`. Left
+// unfixed, an unterminated directive line (no `;`) glues onto the next
+// line's own statement as a leading fragment in `toLogicalStatements` —
+// as does an ordinary line's own trailing `// …` comment, when it isn't
+// blanked first — defeating every `^\s*...`-anchored statement regex that
+// follows it (confirmed: an INCLUDE right after #else/#end, or after any
+// line ending in a trailing comment, silently stopped getting a link).
+export function cleanedDocumentOrder(
+  file: string,
+  lines: string[]
+): ResolvedLine[] {
+  const scope = new Scope(makeScopeDoc(lines) as any);
+  const out: ResolvedLine[] = [];
+  for (let i = 0; i < lines.length; i++) {
+    const text = lines[i];
+    if (text.length === 0) {
+      out.push({ file, line: i, text });
+      continue;
+    }
+    if (!scope.isNotInComment(i, text.search(/\S/))) continue;
+    if (
+      defineRe.test(text) ||
+      undefineRe.test(text) ||
+      ignoreCaseRe.test(text)
+    ) {
+      continue;
+    }
+    const conds = scanBlockDirectives(text, (col) =>
+      scope.isNormalScope(i, col)
+    ).filter((d) => d.kind !== 'macro-start' && d.kind !== 'macro-end');
+    if (conds.length > 0) continue;
+
+    out.push({ file, line: i, text: blankComments(scope, i, text) });
+  }
+  return out;
+}
+
 class DefineSet {
   private names = new Set<string>();
 

@@ -6,32 +6,59 @@
 //   - VALUELABELS <VarList> = LABELFROMFILE <file>;
 //   - #DOMACRO3( <macroname> <file> ) / #DOMACRO4( <file> )
 //   - SYNTAX { ... } = <file>;
+//   - OPENQFILE [FILEKEY <k>] = <file>; — "the same syntax as the DATAFILE
+//     statement" (manual), but not a raw-name-yielding source itself
+//     (§11's scope), so it belongs here rather than in the data-source
+//     provider.
 //
 // Same simplification as GesstabsDataSourceLinkProvider: works over this
 // document's own raw lines only (a link target is always relative to the
 // file that contains the statement, so there's no need to resolve the
 // wider INCLUDE graph the way go-to-definition/find-references do), and
 // skips a path containing a dynamic token (#EXPAND / &macro-param&) since
-// that can't be resolved without running the preprocessor.
+// that can't be resolved without running the preprocessor. An OS-wildcard
+// path (OPENQFILE's own "*cmpl_base.opn", manual: "Anhang > ... >
+// Daten-Input") IS statically resolvable, though — against the real
+// directory contents, same as GesstabsDataSourceLinkProvider does for a
+// wildcard DATAFILE/CSVINFILE/INFILE.
 
 import * as vscode from 'vscode';
+import * as fs from 'fs';
 import * as path from 'path';
 import { Scope } from '../core/scope';
-import { ResolvedLine } from '../core/includeGraph';
+import { ResolvedLine, cleanedDocumentOrder } from '../core/includeGraph';
 import {
   toLogicalStatements,
   locateInStatement,
   LogicalStatement,
 } from '../core/statements';
+import { resolveWildcardPath } from '../util/glob';
 import { printDebugMessage } from '../util/workspaceFiles';
 
+const WILDCARD_TOKEN = /[*?]/;
+
+function listDirEntries(dirAbsPath: string): string[] {
+  try {
+    return fs.readdirSync(dirAbsPath);
+  } catch {
+    return [];
+  }
+}
+
+// cleanedDocumentOrder (not a bare per-line dump): toLogicalStatements
+// needs comments already blanked and bare directive lines (#ifdef/#else/
+// #end/...) already dropped, exactly as resolveIncludeGraph's own `order`
+// is — see that function's doc comment in core/includeGraph.ts for the
+// concrete breakage a raw per-line dump caused (an INCLUDE right after
+// #else/#end, or after any line ending in a trailing comment, silently
+// stopped getting a link).
 function documentOrder(document: vscode.TextDocument): ResolvedLine[] {
   const file = document.uri.fsPath;
-  const out: ResolvedLine[] = [];
+  const lines: string[] = [];
   for (let i = 0; i < document.lineCount; i += 1) {
-    out.push({ file, line: i, text: document.lineAt(i).text });
+    lines.push(document.lineAt(i).text);
   }
-  return out;
+  return cleanedDocumentOrder(file, lines);
 }
 
 // INCLUDE = <path>; — same shape as includeGraph.ts's own includeRe, kept
@@ -57,6 +84,12 @@ const valuelabelsFromFileRe =
 // (not just a prefix match) so this never matches the unrelated
 // SYNTAXVARNAMENOQUOTES keyword.
 const syntaxStatementRe = /^\s*syntax\b[^=;]*=\s*(["']?)([^"';]+)\1\s*;?/i;
+
+// OPENQFILE [FILEKEY <k>] = <path>; — "the same syntax as the DATAFILE
+// statement" (manual's own OPENQFILE entry), so `[^=]*` tolerates an
+// optional leading `FILEKEY <k>` clause the same way the SYNTAX pattern
+// above tolerates its own leading option list.
+const openqfileStatementRe = /^\s*openqfile\b[^=]*=\s*(["']?)([^"';]+)\1\s*;?/i;
 
 // #DOMACRO3( <macroname> <path> ) / #DOMACRO4( <path> ) — the macro-engine
 // looping constructs that read their parameters from a CSV file (manual:
@@ -118,6 +151,9 @@ function findLinkTarget(stmt: LogicalStatement): LinkTarget | undefined {
   m = stmt.text.match(syntaxStatementRe);
   if (m) return target(stmt, m, 'SYNTAX-Datei öffnen');
 
+  m = stmt.text.match(openqfileStatementRe);
+  if (m) return target(stmt, m, 'OPENQFILE-Datei öffnen');
+
   m = stmt.text.match(domacro3Re);
   if (m) {
     const file = lastToken(m[2]);
@@ -163,10 +199,16 @@ export class GesstabsFileReferenceLinkProvider
         const { line, character } = locateInStatement(stmt, linkTarget.offset);
         if (!scope.isNotInComment(line.line, character)) return;
 
-        const resolved = path.resolve(
-          path.dirname(document.uri.fsPath),
-          linkTarget.rawPath
-        );
+        // An OS-wildcard path (OPENQFILE's "*cmpl_base.opn") has no single
+        // literal file to link to — resolve it against the real directory
+        // contents instead, same match/sort convention
+        // GesstabsDataSourceLinkProvider uses for a wildcard DATAFILE. No
+        // match on disk: no link, same as any other unresolvable path.
+        const dir = path.dirname(document.uri.fsPath);
+        const resolved = WILDCARD_TOKEN.test(linkTarget.rawPath)
+          ? resolveWildcardPath(dir, linkTarget.rawPath, listDirEntries)
+          : path.resolve(dir, linkTarget.rawPath);
+        if (!resolved) return;
         const link = new vscode.DocumentLink(
           new vscode.Range(
             line.line,

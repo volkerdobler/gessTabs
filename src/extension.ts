@@ -38,6 +38,10 @@ import {
 import {
   findMacroDefinitions,
   findParamReferenceAt,
+  findHashNameAt,
+  findHashNameOccurrences,
+  buildMacroIndex,
+  isReservedDirectiveKeyword,
   MacroSourceLine,
 } from './core/macroExpansion';
 import { GesstabsEffectiveElementsHoverProvider } from './providers/tableElementsProvider';
@@ -618,6 +622,26 @@ class GesstabsReferenceProvider implements vscode.ReferenceProvider {
     context: vscode.ReferenceContext,
     token: vscode.CancellationToken
   ): Promise<vscode.Location[] | null> {
+    // A "#name" (macro call/declaration, #EXPAND/#EXPANDINC reference or
+    // declaration) is a different symbol grammar from the ordinary
+    // COMPUTE/GROUPS/... variable one below — constVarName (used by
+    // getWordAtPosition) has no "#" in it at all, and the variable-model
+    // scan that the word-based path falls through to deliberately excludes
+    // a "#"-prefixed hit (see findHashNameOccurrences' own doc comment in
+    // core/macroExpansion.ts) — so a macro/#EXPAND name never turned up in
+    // "Find All References" without this. Checked first and independently
+    // of getWordAtPosition, which would otherwise either drop the leading
+    // "#" (cursor inside the name itself) or find no word at all (cursor
+    // right on the "#").
+    const lineText = document.lineAt(position.line).text;
+    const scope = new sc.Scope(document);
+    const hashName = scope.isNormalScope(position.line, position.character)
+      ? findHashNameAt(lineText, position.character)
+      : undefined;
+    if (hashName && !isReservedDirectiveKeyword(hashName)) {
+      return this.hashNameReferences(document, hashName, context, token);
+    }
+
     const wordAtPosition = getWordAtPosition(document, position);
     if (!wordAtPosition[0]) return null;
     const word = wordAtPosition[1];
@@ -667,6 +691,53 @@ class GesstabsReferenceProvider implements vscode.ReferenceProvider {
           )
         )
     );
+  }
+
+  // Every literal "#hashName" occurrence across the resolved workspace —
+  // see provideReferences' own comment for why this is a separate path
+  // from the ordinary variable-model scan above.
+  private async hashNameReferences(
+    document: vscode.TextDocument,
+    hashName: string,
+    context: vscode.ReferenceContext,
+    token: vscode.CancellationToken
+  ): Promise<vscode.Location[] | null> {
+    let fileNames: string[];
+    try {
+      fileNames = await findWorkspaceFiles(document);
+    } catch (e) {
+      printDebugMessage(`gesstabs: provideReferences (hash-name) failed: ${e}`);
+      return null;
+    }
+    if (token && token.isCancellationRequested) return null;
+
+    // conditionalsAllActive: same reasoning as the ordinary variable path —
+    // a macro/#EXPAND definition or usage in a branch this build doesn't
+    // compile is still real.
+    const index = buildWorkspaceIndex(
+      fileNames,
+      makeWorkspaceReader(document),
+      { conditionalsAllActive: true }
+    );
+    // Macro names are matched case-insensitively, #EXPAND/#EXPANDINC names
+    // case-sensitively (the language's own documented convention — see
+    // macroExpansion.ts's module doc comment): `hashName` resolving in the
+    // macro index picks the former, anything else the latter.
+    const macroIndex = buildMacroIndex(findMacroDefinitions(index.order));
+    const caseSensitive = !macroIndex.has(hashName.toLowerCase());
+
+    return findHashNameOccurrences(index.order, hashName, caseSensitive)
+      .filter((occ) => context.includeDeclaration || !occ.isDeclaration)
+      .map(
+        (occ) =>
+          new vscode.Location(
+            vscode.Uri.file(occ.file),
+            new vscode.Range(
+              new vscode.Position(occ.line, occ.character),
+              new vscode.Position(occ.line, occ.character + occ.length)
+            )
+          )
+      );
   }
 }
 
