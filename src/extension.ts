@@ -38,8 +38,13 @@ import {
 import {
   findMacroDefinitions,
   findParamReferenceAt,
+  findMacroCalls,
   findHashNameAt,
   findHashNameOccurrences,
+  findExpandDefinitionSites,
+  findExpandIncDefinitions,
+  isExpandDefinitionNameAt,
+  isExpandIncDefinitionNameAt,
   buildMacroIndex,
   isReservedDirectiveKeyword,
   MacroSourceLine,
@@ -454,6 +459,32 @@ class GesstabsDefintionProvider implements vscode.DefinitionProvider {
     const paramRef = this.findParamReference(document, position);
     if (paramRef) return paramRef;
 
+    // A "#name" (macro call or #EXPAND/#EXPANDINC reference) is a
+    // different symbol grammar from the ordinary COMPUTE/GROUPS/...
+    // variable one below — same reasoning as GesstabsReferenceProvider's
+    // own hash-name branch (see its comment). Before this, F12 on a macro
+    // call found nothing at all (word/model both miss the "#"), even
+    // though hovering the very same call already showed a jump link to
+    // the definition — GesstabsMacroHoverProvider resolves this itself,
+    // go-to-definition never did. `hashNameDefinition` returns `undefined`
+    // (not `null`) when the cursor isn't on a "#" token at all, so that
+    // case — and only that case — falls through to the ordinary word path
+    // below; a "#" token that resolves to no known macro/#EXPAND name
+    // stops here with `null`, rather than falling through and resolving
+    // the de-hashed bare word as an unrelated ordinary variable.
+    const lineText = document.lineAt(position.line).text;
+    if (
+      new sc.Scope(document).isNormalScope(position.line, position.character)
+    ) {
+      const hashDef = await this.hashNameDefinition(
+        document,
+        lineText,
+        position
+      );
+      if (hashDef !== undefined) return hashDef;
+    }
+    if (token && token.isCancellationRequested) return null;
+
     const wordAtPosition = getWordAtPosition(document, position);
     if (!wordAtPosition[0]) return null;
     const word = wordAtPosition[1];
@@ -573,6 +604,90 @@ class GesstabsDefintionProvider implements vscode.DefinitionProvider {
         resolvedLineRange(macroDef.callSite)
       ),
     ];
+  }
+
+  // Resolves a "#name" (macro call or #EXPAND/#EXPANDINC reference) under
+  // the cursor to its declaration — the exact detection
+  // GesstabsMacroHoverProvider (providers/macroProviders.ts) already uses
+  // for its own "jump to definition" hover link; go-to-definition never
+  // had an equivalent until now. Returns `undefined` when the cursor isn't
+  // on a "#" token at all (the caller falls through to the ordinary word
+  // path below); `null` when it is one but resolves to nothing (a reserved
+  // directive keyword, the name's own declaring line, or an unknown name)
+  // — deliberately NOT falling through in that case, since the de-hashed
+  // bare word could otherwise spuriously resolve as an unrelated ordinary
+  // variable.
+  private async hashNameDefinition(
+    document: vscode.TextDocument,
+    lineText: string,
+    position: vscode.Position
+  ): Promise<vscode.Location | null | undefined> {
+    const call = findMacroCalls(lineText).find((c) => {
+      const hashPos = c.index + c.raw.indexOf('#');
+      const nameEnd = hashPos + 1 + c.name.length;
+      return position.character >= hashPos && position.character <= nameEnd;
+    });
+    const name = call?.name ?? findHashNameAt(lineText, position.character);
+    if (!name) return undefined; // not on a "#" token at all
+
+    if (isReservedDirectiveKeyword(name)) return null;
+
+    if (
+      !call &&
+      (isExpandDefinitionNameAt(lineText, position.character) ||
+        isExpandIncDefinitionNameAt(lineText, position.character))
+    ) {
+      return null; // already on the declaring name itself
+    }
+
+    let fileNames: string[];
+    try {
+      fileNames = await findWorkspaceFiles(document);
+    } catch (e) {
+      printDebugMessage(`gesstabs: provideDefinition (hash-name) failed: ${e}`);
+      return null;
+    }
+    // conditionalsAllActive: a definition in an #ifdef/#ifndef branch this
+    // build doesn't compile is still a real definition — same reasoning as
+    // the ordinary variable path above.
+    const index = buildWorkspaceIndex(
+      fileNames,
+      makeWorkspaceReader(document),
+      { conditionalsAllActive: true }
+    );
+    const lineAt = (file: string, line: number): ResolvedLine =>
+      index.order.find((rl) => rl.file === file && rl.line === line) ?? {
+        file,
+        line,
+        text: '',
+      };
+
+    if (call) {
+      const macroIndex = buildMacroIndex(findMacroDefinitions(index.order));
+      const target = macroIndex.get(call.name.toLowerCase());
+      if (!target) return null;
+      return new vscode.Location(
+        vscode.Uri.file(target.file),
+        resolvedLineRange(lineAt(target.file, target.defLine))
+      );
+    }
+
+    // #EXPANDINC takes precedence over a same-named plain #EXPAND — same
+    // convention as the hover's own resolution order.
+    const incDef = findExpandIncDefinitions(index.order).get(name);
+    if (incDef) {
+      return new vscode.Location(
+        vscode.Uri.file(incDef.file),
+        resolvedLineRange(lineAt(incDef.file, incDef.line))
+      );
+    }
+
+    const site = findExpandDefinitionSites(index.order).get(name);
+    if (!site) return null;
+    return new vscode.Location(
+      vscode.Uri.file(site.file),
+      resolvedLineRange(lineAt(site.file, site.line))
+    );
   }
 
   // Resolves a "&paramname" reference inside a macro body back to its
