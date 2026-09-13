@@ -7,7 +7,7 @@
 
 import * as vscode from 'vscode';
 import * as path from 'path';
-import { Scope } from '../core/scope';
+import { getCachedScope } from '../core/scope';
 import { buildWorkspaceIndex } from '../core/symbolIndex';
 import {
   findEffectiveElements,
@@ -39,7 +39,7 @@ export class GesstabsEffectiveElementsHoverProvider
       // on is always a bare code token — never legitimately written inside
       // a string literal — so both comment AND string scope are excluded
       // (isNormalScope).
-      const scope = new Scope(document);
+      const scope = getCachedScope(document);
       if (!scope.isNormalScope(position.line, position.character)) {
         return null;
       }

@@ -122,7 +122,7 @@ export function activate(context: vscode.ExtensionContext) {
           await vscode.commands.executeCommand('editor.action.jumpToBracket');
           return;
         }
-        const scope = new sc.Scope(editor.document);
+        const scope = sc.getCachedScope(editor.document);
         const lines: string[] = [];
         for (let i = 0; i < editor.document.lineCount; i += 1) {
           lines.push(editor.document.lineAt(i).text);
@@ -320,13 +320,20 @@ export function activate(context: vscode.ExtensionContext) {
       if (e.document.languageId === 'gesstabs') {
         externalNamesManager.noteDocumentsChanged();
       }
+      sc.clearScopeCache(e.document);
       scheduleDiagnostics(e.document);
+    })
+  );
+  context.subscriptions.push(
+    vscode.workspace.onDidSaveTextDocument((document) => {
+      sc.clearScopeCache(document);
     })
   );
   context.subscriptions.push(
     vscode.workspace.onDidCloseTextDocument((document) => {
       diagnosticsManager.clear(document);
       externalNamesManager.clear(document);
+      sc.clearScopeCache(document);
     })
   );
   context.subscriptions.push(
@@ -384,7 +391,9 @@ export function activate(context: vscode.ExtensionContext) {
 
 // this method is called when your extension is deactivated
 // eslint-disable-next-line no-empty-function
-export function deactivate() {}
+export function deactivate() {
+  sc.clearScopeCache();
+}
 
 // fixDriveCasingInWindows/getWorkspaceFolderPath/normalizePath/
 // makeWorkspaceReader/resolvedLineRange/findWorkspaceFiles live in
@@ -474,7 +483,9 @@ class GesstabsDefintionProvider implements vscode.DefinitionProvider {
     // the de-hashed bare word as an unrelated ordinary variable.
     const lineText = document.lineAt(position.line).text;
     if (
-      new sc.Scope(document).isNormalScope(position.line, position.character)
+      sc
+        .getCachedScope(document)
+        .isNormalScope(position.line, position.character)
     ) {
       const hashDef = await this.hashNameDefinition(
         document,
@@ -749,7 +760,7 @@ class GesstabsReferenceProvider implements vscode.ReferenceProvider {
     // "#" (cursor inside the name itself) or find no word at all (cursor
     // right on the "#").
     const lineText = document.lineAt(position.line).text;
-    const scope = new sc.Scope(document);
+    const scope = sc.getCachedScope(document);
     const hashName = scope.isNormalScope(position.line, position.character)
       ? findHashNameAt(lineText, position.character)
       : undefined;
@@ -1017,7 +1028,7 @@ class GesstabsDocumentSymbolProvider implements vscode.DocumentSymbolProvider {
 
       const macroRegExp: RegExp = macroDefRe('');
       const expandRegExp: RegExp = expandDefRe('');
-      const scope = new sc.Scope(document);
+      const scope = sc.getCachedScope(document);
       const lines: string[] = [];
       for (let i = 0; i < document.lineCount; i += 1) {
         lines.push(document.lineAt(i).text);
@@ -1266,7 +1277,7 @@ class GessTabsWorkspaceSymbolProvider
     const expandRegExp: RegExp = expandDefRe('');
     docs.forEach((document) => {
       if (token && token.isCancellationRequested) return;
-      const scope = new sc.Scope(document);
+      const scope = sc.getCachedScope(document);
       const lines: string[] = [];
       for (let i = 0; i < document.lineCount; i += 1) {
         lines.push(document.lineAt(i).text);

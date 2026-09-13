@@ -23,7 +23,7 @@
 // ones (vscode merges every registered provider's result).
 
 import * as vscode from 'vscode';
-import { Scope } from '../core/scope';
+import { getCachedScope } from '../core/scope';
 import { constVarName } from '../core/regex';
 import {
   buildWorkspaceIndex,
@@ -121,7 +121,7 @@ export class GesstabsVariableHoverProvider implements vscode.HoverProvider {
       if (!hoverEnabled()) return null;
       if (!hoverShows('variables')) return null;
 
-      const scope = new Scope(document);
+      const scope = getCachedScope(document);
       if (!scope.isNotInComment(position.line, position.character)) return null;
 
       const wordRange = document.getWordRangeAtPosition(

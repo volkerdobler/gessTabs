@@ -1,5 +1,5 @@
 import { expect } from 'chai';
-import { Scope } from '../src/core/scope';
+import { Scope, getCachedScope, clearScopeCache } from '../src/core/scope';
 
 // Minimal runtime mocks for VS Code types used in Scope
 class Position {
@@ -22,12 +22,15 @@ class Range {
     this.end = end;
   }
 }
-const Uri = { file: (s: string) => ({ fsPath: s }) };
+const Uri = {
+  file: (s: string) => ({ fsPath: s, toString: () => `file://${s}` }),
+};
 
-function makeDoc(text: string): any {
+function makeDoc(text: string, uriPath = 'test', version = 1): any {
   const lines = text.split('\n');
   return {
-    uri: Uri.file('test'),
+    uri: Uri.file(uriPath),
+    version,
     lineCount: lines.length,
     lineAt: (n: number) => ({
       text: lines[n],
@@ -99,5 +102,51 @@ describe('Scope', () => {
     expect(s.isNormalScope(0, -1)).to.be.false; // column before start
     expect(s.isNormalScope(0, 100)).to.be.false; // column past end
     expect(s.isNormalScope(0, 1)).to.be.true; // sanity check: in range
+  });
+});
+
+describe('getCachedScope / clearScopeCache', () => {
+  it('returns the same Scope instance across calls while the document version is unchanged', () => {
+    const doc = makeDoc('a', 'doc-a', 1);
+    const first = getCachedScope(doc);
+    const second = getCachedScope(doc);
+    expect(second).to.equal(first);
+  });
+
+  it('recomputes once the document version changes', () => {
+    const doc = makeDoc('a', 'doc-b', 1);
+    const first = getCachedScope(doc);
+    const bumped = makeDoc('b', 'doc-b', 2);
+    const second = getCachedScope(bumped);
+    expect(second).to.not.equal(first);
+  });
+
+  it('clearScopeCache(document) forces the next call to recompute even at the same version', () => {
+    const doc = makeDoc('a', 'doc-c', 1);
+    const first = getCachedScope(doc);
+    clearScopeCache(doc);
+    const second = getCachedScope(doc);
+    expect(second).to.not.equal(first);
+  });
+
+  it('clearScopeCache() with no argument clears every cached document', () => {
+    const docX = makeDoc('a', 'doc-x', 1);
+    const docY = makeDoc('a', 'doc-y', 1);
+    const firstX = getCachedScope(docX);
+    const firstY = getCachedScope(docY);
+    clearScopeCache();
+    expect(getCachedScope(docX)).to.not.equal(firstX);
+    expect(getCachedScope(docY)).to.not.equal(firstY);
+  });
+
+  it('keeps separate cache entries per document (by uri)', () => {
+    const docX = makeDoc('a', 'doc-p', 1);
+    const docY = makeDoc('a', 'doc-q', 1);
+    const scopeX = getCachedScope(docX);
+    const scopeY = getCachedScope(docY);
+    expect(scopeX).to.not.equal(scopeY);
+    // still cached independently
+    expect(getCachedScope(docX)).to.equal(scopeX);
+    expect(getCachedScope(docY)).to.equal(scopeY);
   });
 });

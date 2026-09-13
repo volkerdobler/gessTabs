@@ -24,7 +24,7 @@ import {
   ResolvedLine,
   cleanedDocumentOrder,
 } from '../core/includeGraph';
-import { Scope } from '../core/scope';
+import { getCachedScope } from '../core/scope';
 import {
   ExternalNamesIO,
   ExternalNameSource,
@@ -481,7 +481,7 @@ export class GesstabsDataSourceLinkProvider
     document: vscode.TextDocument
   ): vscode.DocumentLink[] {
     try {
-      const scope = new Scope(document);
+      const scope = getCachedScope(document);
       const links: vscode.DocumentLink[] = [];
       findDataSourceStatements(documentOrder(document)).forEach((st) => {
         // The comment-scope guard always checks the statement's own first

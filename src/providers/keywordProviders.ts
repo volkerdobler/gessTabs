@@ -4,7 +4,7 @@
 // provider" split as the rest of this codebase's providers.
 
 import * as vscode from 'vscode';
-import { Scope } from '../core/scope';
+import { getCachedScope } from '../core/scope';
 import { keywordData } from '../keywords/keywordData';
 import {
   ResolvedKeyword,
@@ -63,7 +63,7 @@ export class GesstabsKeywordHoverProvider implements vscode.HoverProvider {
       // inside a string literal — so both comment AND string scope are
       // excluded (isNormalScope), unlike the variable hover where a
       // quoted token can be a genuine reference.
-      const scope = new Scope(document);
+      const scope = getCachedScope(document);
       if (!scope.isNormalScope(position.line, position.character)) {
         return null;
       }

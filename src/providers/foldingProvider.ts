@@ -2,7 +2,7 @@
 // thin provider" split as src/core/macroExpansion.ts/./macroProviders.ts.
 
 import * as vscode from 'vscode';
-import { Scope } from '../core/scope';
+import { getCachedScope } from '../core/scope';
 import { findFoldRanges } from '../core/foldingRanges';
 import { printDebugMessage } from '../util/workspaceFiles';
 
@@ -13,7 +13,7 @@ export class GesstabsFoldingRangeProvider
     document: vscode.TextDocument
   ): vscode.FoldingRange[] {
     try {
-      const scope = new Scope(document);
+      const scope = getCachedScope(document);
       const lines: string[] = [];
       for (let i = 0; i < document.lineCount; i++) {
         lines.push(document.lineAt(i).text);

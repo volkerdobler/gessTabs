@@ -243,6 +243,36 @@ export class Scope {
   }
 }
 
+// `new Scope(document)` does a full char-by-char scan of the whole document
+// — cheap for one call, but it was being rebuilt from scratch, uncached, at
+// every hover/completion/fold/format/semantic-token/diagnostics call site.
+// Cached here by document version (mirrors the sibling gessq extension's
+// `getCachedScope`/`clearScopeCache`, src/core/scope.ts) so repeated
+// requests against an unchanged document reuse the same instance.
+const scopeCache = new Map<string, { version: number; scope: Scope }>();
+
+export function getCachedScope(document: vscode.TextDocument): Scope {
+  const key = document.uri.toString();
+  const entry = scopeCache.get(key);
+  if (entry && entry.version === document.version) {
+    return entry.scope;
+  }
+  const scope = new Scope(document);
+  scopeCache.set(key, { version: document.version, scope });
+  return scope;
+}
+
+// Drops the cache entry for `document`, or the whole cache when omitted —
+// call after any edit/save/close so a stale Scope is never reused once the
+// document's content could have changed.
+export function clearScopeCache(document?: vscode.TextDocument): void {
+  if (document) {
+    scopeCache.delete(document.uri.toString());
+  } else {
+    scopeCache.clear();
+  }
+}
+
 /*
   function readScopes(document: vscode.TextDocument): string[] {
   const normalScope = '-';

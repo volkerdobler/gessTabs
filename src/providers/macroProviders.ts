@@ -6,7 +6,7 @@
 // thin vscode wiring, same split as extension.ts's own providers.
 
 import * as vscode from 'vscode';
-import { Scope } from '../core/scope';
+import { getCachedScope } from '../core/scope';
 import {
   buildWorkspaceIndex,
   collectAllMacroCalls,
@@ -265,7 +265,7 @@ export class GesstabsMacroHoverProvider implements vscode.HoverProvider {
       // a macro call (always a column-1, code-level construct) or an
       // #EXPAND reference, so both comment AND string scope are excluded
       // here (isNormalScope), not just comments.
-      const scope = new Scope(document);
+      const scope = getCachedScope(document);
       if (!scope.isNormalScope(position.line, position.character)) {
         printDebugMessage(
           `gesstabs: hover - ${position.line}:${position.character} is inside a comment or string, skipping`
@@ -503,7 +503,7 @@ export class GesstabsMacroSignatureHelpProvider
       const match = textBeforeCursor.match(/#([A-Za-z_]\w*)\s*\(([^)]*)$/);
       if (!match) return null;
 
-      const scope = new Scope(document);
+      const scope = getCachedScope(document);
       if (!scope.isNotInComment(position.line, position.character)) {
         printDebugMessage(
           `gesstabs: signature help - ${position.line}:${position.character} is inside a comment, skipping`

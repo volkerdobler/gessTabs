@@ -25,7 +25,7 @@
 import * as vscode from 'vscode';
 import * as fs from 'fs';
 import * as path from 'path';
-import { Scope } from '../core/scope';
+import { getCachedScope } from '../core/scope';
 import { ResolvedLine, cleanedDocumentOrder } from '../core/includeGraph';
 import {
   toLogicalStatements,
@@ -188,7 +188,7 @@ export class GesstabsFileReferenceLinkProvider
     document: vscode.TextDocument
   ): vscode.DocumentLink[] {
     try {
-      const scope = new Scope(document);
+      const scope = getCachedScope(document);
       const links: vscode.DocumentLink[] = [];
 
       toLogicalStatements(documentOrder(document)).forEach((stmt) => {
