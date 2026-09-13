@@ -315,6 +315,27 @@ describe('classifyStatement — references & current variable (§4)', () => {
     const region = s.references.find((r) => r.span.name === 'region');
     expect(region?.mode).to.equal('ifKnown');
   });
+
+  // "Test auf Variablentyp" (Logische Bedingungen): a <vartype> keyword
+  // after IS is never a variable name — confirmed real bug: before this,
+  // e.g. "multiq" here was collected as an ordinary bare reference and
+  // (almost never resolving to a real declared variable) flagged as
+  // undefined by checkUndefinedVariables.
+  const vartypeKeywords = [
+    'VARIABLE',
+    'SINGLEQ',
+    'FAMILYVAR',
+    'MULTIQ',
+    'GROUPVAR',
+    'DICHOQ',
+    'OPEN',
+  ];
+  vartypeKeywords.forEach((vartype) => {
+    it(`IF v1 IS ${vartype} THEN … — the vartype keyword is not a reference`, () => {
+      const s = c(`if v1 is ${vartype} then x = 1;`);
+      expect(refNames(s)).to.deep.equal(['v1']);
+    });
+  });
 });
 
 describe('classifyStatement — blocks (§2.4)', () => {

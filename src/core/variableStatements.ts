@@ -489,6 +489,22 @@ const EXPR_OPERATORS = new Set([
   'div',
 ]);
 
+// `IF <varname> IS <vartype> THEN …` (Logische Bedingungen, "Test auf
+// Variablentyp") — the closed, documented set of `<vartype>` keywords.
+// Confirmed real bug: without excluding these, e.g. `multiq` in
+// `if v1 is multiq then …` was collected as an ordinary bare reference and
+// (almost never resolving to a real declared variable) flagged as
+// undefined by checkUndefinedVariables.
+const VARTYPE_KEYWORDS = new Set([
+  'variable',
+  'singleq',
+  'familyvar',
+  'multiq',
+  'groupvar',
+  'dichoq',
+  'open',
+]);
+
 function collectExprRefs(
   tokens: Token[],
   from: number,
@@ -505,6 +521,9 @@ function collectExprRefs(
       if (t.value.startsWith('#') || t.value.startsWith('&')) continue;
       const next = tokens[i + 1];
       if (next && next.value === '(') continue; // function call
+      // A `<vartype>` keyword sits nowhere else than directly after a
+      // bare `IS` — nothing else marks it as special syntactically.
+      if (VARTYPE_KEYWORDS.has(low) && kw(tokens[i - 1]) === 'is') continue;
     }
     refs.push({ span: spanOf(t), mode });
   }

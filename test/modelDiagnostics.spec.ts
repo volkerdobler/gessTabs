@@ -131,6 +131,13 @@ describe('checkUndefinedVariables', () => {
       .false;
     expect(incIssues.some((i) => i.message.includes('alsoUnknown'))).to.be.true;
   });
+
+  it('does not flag the <vartype> keyword in "IF <var> IS <vartype> THEN …" as undefined (regression)', () => {
+    const idx = indexOf('singleq v1 = 1;\nif v1 is multiq then x = 1;');
+    const model = buildVariableModel(idx);
+    const issues = checkUndefinedVariables(model, p('main.tab'));
+    expect(issues.some((i) => i.message.includes('multiq'))).to.be.false;
+  });
 });
 
 describe('checkSystemVariableRedeclaration', () => {
