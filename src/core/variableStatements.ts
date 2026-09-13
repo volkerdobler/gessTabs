@@ -120,6 +120,12 @@ export interface ClassifiedStatement {
   // a recognised keyword whose operands did not parse (design §9 Q1: a
   // no-name VARFAMILY/VARGROUP lands here rather than inventing a symbol).
   malformed?: string;
+  // `MAKEFAMILY <v> = <n>;` / `MAKEGROUP <v> = <n>;`'s own declared slot
+  // count — the model needs this to resolve a `$`-member reference
+  // (`v$k`) against a family that was sized by count rather than given an
+  // explicit member varlist (VARFAMILY's own form already yields one via
+  // `defines`/`references`, no separate count needed there).
+  declaredCount?: number;
 }
 
 // ---------------------------------------------------------------------------
@@ -135,10 +141,17 @@ interface Token {
 
 // A gessTabs name token: a letter (incl. the German set) or `_`, then
 // name characters — `.` is a plain name character here (`region.f24` is
-// ONE name), matching regex.ts' `constTokenVarName`. `#name` / `&name` /
-// `&1` are kept whole so a macro call / macro param isn't mis-split.
+// ONE name), matching regex.ts' `constTokenVarName`. `$` is likewise a
+// plain name character (not an operator): a family/group member reference
+// is written `family$k` or `family_$k` (Variablenfamilien: "Datum1_$1
+// enthält dann den Tag …"), never quoted unless it also contains a space
+// (the general "a token with a space must be quoted" rule) — without this,
+// `medsort$1` used to silently tokenize as just `medsort`, dropping the
+// member index entirely (see variableModel.ts's $-member resolution).
+// `#name` / `&name` / `&1` are kept whole so a macro call / macro param
+// isn't mis-split.
 const NAME_START = /[A-Za-zßäöüÄÖÜ_]/;
-const NAME_CHAR = /[A-Za-zßäöüÄÖÜ0-9_.]/;
+const NAME_CHAR = /[A-Za-zßäöüÄÖÜ0-9_.$]/;
 
 function tokenize(text: string): Token[] {
   const tokens: Token[] = [];
@@ -610,7 +623,12 @@ function classifyLeftOfEq(
     cls.malformed = `${keyword}: no target name`;
     return cls;
   }
-  return withDefines(cls, spans, defKind, targetKind);
+  withDefines(cls, spans, defKind, targetKind);
+  if ((keyword === 'makefamily' || keyword === 'makegroup') && eq !== -1) {
+    const rhs = tokens[eq + 1];
+    if (rhs?.type === 'number') cls.declaredCount = Number(rhs.value);
+  }
+  return cls;
 }
 
 function classifyAtomicDecl(

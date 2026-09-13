@@ -7,9 +7,9 @@
 // against the names actually known at that program point.
 //
 // Phase 2 scope (docs/variable-model-design.md §8): `declared` + `predefined`
-// origins from the start; `external` joined 2026-09-05 (phase 4, P1.4).
-// `macro-produced` (phase 5) and on-demand `$`-member synthesis (§9 Q2) are
-// not wired yet; the shapes below leave room for them.
+// origins from the start; `external` joined 2026-09-05 (phase 4, P1.4);
+// `macro-produced` joined phase 5. On-demand `$`-member synthesis (§9 Q2)
+// joined 2026-09-14 — see `findMemberHost`/`buildMemberSymbol` below.
 //
 // PURE — takes a WorkspaceIndex (+ already-resolved external names — the
 // file I/O to read a .sav/.csv itself lives in externalNames.ts /
@@ -233,6 +233,81 @@ function memberSpans(cls: ClassifiedStatement): string[] | undefined {
   return undefined;
 }
 
+// $-member on-demand resolution (§9 Q2's original "resolve on demand"
+// decision — decided 2026-09-04, never actually wired up until now). The
+// kinds `memberSpans` above already populates `members`/`memberCount` for
+// — confirmed generic across these, not just VARFAMILY, by the manual's
+// own VARGROUP example ("Interviewdauer $1", "Interviewdauer $2", …
+// Variablengruppen.md) alongside VARFAMILY's own ("medsort $1",
+// Variablenfamilien.md). `spssgroup` is included too since it derives
+// from a MultiQ the same shape applies to.
+const MEMBER_HOST_KINDS = new Set<VariableKind>([
+  'family',
+  'alphafamily',
+  'crossvar',
+  'group',
+  'spssgroup',
+]);
+
+interface MemberRef {
+  family: VariableSymbol;
+  index: number;
+}
+
+// `family$k` / `family_$k` / `"family $k"` (unquoted forms tokenize as one
+// word since variableStatements.ts's NAME_CHAR now includes `$`; the
+// quoted-with-space form arrives here as one string span, space intact) —
+// a member reference into a MultiQ/VARFAMILY/VARGROUP. Tries the text
+// exactly before the `$` as the family name first (so a family literally
+// named with a trailing `_`/space would still resolve, however unlikely),
+// falling back to stripping trailing whitespace/`_` only if that first
+// lookup misses — covers both `Datum1_$1` (Variablenfamilien.md's own
+// example: family "Datum1") and the quoted `"medsort $1"` form alike.
+// Returns undefined (not a member ref, or the host isn't found/doesn't
+// have that many members) rather than guessing.
+function findMemberHost(
+  symbols: Map<string, VariableSymbol>,
+  name: string
+): MemberRef | undefined {
+  const m = name.match(/^(.+)\$(\d+)$/);
+  if (!m) return undefined;
+  const index = Number(m[2]);
+  if (!Number.isFinite(index) || index < 1) return undefined;
+
+  const rawPrefix = m[1];
+  const trimmedPrefix = rawPrefix.replace(/[\s_]+$/, '');
+  const family =
+    symbols.get(rawPrefix) ??
+    (trimmedPrefix !== rawPrefix ? symbols.get(trimmedPrefix) : undefined);
+  if (!family || !MEMBER_HOST_KINDS.has(family.kind)) return undefined;
+
+  const count = family.memberCount ?? family.members?.length;
+  if (count === undefined || index > count) return undefined;
+
+  return { family, index };
+}
+
+// The synthesized member symbol itself — `kind: 'atomic'` (design doc
+// §2.1: "medsort $1 is an atomic member of a MultiQ/VARFAMILY"),
+// `origin: 'virtual'` (no statement declares it by its own name, same
+// category as an OVERCODE or system variable). No definition line of its
+// own to point at, so go-to-definition/hover fall back to the family's —
+// the closest real answer to "where did this come from".
+function buildMemberSymbol(name: string, ref: MemberRef): VariableSymbol {
+  const { family, index } = ref;
+  return {
+    name,
+    displayName: `${family.displayName}$${index}`,
+    kind: 'atomic',
+    origin: 'virtual',
+    definitions: family.definitions,
+    definitionStatements: family.definitionStatements,
+    definitionKinds: family.definitionKinds,
+    definitionBranches: family.definitionBranches,
+    annotations: [],
+  };
+}
+
 export interface BuildVariableModelOptions {
   // Already-resolved data sources (CSVINFILE/SPSSINFILE/DATAFILE) whose raw
   // column/field names become `origin: 'external'` symbols — see the
@@ -360,6 +435,7 @@ export function buildVariableModel(
     }
 
     const members = memberSpans(cls);
+    const { declaredCount } = cls;
 
     cls.defines.forEach((span) => {
       const loc = locateInStatement(stmt, span.rawStart);
@@ -373,6 +449,7 @@ export function buildVariableModel(
           existing.kind = cls.targetKind;
         }
         if (members) existing.members = members;
+        if (declaredCount !== undefined) existing.memberCount = declaredCount;
         // A raw dataset column a real declaration statement now also
         // names is a re-definition, not a duplicate (design §11) — the
         // script owns it from here on. A mere COMPUTE/IF…THEN touching it
@@ -394,6 +471,9 @@ export function buildVariableModel(
           definitionBranches: [pathAt(loc.line.file, loc.line.line)],
           annotations: [],
           ...(members ? { members } : {}),
+          ...(declaredCount !== undefined
+            ? { memberCount: declaredCount }
+            : {}),
         });
         firstSeen.set(span.name, i);
       }
@@ -530,10 +610,19 @@ export function buildVariableModel(
     return {
       all: visible,
       resolve: (name: string) => {
-        const s = symbols.get(name.toLowerCase());
-        if (!s) return undefined;
-        return (firstSeen.get(s.name) ?? Infinity) <= pointIndex
-          ? s
+        const key = name.toLowerCase();
+        const s = symbols.get(key);
+        if (s) {
+          return (firstSeen.get(s.name) ?? Infinity) <= pointIndex
+            ? s
+            : undefined;
+        }
+        const ref = findMemberHost(symbols, key);
+        if (!ref) return undefined;
+        // Gated on the *family's* own visibility at this point — a
+        // member is only known once its family is.
+        return (firstSeen.get(ref.family.name) ?? Infinity) <= pointIndex
+          ? buildMemberSymbol(key, ref)
           : undefined;
       },
       currentVariable: () =>
@@ -621,7 +710,13 @@ export function buildVariableModel(
       const key = name.toLowerCase();
       return allReferences().filter((r) => r.span.name === key);
     },
-    resolveAnywhere: (name) => symbols.get(name.toLowerCase()),
+    resolveAnywhere: (name) => {
+      const key = name.toLowerCase();
+      const s = symbols.get(key);
+      if (s) return s;
+      const ref = findMemberHost(symbols, key);
+      return ref ? buildMemberSymbol(key, ref) : undefined;
+    },
     annotationsFor: (name) => {
       const k = name.toLowerCase();
       return [

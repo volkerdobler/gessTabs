@@ -8,6 +8,7 @@ import {
   collectVariableOccurrences,
   primaryDefinitions,
 } from '../src/core/variableModel';
+import { checkUndefinedVariables } from '../src/core/modelDiagnostics';
 
 const ROOT = path.resolve('/gesstabs-varmodel-test');
 const p = (...s: string[]) => path.join(ROOT, ...s);
@@ -201,6 +202,72 @@ describe('buildVariableModel', () => {
     const a5 = m.resolve('a5', p('main.tab'), 5);
     expect(a5?.origin).to.equal('declared');
     expect(a5?.definitions[0].line).to.equal(0);
+  });
+});
+
+describe('buildVariableModel — $-member resolution (§9 Q2)', () => {
+  // Regression coverage for three confirmed real bugs: `family$k` (no
+  // separator) used to silently truncate to just `family` at tokenize
+  // time (resolving to the wrong symbol, no error); `family_$k` used to
+  // truncate to `family_` (a name that never exists — a real false
+  // "undefined-variable" positive); the quoted `"family $k"` form was
+  // captured as one span but never resolved to anything.
+
+  it('resolves "family$k" (no separator) to a synthesized atomic member symbol', () => {
+    const m = modelOf('makefamily medsort = 5;\ncompute x = medsort$1;');
+    const sym = m.resolve('medsort$1', p('main.tab'), 5);
+    expect(sym?.kind).to.equal('atomic');
+    expect(sym?.origin).to.equal('virtual');
+    // Points back at the family's own declaration — no line of its own.
+    expect(sym?.definitions[0].text).to.equal('makefamily medsort = 5;');
+  });
+
+  it('resolves "family_$k" (underscore separator, the manual\'s own MULTIFROMSTRING example spelling)', () => {
+    const m = modelOf('makefamily Datum1 = 3;\ncompute x = Datum1_$1;');
+    const sym = m.resolve('datum1_$1', p('main.tab'), 5);
+    expect(sym).to.not.be.undefined;
+    expect(sym?.kind).to.equal('atomic');
+  });
+
+  it('resolves the quoted "family $k" form (space separator, forced by the "token with a space must be quoted" rule)', () => {
+    const m = modelOf('makefamily medsort = 5;\ncompute x = "medsort $1";');
+    const sym = m.resolve('medsort $1', p('main.tab'), 5);
+    expect(sym).to.not.be.undefined;
+    expect(sym?.kind).to.equal('atomic');
+  });
+
+  it('reads the member count from MAKEFAMILY\'s own "= <n>" — an out-of-range member is still unresolved', () => {
+    const m = modelOf('makefamily medsort = 5;\ncompute x = medsort$99;');
+    expect(m.resolve('medsort$99', p('main.tab'), 5)).to.be.undefined;
+  });
+
+  it('reads the member count from an explicit VARFAMILY member list', () => {
+    const m = modelOf('varfamily item = item1 item2 item3;');
+    expect(m.resolve('item$3', p('main.tab'), 3)).to.not.be.undefined;
+    expect(m.resolve('item$4', p('main.tab'), 3)).to.be.undefined;
+  });
+
+  it('does not resolve a $-suffixed name whose prefix is not a family/group at all', () => {
+    const m = modelOf('compute plainvar = 1;\ncompute x = plainvar$1;');
+    expect(m.resolve('plainvar$1', p('main.tab'), 5)).to.be.undefined;
+  });
+
+  it("is gated on the family's own program-point visibility, same as any other symbol", () => {
+    const m = modelOf('compute x = medsort$1;\nmakefamily medsort = 5;');
+    // referenced before the family is declared — no forward references
+    expect(m.resolve('medsort$1', p('main.tab'), 0)).to.be.undefined;
+    expect(m.resolve('medsort$1', p('main.tab'), 5)).to.not.be.undefined;
+  });
+
+  it('resolveAnywhere also synthesizes a member symbol, ignoring program order', () => {
+    const m = modelOf('makefamily medsort = 5;');
+    expect(m.resolveAnywhere('medsort$1')).to.not.be.undefined;
+  });
+
+  it('checkUndefinedVariables no longer false-flags a real $-member reference', () => {
+    const m = modelOf('makefamily medsort = 5;\ncompute x = medsort$1;');
+    const issues = checkUndefinedVariables(m, p('main.tab'));
+    expect(issues.some((i) => i.message.includes('medsort'))).to.be.false;
   });
 });
 

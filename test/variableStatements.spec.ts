@@ -144,6 +144,15 @@ describe('classifyStatement — definition forms (§3)', () => {
     const s = c('makefamily x = 10;');
     expect(defNames(s)).to.deep.equal(['x']);
     expect(s.references).to.be.empty;
+    // the model needs this to resolve a $-member reference (x$k) against
+    // a family sized by count rather than an explicit member varlist.
+    expect(s.declaredCount).to.equal(10);
+  });
+
+  it('MAKEGROUP g = 5 — same declared-count capture as MAKEFAMILY', () => {
+    const s = c('makegroup g = 5;');
+    expect(defNames(s)).to.deep.equal(['g']);
+    expect(s.declaredCount).to.equal(5);
   });
 
   it('VARGROUP g = ( a b c ) EQ 1 — targets and parenthesised members', () => {
