@@ -5,12 +5,19 @@
 // *current document only* — a real script's variables/#defines can span
 // files, but resolving the whole workspace on every keystroke for every
 // check here is a bigger design (and performance) undertaking than this
-// pass attempts. Duplicate-declaration got its cross-INCLUDE fix anyway —
-// see `checkDuplicateDeclarations` in modelDiagnostics.ts, which reuses
+// pass attempts. Two checks got a cross-INCLUDE-aware version anyway,
+// each living outside this document-only pass instead: duplicate-
+// declaration (`checkDuplicateDeclarations` in modelDiagnostics.ts, on
 // the whole-workspace `VariableModel` already rebuilt per keystroke for
-// P1.6's undefined-variable/system-variable-redeclaration checks, so the
-// performance question was already answered there. A `#define`-case
-// mismatch across an INCLUDE boundary remains a known, accepted gap.
+// P1.6's undefined-variable/system-variable-redeclaration checks) and
+// `checkDefineCaseMismatch` below (still defined — and still directly
+// unit-tested — here, since it needs no variable model, just a wider
+// name set; but only ever *called* from `externalNamesProvider.ts`
+// alongside the other cross-INCLUDE-aware checks, with that wider set
+// passed in — see its own `workspaceDefines` parameter doc comment. Not
+// wired into `computeDiagnostics` below, so the document-only F2 pass
+// never runs it and can't double-report what the workspace-aware call
+// already covers).
 
 import { scanBlockDirectives } from './directives';
 import { ResolvedLine } from './includeGraph';
@@ -742,8 +749,10 @@ export function checkDeprecatedKeywords(
 // document but *does* match case-insensitively — almost certainly the
 // bug, not an intentionally-undefined flag. Suppressed entirely once
 // #IGNORECASE = YES; is in effect, since case differences are then
-// intentional. Document-scoped (see this module's own header comment) —
-// a #define from an INCLUDEd file isn't seen here.
+// intentional. Document-scoped by default (see this module's own header
+// comment) — a #define from an INCLUDEd file isn't seen unless the caller
+// passes `workspaceDefines` (below), the one exception to this file's
+// otherwise-strict document-scoping.
 const defineRe = /^\s*#define\s+(\S+)/i;
 const ignoreCaseRe = /^\s*#ignorecase\s*=\s*(yes|no)/i;
 const ifdefRe = /^\s*#ifn?def\b\s*(.*)$/i;
@@ -757,7 +766,16 @@ function parseDefineNameList(raw: string): string[] {
 
 export function checkDefineCaseMismatch(
   lines: string[],
-  isNotInComment: IsNotInComment
+  isNotInComment: IsNotInComment,
+  // Raw-case #define/#undefine names from the whole reachable INCLUDE
+  // graph (core/includeGraph.ts's collectAllDefineNames) — optional so
+  // every existing document-only caller/test keeps its exact prior
+  // behavior unchanged. When passed, a name is also considered "really
+  // defined" (not flagged) if it exactly matches something here even
+  // though this document's own #define scan hasn't seen it (it lives in
+  // an INCLUDEd/INCLUDEing file instead), and the case-insensitive
+  // mismatch check widens to this set too.
+  workspaceDefines?: Set<string>
 ): DiagnosticIssue[] {
   const issues: DiagnosticIssue[] = [];
   const defined = new Set<string>();
@@ -786,9 +804,17 @@ export function checkDefineCaseMismatch(
 
     parseDefineNameList(ifdefMatch[1]).forEach((name) => {
       if (defined.has(name)) return;
-      const caseInsensitiveHit = Array.from(defined).some(
-        (d) => d.toLowerCase() === name.toLowerCase()
-      );
+      if (workspaceDefines?.has(name)) return;
+
+      const caseInsensitiveHit =
+        Array.from(defined).some(
+          (d) => d.toLowerCase() === name.toLowerCase()
+        ) ||
+        (workspaceDefines
+          ? Array.from(workspaceDefines).some(
+              (d) => d.toLowerCase() === name.toLowerCase()
+            )
+          : false);
       if (!caseInsensitiveHit) return;
       const idx = lineText.indexOf(name);
       issues.push({
@@ -796,7 +822,11 @@ export function checkDefineCaseMismatch(
         startChar: idx === -1 ? 0 : idx,
         length: name.length,
         severity: 'warning',
-        message: `"${name}" doesn't exactly match any #DEFINE seen so far (names are case-sensitive unless #IGNORECASE = YES; is set) — likely a typo'd case rather than an intentionally-undefined flag.`,
+        message: `"${name}" doesn't exactly match any #DEFINE seen so far${
+          workspaceDefines
+            ? ' (in this file or an INCLUDEd/INCLUDEing one)'
+            : ''
+        } (names are case-sensitive unless #IGNORECASE = YES; is set) — likely a typo'd case rather than an intentionally-undefined flag.`,
         code: 'define-case-mismatch',
       });
     });
@@ -1324,7 +1354,10 @@ export function computeDiagnostics(
     ...checkCellsetElements(lines, isNotInComment),
     ...checkInvertoutUpdateinvert(lines, isNotInComment),
     ...checkDeprecatedKeywords(lines, isNotInComment),
-    ...checkDefineCaseMismatch(lines, isNotInComment),
+    // checkDefineCaseMismatch is deliberately NOT included here — see this
+    // module's own header comment: it's only ever called from
+    // externalNamesProvider.ts, with the cross-INCLUDE `workspaceDefines`
+    // set that call site alone can resolve.
     ...checkParenBalance(lines, isNormalScope),
     ...checkNestedBlockComments(lines),
     ...checkMalformedStatements(lines, isNotInComment),

@@ -438,30 +438,30 @@ export function resolveIncludeGraph(
   return { order, files, errors, scopes, branchPaths };
 }
 
-// Every name ever named in a `#define`/`#undefine` directive anywhere in
-// the reachable graph, ignoring #ifdef gating entirely (the same
-// "everything, regardless of branch" traversal `conditionalsAllActive`
-// already does) — used to tell "this #ifdef's name is a real switch this
-// script's authors use, just not set on this path" (confident) apart from
-// "nothing here ever touches this name at all" (uncertain — see
-// ConditionalFrame.uncertain). A conservative first cut: a name only ever
-// `#define`'d inside a branch whose own activity depends on that same name
-// is (rare, self-referential) still counted as known, since this pass
-// itself never gates on #ifdef state.
-function collectKnownDefineNames(
+interface DefineDirectiveMatch {
+  file: string;
+  line: number;
+  // exactly as written — callers that want the coarser lower-cased
+  // "known at all" signal (collectKnownDefineNames below) lower-case at
+  // their own call site.
+  name: string;
+}
+
+// Every `#define`/`#undefine` directive anywhere in the reachable graph,
+// ignoring #ifdef gating entirely (the same "everything, regardless of
+// branch" traversal `conditionalsAllActive` already does). Shared walk
+// behind both collectKnownDefineNames and collectAllDefineNames below —
+// see the former's own comment for why re-reading raw file lines (rather
+// than scanning `order`) is what's needed here: a `#define`/`#undefine`
+// line is consumed by the resolver the same way an `#ifdef`/`#else`/`#end`
+// directive line is and never reaches `order` at all (see
+// IncludeGraphResult.branchPaths' doc comment).
+function collectDefineDirectives(
   entryFile: string,
   readFile: FileReader,
   options: IncludeGraphOptions
-): Set<string> {
-  // A `#define`/`#undefine` line is consumed by the resolver the same way
-  // an `#ifdef`/`#else`/`#end` directive line is — it never reaches
-  // `order` at all (see IncludeGraphResult.branchPaths' doc comment) — so
-  // scanning `order` here would always come back empty. Re-reading every
-  // file `conditionalsAllActive` already proved reachable and scanning
-  // its raw lines directly (still comment/string-scope-aware, still
-  // ignoring #ifdef nesting entirely — this is deliberately more
-  // permissive than the real resolution) is what actually finds them.
-  const names = new Set<string>();
+): DefineDirectiveMatch[] {
+  const matches: DefineDirectiveMatch[] = [];
   const full = resolveIncludeGraph(entryFile, readFile, {
     ...options,
     conditionalsAllActive: true,
@@ -473,17 +473,58 @@ function collectKnownDefineNames(
     lines.forEach((text, i) => {
       if (text.length === 0) return;
       if (!scope.isNotInComment(i, text.search(/\S/))) return;
-      // Lower-cased: this is a "is some real switch spelled anything like
-      // this known at all" signal, not the real (default case-sensitive,
-      // #ignorecase-aware) match `DefineSet.isDefined` performs — without
-      // this, a `#define xyz` + later `#ifdef XYZ` (case mismatch, real
-      // gessTabs: confidently NOT the same switch) would wrongly read as
-      // "xyz is a total unknown", not "known, just doesn't match here".
       const d = text.match(defineRe);
-      if (d) names.add(d[1].toLowerCase());
+      if (d) matches.push({ file, line: i, name: d[1] });
       const u = text.match(undefineRe);
-      if (u) names.add(u[1].toLowerCase());
+      if (u) matches.push({ file, line: i, name: u[1] });
     });
   });
+  return matches;
+}
+
+// Every name ever named in a `#define`/`#undefine` directive anywhere in
+// the reachable graph — used to tell "this #ifdef's name is a real switch
+// this script's authors use, just not set on this path" (confident) apart
+// from "nothing here ever touches this name at all" (uncertain — see
+// ConditionalFrame.uncertain). A conservative first cut: a name only ever
+// `#define`'d inside a branch whose own activity depends on that same name
+// is (rare, self-referential) still counted as known, since this pass
+// itself never gates on #ifdef state.
+function collectKnownDefineNames(
+  entryFile: string,
+  readFile: FileReader,
+  options: IncludeGraphOptions
+): Set<string> {
+  const names = new Set<string>();
+  // Lower-cased: this is a "is some real switch spelled anything like this
+  // known at all" signal, not the real (default case-sensitive,
+  // #ignorecase-aware) match `DefineSet.isDefined` performs — without
+  // this, a `#define xyz` + later `#ifdef XYZ` (case mismatch, real
+  // gessTabs: confidently NOT the same switch) would wrongly read as "xyz
+  // is a total unknown", not "known, just doesn't match here".
+  collectDefineDirectives(entryFile, readFile, options).forEach((m) =>
+    names.add(m.name.toLowerCase())
+  );
+  return names;
+}
+
+// Same traversal as collectKnownDefineNames, but keeping each name's
+// original casing — the set that check's own lower-casing throws away.
+// Feeds checkDefineCaseMismatch's cross-INCLUDE half (diagnostics.ts): that
+// check only ever saw the current document's own `#define` lines, so a
+// `#define FOO;` sitting in an INCLUDEd file (or vice versa) was invisible
+// to a case-mismatched `#ifdef foo` elsewhere in the graph. `options`
+// defaults to `{}` (no `externalDefines`), unlike collectKnownDefineNames
+// which is always called with the caller's own options — this is exported
+// for a standalone caller that doesn't necessarily have any to pass.
+export function collectAllDefineNames(
+  entryFile: string,
+  readFile: FileReader,
+  options: IncludeGraphOptions = {}
+): Set<string> {
+  const names = new Set<string>();
+  collectDefineDirectives(entryFile, readFile, options).forEach((m) =>
+    names.add(m.name)
+  );
   return names;
 }

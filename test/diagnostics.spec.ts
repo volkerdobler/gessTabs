@@ -628,6 +628,77 @@ describe('checkDefineCaseMismatch', () => {
     expect(issues).to.have.length(1);
     expect(issues[0].message).to.include('FOO');
   });
+
+  describe('workspaceDefines (cross-INCLUDE half)', () => {
+    it('does not flag a name only #define-d in an INCLUDEd/INCLUDEing file when its exact case is passed in', () => {
+      // "xyz" is never #define-d in *this* document's own lines — only
+      // workspaceDefines (standing in for collectAllDefineNames' whole-graph
+      // scan) knows about it, with the same case as the #ifdef reference.
+      const lines = ['#ifdef xyz', 'x;', '#end'];
+      const issues = checkDefineCaseMismatch(
+        lines,
+        alwaysNotInComment,
+        new Set(['xyz'])
+      );
+      expect(issues).to.be.empty;
+    });
+
+    it("flags a name that only matches an INCLUDEd file's #define case-insensitively", () => {
+      const lines = ['#ifdef XYZ', 'x;', '#end'];
+      const issues = checkDefineCaseMismatch(
+        lines,
+        alwaysNotInComment,
+        new Set(['xyz'])
+      );
+      expect(issues).to.have.length(1);
+      expect(issues[0]).to.deep.include({
+        line: 0,
+        code: 'define-case-mismatch',
+      });
+      expect(issues[0].message).to.include('XYZ');
+    });
+
+    it('still flags a name absent from both the document and workspaceDefines entirely — passing workspaceDefines does not suppress a genuine unknown', () => {
+      const lines = ['#define abc', '#ifdef XYZ', 'x;', '#end'];
+      const issues = checkDefineCaseMismatch(
+        lines,
+        alwaysNotInComment,
+        new Set(['abc'])
+      );
+      // "XYZ" doesn't case-insensitively match anything in either set, so
+      // this is the "intentionally undefined flag" case, not a mismatch.
+      expect(issues).to.be.empty;
+    });
+
+    it('an exact in-document match still wins even when workspaceDefines is also passed', () => {
+      const lines = ['#define xyz', '#ifdef xyz', 'x;', '#end'];
+      const issues = checkDefineCaseMismatch(
+        lines,
+        alwaysNotInComment,
+        new Set(['somethingElse'])
+      );
+      expect(issues).to.be.empty;
+    });
+
+    it('#IGNORECASE = YES; still suppresses the check even with workspaceDefines passed', () => {
+      const lines = ['#ignorecase = yes;', '#ifdef XYZ', 'x;', '#end'];
+      const issues = checkDefineCaseMismatch(
+        lines,
+        alwaysNotInComment,
+        new Set(['xyz'])
+      );
+      expect(issues).to.be.empty;
+    });
+
+    it('omitting workspaceDefines keeps the exact prior document-only behavior', () => {
+      // Same shape as the very first test in this describe block, just
+      // spelled out again here to pin down that the new parameter is
+      // opt-in and changes nothing when absent.
+      const lines = ['#define xyz', '#ifdef XYZ', 'x;', '#end'];
+      const issues = checkDefineCaseMismatch(lines, alwaysNotInComment);
+      expect(issues).to.have.length(1);
+    });
+  });
 });
 
 describe('checkParenBalance', () => {

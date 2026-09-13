@@ -23,8 +23,10 @@ import {
   FileReader,
   ResolvedLine,
   cleanedDocumentOrder,
+  collectAllDefineNames,
 } from '../core/includeGraph';
 import { getCachedScope } from '../core/scope';
+import { checkDefineCaseMismatch } from '../core/diagnostics';
 import {
   ExternalNamesIO,
   ExternalNameSource,
@@ -430,6 +432,41 @@ export class GesstabsExternalNamesManager {
         modelIssues.push(...checkDuplicateDeclarations(model, file));
         modelIssues.push(
           ...checkMacroDuplicateVariableDefinition(wsIndex, file)
+        );
+
+        // checkDefineCaseMismatch's cross-INCLUDE half (P2): unlike the
+        // rest of diagnostics.ts, this one needs workspace-wide #define
+        // names to catch a mismatch against an INCLUDEd/INCLUDEing file's
+        // #define rather than only this document's own — so it moved here
+        // alongside the other cross-INCLUDE-aware checks instead of
+        // running (document-only) in the F2 pass (diagnosticsProvider.ts),
+        // same reasoning as checkDuplicateDeclarations' own move (see this
+        // function's header comment) and the same "known, accepted gap"
+        // diagnostics.ts's own header used to call out for this exact
+        // check. Reads its own `lines`/scope rather than reusing anything
+        // above since none of the other model-based checks need per-
+        // document raw text; `getCachedScope` makes the extra full-
+        // document scan effectively free after the first call this pass.
+        const workspaceDefines =
+          owningPrograms.length > 0
+            ? owningPrograms.reduce((set, prog) => {
+                collectAllDefineNames(prog.entryFile, liveFileReader()).forEach(
+                  (name) => set.add(name)
+                );
+                return set;
+              }, new Set<string>())
+            : undefined;
+        const scope = getCachedScope(document);
+        const lines: string[] = [];
+        for (let i = 0; i < document.lineCount; i += 1) {
+          lines.push(document.lineAt(i).text);
+        }
+        modelIssues.push(
+          ...checkDefineCaseMismatch(
+            lines,
+            (line, char) => scope.isNotInComment(line, char),
+            workspaceDefines
+          )
         );
 
         modelIssues.forEach((issue) => {

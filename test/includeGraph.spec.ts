@@ -3,6 +3,7 @@ import * as path from 'path';
 import {
   resolveIncludeGraph,
   cleanedDocumentOrder,
+  collectAllDefineNames,
   FileReader,
 } from '../src/core/includeGraph';
 import { findMacroDefinitions } from '../src/core/macroExpansion';
@@ -724,5 +725,55 @@ describe('cleanedDocumentOrder', () => {
     expect(order[0].text.trimEnd()).to.equal('include = "a.inc";');
     expect(order[0].text.length).to.equal(raw.length);
     expect(order[0].text).to.not.include('note');
+  });
+});
+
+describe('collectAllDefineNames', () => {
+  it('finds a #define in an INCLUDEd file, in its original casing', () => {
+    const reader = makeReader({
+      [p('main.tab')]: 'include = "vars.inc";\ncompute v = 1;',
+      [p('vars.inc')]: '#define FOO\n',
+    });
+    const names = collectAllDefineNames(p('main.tab'), reader);
+    expect(Array.from(names)).to.deep.equal(['FOO']);
+  });
+
+  it('finds a #define in the entry file itself', () => {
+    const reader = makeReader({ [p('main.tab')]: '#define Bar\n' });
+    const names = collectAllDefineNames(p('main.tab'), reader);
+    expect(Array.from(names)).to.deep.equal(['Bar']);
+  });
+
+  it('finds a #undefine name too', () => {
+    const reader = makeReader({ [p('main.tab')]: '#undefine Baz\n' });
+    const names = collectAllDefineNames(p('main.tab'), reader);
+    expect(Array.from(names)).to.deep.equal(['Baz']);
+  });
+
+  it('is not lower-cased — keeps the exact original casing (unlike the internal known-names scan)', () => {
+    const reader = makeReader({ [p('main.tab')]: '#define MixedCase\n' });
+    const names = collectAllDefineNames(p('main.tab'), reader);
+    expect(names.has('MixedCase')).to.be.true;
+    expect(names.has('mixedcase')).to.be.false;
+  });
+
+  it('ignores a #define written inside a comment', () => {
+    const reader = makeReader({
+      [p('main.tab')]: '// #define NotReal\ncompute v = 1;',
+    });
+    expect(collectAllDefineNames(p('main.tab'), reader)).to.be.empty;
+  });
+
+  it('finds a #define inside an inactive #ifdef branch (ignores gating, same as the internal scan)', () => {
+    const reader = makeReader({
+      [p('main.tab')]: '#ifdef NeverSet\n#define Inactive\n#end\n',
+    });
+    const names = collectAllDefineNames(p('main.tab'), reader);
+    expect(names.has('Inactive')).to.be.true;
+  });
+
+  it('returns an empty set when nothing #defines anything', () => {
+    const reader = makeReader({ [p('main.tab')]: 'compute v = 1;' });
+    expect(collectAllDefineNames(p('main.tab'), reader)).to.be.empty;
   });
 });
