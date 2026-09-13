@@ -24,6 +24,13 @@ import { locateInStatement } from './statements';
 import { classifyStatement } from './variableStatements';
 import { VariableModel } from './variableModel';
 import { DiagnosticIssue } from './diagnostics';
+import { WorkspaceIndex, collectAllMacroCalls } from './symbolIndex';
+import {
+  findMacroDefinitions,
+  buildMacroIndex,
+  expandLines,
+  MacroDefinition,
+} from './macroExpansion';
 
 // Manual: Systemvariablen — declaring one of these is a syntax error. Kept
 // in sync with variableModel.ts's own PREDEFINED list by hand (small,
@@ -151,6 +158,117 @@ export function checkDuplicateDeclarations(
           elsewhere ? `${path.basename(first.file)}:` : ''
         }line ${first.line + 1}.`,
         code: 'duplicate-declaration',
+      });
+    });
+  });
+
+  return issues;
+}
+
+function firstNonWs(lineText: string): number {
+  const idx = lineText.search(/\S/);
+  return idx === -1 ? 0 : idx;
+}
+
+// A #MACRO body statement that DEFINES a variable (GROUPS/COMPUTE/SINGLEQ/…
+// — any statement whose `defines` is non-empty — but deliberately NOT an
+// IF…THEN, `kind === 'if-then'`, whose target is itself conditional rather
+// than the thing that unconditionally (re-)declares a name on every
+// expansion) compiles into one literal statement per call once the macro's
+// `&params` are substituted. If that substitution happens to produce the
+// *same* name on two or more calls — almost always because the name never
+// referenced one of the macro's own parameters to begin with, e.g. `groups
+// fixedname = …;` inside `#macro #x( &z )` — the expanded script declares
+// that name twice, which the real compiler rejects ("variable declared
+// twice"), same failure mode as checkDuplicateDeclarations above, just
+// produced indirectly through macro expansion instead of two literal
+// source statements. A name that DOES depend on a parameter (`groups
+// VAR_&z = …;`) is the documented way to avoid this, and is only flagged
+// here if two calls happen to substitute down to the same literal name
+// anyway (e.g. called twice with the same argument) — this check is driven
+// entirely by the actual substituted result, never by guessing whether the
+// raw source text "looks parameterized".
+//
+// Reuses the same macro-call enumeration as symbolIndex.ts's own
+// findAllMacroProducedNames (collectAllMacroCalls — including #DOMACRO/
+// #DOMACRO2-generated and indirectly-flattened calls), but needs each call
+// grouped by its target macro (not flattened into one big name list) and
+// needs `ClassifiedStatement.kind` to exclude IF…THEN, which
+// MacroProducedName doesn't carry — so this re-implements the per-call
+// expand-and-classify step directly rather than building on top of it.
+export function checkMacroDuplicateVariableDefinition(
+  index: WorkspaceIndex,
+  file: string
+): DiagnosticIssue[] {
+  const issues: DiagnosticIssue[] = [];
+  const macroIndex = buildMacroIndex(findMacroDefinitions(index.order));
+  if (macroIndex.size === 0) return issues;
+
+  const callsByMacro = new Map<
+    string,
+    { macro: MacroDefinition; args: string[] }[]
+  >();
+  collectAllMacroCalls(index, macroIndex).forEach(({ macro, args }) => {
+    const key = `${macro.file}:${macro.defLine}`;
+    const list = callsByMacro.get(key);
+    if (list) {
+      list.push({ macro, args });
+    } else {
+      callsByMacro.set(key, [{ macro, args }]);
+    }
+  });
+
+  callsByMacro.forEach((macroCalls) => {
+    if (macroCalls.length < 2) return;
+    const { macro } = macroCalls[0];
+    if (macro.file !== file) return;
+
+    const bodyLines = index.order.filter(
+      (l) =>
+        l.file === macro.file &&
+        l.line > macro.defLine &&
+        l.line < macro.endLine
+    );
+
+    bodyLines.forEach((bl) => {
+      const perCall = macroCalls.map(({ args }) =>
+        classifyStatement(expandLines([bl.text], macro.params, args)[0])
+      );
+      const first = perCall[0];
+      if (!first || first.kind === 'if-then' || first.defines.length === 0) {
+        return;
+      }
+
+      first.defines.forEach((_, defIdx) => {
+        const seen = new Set<string>();
+        let duplicateName: string | undefined;
+        perCall.forEach((cls) => {
+          const span = cls?.defines[defIdx];
+          if (!span) return;
+          if (seen.has(span.name)) {
+            duplicateName = span.raw;
+          } else {
+            seen.add(span.name);
+          }
+        });
+        if (!duplicateName) return;
+
+        const paramHint =
+          macro.params.length > 0
+            ? ` Make the name depend on one of the macro's own parameters (${macro.params
+                .map((p) => `&${p}`)
+                .join(', ')}), e.g. "..._&${
+                macro.params[0]
+              }", so each call produces a distinct name.`
+            : '';
+        issues.push({
+          line: bl.line,
+          startChar: firstNonWs(bl.text),
+          length: Math.max(bl.text.trim().length, 1),
+          severity: 'error',
+          message: `#${macro.name} is called ${macroCalls.length}× in this program, and this statement always declares "${duplicateName}" with the exact same name — once expanded, the compiler will fail with "variable declared twice".${paramHint}`,
+          code: 'macro-duplicate-variable-definition',
+        });
       });
     });
   });

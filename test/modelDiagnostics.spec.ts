@@ -8,6 +8,7 @@ import {
   checkUndefinedVariables,
   checkSystemVariableRedeclaration,
   checkDuplicateDeclarations,
+  checkMacroDuplicateVariableDefinition,
 } from '../src/core/modelDiagnostics';
 
 const ROOT = path.resolve('/gesstabs-modeldiag-test');
@@ -226,9 +227,7 @@ describe('checkDuplicateDeclarations', () => {
   it('is case-insensitive', () => {
     const idx = indexOf('variable X = 1;\nvariable x = 2;');
     const model = buildVariableModel(idx);
-    expect(
-      checkDuplicateDeclarations(model, p('main.tab'))
-    ).to.have.length(1);
+    expect(checkDuplicateDeclarations(model, p('main.tab'))).to.have.length(1);
   });
 
   it('does not flag COMPUTE ADD re-assigning an existing variable — legal, not a duplicate declaration (§9 Q3)', () => {
@@ -285,5 +284,101 @@ describe('checkDuplicateDeclarations', () => {
     expect(mainIssues[0].message).to.include('vars.inc:line 1');
     // The INCLUDEd file itself has no duplicate on its own side.
     expect(checkDuplicateDeclarations(model, p('vars.inc'))).to.be.empty;
+  });
+});
+
+describe('checkMacroDuplicateVariableDefinition', () => {
+  it('flags a fixed-name GROUPS declared inside a macro called more than once', () => {
+    const idx = indexOf(
+      [
+        '#macro #x( &z )',
+        'groups fixedname = | "x" : v eq 1;',
+        '#endmacro',
+        '#x( a )',
+        '#x( b )',
+      ].join('\n')
+    );
+    const issues = checkMacroDuplicateVariableDefinition(idx, p('main.tab'));
+    expect(issues).to.have.length(1);
+    expect(issues[0]).to.deep.include({
+      line: 1,
+      code: 'macro-duplicate-variable-definition',
+    });
+    expect(issues[0].message).to.include('fixedname');
+    expect(issues[0].message).to.include('#x');
+  });
+
+  it('flags a fixed-name (bare) COMPUTE declared inside a macro called more than once', () => {
+    const idx = indexOf(
+      [
+        '#macro #x( &z )',
+        'compute fixedname = 1;',
+        '#endmacro',
+        '#x( a )',
+        '#x( b )',
+      ].join('\n')
+    );
+    expect(
+      checkMacroDuplicateVariableDefinition(idx, p('main.tab'))
+    ).to.have.length(1);
+  });
+
+  it('does not flag when the defined name depends on one of the macro parameters', () => {
+    const idx = indexOf(
+      [
+        '#macro #x( &z )',
+        'groups fixed_&z = | "x" : v eq 1;',
+        '#endmacro',
+        '#x( a )',
+        '#x( b )',
+      ].join('\n')
+    );
+    expect(checkMacroDuplicateVariableDefinition(idx, p('main.tab'))).to.be
+      .empty;
+  });
+
+  it('does not flag a macro that is only called once', () => {
+    const idx = indexOf(
+      [
+        '#macro #x( &z )',
+        'groups fixedname = | "x" : v eq 1;',
+        '#endmacro',
+        '#x( a )',
+      ].join('\n')
+    );
+    expect(checkMacroDuplicateVariableDefinition(idx, p('main.tab'))).to.be
+      .empty;
+  });
+
+  it('does not flag an IF…THEN target inside the macro body, even with a fixed name', () => {
+    const idx = indexOf(
+      [
+        '#macro #x( &z )',
+        'if v eq 1 then fixedname = 2;',
+        '#endmacro',
+        '#x( a )',
+        '#x( b )',
+      ].join('\n')
+    );
+    expect(checkMacroDuplicateVariableDefinition(idx, p('main.tab'))).to.be
+      .empty;
+  });
+
+  it('only reports for the file the macro is defined in', () => {
+    const idx = indexOf(
+      ['include = macros.inc;', '#x( a )', '#x( b )'].join('\n'),
+      {
+        [p('macros.inc')]: [
+          '#macro #x( &z )',
+          'groups fixedname = | "x" : v eq 1;',
+          '#endmacro',
+        ].join('\n'),
+      }
+    );
+    expect(checkMacroDuplicateVariableDefinition(idx, p('main.tab'))).to.be
+      .empty;
+    expect(
+      checkMacroDuplicateVariableDefinition(idx, p('macros.inc'))
+    ).to.have.length(1);
   });
 });
