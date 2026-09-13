@@ -33,6 +33,10 @@ All notable changes to the "GESStabs" extension will be documented in this file 
 
 ### Diagnostics
 
+- New diagnostic: `USEFILTER`/`MAKEFILTER` are flagged as retired since GESStabs 2.82 (replaced by `FILTER`/`TABLEFILTER`/`SETFILTER`) — the only two keywords from a much longer originally-considered "deprecated keyword" list the manual actually documents as removed; everything else on that list is still supported today, just superseded by a newer/preferred mechanism.
+- Fixed: `#define`/`#ifdef` case-mismatch detection is now cross-INCLUDE-aware — a `#define FOO;` sitting in an INCLUDEd file no longer goes unseen by a wrong-case `#ifdef foo` in the main file (or the reverse), closing the one gap the duplicate-declaration diagnostic had already been fixed for.
+- Fixed: a false "undefined variable" warning on `IF <var> IS <vartype> THEN …` (the type-test construct, e.g. `IF v1 IS MULTIQ THEN …`) — the `<vartype>` keyword itself (`VARIABLE`/`SINGLEQ`, `FAMILYVAR`/`MULTIQ`, `GROUPVAR`/`DICHOQ`, `OPEN`) was being collected as an ordinary variable reference and flagged since it (almost never) resolves to a real declared variable.
+- Fixed: a `$`-member reference (`medsort$1`, `Datum1_$1`, or the quoted `"medsort $1"`) is now resolved against its family/group instead of silently truncating at the `$` — this used to either falsely flag the reference as an undefined variable (`Datum1_$1`, since that truncated name never exists) or silently resolve to the wrong symbol (`medsort$1` resolved as plain `medsort`, the whole family). Hover and Go to Definition on a member now also work, pointing at the family's own declaration.
 - New diagnostics for documented gessTabs pitfalls: empty-varlist trap on `RECODE`/`VARTITLE`/`VARTEXT`/`VALUELABELS` (with a quick fix), unmatched `#MACRO`/`#IFDEF` blocks, duplicate variable declarations, inverted `RECODE` bounds, `CARD`/`CARDS` ordering, `WEIGHTCELLS` percentages not summing to 100%, invalid `CELLSET` elements, `INVERTOUT`+`UPDATEINVERT` together, and `#define`/`#ifdef` case mismatches.
 - Fixed: a single-line `#ifnempty … #else … #end` (or any line with more than one preprocessor directive) no longer produces a false "unclosed block" diagnostic, and no longer throws off code folding or the formatter's indentation. A directive keyword written in a trailing `// …` comment (e.g. `#end // #ifdef PowerChart`) is likewise no longer miscounted. The same fix in the INCLUDE/#ifdef resolver: such a line no longer leaves an `#ifdef` block "open" for the rest of the file, which had been hiding later `#MACRO` definitions from hover/autocomplete/go-to-definition.
 
@@ -47,11 +51,14 @@ All notable changes to the "GESStabs" extension will be documented in this file 
 
 ### Settings
 
+- New leveled logger writing to a "GESStabs" output channel (`View > Output`), replacing `console.log` gated behind `gesstabs.debugMode` (invisible without opening the Extension Host's own dev tools). New setting `gesstabs.logLevel` (`off`/`error`/`warn`/`info`/`debug`) controls verbosity; left unset by default, it falls back to the existing `gesstabs.debugMode` boolean, so no `settings.json` changes are required.
 - Hover settings consolidated. The flat `gesstabs.hover.macros` / `.expands` / `.keywords` / `.variables` / `.variableAnnotations` / `.effectiveElements` / `.macroExpansionStyle` are replaced by two grouped settings: `gesstabs.hover.show` (`{ keywords, variables, tableDefaults: boolean; macros: "short" | "full" }`) and `gesstabs.hover.variableContent` (`{ definition, text, title, valueLabels: boolean }` — pick which blocks of the variable hover appear). `gesstabs.hover.enabled` and `gesstabs.hover.language` are unchanged. Old keys still in `settings.json` are honoured as a fallback.
 - Many new `gesstabs.*` settings to turn individual hovers/diagnostics/autocomplete on or off — see the README.
 
 ### Internal
 
+- Performance: the comment/string `Scope` scan (used by every hover, completion, fold, format, semantic-token and diagnostics pass) is now cached per document version instead of rebuilt from scratch on every request.
+- The remaining ad hoc `vscode.workspace.getConfiguration('gesstabs')` reads (`diagnostics.enabled`, `autocomplete.enabled`, `hover.language`, `dataInput.entryScriptPatterns`) are now centralized alongside the existing `hover.*` settings in one typed module — no behavior change.
 - Internal: fixed the packaged extension accidentally including internal/dev-only files; resolved all `npm audit` findings; added the missing LICENSE file. The keyword hover/autocomplete database is now a single hand-maintained `src/keywordData.ts` (one `{ name, argsHint?, syntax, description }` entry per keyword, `syntax` language-independent and `description` a per-language `{ de, en }` map — strings `''` where not yet documented) instead of two generated per-language files plus separate override files — the manuals are moving online and won't be re-extracted.
 
 ## 0.3.0
