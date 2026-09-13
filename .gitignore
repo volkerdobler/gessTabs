@@ -64,3 +64,6 @@ dokumentation/**
 .vscode/mcp.json
 
 .claude/**
+
+# Local scratch planning docs — not part of the shipped/reviewed project
+IMPLEMENTATION_PLAN.md
