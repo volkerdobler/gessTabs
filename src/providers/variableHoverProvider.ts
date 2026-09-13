@@ -38,9 +38,9 @@ import {
   makeWorkspaceReader,
   findWorkspaceFiles,
   normalizePath,
-  printDebugMessage,
   jumpLink,
 } from '../util/workspaceFiles';
+import * as logger from '../util/logger';
 import {
   hoverEnabled,
   hoverShows,
@@ -343,7 +343,7 @@ export class GesstabsVariableHoverProvider implements vscode.HoverProvider {
 
       return new vscode.Hover(md, wordRange);
     } catch (e) {
-      printDebugMessage(`gesstabs: variable hover failed: ${e}`);
+      logger.error(`gesstabs: variable hover failed: ${e}`);
       return null;
     }
   }

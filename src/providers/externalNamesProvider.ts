@@ -49,8 +49,8 @@ import {
   getWorkspaceFolderPath,
   normalizePath,
   findWorkspaceFiles,
-  printDebugMessage,
 } from '../util/workspaceFiles';
+import * as logger from '../util/logger';
 import { resolveWildcardPath } from '../util/glob';
 
 // listFiles for resolveWildcardPath: a plain synchronous directory read,
@@ -458,12 +458,12 @@ export class GesstabsExternalNamesManager {
           diagnostics.push(d);
         });
       } catch (e) {
-        printDebugMessage(`gesstabs: model diagnostics failed: ${e}`);
+        logger.error(`gesstabs: model diagnostics failed: ${e}`);
       }
 
       this.collection.set(document.uri, diagnostics);
     } catch (e) {
-      printDebugMessage(`gesstabs: data-source diagnostics failed: ${e}`);
+      logger.error(`gesstabs: data-source diagnostics failed: ${e}`);
     }
   }
 
@@ -520,7 +520,7 @@ export class GesstabsDataSourceLinkProvider
       });
       return links;
     } catch (e) {
-      printDebugMessage(`gesstabs: data-source links failed: ${e}`);
+      logger.error(`gesstabs: data-source links failed: ${e}`);
       return [];
     }
   }

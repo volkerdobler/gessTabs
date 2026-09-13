@@ -7,7 +7,7 @@ import {
   collectModelSemanticTokens,
   SemanticTokenType,
 } from '../core/semanticTokens';
-import { printDebugMessage } from '../util/workspaceFiles';
+import * as logger from '../util/logger';
 
 export const gesstabsSemanticTokensLegend = new vscode.SemanticTokensLegend([
   'variable',
@@ -46,7 +46,7 @@ export class GesstabsSemanticTokensProvider
           );
         });
     } catch (e) {
-      printDebugMessage(`gesstabs: semantic tokens failed: ${e}`);
+      logger.error(`gesstabs: semantic tokens failed: ${e}`);
     }
     return builder.build();
   }

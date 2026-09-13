@@ -33,7 +33,7 @@ import {
   LogicalStatement,
 } from '../core/statements';
 import { resolveWildcardPath } from '../util/glob';
-import { printDebugMessage } from '../util/workspaceFiles';
+import * as logger from '../util/logger';
 
 const WILDCARD_TOKEN = /[*?]/;
 
@@ -224,7 +224,7 @@ export class GesstabsFileReferenceLinkProvider
 
       return links;
     } catch (e) {
-      printDebugMessage(`gesstabs: file-reference links failed: ${e}`);
+      logger.error(`gesstabs: file-reference links failed: ${e}`);
       return [];
     }
   }

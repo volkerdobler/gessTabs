@@ -17,7 +17,7 @@ import {
   findEnclosingBlockCommentGroup,
   DiagnosticSeverity,
 } from '../core/diagnostics';
-import { printDebugMessage } from '../util/workspaceFiles';
+import * as logger from '../util/logger';
 
 function toVscodeSeverity(
   severity: DiagnosticSeverity
@@ -76,7 +76,7 @@ export class GesstabsDiagnosticsManager {
 
       this.collection.set(document.uri, diagnostics);
     } catch (e) {
-      printDebugMessage(`gesstabs: diagnostics failed: ${e}`);
+      logger.error(`gesstabs: diagnostics failed: ${e}`);
     }
   }
 
@@ -136,7 +136,7 @@ export class GesstabsEmptyVarlistCodeActionProvider
 
       return actions;
     } catch (e) {
-      printDebugMessage(`gesstabs: empty-varlist quick fix failed: ${e}`);
+      logger.error(`gesstabs: empty-varlist quick fix failed: ${e}`);
       return [];
     }
   }
@@ -192,7 +192,7 @@ export class GesstabsStrictVarlistCodeActionProvider
       );
       return [action];
     } catch (e) {
-      printDebugMessage(`gesstabs: STRICTVARLIST source action failed: ${e}`);
+      logger.error(`gesstabs: STRICTVARLIST source action failed: ${e}`);
       return [];
     }
   }
@@ -256,9 +256,7 @@ export class GesstabsNestedBlockCommentCodeActionProvider
 
       return actions;
     } catch (e) {
-      printDebugMessage(
-        `gesstabs: nested-block-comment quick fix failed: ${e}`
-      );
+      logger.error(`gesstabs: nested-block-comment quick fix failed: ${e}`);
       return [];
     }
   }

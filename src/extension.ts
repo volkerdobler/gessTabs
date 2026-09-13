@@ -4,6 +4,7 @@ import * as vscode from 'vscode';
 import * as path from 'path';
 
 import * as sc from './core/scope';
+import * as logger from './util/logger';
 import { constVarName, macroDefRe, expandDefRe } from './core/regex';
 import { matchInScope } from './core/matching';
 import { findMatchingDirectiveLine } from './core/matchingDirective';
@@ -28,7 +29,6 @@ import {
   makeWorkspaceReader,
   resolvedLineRange,
   findWorkspaceFiles,
-  printDebugMessage,
 } from './util/workspaceFiles';
 import {
   GesstabsMacroHoverProvider,
@@ -77,11 +77,11 @@ import { GesstabsFileReferenceLinkProvider } from './providers/fileReferenceLink
 // this method is called when your extension is activated
 // your extension is activated the very first time the command is executed
 export function activate(context: vscode.ExtensionContext) {
-  // Use the console to output diagnostic information (console.log) and errors (console.error)
-  // This line of code will only be executed once when your extension is activated
-  printDebugMessage(
-    'Congratulations, your extension "gesstabs" is now active!'
-  );
+  const outputChannel = vscode.window.createOutputChannel('GESStabs');
+  context.subscriptions.push(outputChannel);
+  logger.setOutputChannel(outputChannel);
+  logger.refreshLogLevelFromConfig();
+  logger.debug('gesstabs: extension activated');
 
   const externalNamesManager = new GesstabsExternalNamesManager();
   context.subscriptions.push(externalNamesManager);
@@ -338,6 +338,12 @@ export function activate(context: vscode.ExtensionContext) {
   );
   context.subscriptions.push(
     vscode.workspace.onDidChangeConfiguration((e) => {
+      if (
+        e.affectsConfiguration('gesstabs.logLevel') ||
+        e.affectsConfiguration('gesstabs.debugMode')
+      ) {
+        logger.refreshLogLevelFromConfig();
+      }
       if (e.affectsConfiguration('gesstabs.dataInput.entryScriptPatterns')) {
         externalNamesManager.invalidate();
       }
@@ -504,7 +510,7 @@ class GesstabsDefintionProvider implements vscode.DefinitionProvider {
     try {
       fileNames = await findWorkspaceFiles(document);
     } catch (e) {
-      printDebugMessage(`gesstabs: provideDefinition failed: ${e}`);
+      logger.error(`gesstabs: provideDefinition failed: ${e}`);
       return null;
     }
     if (token && token.isCancellationRequested) return null;
@@ -655,7 +661,7 @@ class GesstabsDefintionProvider implements vscode.DefinitionProvider {
     try {
       fileNames = await findWorkspaceFiles(document);
     } catch (e) {
-      printDebugMessage(`gesstabs: provideDefinition (hash-name) failed: ${e}`);
+      logger.error(`gesstabs: provideDefinition (hash-name) failed: ${e}`);
       return null;
     }
     // conditionalsAllActive: a definition in an #ifdef/#ifndef branch this
@@ -776,7 +782,7 @@ class GesstabsReferenceProvider implements vscode.ReferenceProvider {
     try {
       fileNames = await findWorkspaceFiles(document);
     } catch (e) {
-      printDebugMessage(`gesstabs: provideReferences failed: ${e}`);
+      logger.error(`gesstabs: provideReferences failed: ${e}`);
       return null;
     }
     if (token && token.isCancellationRequested) return null;
@@ -832,7 +838,7 @@ class GesstabsReferenceProvider implements vscode.ReferenceProvider {
     try {
       fileNames = await findWorkspaceFiles(document);
     } catch (e) {
-      printDebugMessage(`gesstabs: provideReferences (hash-name) failed: ${e}`);
+      logger.error(`gesstabs: provideReferences (hash-name) failed: ${e}`);
       return null;
     }
     if (token && token.isCancellationRequested) return null;
@@ -901,7 +907,7 @@ class GesstabsRenameProvider implements vscode.RenameProvider {
     try {
       fileNames = await findWorkspaceFiles(document);
     } catch (e) {
-      printDebugMessage(`gesstabs: prepareRename failed: ${e}`);
+      logger.error(`gesstabs: prepareRename failed: ${e}`);
       return wordRange;
     }
     if (token && token.isCancellationRequested) return wordRange;
@@ -938,7 +944,7 @@ class GesstabsRenameProvider implements vscode.RenameProvider {
     try {
       fileNames = await findWorkspaceFiles(document);
     } catch (e) {
-      printDebugMessage(`gesstabs: provideRenameEdits failed: ${e}`);
+      logger.error(`gesstabs: provideRenameEdits failed: ${e}`);
       return null;
     }
     if (token && token.isCancellationRequested) return null;
@@ -1156,7 +1162,7 @@ class GessTabsWorkspaceSymbolProvider
     try {
       files = await getAllFilenamesInDirectory(wsfolder, '(tab|inc|def)');
     } catch (e) {
-      printDebugMessage(`gesstabs: provideWorkspaceSymbols failed: ${e}`);
+      logger.error(`gesstabs: provideWorkspaceSymbols failed: ${e}`);
       return [];
     }
     if (token && token.isCancellationRequested) return [];

@@ -12,7 +12,7 @@ import {
   resolveKeywordLanguage,
   keywordLookupKeyAt,
 } from '../keywords/keywordDatabaseTypes';
-import { printDebugMessage } from '../util/workspaceFiles';
+import * as logger from '../util/logger';
 import { hoverEnabled, hoverShows } from '../util/config';
 
 // Picks the effective keyword-doc language from gesstabs.hover.language
@@ -79,7 +79,7 @@ export class GesstabsKeywordHoverProvider implements vscode.HoverProvider {
 
       return new vscode.Hover(renderHover(entry), wordRange);
     } catch (e) {
-      printDebugMessage(`gesstabs: keyword hover failed: ${e}`);
+      logger.error(`gesstabs: keyword hover failed: ${e}`);
       return null;
     }
   }
@@ -113,7 +113,7 @@ export class GesstabsKeywordCompletionProvider
         return item;
       });
     } catch (e) {
-      printDebugMessage(`gesstabs: keyword completion failed: ${e}`);
+      logger.error(`gesstabs: keyword completion failed: ${e}`);
       return [];
     }
   }

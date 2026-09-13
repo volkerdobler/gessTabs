@@ -4,7 +4,7 @@
 import * as vscode from 'vscode';
 import { getCachedScope } from '../core/scope';
 import { findFoldRanges } from '../core/foldingRanges';
-import { printDebugMessage } from '../util/workspaceFiles';
+import * as logger from '../util/logger';
 
 export class GesstabsFoldingRangeProvider
   implements vscode.FoldingRangeProvider
@@ -23,7 +23,7 @@ export class GesstabsFoldingRangeProvider
         scope.isNotInComment(line, char)
       ).map((r) => new vscode.FoldingRange(r.startLine, r.endLine));
     } catch (e) {
-      printDebugMessage(`gesstabs: folding failed: ${e}`);
+      logger.error(`gesstabs: folding failed: ${e}`);
       return [];
     }
   }

@@ -10,16 +10,6 @@ import * as fs from 'fs';
 import { getAllFilenamesInDirectory } from './fsutils';
 import { FileReader, ResolvedLine } from '../core/includeGraph';
 
-// Shared debug channel, gated behind the gesstabs.debugMode setting —
-// used by extension.ts's own providers and by macroProviders.ts so a
-// failure that would otherwise silently resolve to null/undefined (no
-// hover, no signature help, ...) can actually be diagnosed.
-export function printDebugMessage(message: string): void {
-  if (vscode.workspace.getConfiguration('gesstabs').get('debugMode')) {
-    console.log(message);
-  }
-}
-
 // `basename:line` (or a custom `label`) rendered as a markdown link that
 // opens `file` at `line` (0-based). Uses the `gesstabs.revealLine`
 // command rather than the built-in `vscode.open`, whose `selection`

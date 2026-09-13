@@ -4,7 +4,7 @@
 import * as vscode from 'vscode';
 import { getCachedScope } from '../core/scope';
 import { formatLines } from '../core/formatter';
-import { printDebugMessage } from '../util/workspaceFiles';
+import * as logger from '../util/logger';
 
 export class GesstabsFormattingProvider
   implements vscode.DocumentFormattingEditProvider
@@ -36,7 +36,7 @@ export class GesstabsFormattingProvider
       );
       return [vscode.TextEdit.replace(fullRange, formatted.join(eol))];
     } catch (e) {
-      printDebugMessage(`gesstabs: format failed: ${e}`);
+      logger.error(`gesstabs: format failed: ${e}`);
       return [];
     }
   }

@@ -40,9 +40,9 @@ import {
   makeWorkspaceReader,
   findWorkspaceFiles,
   normalizePath,
-  printDebugMessage,
   jumpLink,
 } from '../util/workspaceFiles';
+import * as logger from '../util/logger';
 import { hoverEnabled, macroHoverStyle } from '../util/config';
 import { FileReader } from '../core/includeGraph';
 
@@ -267,7 +267,7 @@ export class GesstabsMacroHoverProvider implements vscode.HoverProvider {
       // here (isNormalScope), not just comments.
       const scope = getCachedScope(document);
       if (!scope.isNormalScope(position.line, position.character)) {
-        printDebugMessage(
+        logger.debug(
           `gesstabs: hover - ${position.line}:${position.character} is inside a comment or string, skipping`
         );
         return null;
@@ -298,7 +298,7 @@ export class GesstabsMacroHoverProvider implements vscode.HoverProvider {
         ]);
         const value = allTokenDefs.get(tokenRef);
         if (value === undefined) {
-          printDebugMessage(
+          logger.debug(
             `gesstabs: hover - "&${tokenRef}&" has no "#expandintoken &${tokenRef}& ..." definition`
           );
           return null;
@@ -335,7 +335,7 @@ export class GesstabsMacroHoverProvider implements vscode.HoverProvider {
             );
           }
         }
-        printDebugMessage(
+        logger.debug(
           `gesstabs: hover - "#${call.name}" is a gessTabs directive keyword, not a macro call, skipping`
         );
         return null;
@@ -347,7 +347,7 @@ export class GesstabsMacroHoverProvider implements vscode.HoverProvider {
       if (!call) {
         const hashName = findHashNameAt(lineText, position.character);
         if (!hashName || isReservedDirectiveKeyword(hashName)) {
-          printDebugMessage(
+          logger.debug(
             `gesstabs: hover - no "#name(...)" call or "#name" reference found at ${position.line}:${position.character} on line "${lineText}"`
           );
           return null;
@@ -362,7 +362,7 @@ export class GesstabsMacroHoverProvider implements vscode.HoverProvider {
           isExpandDefinitionNameAt(lineText, position.character) ||
           isExpandIncDefinitionNameAt(lineText, position.character)
         ) {
-          printDebugMessage(
+          logger.debug(
             `gesstabs: hover - "#${hashName}" at ${position.line}:${position.character} is the name this "#expand"/"#expandinc" line itself defines, not a reference, skipping`
           );
           return null;
@@ -416,7 +416,7 @@ export class GesstabsMacroHoverProvider implements vscode.HoverProvider {
         ]);
 
         if (!allExpandDefs.has(hashName)) {
-          printDebugMessage(
+          logger.debug(
             `gesstabs: hover - "#${hashName}" is not a column-1 macro call, and no "#expand #${hashName} ..." definition was found (names are case-sensitive). Known #expand names: ${
               Array.from(allExpandDefs.keys()).join(', ') || '(none)'
             }`
@@ -446,7 +446,7 @@ export class GesstabsMacroHoverProvider implements vscode.HoverProvider {
 
       const target = macroIndex.get(call.name.toLowerCase());
       if (!target) {
-        printDebugMessage(diagnoseMissingMacro(document, call.name, index));
+        logger.debug(diagnoseMissingMacro(document, call.name, index));
         return null;
       }
 
@@ -480,7 +480,7 @@ export class GesstabsMacroHoverProvider implements vscode.HoverProvider {
       md.appendCodeblock(expanded.join('\n'), 'gesstabs');
       return new vscode.Hover(md, range);
     } catch (e) {
-      printDebugMessage(`gesstabs: hover failed: ${e}`);
+      logger.error(`gesstabs: hover failed: ${e}`);
       return null;
     }
   }
@@ -505,7 +505,7 @@ export class GesstabsMacroSignatureHelpProvider
 
       const scope = getCachedScope(document);
       if (!scope.isNotInComment(position.line, position.character)) {
-        printDebugMessage(
+        logger.debug(
           `gesstabs: signature help - ${position.line}:${position.character} is inside a comment, skipping`
         );
         return null;
@@ -516,7 +516,7 @@ export class GesstabsMacroSignatureHelpProvider
 
       const target = macroIndex.get(match[1].toLowerCase());
       if (!target) {
-        printDebugMessage(diagnoseMissingMacro(document, match[1], index));
+        logger.debug(diagnoseMissingMacro(document, match[1], index));
         return null;
       }
 
@@ -540,7 +540,7 @@ export class GesstabsMacroSignatureHelpProvider
       );
       return help;
     } catch (e) {
-      printDebugMessage(`gesstabs: signature help failed: ${e}`);
+      logger.error(`gesstabs: signature help failed: ${e}`);
       return null;
     }
   }
@@ -561,7 +561,7 @@ export class GesstabsMacroCodeLensProvider implements vscode.CodeLensProvider {
     try {
       context = await buildMacroContext(document);
     } catch (e) {
-      printDebugMessage(`gesstabs: macro CodeLens failed: ${e}`);
+      logger.error(`gesstabs: macro CodeLens failed: ${e}`);
       return [];
     }
     if (token && token.isCancellationRequested) return [];

@@ -72,7 +72,18 @@
         "gesstabs.debugMode": {
           "type": "boolean",
           "default": false,
-          "description": "Enable debug messages in the console."
+          "description": "Deprecated - use gesstabs.logLevel instead. Enable debug messages in the console (equivalent to logLevel: debug when logLevel is unset)."
+        },
+        "gesstabs.logLevel": {
+          "type": "string",
+          "enum": [
+            "off",
+            "error",
+            "warn",
+            "info",
+            "debug"
+          ],
+          "description": "How much detail the \"GESStabs\" output channel logs. Left unset by default so gesstabs.debugMode (true -> debug, else error) keeps controlling it; set this to override that."
         },
         "gesstabs.hover.enabled": {
           "type": "boolean",

@@ -19,8 +19,8 @@ import {
   makeWorkspaceReader,
   findWorkspaceFiles,
   normalizePath,
-  printDebugMessage,
 } from '../util/workspaceFiles';
+import * as logger from '../util/logger';
 import { hoverEnabled, hoverShows } from '../util/config';
 
 export class GesstabsEffectiveElementsHoverProvider
@@ -105,7 +105,7 @@ export class GesstabsEffectiveElementsHoverProvider
 
       return new vscode.Hover(md, wordRange);
     } catch (e) {
-      printDebugMessage(`gesstabs: effective-elements hover failed: ${e}`);
+      logger.error(`gesstabs: effective-elements hover failed: ${e}`);
       return null;
     }
   }

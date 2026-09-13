@@ -17,8 +17,8 @@ import {
   makeWorkspaceReader,
   findWorkspaceFiles,
   normalizePath,
-  printDebugMessage,
 } from '../util/workspaceFiles';
+import * as logger from '../util/logger';
 
 export class GesstabsSymbolCompletionProvider
   implements vscode.CompletionItemProvider
@@ -72,7 +72,7 @@ export class GesstabsSymbolCompletionProvider
 
       return [...variableItems, ...macroItems];
     } catch (e) {
-      printDebugMessage(`gesstabs: symbol completion failed: ${e}`);
+      logger.error(`gesstabs: symbol completion failed: ${e}`);
       return [];
     }
   }
