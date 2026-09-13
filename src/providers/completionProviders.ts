@@ -19,6 +19,7 @@ import {
   normalizePath,
 } from '../util/workspaceFiles';
 import * as logger from '../util/logger';
+import { autocompleteEnabled } from '../util/config';
 
 export class GesstabsSymbolCompletionProvider
   implements vscode.CompletionItemProvider
@@ -29,8 +30,7 @@ export class GesstabsSymbolCompletionProvider
     token: vscode.CancellationToken
   ): Promise<vscode.CompletionItem[]> {
     try {
-      const config = vscode.workspace.getConfiguration('gesstabs');
-      if (config.get<boolean>('autocomplete.enabled', true) === false) {
+      if (!autocompleteEnabled()) {
         return [];
       }
 

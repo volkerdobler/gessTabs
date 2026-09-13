@@ -51,6 +51,7 @@ import {
   findWorkspaceFiles,
 } from '../util/workspaceFiles';
 import * as logger from '../util/logger';
+import { diagnosticsEnabled, entryScriptPatterns } from '../util/config';
 import { resolveWildcardPath } from '../util/glob';
 
 // listFiles for resolveWildcardPath: a plain synchronous directory read,
@@ -222,15 +223,7 @@ export class GesstabsExternalNamesManager {
   }
 
   private static patterns(): string[] {
-    const raw = vscode.workspace
-      .getConfiguration('gesstabs')
-      .get<string[]>(
-        'dataInput.entryScriptPatterns',
-        DEFAULT_ENTRY_SCRIPT_PATTERNS
-      );
-    return Array.isArray(raw) && raw.every((s) => typeof s === 'string')
-      ? raw
-      : DEFAULT_ENTRY_SCRIPT_PATTERNS;
+    return entryScriptPatterns(DEFAULT_ENTRY_SCRIPT_PATTERNS);
   }
 
   public async getPrograms(hint?: vscode.Uri): Promise<EntryProgram[]> {
@@ -338,8 +331,7 @@ export class GesstabsExternalNamesManager {
   public async refresh(document: vscode.TextDocument): Promise<void> {
     if (document.languageId !== 'gesstabs') return;
     try {
-      const cfg = vscode.workspace.getConfiguration('gesstabs');
-      if (cfg.get<boolean>('diagnostics.enabled', true) === false) {
+      if (!diagnosticsEnabled()) {
         this.collection.delete(document.uri);
         return;
       }

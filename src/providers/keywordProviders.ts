@@ -13,7 +13,12 @@ import {
   keywordLookupKeyAt,
 } from '../keywords/keywordDatabaseTypes';
 import * as logger from '../util/logger';
-import { hoverEnabled, hoverShows } from '../util/config';
+import {
+  hoverEnabled,
+  hoverShows,
+  hoverLanguage,
+  autocompleteEnabled,
+} from '../util/config';
 
 // Picks the effective keyword-doc language from gesstabs.hover.language
 // (falling back to vscode.env.language for "auto") and returns an index of
@@ -22,12 +27,7 @@ import { hoverEnabled, hoverShows } from '../util/config';
 // reasoning. Rebuilt per call because the setting can change at any time;
 // it's a cheap pass over an in-memory array.
 function resolvedKeywordIndex(): Map<string, ResolvedKeyword> {
-  const config = vscode.workspace.getConfiguration('gesstabs');
-  const setting = config.get<string>('hover.language', 'auto');
-  const language = resolveKeywordLanguage(
-    setting ?? 'auto',
-    vscode.env.language
-  );
+  const language = resolveKeywordLanguage(hoverLanguage(), vscode.env.language);
   return buildResolvedIndex(keywordData, language);
 }
 
@@ -93,8 +93,7 @@ export class GesstabsKeywordCompletionProvider
 {
   public provideCompletionItems(): vscode.CompletionItem[] {
     try {
-      const config = vscode.workspace.getConfiguration('gesstabs');
-      if (config.get<boolean>('autocomplete.enabled', true) === false) {
+      if (!autocompleteEnabled()) {
         return [];
       }
 

@@ -18,6 +18,7 @@ import {
   DiagnosticSeverity,
 } from '../core/diagnostics';
 import * as logger from '../util/logger';
+import { diagnosticsEnabled } from '../util/config';
 
 function toVscodeSeverity(
   severity: DiagnosticSeverity
@@ -41,8 +42,7 @@ export class GesstabsDiagnosticsManager {
   public refresh(document: vscode.TextDocument): void {
     if (document.languageId !== 'gesstabs') return;
     try {
-      const config = vscode.workspace.getConfiguration('gesstabs');
-      if (config.get<boolean>('diagnostics.enabled', true) === false) {
+      if (!diagnosticsEnabled()) {
         this.collection.delete(document.uri);
         return;
       }
@@ -164,8 +164,7 @@ export class GesstabsStrictVarlistCodeActionProvider
     document: vscode.TextDocument
   ): vscode.CodeAction[] {
     try {
-      const config = vscode.workspace.getConfiguration('gesstabs');
-      if (config.get<boolean>('diagnostics.enabled', true) === false) {
+      if (!diagnosticsEnabled()) {
         return [];
       }
 

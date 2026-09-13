@@ -1,7 +1,7 @@
-// One typed place for the GESStabs hover settings, replacing the ad-hoc
-// `vscode.workspace.getConfiguration('gesstabs').get('hover.<x>')` reads
-// that were scattered across every provider (each re-typing the key string
-// and its default).
+// One typed place for GESStabs settings access, replacing the ad-hoc
+// `vscode.workspace.getConfiguration('gesstabs').get('<x>')` reads that
+// were scattered across every provider (each re-typing the key string and
+// its default).
 //
 // 0.99.4 collapsed nine flat `hover.*` booleans into three settings:
 //   gesstabs.hover.enabled          — master on/off (unchanged)
@@ -11,6 +11,12 @@
 // The pre-0.99.4 flat keys are still honoured as a fallback when the new
 // object isn't set, so an existing settings.json keeps working — see
 // LEGACY_* below. Remove that fallback once no one has the old keys.
+//
+// The remaining accessors below (diagnosticsEnabled/autocompleteEnabled/
+// hoverLanguage/entryScriptPatterns) finish that centralization for the
+// handful of ad hoc reads that were left outside the hover settings —
+// `debugMode` is deliberately not included here, since `src/util/logger.ts`
+// owns reading that one directly.
 
 import * as vscode from 'vscode';
 
@@ -66,4 +72,37 @@ export function variableContentShows(part: VariableContentPart): boolean {
   }
   if (part === 'definition') return true;
   return cfg().get<boolean>('hover.variableAnnotations') !== false;
+}
+
+// `gesstabs.diagnostics.enabled` — master switch for the F2 diagnostics
+// pass (both the document-scoped checks and the model-based ones).
+export function diagnosticsEnabled(): boolean {
+  return cfg().get<boolean>('diagnostics.enabled', true) !== false;
+}
+
+// `gesstabs.autocomplete.enabled` — master switch for both completion
+// providers (symbol completion and keyword completion).
+export function autocompleteEnabled(): boolean {
+  return cfg().get<boolean>('autocomplete.enabled', true) !== false;
+}
+
+// `gesstabs.hover.language` — "auto" | "de" | "en" for the keyword hover/
+// completion's documentation language. Not validated against
+// KeywordLanguage here (that would need importing the keywords module into
+// this generic util) — resolveKeywordLanguage (keywords/keywordDatabaseTypes.ts)
+// already falls back safely for any unrecognised value, "auto" included.
+export function hoverLanguage(): string {
+  return cfg().get<string>('hover.language', 'auto');
+}
+
+// `gesstabs.dataInput.entryScriptPatterns` — glob patterns identifying a
+// workspace file as an "entry script" (a real compile root, e.g.
+// `main.tab`). `fallback` is the caller's own default (entryScripts.ts'
+// DEFAULT_ENTRY_SCRIPT_PATTERNS) — kept as a parameter rather than
+// hardcoded here so this generic util doesn't need to import from core.
+export function entryScriptPatterns(fallback: string[]): string[] {
+  const raw = cfg().get<string[]>('dataInput.entryScriptPatterns', fallback);
+  return Array.isArray(raw) && raw.every((s) => typeof s === 'string')
+    ? raw
+    : fallback;
 }
