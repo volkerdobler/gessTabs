@@ -694,6 +694,46 @@ export function checkInvertoutUpdateinvert(
   }));
 }
 
+// --- 7b. Deprecated keywords ------------------------------------------------
+// Anhang > Historisches > Abgelöste Befehle (read 2026-09-05): of a much
+// longer originally-considered list of retired-looking keywords, only
+// USEFILTER/MAKEFILTER are actually documented as no longer working ("seit
+// Version 2.82 außer Dienst gestellt", superseded by FILTER/TABLEFILTER/
+// SETFILTER — see the "Filter" manual page). Every other keyword that list
+// started with (AUTOCLEAR, AUTOOVERSORT, LOWERCASE, MARKCELLS' old form,
+// NOMINATIONS(TITLE), OUTFILE, TABLETYPE, YSIGNIFINFRONT, the CHIQU*
+// minimum settings, …) is explicitly described as *still supported*, just
+// superseded by a newer/preferred mechanism — flagging any of those would
+// misinform users, so this check is deliberately scoped to just the two
+// truly-dead keywords rather than the full original list.
+const deprecatedKeywordRe = /^\s*(usefilter|makefilter)\b/i;
+
+export function checkDeprecatedKeywords(
+  lines: string[],
+  isNotInComment: IsNotInComment
+): DiagnosticIssue[] {
+  const issues: DiagnosticIssue[] = [];
+
+  lines.forEach((lineText, i) => {
+    if (lineText.length === 0) return;
+    if (!isNotInComment(i, firstNonWs(lineText))) return;
+
+    const match = lineText.match(deprecatedKeywordRe);
+    if (!match) return;
+    const name = match[1].toUpperCase();
+    issues.push({
+      line: i,
+      startChar: firstNonWs(lineText),
+      length: match[1].length,
+      severity: 'warning',
+      message: `${name} was retired in GESStabs 2.82 and no longer works — use FILTER/TABLEFILTER/SETFILTER instead (see the manual's "Filter" page).`,
+      code: 'deprecated-keyword',
+    });
+  });
+
+  return issues;
+}
+
 // --- 8. #define/#ifdef case-sensitivity gotcha ----------------------------
 // Unlike the rest of the case-insensitive language, preprocessor names
 // are case-sensitive by default (#define xyz; #ifdef XYZ is false)
@@ -1283,6 +1323,7 @@ export function computeDiagnostics(
     ...checkWeightcellsPercentages(lines, isNotInComment),
     ...checkCellsetElements(lines, isNotInComment),
     ...checkInvertoutUpdateinvert(lines, isNotInComment),
+    ...checkDeprecatedKeywords(lines, isNotInComment),
     ...checkDefineCaseMismatch(lines, isNotInComment),
     ...checkParenBalance(lines, isNormalScope),
     ...checkNestedBlockComments(lines),

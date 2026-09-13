@@ -10,6 +10,7 @@ import {
   checkWeightcellsPercentages,
   checkCellsetElements,
   checkInvertoutUpdateinvert,
+  checkDeprecatedKeywords,
   checkDefineCaseMismatch,
   checkParenBalance,
   checkNestedBlockComments,
@@ -526,6 +527,66 @@ describe('checkInvertoutUpdateinvert', () => {
     expect(
       checkInvertoutUpdateinvert(['INVERTOUT = out.dat;'], alwaysNotInComment)
     ).to.be.empty;
+  });
+});
+
+describe('checkDeprecatedKeywords', () => {
+  it('flags a bare USEFILTER statement', () => {
+    const issues = checkDeprecatedKeywords(
+      ['USEFILTER f1;'],
+      alwaysNotInComment
+    );
+    expect(issues).to.have.length(1);
+    expect(issues[0]).to.deep.include({
+      line: 0,
+      severity: 'warning',
+      code: 'deprecated-keyword',
+    });
+    expect(issues[0].message).to.include('USEFILTER');
+  });
+
+  it('flags a bare MAKEFILTER statement', () => {
+    const issues = checkDeprecatedKeywords(
+      ['MAKEFILTER f1 = x eq 1;'],
+      alwaysNotInComment
+    );
+    expect(issues).to.have.length(1);
+    expect(issues[0].message).to.include('MAKEFILTER');
+  });
+
+  it('is case-insensitive', () => {
+    expect(
+      checkDeprecatedKeywords(['usefilter f1;'], alwaysNotInComment)
+    ).to.have.length(1);
+  });
+
+  it('ignores a commented-out occurrence', () => {
+    expect(checkDeprecatedKeywords(['USEFILTER f1;'], () => false)).to.be.empty;
+  });
+
+  it('does not flag SETFILTER (the current, still-supported mechanism)', () => {
+    expect(checkDeprecatedKeywords(['SETFILTER = x eq 1;'], alwaysNotInComment))
+      .to.be.empty;
+  });
+
+  // Every one of these was on the original, broader "deprecated keyword"
+  // candidate list, but the manual (Anhang > Historisches > Abgelöste
+  // Befehle) explicitly still supports all of them — flagging any would
+  // misinform users, which is exactly why this check stays scoped to just
+  // USEFILTER/MAKEFILTER.
+  [
+    'AUTOCLEAR = YES;',
+    'AUTOOVERSORT = YES;',
+    'LOWERCASE = YES;',
+    'MARKCELLS = YES;',
+    'NOMINATIONS = YES;',
+    'OUTFILE = out.dat;',
+    'TABLETYPE = 1;',
+    'YSIGNIFINFRONT = YES;',
+  ].forEach((line) => {
+    it(`does not flag still-supported "${line.split(/[\s=]/)[0]}"`, () => {
+      expect(checkDeprecatedKeywords([line], alwaysNotInComment)).to.be.empty;
+    });
   });
 });
 
