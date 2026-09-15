@@ -18,6 +18,17 @@
   "license": "AFL-3.0",
   "main": "./out/extension",
   "icon": "images/gesstabs_icon.png",
+  "files": [
+    "out/**/*.js",
+    "language-configuration.json",
+    "syntaxes/gessTabs.json",
+    "snippets/snippets.json",
+    "images/gesstabs_icon.png",
+    "release-notes/**/*.md",
+    "README.md",
+    "CHANGELOG.md",
+    "LICENSE"
+  ],
   "contributes": {
     "languages": [
       {
