@@ -19,6 +19,7 @@ import {
   hoverLanguage,
   autocompleteEnabled,
 } from '../util/config';
+import { hashPrefixRangeAt } from '../util/workspaceFiles';
 
 // Picks the effective keyword-doc language from gesstabs.hover.language
 // (falling back to vscode.env.language for "auto") and returns an index of
@@ -91,26 +92,40 @@ export class GesstabsKeywordHoverProvider implements vscode.HoverProvider {
 export class GesstabsKeywordCompletionProvider
   implements vscode.CompletionItemProvider
 {
-  public provideCompletionItems(): vscode.CompletionItem[] {
+  public provideCompletionItems(
+    document: vscode.TextDocument,
+    position: vscode.Position
+  ): vscode.CompletionItem[] {
     try {
       if (!autocompleteEnabled()) {
         return [];
       }
 
-      return Array.from(resolvedKeywordIndex().values()).map((entry) => {
-        const item = new vscode.CompletionItem(
-          entry.name,
-          vscode.CompletionItemKind.Keyword
-        );
-        if (entry.syntax) {
-          const [firstLine] = entry.syntax.split('\n');
-          item.detail = firstLine;
-        }
-        if (entry.description) {
-          item.documentation = new vscode.MarkdownString(entry.description);
-        }
-        return item;
-      });
+      const hashRange = hashPrefixRangeAt(document, position);
+      // Right after "#", only a "#" keyword can follow — a plain keyword
+      // (TABLE, RECODE, …) never can. Drop those entirely rather than
+      // rely on vscode's own fuzzy filter to exclude them via the
+      // explicit range/filterText below.
+      return Array.from(resolvedKeywordIndex().values())
+        .filter((entry) => !hashRange || entry.name.startsWith('#'))
+        .map((entry) => {
+          const item = new vscode.CompletionItem(
+            entry.name,
+            vscode.CompletionItemKind.Keyword
+          );
+          if (entry.syntax) {
+            const [firstLine] = entry.syntax.split('\n');
+            item.detail = firstLine;
+          }
+          if (entry.description) {
+            item.documentation = new vscode.MarkdownString(entry.description);
+          }
+          if (hashRange) {
+            item.range = hashRange;
+            item.filterText = entry.name;
+          }
+          return item;
+        });
     } catch (e) {
       logger.error(`gesstabs: keyword completion failed: ${e}`);
       return [];

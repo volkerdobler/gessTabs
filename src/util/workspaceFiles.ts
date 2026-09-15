@@ -85,6 +85,38 @@ export function makeWorkspaceReader(document: vscode.TextDocument): FileReader {
   };
 }
 
+// A completion item whose label starts with "#" (a macro name or a "#"
+// keyword like #DEFINE/#MACRO) can't rely on vscode's default replace
+// range: the language's wordPattern (language-configuration.json)
+// deliberately excludes "#" from word characters, so
+// document.getWordRangeAtPosition at the cursor only covers the letters
+// typed after the "#" (e.g. "zusatz"), never the "#" itself. vscode then
+// filters every item's label ("#zusatzAusgaben") against that hash-less
+// query — a mismatch that silently empties the suggestion list once
+// anything has been typed past the "#" (confirmed: typing "#zusatz" then
+// Ctrl+Space shows "No suggestions", even though the same position with
+// nothing typed yet lists every macro). Handing the item an explicit
+// range that starts at the "#" fixes both the filtering (paired with a
+// filterText that also starts with "#") and accepting the item (without
+// this, the default range leaves the original "#" untouched and the
+// inserted label's own leading "#" duplicates it into "##name").
+export function hashPrefixRangeAt(
+  document: vscode.TextDocument,
+  position: vscode.Position
+): vscode.Range | undefined {
+  const before = document
+    .lineAt(position.line)
+    .text.slice(0, position.character);
+  const m = before.match(/#[A-Za-zÄÖÜßäöü0-9_]*$/);
+  if (!m) return undefined;
+  return new vscode.Range(
+    position.line,
+    position.character - m[0].length,
+    position.line,
+    position.character
+  );
+}
+
 export function resolvedLineRange(resolved: ResolvedLine): vscode.Range {
   return new vscode.Range(
     new vscode.Position(resolved.line, 0),

@@ -17,6 +17,7 @@ import {
   makeWorkspaceReader,
   findWorkspaceFiles,
   normalizePath,
+  hashPrefixRangeAt,
 } from '../util/workspaceFiles';
 import * as logger from '../util/logger';
 import { autocompleteEnabled } from '../util/config';
@@ -41,20 +42,31 @@ export class GesstabsSymbolCompletionProvider
       );
       if (token && token.isCancellationRequested) return [];
 
+      const hashRange = hashPrefixRangeAt(document, position);
+
+      // A bare variable name is never valid right after "#" (only a macro
+      // call or a "#" keyword can follow it) — skip building these
+      // entirely rather than rely on vscode's own fuzzy filter to exclude
+      // them via the explicit range/filterText below.
       const currentFile = normalizePath(document.uri.fsPath);
-      const model = buildVariableModel(index);
-      const variableItems = collectCompletionNames(
-        model,
-        currentFile,
-        position.line
-      ).map(
-        (name) =>
-          new vscode.CompletionItem(name, vscode.CompletionItemKind.Variable)
-      );
+      const variableItems = hashRange
+        ? []
+        : collectCompletionNames(
+            buildVariableModel(index),
+            currentFile,
+            position.line
+          ).map(
+            (name) =>
+              new vscode.CompletionItem(
+                name,
+                vscode.CompletionItemKind.Variable
+              )
+          );
 
       const macroItems = findMacroDefinitions(index.order).map((def) => {
+        const label = `#${def.name}`;
         const item = new vscode.CompletionItem(
-          `#${def.name}`,
+          label,
           vscode.CompletionItemKind.Function
         );
         item.detail = `#${def.name}(${def.params
@@ -66,6 +78,10 @@ export class GesstabsSymbolCompletionProvider
               .map((p, i) => `\${${i + 1}:${p}}`)
               .join(' ')})`
           );
+        }
+        if (hashRange) {
+          item.range = hashRange;
+          item.filterText = label;
         }
         return item;
       });
