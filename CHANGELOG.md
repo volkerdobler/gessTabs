@@ -2,7 +2,7 @@
 
 All notable changes to the "GESStabs" extension will be documented in this file (last change first).
 
-## Unreleased
+## 1.0.0
 
 ### Go to Definition, Find All References & Rename
 
