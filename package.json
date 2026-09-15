@@ -51,8 +51,26 @@
         "command": "gesstabs.jumpToMatchingDirective",
         "title": "Go to Matching Directive (#MACRO/#ENDMACRO, #IFDEF/#END, …)",
         "category": "GESStabs"
+      },
+      {
+        "command": "gesstabs.showReleaseNotes",
+        "title": "Show Release Notes",
+        "category": "GESStabs"
+      },
+      {
+        "command": "gesstabs.resetReleaseNotesState",
+        "title": "Reset Release Notes State (Development)",
+        "category": "GESStabs"
       }
     ],
+    "menus": {
+      "commandPalette": [
+        {
+          "command": "gesstabs.resetReleaseNotesState",
+          "when": "gesstabs.devMode"
+        }
+      ]
+    },
     "keybindings": [
       {
         "command": "gesstabs.jumpToMatchingDirective",
@@ -183,6 +201,11 @@
           "type": "boolean",
           "default": true,
           "description": "Suggest GESStabs keywords, previously-defined variable/table names, and macro names while typing."
+        },
+        "gesstabs.releaseNotes.showOnUpdate": {
+          "type": "boolean",
+          "default": true,
+          "description": "Automatically show the Release Notes panel on activation when the installed version ships one (release-notes/<version>.md) and it hasn't been dismissed yet (its own \"don't show this again\" checkbox controls that separately, per version). Turn this off to never see the automatic popup; \"GESStabs: Show Release Notes\" still works on demand."
         },
         "gesstabs.dataInput.entryScriptPatterns": {
           "type": "array",

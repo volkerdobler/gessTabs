@@ -73,6 +73,7 @@ import {
   GesstabsDataSourceLinkProvider,
 } from './providers/externalNamesProvider';
 import { GesstabsFileReferenceLinkProvider } from './providers/fileReferenceLinkProvider';
+import { activateReleaseNotes } from './providers/releaseNotesProvider';
 
 // this method is called when your extension is activated
 // your extension is activated the very first time the command is executed
@@ -82,6 +83,8 @@ export function activate(context: vscode.ExtensionContext) {
   logger.setOutputChannel(outputChannel);
   logger.refreshLogLevelFromConfig();
   logger.debug('gesstabs: extension activated');
+
+  activateReleaseNotes(context);
 
   const externalNamesManager = new GesstabsExternalNamesManager();
   context.subscriptions.push(externalNamesManager);

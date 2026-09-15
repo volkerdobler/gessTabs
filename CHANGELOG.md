@@ -42,6 +42,10 @@ All notable changes to the "GESStabs" extension will be documented in this file 
 - New diagnostics for documented gessTabs pitfalls: empty-varlist trap on `RECODE`/`VARTITLE`/`VARTEXT`/`VALUELABELS` (with a quick fix), unmatched `#MACRO`/`#IFDEF` blocks, duplicate variable declarations, inverted `RECODE` bounds, `CARD`/`CARDS` ordering, `WEIGHTCELLS` percentages not summing to 100%, invalid `CELLSET` elements, `INVERTOUT`+`UPDATEINVERT` together, and `#define`/`#ifdef` case mismatches.
 - Fixed: a single-line `#ifnempty … #else … #end` (or any line with more than one preprocessor directive) no longer produces a false "unclosed block" diagnostic, and no longer throws off code folding or the formatter's indentation. A directive keyword written in a trailing `// …` comment (e.g. `#end // #ifdef PowerChart`) is likewise no longer miscounted. The same fix in the INCLUDE/#ifdef resolver: such a line no longer leaves an `#ifdef` block "open" for the rest of the file, which had been hiding later `#MACRO` definitions from hover/autocomplete/go-to-definition.
 
+### Release Notes
+
+- New: on activation, a version bump that ships a `release-notes/<version>.md` file opens it as a rendered Release Notes panel — silently skipped when no such file exists for the installed version, and off entirely when `gesstabs.releaseNotes.showOnUpdate` is disabled. The panel has a "Don't show this again for version X" checkbox, checked by default (closing the panel leaves it suppressed for that version); unchecking it means the panel comes back on every subsequent start until it's checked again. Two commands: **GESStabs: Show Release Notes** (shows a message instead of staying silent when the current version has no notes file) and, in development/test hosts only, **GESStabs: Reset Release Notes State**. Mirrors the sibling gessQ extension's own `release-notes/<version>.md` convention and command pair, plus the same `showOnUpdate` setting; the per-version checkbox is a gesstabs-only addition so far.
+
 ### Editor niceties
 
 - Code folding for `#MACRO`/`#ENDMACRO` and `#IFDEF`-family/`#END` blocks.

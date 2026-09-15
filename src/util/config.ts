@@ -86,6 +86,14 @@ export function autocompleteEnabled(): boolean {
   return cfg().get<boolean>('autocomplete.enabled', true) !== false;
 }
 
+// `gesstabs.releaseNotes.showOnUpdate` — master switch for the automatic
+// release-notes popup on activation (src/providers/releaseNotesProvider.ts).
+// Off doesn't affect the "GESStabs: Show Release Notes" command, which
+// always works on demand.
+export function releaseNotesShowOnUpdate(): boolean {
+  return cfg().get<boolean>('releaseNotes.showOnUpdate', true) !== false;
+}
+
 // `gesstabs.hover.language` — "auto" | "de" | "en" for the keyword hover/
 // completion's documentation language. Not validated against
 // KeywordLanguage here (that would need importing the keywords module into

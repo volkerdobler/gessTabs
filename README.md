@@ -34,6 +34,7 @@ No requirements or dependencies.
 - `gesstabs.hover.variableContent` (object) — which blocks the variable hover shows, always in this order. Keys, all boolean and default `true`: `definition` (the variable's origin — its declaration line, or `aus <datei>.sav (SPSS, Spalte N)` for a raw dataset variable), `text` (`VARTEXT`), `title` (`VARTITLE`), `valueLabels` (`VALUELABELS`). Needs `gesstabs.hover.show` → `variables` on.
 - `gesstabs.hover.language` (`"auto"` | `"de"` | `"en"`, default `"auto"`) — which manual's descriptions to show; `"auto"` follows VS Code's own display language.
 - `gesstabs.autocomplete.enabled` (boolean, default `true`) — suggest keywords, macro names, and previously-defined variable/table names while typing.
+- `gesstabs.releaseNotes.showOnUpdate` (boolean, default `true`) — automatically show the Release Notes panel on activation when the installed version ships one. Turn off to never see the automatic popup; **GESStabs: Show Release Notes** still works on demand.
 
 > The pre-0.99.4 flat `gesstabs.hover.macros` / `.expands` / `.keywords` / `.variables` / `.variableAnnotations` / `.effectiveElements` / `.macroExpansionStyle` settings were replaced by the two objects above. Any still in your `settings.json` are honoured as a fallback but should be migrated.
 
@@ -43,4 +44,4 @@ See [TODO.md](TODO.md) for known issues and planned improvements.
 
 ## Release Notes
 
-See [CHANGELOG.md](CHANGELOG.md).
+See [CHANGELOG.md](CHANGELOG.md). A version with user-facing notes (`release-notes/<version>.md`) also opens a Release Notes panel once on first activation after the update (a "Don't show this again for version X" checkbox controls whether it comes back on subsequent starts); reopen it any time with **GESStabs: Show Release Notes** from the Command Palette.
