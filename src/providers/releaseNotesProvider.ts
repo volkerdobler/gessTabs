@@ -1,11 +1,13 @@
-// Shows a release-notes webview on activation when the currently installed
-// version ships a release-notes/<version>.md file — silently does nothing
-// when it doesn't (an ordinary point release with no user-facing notes
-// needs no file at all). Mirrors the sibling gessQ extension's own
-// src/infra/releaseNotes.ts: same release-notes/<version>.md convention,
-// the same "show" + dev-only "reset" commands, and the same
-// releaseNotes.showOnUpdate setting — so the two extensions behave alike,
-// and a future change to one translates easily to the other.
+// Shows a release-notes webview on activation for the newest bundled
+// release-notes/<version>.md file — not necessarily the installed version,
+// since a quick patch release doesn't get (or need) its own notes file when
+// it has nothing worth announcing; it just keeps shipping the previous one.
+// Silently does nothing when no notes file exists at all. Mirrors the
+// sibling gessQ extension's own src/infra/releaseNotes.ts: same
+// release-notes/<version>.md convention, the same "show newest" + dev-only
+// "reset" commands, and the same releaseNotes.showOnUpdate setting — so the
+// two extensions behave alike, and a future change to one translates
+// easily to the other.
 //
 // One thing intentionally does NOT match gessQ (yet): the panel's own
 // "don't show this again" checkbox (checked by default). gessQ tracks a
@@ -22,7 +24,11 @@
 import * as vscode from 'vscode';
 import * as fs from 'fs';
 import * as path from 'path';
-import { releaseNotesPath } from '../core/releaseNotes';
+import {
+  latestVersion,
+  releaseNotesPath,
+  shouldShowReleaseNotes,
+} from '../core/releaseNotes';
 import { renderReleaseNotesMarkdown } from '../core/releaseNotesMarkdown';
 import { releaseNotesShowOnUpdate } from '../util/config';
 import * as logger from '../util/logger';
@@ -40,6 +46,19 @@ function releaseNotesFilePath(
     context.extensionPath,
     ...releaseNotesPath(version).split('/')
   );
+}
+
+// Versions with a release-notes/<v>.md file bundled in this install.
+function availableVersions(context: vscode.ExtensionContext): string[] {
+  const dir = path.join(context.extensionPath, 'release-notes');
+  try {
+    return fs
+      .readdirSync(dir)
+      .map((name) => /^(\d+\.\d+\.\d+)\.md$/.exec(name)?.[1])
+      .filter((v): v is string => v !== undefined);
+  } catch {
+    return [];
+  }
 }
 
 function getNonce(): string {
@@ -148,28 +167,32 @@ function showReleaseNotesPanel(
 }
 
 /**
- * Register the release-notes commands and, once per version (unless
- * `gesstabs.releaseNotes.showOnUpdate` is off, or the checkbox already
- * suppressed this version), open the notes for the installed version
- * (`release-notes/<version>.md`, if that file exists).
+ * Register the release-notes commands and, unless
+ * `gesstabs.releaseNotes.showOnUpdate` is off, open the newest bundled
+ * `release-notes/<version>.md` once per version — not necessarily the
+ * version currently installed, since a quick patch release doesn't need
+ * (and won't ship) its own notes file. A version already shown and
+ * dismissed doesn't repeat, and with no notes file at all this is a no-op.
  */
 export function activateReleaseNotes(context: vscode.ExtensionContext): void {
   try {
-    const version = context.extension.packageJSON.version as string;
-    const suppressKey = SUPPRESS_KEY_PREFIX + version;
+    const suppressKey = (v: string) => SUPPRESS_KEY_PREFIX + v;
     const devMode = context.extensionMode !== vscode.ExtensionMode.Production;
 
     context.subscriptions.push(
       vscode.commands.registerCommand(SHOW_RELEASE_NOTES_COMMAND, () => {
-        const filePath = releaseNotesFilePath(context, version);
-        if (!fs.existsSync(filePath)) {
+        const version = latestVersion(availableVersions(context));
+        if (version === undefined) {
           vscode.window.showInformationMessage(
-            `GESStabs: no release notes for version ${version}.`
+            'GESStabs: no release notes available.'
           );
           return;
         }
-        const markdown = fs.readFileSync(filePath, 'utf8');
-        showReleaseNotesPanel(context, version, markdown, suppressKey);
+        const markdown = fs.readFileSync(
+          releaseNotesFilePath(context, version),
+          'utf8'
+        );
+        showReleaseNotesPanel(context, version, markdown, suppressKey(version));
       })
     );
 
@@ -179,27 +202,33 @@ export function activateReleaseNotes(context: vscode.ExtensionContext): void {
     if (devMode) {
       context.subscriptions.push(
         vscode.commands.registerCommand(RESET_RELEASE_NOTES_COMMAND, () => {
-          context.globalState.update(suppressKey, undefined);
+          availableVersions(context).forEach((v) =>
+            context.globalState.update(suppressKey(v), undefined)
+          );
           vscode.window.showInformationMessage(
-            `GESStabs: release-notes state for version ${version} reset — ` +
-              'reload the window to see them again automatically.'
+            'GESStabs: release-notes state reset — reload the window to ' +
+              'see them again automatically.'
           );
         })
       );
     }
 
+    const version = latestVersion(availableVersions(context));
+    if (version === undefined) return;
     if (
-      !releaseNotesShowOnUpdate() ||
-      context.globalState.get<boolean>(suppressKey) === true
+      !shouldShowReleaseNotes(
+        releaseNotesShowOnUpdate(),
+        context.globalState.get<boolean>(suppressKey(version))
+      )
     ) {
       return;
     }
 
-    const filePath = releaseNotesFilePath(context, version);
-    if (!fs.existsSync(filePath)) return;
-
-    const markdown = fs.readFileSync(filePath, 'utf8');
-    showReleaseNotesPanel(context, version, markdown, suppressKey);
+    const markdown = fs.readFileSync(
+      releaseNotesFilePath(context, version),
+      'utf8'
+    );
+    showReleaseNotesPanel(context, version, markdown, suppressKey(version));
   } catch (e) {
     logger.error(`gesstabs: release notes failed: ${e}`);
   }

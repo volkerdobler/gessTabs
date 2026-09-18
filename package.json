@@ -216,7 +216,7 @@
         "gesstabs.releaseNotes.showOnUpdate": {
           "type": "boolean",
           "default": true,
-          "description": "Automatically show the Release Notes panel on activation when the installed version ships one (release-notes/<version>.md) and it hasn't been dismissed yet (its own \"don't show this again\" checkbox controls that separately, per version). Turn this off to never see the automatic popup; \"GESStabs: Show Release Notes\" still works on demand."
+          "description": "Automatically show the Release Notes panel on activation for the newest bundled release-notes/<version>.md (not necessarily the installed version — a patch release with nothing new to announce keeps showing the last real notes) when it hasn't been dismissed yet (its own \"don't show this again\" checkbox controls that separately, per version). Turn this off to never see the automatic popup; \"GESStabs: Show Release Notes\" still works on demand."
         },
         "gesstabs.dataInput.entryScriptPatterns": {
           "type": "array",
