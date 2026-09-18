@@ -321,11 +321,18 @@ export function checkMacroDuplicateVariableDefinition(
               args.length === conflict.args.length &&
               args.every((a, i) => a === conflict.args[i]);
 
-            const detail = neverVaries
-              ? `#${macro.name} is called ${macroCalls.length}× in this program, and this call's "${bl.text.trim()}" always declares "${span.raw}" with the exact same name, just like the call at ${earlierLoc} — once expanded, the compiler will fail with "variable declared twice".${paramHint}`
-              : sameArgs
-                ? `This #${macro.name} call passes the exact same arguments as the call at ${earlierLoc}, so both expand to declare "${span.raw}" here — once expanded, the compiler will fail with "variable declared twice". Check whether one of these two calls should use different arguments.`
-                : `This #${macro.name} call also expands to declare "${span.raw}" here, the same name the call at ${earlierLoc} already produces (with different arguments) — once expanded, the compiler will fail with "variable declared twice".`;
+            let detail: string;
+            if (neverVaries) {
+              detail = `#${macro.name} is called ${
+                macroCalls.length
+              }× in this program, and this call's "${bl.text.trim()}" always declares "${
+                span.raw
+              }" with the exact same name, just like the call at ${earlierLoc} — once expanded, the compiler will fail with "variable declared twice".${paramHint}`;
+            } else if (sameArgs) {
+              detail = `This #${macro.name} call passes the exact same arguments as the call at ${earlierLoc}, so both expand to declare "${span.raw}" here — once expanded, the compiler will fail with "variable declared twice". Check whether one of these two calls should use different arguments.`;
+            } else {
+              detail = `This #${macro.name} call also expands to declare "${span.raw}" here, the same name the call at ${earlierLoc} already produces (with different arguments) — once expanded, the compiler will fail with "variable declared twice".`;
+            }
 
             issues.push({
               line: callSite.line,
