@@ -2,6 +2,16 @@
 
 All notable changes to the "GESStabs" extension will be documented in this file (last change first).
 
+## 1.0.1
+
+### Diagnostics
+
+- Fixed: the "variable declared twice" diagnostic for a `#MACRO` whose body declares the same name on every call (`macro-duplicate-variable-definition`) was both imprecise and, in one common case, a false positive. It now: only reports the calls that actually produce a colliding name, instead of implying every call does; points at the colliding call site itself rather than the shared `#MACRO` body line, so it's findable even when the macro is defined in a different (INCLUDEd) file; and no longer flags two calls sitting in mutually exclusive `#ifdef`/`#else` arms of the same conditional, since only one arm ever compiles on a real build.
+
+### Build & Release
+
+- New `.github/workflows/ci.yml`: every push/PR to `master`/`develop` runs the type-check, lint and unit tests, compiles the extension and packages it as a VSIX (uploaded as a build artifact); pushing a `v*` tag additionally publishes that VSIX to the VS Code Marketplace. No user-facing change.
+
 ## 1.0.0
 
 ### Go to Definition, Find All References & Rename
