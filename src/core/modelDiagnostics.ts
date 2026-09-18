@@ -25,6 +25,8 @@ import { classifyStatement } from './variableStatements';
 import { VariableModel } from './variableModel';
 import { DiagnosticIssue } from './diagnostics';
 import { WorkspaceIndex, collectAllMacroCalls } from './symbolIndex';
+import { ResolvedLine } from './includeGraph';
+import { BranchPath, branchKey, branchPathsCompatible } from './branchPaths';
 import {
   findMacroDefinitions,
   buildMacroIndex,
@@ -189,6 +191,17 @@ function firstNonWs(lineText: string): number {
 // entirely by the actual substituted result, never by guessing whether the
 // raw source text "looks parameterized".
 //
+// The diagnostic is placed at the *call site* that actually collides, not
+// at the #MACRO body line: the body line is where the declaration is
+// written once, but it never "crashes" by itself — the compiler only fails
+// once two calls happen to expand it to the same name, and that failure is
+// only findable/fixable by looking at those specific calls (mirrors
+// checkDuplicateDeclarations, which likewise points at the redeclaring
+// statement and names where the first one was, not some third, unrelated
+// location). Reported per file the way every check here is: only a call
+// site that lives in the requested `file` gets an issue, even if the
+// #MACRO itself, or the call it collides with, lives elsewhere.
+//
 // Reuses the same macro-call enumeration as symbolIndex.ts's own
 // findAllMacroProducedNames (collectAllMacroCalls — including #DOMACRO/
 // #DOMACRO2-generated and indirectly-flattened calls), but needs each call
@@ -206,22 +219,23 @@ export function checkMacroDuplicateVariableDefinition(
 
   const callsByMacro = new Map<
     string,
-    { macro: MacroDefinition; args: string[] }[]
+    { macro: MacroDefinition; args: string[]; callSite: ResolvedLine }[]
   >();
-  collectAllMacroCalls(index, macroIndex).forEach(({ macro, args }) => {
-    const key = `${macro.file}:${macro.defLine}`;
-    const list = callsByMacro.get(key);
-    if (list) {
-      list.push({ macro, args });
-    } else {
-      callsByMacro.set(key, [{ macro, args }]);
+  collectAllMacroCalls(index, macroIndex).forEach(
+    ({ macro, args, callSite }) => {
+      const key = `${macro.file}:${macro.defLine}`;
+      const list = callsByMacro.get(key);
+      if (list) {
+        list.push({ macro, args, callSite });
+      } else {
+        callsByMacro.set(key, [{ macro, args, callSite }]);
+      }
     }
-  });
+  );
 
   callsByMacro.forEach((macroCalls) => {
     if (macroCalls.length < 2) return;
     const { macro } = macroCalls[0];
-    if (macro.file !== file) return;
 
     const bodyLines = index.order.filter(
       (l) =>
@@ -231,43 +245,104 @@ export function checkMacroDuplicateVariableDefinition(
     );
 
     bodyLines.forEach((bl) => {
-      const perCall = macroCalls.map(({ args }) =>
-        classifyStatement(expandLines([bl.text], macro.params, args)[0])
-      );
-      const first = perCall[0];
+      const perCall = macroCalls.map(({ args, callSite }) => ({
+        cls: classifyStatement(expandLines([bl.text], macro.params, args)[0]),
+        args,
+        callSite,
+      }));
+      const first = perCall[0]?.cls;
       if (!first || first.kind === 'if-then' || first.defines.length === 0) {
         return;
       }
 
       first.defines.forEach((_, defIdx) => {
-        const seen = new Set<string>();
-        let duplicateName: string | undefined;
-        perCall.forEach((cls) => {
+        // First, look across *every* call (regardless of file) to tell
+        // apart two very different situations: a name that never actually
+        // varies with the call (every single call collapses to one name —
+        // the declaration was never parameterized to begin with, and
+        // *every* later call is a fresh collision), versus a name that
+        // does normally vary but a couple of calls happen to coincide
+        // (e.g. two calls were given the same argument by mistake).
+        const allNames = new Set<string>();
+        let consideredCalls = 0;
+        perCall.forEach(({ cls }) => {
           const span = cls?.defines[defIdx];
           if (!span) return;
-          if (seen.has(span.name)) {
-            duplicateName = span.raw;
-          } else {
-            seen.add(span.name);
-          }
+          consideredCalls += 1;
+          allNames.add(span.name);
         });
-        if (!duplicateName) return;
+        if (consideredCalls < 2) return;
+        const neverVaries = allNames.size === 1;
 
         const paramHint =
-          macro.params.length > 0
+          neverVaries && macro.params.length > 0
             ? ` Make the name depend on one of the macro's own parameters (${macro.params
                 .map((p) => `&${p}`)
                 .join(', ')}), e.g. "..._&${
                 macro.params[0]
               }", so each call produces a distinct name.`
             : '';
-        issues.push({
-          line: bl.line,
-          startChar: firstNonWs(bl.text),
-          length: Math.max(bl.text.trim().length, 1),
-          severity: 'error',
-          message: `#${macro.name} is called ${macroCalls.length}× in this program, and this statement always declares "${duplicateName}" with the exact same name — once expanded, the compiler will fail with "variable declared twice".${paramHint}`,
-          code: 'macro-duplicate-variable-definition',
+
+        // Walk the calls in program order and, for each name, remember
+        // every *branch-path-distinct* occurrence seen so far — not just
+        // the first. Two calls inside mutually exclusive #ifdef/#else arms
+        // never both run on the same real build (branchPathsCompatible),
+        // so they never actually collide, no matter how many times that
+        // pair repeats; two calls that CAN run together (same arm, or
+        // either one unconditional) do collide the moment a second,
+        // path-compatible occurrence of the same name shows up — mirrors
+        // variableModel.ts's primaryDefinitions dominance check, just
+        // applied per produced name instead of per symbol.
+        const occurrencesByName = new Map<
+          string,
+          {
+            raw: string;
+            args: string[];
+            callSite: ResolvedLine;
+            branchPath: BranchPath;
+          }[]
+        >();
+        perCall.forEach(({ cls, args, callSite }) => {
+          const span = cls?.defines[defIdx];
+          if (!span) return;
+          const branchPath =
+            index.branchPaths.get(branchKey(callSite.file, callSite.line)) ??
+            [];
+          const occurrences = occurrencesByName.get(span.name);
+          const conflict = occurrences?.find((o) =>
+            branchPathsCompatible(o.branchPath, branchPath)
+          );
+          if (conflict && callSite.file === file) {
+            const elsewhere = conflict.callSite.file !== callSite.file;
+            const earlierLoc = `${
+              elsewhere ? `${path.basename(conflict.callSite.file)}:` : ''
+            }line ${conflict.callSite.line + 1}`;
+            const sameArgs =
+              args.length === conflict.args.length &&
+              args.every((a, i) => a === conflict.args[i]);
+
+            const detail = neverVaries
+              ? `#${macro.name} is called ${macroCalls.length}× in this program, and this call's "${bl.text.trim()}" always declares "${span.raw}" with the exact same name, just like the call at ${earlierLoc} — once expanded, the compiler will fail with "variable declared twice".${paramHint}`
+              : sameArgs
+                ? `This #${macro.name} call passes the exact same arguments as the call at ${earlierLoc}, so both expand to declare "${span.raw}" here — once expanded, the compiler will fail with "variable declared twice". Check whether one of these two calls should use different arguments.`
+                : `This #${macro.name} call also expands to declare "${span.raw}" here, the same name the call at ${earlierLoc} already produces (with different arguments) — once expanded, the compiler will fail with "variable declared twice".`;
+
+            issues.push({
+              line: callSite.line,
+              startChar: firstNonWs(callSite.text),
+              length: Math.max(callSite.text.trim().length, 1),
+              severity: 'error',
+              message: detail,
+              code: 'macro-duplicate-variable-definition',
+            });
+          }
+          if (occurrences) {
+            occurrences.push({ raw: span.raw, args, callSite, branchPath });
+          } else {
+            occurrencesByName.set(span.name, [
+              { raw: span.raw, args, callSite, branchPath },
+            ]);
+          }
         });
       });
     });
