@@ -20,8 +20,11 @@ export const stringDelimiter: Array<Delimiter> = [
   { start: "'", end: "'" },
 ];
 
-function escapeRegex(str: string): string {
-  return str.replace(/[-/\\^$*+?.()|[\]{}]/g, '\\$&');
+// A sticky (`y`) copy of `re`: `test` with `lastIndex = i` then matches
+// only at exactly `i` — the old `str.substring(i).search(re) === 0`
+// without copying the rest of the line for every character.
+function stickyCopy(re: RegExp): RegExp {
+  return new RegExp(re.source, `${re.flags.replace(/[gy]/g, '')}y`);
 }
 
 export class Scope {
@@ -34,7 +37,9 @@ export class Scope {
     BlCoDel?: Array<Delimiter>,
     strReg?: Array<Delimiter>
   ) {
-    const localLineCommentDelimiter = lineComDel || lineCommentDelimiter;
+    const localLineCommentDelimiter = stickyCopy(
+      lineComDel || lineCommentDelimiter
+    );
     const localBlockCommentDelimiter = BlCoDel || blockCommentDelimiter;
     const localStringDelimiter = strReg || stringDelimiter;
 
@@ -44,11 +49,20 @@ export class Scope {
     let strIndex = -1;
     let lineComment = false;
 
-    function findBlockCommentStartLocal(str: string): [number, number] {
+    // Every delimiter test below is anchored at `pos` in the whole line
+    // (startsWith / a sticky regex) — this scan runs once per character,
+    // so the old per-character substring copy plus a freshly compiled,
+    // unanchored RegExp per delimiter made it quadratic in line length
+    // (hundreds of ms for a large include, rebuilt many times per
+    // workspace index). The last matching delimiter still wins, as before.
+    function findBlockCommentStartLocal(
+      str: string,
+      pos: number
+    ): [number, number] {
       let result = -1;
       let cType = -1;
       localBlockCommentDelimiter.forEach((value, index) => {
-        if (str.search(escapeRegex(value.start)) === 0) {
+        if (str.startsWith(value.start, pos)) {
           result = value.start.length;
           cType = index;
         }
@@ -58,25 +72,18 @@ export class Scope {
 
     function findBlockCommentEndLocal(
       str: string,
+      pos: number,
       activeComIndex: number
     ): number {
-      let result = -1;
-      localBlockCommentDelimiter.forEach((value, index) => {
-        if (
-          str.search(escapeRegex(value.end)) === 0 &&
-          index === activeComIndex
-        ) {
-          result = value.end.length;
-        }
-      });
-      return result;
+      const value = localBlockCommentDelimiter[activeComIndex];
+      return value && str.startsWith(value.end, pos) ? value.end.length : -1;
     }
 
-    function findStringStartLocal(str: string): [number, number] {
+    function findStringStartLocal(str: string, pos: number): [number, number] {
       let result = -1;
       let sIndex = -1;
       localStringDelimiter.forEach((value, index) => {
-        if (str.search(escapeRegex(value.start)) === 0) {
+        if (str.startsWith(value.start, pos)) {
           result = value.start.length;
           sIndex = index;
         }
@@ -84,14 +91,18 @@ export class Scope {
       return [result, sIndex];
     }
 
-    function findStringEndLocal(str: string, sIndex: number): number {
-      let result = -1;
-      localStringDelimiter.forEach((value, index) => {
-        if (str.search(escapeRegex(value.end)) === 0 && index === sIndex) {
-          result = value.end.length;
-        }
-      });
-      return result;
+    function findStringEndLocal(
+      str: string,
+      pos: number,
+      sIndex: number
+    ): number {
+      const value = localStringDelimiter[sIndex];
+      return value && str.startsWith(value.end, pos) ? value.end.length : -1;
+    }
+
+    function isLineCommentAt(str: string, pos: number): boolean {
+      localLineCommentDelimiter.lastIndex = pos;
+      return localLineCommentDelimiter.test(str);
     }
 
     for (let line = 0; line < document.lineCount; line++) {
@@ -117,18 +128,15 @@ export class Scope {
 
         switch (localCurrScope) {
           case ScopeEnum.normal:
-            lineComment =
-              lineStr.substring(i).search(localLineCommentDelimiter) === 0;
-            [strStart, strIndex] = findStringStartLocal(lineStr.substring(i));
-            [comStart, comIndex] = findBlockCommentStartLocal(
-              lineStr.substring(i)
-            );
+            lineComment = isLineCommentAt(lineStr, i);
+            [strStart, strIndex] = findStringStartLocal(lineStr, i);
+            [comStart, comIndex] = findBlockCommentStartLocal(lineStr, i);
             break;
           case ScopeEnum.string:
-            strEnde = findStringEndLocal(lineStr.substring(i), strIndex);
+            strEnde = findStringEndLocal(lineStr, i, strIndex);
             break;
           case ScopeEnum.comment:
-            comEnde = findBlockCommentEndLocal(lineStr.substring(i), comIndex);
+            comEnde = findBlockCommentEndLocal(lineStr, i, comIndex);
             break;
           default:
             break;
