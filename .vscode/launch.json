@@ -11,10 +11,7 @@
       "runtimeExecutable": "${execPath}",
       "args": ["--extensionDevelopmentPath=${workspaceFolder}"],
       "outFiles": ["${workspaceFolder}/out/**/*.js"],
-      "preLaunchTask": "npm: watch",
-      // The default 10 s is too short when the machine is busy (cloud sync,
-      // a second full VS Code starting with every installed extension).
-      "timeout": 60000
+      "preLaunchTask": "npm: watch"
     },
     {
       "name": "Extension Tests",
@@ -26,10 +23,7 @@
         "--extensionTestsPath=${workspaceFolder}/out/test/suite/index"
       ],
       "outFiles": ["${workspaceFolder}/out/test/**/*.js"],
-      "preLaunchTask": "npm: watch",
-      // The default 10 s is too short when the machine is busy (cloud sync,
-      // a second full VS Code starting with every installed extension).
-      "timeout": 60000
+      "preLaunchTask": "npm: watch"
     }
   ]
 }
