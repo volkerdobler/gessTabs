@@ -375,3 +375,32 @@ describe('findWordRangeInLine', () => {
     expect(findWordRangeInLine('variable other = 1;', 'myVar')).to.be.undefined;
   });
 });
+
+describe('buildWorkspaceIndex scope reuse', () => {
+  it('reuses one Scope per line array when the reader returns the same array', () => {
+    const lines: Record<string, string[]> = {
+      [p('main.tab')]: ['INCLUDE = vars.inc;', 'table a = b;'],
+      [p('vars.inc')]: ['{ comment } variable b = 1;'],
+    };
+    const reader: FileReader = (fp) => lines[fp];
+    const first = buildWorkspaceIndex(Object.keys(lines), reader);
+    const second = buildWorkspaceIndex(Object.keys(lines), reader);
+    expect(second.scopes.get(p('vars.inc'))).to.equal(
+      first.scopes.get(p('vars.inc'))
+    );
+  });
+
+  it('builds a fresh Scope for a new array with changed content', () => {
+    const files: Record<string, string> = {
+      [p('main.tab')]: 'variable b = 1;',
+    };
+    const reader = makeReader(files);
+    const first = buildWorkspaceIndex([p('main.tab')], reader);
+    files[p('main.tab')] = '{ variable b = 1; }';
+    const second = buildWorkspaceIndex([p('main.tab')], reader);
+    expect(second.scopes.get(p('main.tab'))).to.not.equal(
+      first.scopes.get(p('main.tab'))
+    );
+    expect(second.order.map((rl) => rl.text.trim())).to.deep.equal([]);
+  });
+});

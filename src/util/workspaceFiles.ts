@@ -59,29 +59,71 @@ export function normalizePath(filePath: string): string {
   return fixDriveCasingInWindows(path.resolve(filePath));
 }
 
-// Reads each file from its live editor buffer when it is open (the
-// currently-focused document included), else from disk. Any open file's
-// unsaved edits are visible to go-to-definition / references / rename /
-// hover / macro tooling — not just the focused one: navigating *from*
-// cleaning.inc *to* an edited-but-unsaved main.tab must land on the line
-// the user currently sees, not the last-saved one. Matches
-// externalNamesProvider.ts's own `liveFileReader`.
-export function makeWorkspaceReader(document: vscode.TextDocument): FileReader {
-  const currentPath = normalizePath(document.uri.fsPath);
+const splitLines = (text: string): string[] => text.split(/\r\n|\r|\n/);
+
+// Line arrays handed out by workspaceReader, reused for as long as the
+// content they came from is unchanged: an open document's by its version
+// (a WeakMap on the TextDocument itself, so closing and reopening a file —
+// a new TextDocument, version 1 again — can never hit a stale entry), a
+// file on disk by mtime + size. Returning the *same* array for unchanged
+// content is what lets includeGraph.ts's per-array Scope cache skip the
+// full comment/string scan on every rebuild. The arrays must therefore
+// never be mutated by a consumer.
+const documentLines = new WeakMap<
+  vscode.TextDocument,
+  { version: number; lines: string[] }
+>();
+const diskLines = new Map<
+  string,
+  { mtimeMs: number; size: number; lines: string[] }
+>();
+
+function linesOfDocument(document: vscode.TextDocument): string[] {
+  const hit = documentLines.get(document);
+  if (hit && hit.version === document.version) return hit.lines;
+  const lines = splitLines(document.getText());
+  documentLines.set(document, { version: document.version, lines });
+  return lines;
+}
+
+function linesOnDisk(filePath: string): string[] | undefined {
+  const key = normalizePath(filePath);
+  let stat: fs.Stats;
+  try {
+    stat = fs.statSync(filePath);
+  } catch (_e) {
+    diskLines.delete(key);
+    return undefined;
+  }
+  const hit = diskLines.get(key);
+  if (hit && hit.mtimeMs === stat.mtimeMs && hit.size === stat.size) {
+    return hit.lines;
+  }
+  try {
+    const lines = splitLines(fs.readFileSync(filePath, 'utf8'));
+    diskLines.set(key, { mtimeMs: stat.mtimeMs, size: stat.size, lines });
+    return lines;
+  } catch (_e) {
+    diskLines.delete(key);
+    return undefined;
+  }
+}
+
+// Reads each file from its live editor buffer when it is open, else from
+// disk. Any open file's unsaved edits are visible to go-to-definition /
+// references / rename / hover / macro tooling / the model diagnostics —
+// not just the focused one: navigating *from* cleaning.inc *to* an
+// edited-but-unsaved main.tab must land on the line the user currently
+// sees, not the last-saved one. The open-document lookup is built once per
+// reader (i.e. per index build), not per file read.
+export function workspaceReader(): FileReader {
+  const open = new Map<string, vscode.TextDocument>();
+  vscode.workspace.textDocuments.forEach((d) => {
+    if (d.uri.scheme === 'file') open.set(normalizePath(d.uri.fsPath), d);
+  });
   return (filePath: string): string[] | undefined => {
-    const norm = normalizePath(filePath);
-    if (norm === currentPath) {
-      return document.getText().split(/\r\n|\r|\n/);
-    }
-    const open = vscode.workspace.textDocuments.find(
-      (d) => normalizePath(d.uri.fsPath) === norm
-    );
-    if (open) return open.getText().split(/\r\n|\r|\n/);
-    try {
-      return fs.readFileSync(filePath, 'utf8').split(/\r\n|\r|\n/);
-    } catch (_e) {
-      return undefined;
-    }
+    const document = open.get(normalizePath(filePath));
+    return document ? linesOfDocument(document) : linesOnDisk(filePath);
   };
 }
 

@@ -662,3 +662,31 @@ describe('collectVariableOccurrences', () => {
     expect(withoutDef.some((o) => !o.literal)).to.be.false;
   });
 });
+
+describe('buildVariableModel memoization', () => {
+  it('returns the same model for the same index and options', () => {
+    const idx = indexOf('variable alter = 1;');
+    const src = externalSource(['geschl']);
+    expect(buildVariableModel(idx)).to.equal(buildVariableModel(idx));
+    expect(buildVariableModel(idx, { externalNames: [src] })).to.equal(
+      buildVariableModel(idx, { externalNames: [src] })
+    );
+  });
+
+  it('builds a separate model when the options differ', () => {
+    const idx = indexOf('variable alter = 1;');
+    const plain = buildVariableModel(idx);
+    const withSource = buildVariableModel(idx, {
+      externalNames: [externalSource(['geschl'])],
+    });
+    const expanded = buildVariableModel(idx, { macroExpansion: true });
+    expect(withSource).to.not.equal(plain);
+    expect(expanded).to.not.equal(plain);
+    expect(plain.resolveAnywhere('geschl')).to.be.undefined;
+    expect(withSource.resolveAnywhere('geschl')?.origin).to.equal('external');
+    // a different source object (a rebuilt data-source cache) is a miss
+    expect(
+      buildVariableModel(idx, { externalNames: [externalSource(['geschl'])] })
+    ).to.not.equal(withSource);
+  });
+});

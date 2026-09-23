@@ -12,6 +12,7 @@ import { getAllFilenamesInDirectory } from './util/fsutils';
 import {
   buildWorkspaceIndex,
   findMacroProducedDefinition,
+  WorkspaceIndex,
 } from './core/symbolIndex';
 import {
   buildVariableModel,
@@ -26,10 +27,12 @@ import {
   fixDriveCasingInWindows,
   getWorkspaceFolderPath,
   normalizePath,
-  makeWorkspaceReader,
   resolvedLineRange,
-  findWorkspaceFiles,
 } from './util/workspaceFiles';
+import {
+  getWorkspaceIndex,
+  registerWorkspaceIndexInvalidation,
+} from './util/workspaceIndexCache';
 import {
   GesstabsMacroHoverProvider,
   GesstabsMacroSignatureHelpProvider,
@@ -85,6 +88,11 @@ export function activate(context: vscode.ExtensionContext) {
   logger.debug('gesstabs: extension activated');
 
   activateReleaseNotes(context);
+
+  // Registered before every other listener below, so an edit has already
+  // invalidated the shared workspace index by the time anything that
+  // reacts to the same edit (the debounced diagnostics) asks for it.
+  registerWorkspaceIndexInvalidation(context);
 
   const externalNamesManager = new GesstabsExternalNamesManager();
   context.subscriptions.push(externalNamesManager);
@@ -405,7 +413,7 @@ export function deactivate() {
 }
 
 // fixDriveCasingInWindows/getWorkspaceFolderPath/normalizePath/
-// makeWorkspaceReader/resolvedLineRange/findWorkspaceFiles live in
+// workspaceReader/resolvedLineRange/findWorkspaceFiles live in
 // src/util/workspaceFiles.ts (shared with src/providers/macroProviders.ts).
 
 // regex factories have been moved to src/core/regex.ts
@@ -509,25 +517,21 @@ class GesstabsDefintionProvider implements vscode.DefinitionProvider {
     if (!wordAtPosition[0]) return null;
     const word = wordAtPosition[1];
 
-    let fileNames: string[];
-    try {
-      fileNames = await findWorkspaceFiles(document);
-    } catch (e) {
-      logger.error(`gesstabs: provideDefinition failed: ${e}`);
-      return null;
-    }
-    if (token && token.isCancellationRequested) return null;
-
     // conditionalsAllActive: a definition/usage in an #ifdef/#ifndef
     // branch this build doesn't compile is still a real definition/usage —
     // go-to-definition, references and rename must see it (same reasoning
     // as the macro hover). #ifdef gating decides what runs, not what a
     // symbol is.
-    const index = buildWorkspaceIndex(
-      fileNames,
-      makeWorkspaceReader(document),
-      { conditionalsAllActive: true }
-    );
+    let index: WorkspaceIndex;
+    try {
+      index = await getWorkspaceIndex(document, {
+        conditionalsAllActive: true,
+      });
+    } catch (e) {
+      logger.error(`gesstabs: provideDefinition failed: ${e}`);
+      return null;
+    }
+    if (token && token.isCancellationRequested) return null;
     const currentFile = normalizePath(document.uri.fsPath);
 
     // The variable model resolves the whole §3 definition inventory —
@@ -660,21 +664,18 @@ class GesstabsDefintionProvider implements vscode.DefinitionProvider {
       return null; // already on the declaring name itself
     }
 
-    let fileNames: string[];
+    // conditionalsAllActive: a definition in an #ifdef/#ifndef branch this
+    // build doesn't compile is still a real definition — same reasoning as
+    // the ordinary variable path above.
+    let index: WorkspaceIndex;
     try {
-      fileNames = await findWorkspaceFiles(document);
+      index = await getWorkspaceIndex(document, {
+        conditionalsAllActive: true,
+      });
     } catch (e) {
       logger.error(`gesstabs: provideDefinition (hash-name) failed: ${e}`);
       return null;
     }
-    // conditionalsAllActive: a definition in an #ifdef/#ifndef branch this
-    // build doesn't compile is still a real definition — same reasoning as
-    // the ordinary variable path above.
-    const index = buildWorkspaceIndex(
-      fileNames,
-      makeWorkspaceReader(document),
-      { conditionalsAllActive: true }
-    );
     const lineAt = (file: string, line: number): ResolvedLine =>
       index.order.find((rl) => rl.file === file && rl.line === line) ?? {
         file,
@@ -781,25 +782,21 @@ class GesstabsReferenceProvider implements vscode.ReferenceProvider {
     if (!wordAtPosition[0]) return null;
     const word = wordAtPosition[1];
 
-    let fileNames: string[];
-    try {
-      fileNames = await findWorkspaceFiles(document);
-    } catch (e) {
-      logger.error(`gesstabs: provideReferences failed: ${e}`);
-      return null;
-    }
-    if (token && token.isCancellationRequested) return null;
-
     // conditionalsAllActive: a definition/usage in an #ifdef/#ifndef
     // branch this build doesn't compile is still a real definition/usage —
     // go-to-definition, references and rename must see it (same reasoning
     // as the macro hover). #ifdef gating decides what runs, not what a
     // symbol is.
-    const index = buildWorkspaceIndex(
-      fileNames,
-      makeWorkspaceReader(document),
-      { conditionalsAllActive: true }
-    );
+    let index: WorkspaceIndex;
+    try {
+      index = await getWorkspaceIndex(document, {
+        conditionalsAllActive: true,
+      });
+    } catch (e) {
+      logger.error(`gesstabs: provideReferences failed: ${e}`);
+      return null;
+    }
+    if (token && token.isCancellationRequested) return null;
     // externalNames (P1.4): finds every literal usage of a raw dataset
     // column too, plus (with includeDeclaration) the CSVINFILE/SPSSINFILE/
     // DATAFILE line that names it, same as go-to-definition.
@@ -837,23 +834,19 @@ class GesstabsReferenceProvider implements vscode.ReferenceProvider {
     context: vscode.ReferenceContext,
     token: vscode.CancellationToken
   ): Promise<vscode.Location[] | null> {
-    let fileNames: string[];
+    // conditionalsAllActive: same reasoning as the ordinary variable path —
+    // a macro/#EXPAND definition or usage in a branch this build doesn't
+    // compile is still real.
+    let index: WorkspaceIndex;
     try {
-      fileNames = await findWorkspaceFiles(document);
+      index = await getWorkspaceIndex(document, {
+        conditionalsAllActive: true,
+      });
     } catch (e) {
       logger.error(`gesstabs: provideReferences (hash-name) failed: ${e}`);
       return null;
     }
     if (token && token.isCancellationRequested) return null;
-
-    // conditionalsAllActive: same reasoning as the ordinary variable path —
-    // a macro/#EXPAND definition or usage in a branch this build doesn't
-    // compile is still real.
-    const index = buildWorkspaceIndex(
-      fileNames,
-      makeWorkspaceReader(document),
-      { conditionalsAllActive: true }
-    );
     // Macro names are matched case-insensitively, #EXPAND/#EXPANDINC names
     // case-sensitively (the language's own documented convention — see
     // macroExpansion.ts's module doc comment): `hashName` resolving in the
@@ -906,20 +899,16 @@ class GesstabsRenameProvider implements vscode.RenameProvider {
     }
     const word = wordAtPosition[1];
 
-    let fileNames: string[];
+    let index: WorkspaceIndex;
     try {
-      fileNames = await findWorkspaceFiles(document);
+      index = await getWorkspaceIndex(document, {
+        conditionalsAllActive: true,
+      });
     } catch (e) {
       logger.error(`gesstabs: prepareRename failed: ${e}`);
       return wordRange;
     }
     if (token && token.isCancellationRequested) return wordRange;
-
-    const index = buildWorkspaceIndex(
-      fileNames,
-      makeWorkspaceReader(document),
-      { conditionalsAllActive: true }
-    );
     const externalSources = this.externalNames
       ? await this.externalNames.sourcesFor(document)
       : [];
@@ -943,25 +932,21 @@ class GesstabsRenameProvider implements vscode.RenameProvider {
     if (!wordAtPosition[0]) return null;
     const word = wordAtPosition[1];
 
-    let fileNames: string[];
-    try {
-      fileNames = await findWorkspaceFiles(document);
-    } catch (e) {
-      logger.error(`gesstabs: provideRenameEdits failed: ${e}`);
-      return null;
-    }
-    if (token && token.isCancellationRequested) return null;
-
     // conditionalsAllActive: a definition/usage in an #ifdef/#ifndef
     // branch this build doesn't compile is still a real definition/usage —
     // go-to-definition, references and rename must see it (same reasoning
     // as the macro hover). #ifdef gating decides what runs, not what a
     // symbol is.
-    const index = buildWorkspaceIndex(
-      fileNames,
-      makeWorkspaceReader(document),
-      { conditionalsAllActive: true }
-    );
+    let index: WorkspaceIndex;
+    try {
+      index = await getWorkspaceIndex(document, {
+        conditionalsAllActive: true,
+      });
+    } catch (e) {
+      logger.error(`gesstabs: provideRenameEdits failed: ${e}`);
+      return null;
+    }
+    if (token && token.isCancellationRequested) return null;
 
     // externalNames (P1.4): a raw dataset column is never a rename
     // target — the name lives in the data file itself, and this

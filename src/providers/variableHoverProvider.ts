@@ -25,21 +25,14 @@
 import * as vscode from 'vscode';
 import { getCachedScope } from '../core/scope';
 import { constVarName } from '../core/regex';
-import {
-  buildWorkspaceIndex,
-  findMacroProducedDefinition,
-} from '../core/symbolIndex';
+import { findMacroProducedDefinition } from '../core/symbolIndex';
 import { buildVariableModel, ModelAnnotation } from '../core/variableModel';
 import { findLogicalStatement } from '../core/statements';
 import { classifyStatement } from '../core/variableStatements';
 import { keywordData } from '../keywords/keywordData';
 import { keywordLookupKey } from '../keywords/keywordDatabaseTypes';
-import {
-  makeWorkspaceReader,
-  findWorkspaceFiles,
-  normalizePath,
-  jumpLink,
-} from '../util/workspaceFiles';
+import { normalizePath, jumpLink } from '../util/workspaceFiles';
+import { getWorkspaceIndex } from '../util/workspaceIndexCache';
 import * as logger from '../util/logger';
 import {
   hoverEnabled,
@@ -155,12 +148,9 @@ export class GesstabsVariableHoverProvider implements vscode.HoverProvider {
       // — bail before the workspace-wide index build.
       if (keywordNames.has(word.toLowerCase())) return null;
 
-      const fileNames = await findWorkspaceFiles(document);
-      const index = buildWorkspaceIndex(
-        fileNames,
-        makeWorkspaceReader(document),
-        { conditionalsAllActive: true }
-      );
+      const index = await getWorkspaceIndex(document, {
+        conditionalsAllActive: true,
+      });
       if (token && token.isCancellationRequested) return null;
 
       const currentFile = normalizePath(document.uri.fsPath);

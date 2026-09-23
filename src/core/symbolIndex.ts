@@ -146,6 +146,29 @@ export function collectAllMacroCalls(
   return out;
 }
 
+// Each macro's own body lines in `index.order`, in order. Looked up once
+// per macro rather than by filtering the whole order again for every call
+// site: a large project has thousands of calls over tens of thousands of
+// lines, and that per-call filter dominated the macro-aware model build.
+function macroBodyLines(
+  index: WorkspaceIndex
+): (macro: MacroDefinition) => ResolvedLine[] {
+  const cache = new Map<MacroDefinition, ResolvedLine[]>();
+  return (macro) => {
+    let lines = cache.get(macro);
+    if (!lines) {
+      lines = index.order.filter(
+        (l) =>
+          l.file === macro.file &&
+          l.line > macro.defLine &&
+          l.line < macro.endLine
+      );
+      cache.set(macro, lines);
+    }
+    return lines;
+  };
+}
+
 // Whether `lineText` is a statement whose `defines` declare `word` exactly
 // — the statement classifier (src/core/variableStatements.ts), covering
 // the whole §3 inventory rather than the old regex-based
@@ -188,15 +211,11 @@ export function findMacroProducedDefinition(
   const searchIndex: WorkspaceIndex =
     pos === -1 ? index : { ...index, order: index.order.slice(0, pos) };
   const calls = collectAllMacroCalls(searchIndex, macroIndex);
+  const bodyOf = macroBodyLines(index);
 
   for (let i = calls.length - 1; i >= 0; i--) {
     const { macro, args, callSite } = calls[i];
-    const bodyLines = index.order.filter(
-      (l) =>
-        l.file === macro.file &&
-        l.line > macro.defLine &&
-        l.line < macro.endLine
-    );
+    const bodyLines = bodyOf(macro);
     const substituted = expandLines(
       bodyLines.map((l) => l.text),
       macro.params,
@@ -250,14 +269,10 @@ export function findAllMacroProducedNames(
   if (macroIndex.size === 0) return [];
 
   const out: MacroProducedName[] = [];
+  const bodyOf = macroBodyLines(index);
   collectAllMacroCalls(index, macroIndex).forEach(
     ({ macro, args, callSite }) => {
-      const bodyLines = index.order.filter(
-        (l) =>
-          l.file === macro.file &&
-          l.line > macro.defLine &&
-          l.line < macro.endLine
-      );
+      const bodyLines = bodyOf(macro);
       const substituted = expandLines(
         bodyLines.map((l) => l.text),
         macro.params,

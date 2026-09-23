@@ -328,9 +328,54 @@ export interface BuildVariableModelOptions {
   macroExpansion?: boolean;
 }
 
+// Models already built for an index, reused while the caller passes the
+// same options — a WorkspaceIndex is never mutated once built, and the
+// extension shares one index per folder until something changes (see
+// src/util/workspaceIndexCache.ts), so a hover, go-to-definition and the
+// diagnostics pass on the same index all get the same model instead of
+// each classifying every statement again. External names match by element
+// identity: GesstabsExternalNamesManager hands out the same source objects
+// until its own cache is rebuilt.
+const modelCache = new WeakMap<
+  WorkspaceIndex,
+  {
+    externalNames: ExternalNameSource[];
+    macroExpansion: boolean;
+    model: VariableModel;
+  }[]
+>();
+
+const MAX_MODELS_PER_INDEX = 4;
+
+function sameSources(a: ExternalNameSource[], b: ExternalNameSource[]) {
+  return a.length === b.length && a.every((src, i) => src === b[i]);
+}
+
 export function buildVariableModel(
   index: WorkspaceIndex,
   opts: BuildVariableModelOptions = {}
+): VariableModel {
+  const externalNames = opts.externalNames ?? [];
+  const macroExpansion = opts.macroExpansion ?? false;
+  const cached = modelCache.get(index) ?? [];
+  const hit = cached.find(
+    (c) =>
+      c.macroExpansion === macroExpansion &&
+      sameSources(c.externalNames, externalNames)
+  );
+  if (hit) return hit.model;
+
+  // eslint-disable-next-line no-use-before-define
+  const model = buildVariableModelUncached(index, opts);
+  cached.push({ externalNames: [...externalNames], macroExpansion, model });
+  if (cached.length > MAX_MODELS_PER_INDEX) cached.shift();
+  modelCache.set(index, cached);
+  return model;
+}
+
+function buildVariableModelUncached(
+  index: WorkspaceIndex,
+  opts: BuildVariableModelOptions
 ): VariableModel {
   const statements = toLogicalStatements(index.order);
   const classified: (ClassifiedStatement | undefined)[] = statements.map((s) =>
@@ -546,17 +591,63 @@ export function buildVariableModel(
   // ---- program-point helpers ----------------------------------------
 
   // statement index whose span contains (file,line), else the last
-  // statement that ends before it (-1 if the point precedes everything).
+  // statement of that file starting at or before it (-1 if the point
+  // precedes everything). Answered from lookup tables built once on first
+  // use: this runs for every reference the undefined-variable check
+  // resolves, and a linear scan over every statement per call was
+  // quadratic on a large program.
+  let firstHit: Map<string, number> | undefined;
+  // per file: statements sorted by startLine, with the running maximum of
+  // their program index — "the last statement starting at or before
+  // `line`" is then a binary search (startLine isn't monotonic in program
+  // order when the same file is INCLUDEd twice).
+  let startsByFile:
+    | Map<string, { startLines: number[]; maxIndex: number[] }>
+    | undefined;
+  const buildStmtLookup = (): void => {
+    firstHit = new Map();
+    const byFile = new Map<string, { startLine: number; index: number }[]>();
+    statements.forEach((s, i) => {
+      s.lines.forEach((l) => {
+        const key = `${l.file}\0${l.line}`;
+        if (!firstHit!.has(key)) firstHit!.set(key, i);
+      });
+      const list = byFile.get(s.file) ?? [];
+      list.push({ startLine: s.startLine, index: i });
+      byFile.set(s.file, list);
+    });
+    startsByFile = new Map();
+    byFile.forEach((list, file) => {
+      list.sort((a, b) => a.startLine - b.startLine);
+      let max = -1;
+      startsByFile!.set(file, {
+        startLines: list.map((e) => e.startLine),
+        maxIndex: list.map((e) => {
+          max = Math.max(max, e.index);
+          return max;
+        }),
+      });
+    });
+  };
   const stmtIndexAt = (file: string, line: number): number => {
-    let last = -1;
-    for (let i = 0; i < statements.length; i += 1) {
-      const s = statements[i];
-      const hit = s.lines.some((l) => l.file === file && l.line === line);
-      if (hit) return i;
-      const startsBefore = s.file === file && s.startLine <= line;
-      if (startsBefore) last = i;
+    if (!firstHit || !startsByFile) buildStmtLookup();
+    const hit = firstHit!.get(`${file}\0${line}`);
+    if (hit !== undefined) return hit;
+    const starts = startsByFile!.get(file);
+    if (!starts) return -1;
+    let lo = 0;
+    let hi = starts.startLines.length - 1;
+    let found = -1;
+    while (lo <= hi) {
+      const mid = Math.floor((lo + hi) / 2);
+      if (starts.startLines[mid] <= line) {
+        found = mid;
+        lo = mid + 1;
+      } else {
+        hi = mid - 1;
+      }
     }
-    return last;
+    return found === -1 ? -1 : starts.maxIndex[found];
   };
 
   // `macro-produced` symbols (P1.5, opt-in — see BuildVariableModelOptions).

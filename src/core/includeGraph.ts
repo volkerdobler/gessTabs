@@ -130,6 +130,25 @@ function makeScopeDoc(lines: string[]) {
   };
 }
 
+// One Scope per `lines` array. A single workspace-index build visits the
+// same file many times — once per root whose graph reaches it, plus the
+// all-active #define pre-pass (collectDefineDirectives) — and a FileReader
+// that hands back the *same* array for unchanged content (the extension's
+// workspaceReader, src/util/workspaceFiles.ts) makes every visit after the
+// first free. Keyed by identity, so it relies on readers never mutating an
+// array they already returned; a reader that returns a fresh array per
+// call simply never hits.
+const scopeByLines = new WeakMap<string[], Scope>();
+
+function scopeForLines(lines: string[]): Scope {
+  let scope = scopeByLines.get(lines);
+  if (!scope) {
+    scope = new Scope(makeScopeDoc(lines) as any);
+    scopeByLines.set(lines, scope);
+  }
+  return scope;
+}
+
 // Cleans one document's own raw lines the same way `resolveIncludeGraph`
 // cleans the `order` it builds by walking the wider INCLUDE graph — comments
 // blanked out (blankComments), and any line that is only a preprocessor
@@ -155,7 +174,7 @@ export function cleanedDocumentOrder(
   file: string,
   lines: string[]
 ): ResolvedLine[] {
-  const scope = new Scope(makeScopeDoc(lines) as any);
+  const scope = scopeForLines(lines);
   const out: ResolvedLine[] = [];
   for (let i = 0; i < lines.length; i++) {
     const text = lines[i];
@@ -305,7 +324,7 @@ export function resolveIncludeGraph(
 
     files.push(file);
     ancestors.add(file);
-    const scope = new Scope(makeScopeDoc(lines) as any);
+    const scope = scopeForLines(lines);
     scopes.set(file, scope);
     const stack: ConditionalFrame[] = [];
 
@@ -469,7 +488,7 @@ function collectDefineDirectives(
   full.files.forEach((file) => {
     const lines = readFile(file);
     if (!lines) return;
-    const scope = new Scope(makeScopeDoc(lines) as any);
+    const scope = scopeForLines(lines);
     lines.forEach((text, i) => {
       if (text.length === 0) return;
       if (!scope.isNotInComment(i, text.search(/\S/))) return;

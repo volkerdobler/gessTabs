@@ -20,7 +20,6 @@ import * as vscode from 'vscode';
 import * as fs from 'fs';
 import * as path from 'path';
 import {
-  FileReader,
   ResolvedLine,
   cleanedDocumentOrder,
   collectAllDefineNames,
@@ -38,7 +37,6 @@ import {
   programsForFile,
   DEFAULT_ENTRY_SCRIPT_PATTERNS,
 } from '../core/entryScripts';
-import { buildWorkspaceIndex } from '../core/symbolIndex';
 import { buildVariableModel } from '../core/variableModel';
 import {
   checkUndefinedVariables,
@@ -50,8 +48,9 @@ import { getAllFilenamesInDirectory } from '../util/fsutils';
 import {
   getWorkspaceFolderPath,
   normalizePath,
-  findWorkspaceFiles,
+  workspaceReader,
 } from '../util/workspaceFiles';
+import { getWorkspaceIndex } from '../util/workspaceIndexCache';
 import * as logger from '../util/logger';
 import { diagnosticsEnabled, entryScriptPatterns } from '../util/config';
 import { resolveWildcardPath } from '../util/glob';
@@ -75,21 +74,6 @@ const WILDCARD_TOKEN = /[*?]/;
 // Enough to cover any CSV header line and virtually every .sav dictionary
 // (the dictionary sits at the front of the file).
 const MAX_DATA_BYTES = 4 * 1024 * 1024;
-
-function liveFileReader(): FileReader {
-  return (filePath: string): string[] | undefined => {
-    const norm = normalizePath(filePath);
-    const open = vscode.workspace.textDocuments.find(
-      (d) => normalizePath(d.uri.fsPath) === norm
-    );
-    if (open) return open.getText().split(/\r\n|\r|\n/);
-    try {
-      return fs.readFileSync(filePath, 'utf8').split(/\r\n|\r|\n/);
-    } catch {
-      return undefined;
-    }
-  };
-}
 
 // Reads up to MAX_DATA_BYTES from a data file, cached by path + mtime + size
 // so the on-typing diagnostic pass never re-hits the disk for an unchanged
@@ -186,10 +170,10 @@ export class GesstabsExternalNamesManager {
   // cached EntryProgram[] — and every statement line number in it — went
   // stale the moment the user edited (but hadn't saved) a .tab/.inc in the
   // graph. Every other provider reads live editor buffers via
-  // makeWorkspaceReader; go-to-definition on a raw dataset variable then
+  // workspaceReader; go-to-definition on a raw dataset variable then
   // mixed a fresh in-buffer model with a stale CSVINFILE/SPSSINFILE line,
   // jumping "a few lines off" after any unsaved insertion above it.
-  // `getPrograms` rebuilds (from live buffers, liveFileReader) whenever the
+  // `getPrograms` rebuilds (from live buffers, workspaceReader) whenever the
   // generation moved since the cached build — lazily, only when actually
   // asked, so a burst of typing costs nothing until something queries.
   private changeGeneration = 0;
@@ -256,7 +240,7 @@ export class GesstabsExternalNamesManager {
       const programs = buildEntryPrograms(
         tabs,
         GesstabsExternalNamesManager.patterns(),
-        liveFileReader(),
+        workspaceReader(),
         this.bytesIO
       );
       this.programsByRoot.set(folder, programs);
@@ -415,8 +399,7 @@ export class GesstabsExternalNamesManager {
         (s) => s.names === 'unresolved'
       );
       try {
-        const fileNames = await findWorkspaceFiles(document);
-        const wsIndex = buildWorkspaceIndex(fileNames, liveFileReader(), {
+        const wsIndex = await getWorkspaceIndex(document, {
           conditionalsAllActive: true,
         });
         const model = buildVariableModel(wsIndex, {
@@ -450,9 +433,10 @@ export class GesstabsExternalNamesManager {
         const workspaceDefines =
           owningPrograms.length > 0
             ? owningPrograms.reduce((set, prog) => {
-                collectAllDefineNames(prog.entryFile, liveFileReader()).forEach(
-                  (name) => set.add(name)
-                );
+                collectAllDefineNames(
+                  prog.entryFile,
+                  workspaceReader()
+                ).forEach((name) => set.add(name));
                 return set;
               }, new Set<string>())
             : undefined;

@@ -9,16 +9,11 @@
 // static list is needed.
 
 import * as vscode from 'vscode';
-import { buildWorkspaceIndex } from '../core/symbolIndex';
 import { buildVariableModel } from '../core/variableModel';
 import { collectCompletionNames } from '../core/symbolCompletion';
 import { findMacroDefinitions } from '../core/macroExpansion';
-import {
-  makeWorkspaceReader,
-  findWorkspaceFiles,
-  normalizePath,
-  hashPrefixRangeAt,
-} from '../util/workspaceFiles';
+import { normalizePath, hashPrefixRangeAt } from '../util/workspaceFiles';
+import { getWorkspaceIndex } from '../util/workspaceIndexCache';
 import * as logger from '../util/logger';
 import { autocompleteEnabled } from '../util/config';
 
@@ -35,11 +30,7 @@ export class GesstabsSymbolCompletionProvider
         return [];
       }
 
-      const fileNames = await findWorkspaceFiles(document);
-      const index = buildWorkspaceIndex(
-        fileNames,
-        makeWorkspaceReader(document)
-      );
+      const index = await getWorkspaceIndex(document);
       if (token && token.isCancellationRequested) return [];
 
       const hashRange = hashPrefixRangeAt(document, position);

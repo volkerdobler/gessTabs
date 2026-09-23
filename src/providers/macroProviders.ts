@@ -7,11 +7,7 @@
 
 import * as vscode from 'vscode';
 import { getCachedScope } from '../core/scope';
-import {
-  buildWorkspaceIndex,
-  collectAllMacroCalls,
-  WorkspaceIndex,
-} from '../core/symbolIndex';
+import { collectAllMacroCalls, WorkspaceIndex } from '../core/symbolIndex';
 import {
   findMacroDefinitions,
   findMacroCalls,
@@ -37,11 +33,11 @@ import {
   MacroDefinition,
 } from '../core/macroExpansion';
 import {
-  makeWorkspaceReader,
-  findWorkspaceFiles,
+  workspaceReader,
   normalizePath,
   jumpLink,
 } from '../util/workspaceFiles';
+import { getWorkspaceIndex } from '../util/workspaceIndexCache';
 import * as logger from '../util/logger';
 import { hoverEnabled, macroHoverStyle } from '../util/config';
 import { FileReader } from '../core/includeGraph';
@@ -69,16 +65,7 @@ function definitionLink(site: { file: string; line: number } | undefined) {
   return site ? ` — ${jumpLink(site.file, site.line)}` : '';
 }
 
-async function buildMacroContext(document: vscode.TextDocument) {
-  const fileNames = await findWorkspaceFiles(document);
-  const reader = makeWorkspaceReader(document);
-  // `conditionalsAllActive`: a #MACRO / #EXPAND may be defined inside an
-  // #ifdef/#ifndef branch the current build doesn't compile — the hover,
-  // signature help and go-to-definition are still wanted there. #ifdef
-  // gating only decides what *runs*, not what a definition *is*.
-  const index = buildWorkspaceIndex(fileNames, reader, {
-    conditionalsAllActive: true,
-  });
+function scanMacroDefinitions(index: WorkspaceIndex) {
   const defs = findMacroDefinitions(index.order);
   return {
     index,
@@ -89,8 +76,31 @@ async function buildMacroContext(document: vscode.TextDocument) {
     expandInTokenDefs: findExpandInTokenDefinitions(index.order),
     expandInTokenDefSites: findExpandInTokenDefinitionSites(index.order),
     expandIncDefs: findExpandIncDefinitions(index.order),
-    reader,
   };
+}
+
+// The definition scans above only depend on the (shared, immutable) index,
+// so they are done once per index rather than on every hover / signature
+// help / CodeLens request.
+const macroScans = new WeakMap<
+  WorkspaceIndex,
+  ReturnType<typeof scanMacroDefinitions>
+>();
+
+async function buildMacroContext(document: vscode.TextDocument) {
+  // `conditionalsAllActive`: a #MACRO / #EXPAND may be defined inside an
+  // #ifdef/#ifndef branch the current build doesn't compile — the hover,
+  // signature help and go-to-definition are still wanted there. #ifdef
+  // gating only decides what *runs*, not what a definition *is*.
+  const index = await getWorkspaceIndex(document, {
+    conditionalsAllActive: true,
+  });
+  let scan = macroScans.get(index);
+  if (!scan) {
+    scan = scanMacroDefinitions(index);
+    macroScans.set(index, scan);
+  }
+  return { ...scan, reader: workspaceReader() };
 }
 
 // "short" (the default) shows the macro's already-filtered `body` — blank
@@ -552,6 +562,10 @@ export class GesstabsMacroSignatureHelpProvider
 // Includes call sites in currently-inactive #ifdef/#ifndef branches —
 // buildMacroContext resolves with conditionalsAllActive (a macro used
 // only in a branch this build skips is still a usage worth showing).
+// Per-index usage counts — VS Code re-requests CodeLenses after every edit
+// and on every editor switch, but the counts only change with the index.
+const macroCallCounts = new WeakMap<WorkspaceIndex, Map<string, number>>();
+
 export class GesstabsMacroCodeLensProvider implements vscode.CodeLensProvider {
   public async provideCodeLenses(
     document: vscode.TextDocument,
@@ -576,12 +590,18 @@ export class GesstabsMacroCodeLensProvider implements vscode.CodeLensProvider {
     // expanded body produces in turn (the handbook's indirect #call
     // idiom). Counted once here rather than per-def below since it's the
     // same whole-workspace pass regardless of which def is being counted.
-    const allCalls = collectAllMacroCalls(context.index, context.macroIndex);
-    const countByName = new Map<string, number>();
-    allCalls.forEach(({ macro }) => {
-      const key = macro.name.toLowerCase();
-      countByName.set(key, (countByName.get(key) ?? 0) + 1);
-    });
+    let countByName = macroCallCounts.get(context.index);
+    if (!countByName) {
+      const counts = new Map<string, number>();
+      collectAllMacroCalls(context.index, context.macroIndex).forEach(
+        ({ macro }) => {
+          const key = macro.name.toLowerCase();
+          counts.set(key, (counts.get(key) ?? 0) + 1);
+        }
+      );
+      countByName = counts;
+      macroCallCounts.set(context.index, counts);
+    }
 
     return ownDefs.map((def) => {
       const count = countByName.get(def.name.toLowerCase()) ?? 0;

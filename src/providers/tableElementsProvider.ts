@@ -8,18 +8,14 @@
 import * as vscode from 'vscode';
 import * as path from 'path';
 import { getCachedScope } from '../core/scope';
-import { buildWorkspaceIndex } from '../core/symbolIndex';
 import {
   findEffectiveElements,
   extractElementsValue,
   isTableOrOverviewStatement,
   isTableOrOverviewKeyword,
 } from '../core/tableElements';
-import {
-  makeWorkspaceReader,
-  findWorkspaceFiles,
-  normalizePath,
-} from '../util/workspaceFiles';
+import { normalizePath } from '../util/workspaceFiles';
+import { getWorkspaceIndex } from '../util/workspaceIndexCache';
 import * as logger from '../util/logger';
 import { hoverEnabled, hoverShows } from '../util/config';
 
@@ -56,11 +52,7 @@ export class GesstabsEffectiveElementsHoverProvider
       if (!wordRange) return null;
       if (!isTableOrOverviewKeyword(document.getText(wordRange))) return null;
 
-      const fileNames = await findWorkspaceFiles(document);
-      const index = buildWorkspaceIndex(
-        fileNames,
-        makeWorkspaceReader(document)
-      );
+      const index = await getWorkspaceIndex(document);
       if (token && token.isCancellationRequested) return null;
 
       const currentFile = normalizePath(document.uri.fsPath);
