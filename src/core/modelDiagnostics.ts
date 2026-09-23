@@ -45,6 +45,38 @@ const SYSTEM_VARIABLE_NAMES = new Set([
   'systemcaseno',
 ]);
 
+type IssuesByFile = Map<string, DiagnosticIssue[]>;
+
+// Every check below has to walk the whole program anyway (a declaration or
+// macro call in one file decides what is flagged in another), and the
+// caller asks once per open document. So each check collects the issues
+// of *every* file in one pass, memoized per model / index, and a per-file
+// call is then a lookup. Returns a copy — callers append to the result.
+function issuesForFile<K extends object>(
+  cache: WeakMap<K, IssuesByFile>,
+  key: K,
+  file: string,
+  collect: (add: (issueFile: string, issue: DiagnosticIssue) => void) => void
+): DiagnosticIssue[] {
+  let byFile = cache.get(key);
+  if (!byFile) {
+    const collected: IssuesByFile = new Map();
+    collect((issueFile, issue) => {
+      const list = collected.get(issueFile);
+      if (list) list.push(issue);
+      else collected.set(issueFile, [issue]);
+    });
+    cache.set(key, collected);
+    byFile = collected;
+  }
+  return [...(byFile.get(file) ?? [])];
+}
+
+const undefinedVariableIssues = new WeakMap<VariableModel, IssuesByFile>();
+const systemVariableIssues = new WeakMap<VariableModel, IssuesByFile>();
+const duplicateDeclarationIssues = new WeakMap<VariableModel, IssuesByFile>();
+const macroDuplicateIssues = new WeakMap<WorkspaceIndex, IssuesByFile>();
+
 // A bare reference the model cannot resolve at its own position — no
 // declaration anywhere in scope, no raw dataset column, no macro-produced
 // name. `model` must already have been built with `externalNames` and
@@ -58,27 +90,26 @@ export function checkUndefinedVariables(
   model: VariableModel,
   file: string
 ): DiagnosticIssue[] {
-  const issues: DiagnosticIssue[] = [];
-  model.statements.forEach((stmt) => {
-    const cls = classifyStatement(stmt.text);
-    if (!cls) return;
-    cls.references.forEach(({ span, mode }) => {
-      if (mode === 'never' || span.synthetic) return;
-      const loc = locateInStatement(stmt, span.rawStart);
-      if (loc.line.file !== file) return;
-      if (model.resolve(span.name, loc.line.file, loc.line.line)) return;
-      if (mode === 'ifKnown' && span.quoted) return;
-      issues.push({
-        line: loc.line.line,
-        startChar: loc.character,
-        length: span.rawLength,
-        severity: 'warning',
-        message: `"${span.raw}" ist nirgends definiert (weder im Skript deklariert noch als Rohvariable oder Macro-Ergebnis erkannt).`,
-        code: 'undefined-variable',
+  return issuesForFile(undefinedVariableIssues, model, file, (add) =>
+    model.statements.forEach((stmt) => {
+      const cls = classifyStatement(stmt.text);
+      if (!cls) return;
+      cls.references.forEach(({ span, mode }) => {
+        if (mode === 'never' || span.synthetic) return;
+        const loc = locateInStatement(stmt, span.rawStart);
+        if (model.resolve(span.name, loc.line.file, loc.line.line)) return;
+        if (mode === 'ifKnown' && span.quoted) return;
+        add(loc.line.file, {
+          line: loc.line.line,
+          startChar: loc.character,
+          length: span.rawLength,
+          severity: 'warning',
+          message: `"${span.raw}" ist nirgends definiert (weder im Skript deklariert noch als Rohvariable oder Macro-Ergebnis erkannt).`,
+          code: 'undefined-variable',
+        });
       });
-    });
-  });
-  return issues;
+    })
+  );
 }
 
 // Manual, verbatim: "Der Versuch, eigene Variablen mit diesen Namen zu
@@ -101,25 +132,24 @@ export function checkSystemVariableRedeclaration(
   model: VariableModel,
   file: string
 ): DiagnosticIssue[] {
-  const issues: DiagnosticIssue[] = [];
-  model.statements.forEach((stmt) => {
-    const cls = classifyStatement(stmt.text);
-    if (!cls) return;
-    cls.defines.forEach((span) => {
-      if (!SYSTEM_VARIABLE_NAMES.has(span.name)) return;
-      const loc = locateInStatement(stmt, span.rawStart);
-      if (loc.line.file !== file) return;
-      issues.push({
-        line: loc.line.line,
-        startChar: loc.character,
-        length: span.rawLength,
-        severity: 'error',
-        message: `"${span.raw}" ist eine vordefinierte Systemvariable (SysMiss/NIL/SystemFileNo/SystemWeight/SystemCaseNo) — eine eigene Variable mit diesem Namen zu erzeugen (Deklaration oder Zuweisung) führt zu einem Fehler.`,
-        code: 'system-variable-redeclaration',
+  return issuesForFile(systemVariableIssues, model, file, (add) =>
+    model.statements.forEach((stmt) => {
+      const cls = classifyStatement(stmt.text);
+      if (!cls) return;
+      cls.defines.forEach((span) => {
+        if (!SYSTEM_VARIABLE_NAMES.has(span.name)) return;
+        const loc = locateInStatement(stmt, span.rawStart);
+        add(loc.line.file, {
+          line: loc.line.line,
+          startChar: loc.character,
+          length: span.rawLength,
+          severity: 'error',
+          message: `"${span.raw}" ist eine vordefinierte Systemvariable (SysMiss/NIL/SystemFileNo/SystemWeight/SystemCaseNo) — eine eigene Variable mit diesem Namen zu erzeugen (Deklaration oder Zuweisung) führt zu einem Fehler.`,
+          code: 'system-variable-redeclaration',
+        });
       });
-    });
-  });
-  return issues;
+    })
+  );
 }
 
 // Mirrors compiler error 8: "variable declared twice" — the cross-INCLUDE
@@ -133,38 +163,36 @@ export function checkDuplicateDeclarations(
   model: VariableModel,
   file: string
 ): DiagnosticIssue[] {
-  const issues: DiagnosticIssue[] = [];
-  const firstSeenAt = new Map<string, { file: string; line: number }>();
+  return issuesForFile(duplicateDeclarationIssues, model, file, (add) => {
+    const firstSeenAt = new Map<string, { file: string; line: number }>();
 
-  model.statements.forEach((stmt) => {
-    const cls = classifyStatement(stmt.text);
-    if (!cls || cls.defKind !== 'declaration') return;
-    cls.defines.forEach((span) => {
-      const loc = locateInStatement(stmt, span.rawStart);
-      const first = firstSeenAt.get(span.name);
-      if (!first) {
-        firstSeenAt.set(span.name, {
-          file: loc.line.file,
+    model.statements.forEach((stmt) => {
+      const cls = classifyStatement(stmt.text);
+      if (!cls || cls.defKind !== 'declaration') return;
+      cls.defines.forEach((span) => {
+        const loc = locateInStatement(stmt, span.rawStart);
+        const first = firstSeenAt.get(span.name);
+        if (!first) {
+          firstSeenAt.set(span.name, {
+            file: loc.line.file,
+            line: loc.line.line,
+          });
+          return;
+        }
+        const elsewhere = first.file !== loc.line.file;
+        add(loc.line.file, {
           line: loc.line.line,
+          startChar: loc.character,
+          length: span.rawLength,
+          severity: 'warning',
+          message: `"${span.raw}" was already declared at ${
+            elsewhere ? `${path.basename(first.file)}:` : ''
+          }line ${first.line + 1}.`,
+          code: 'duplicate-declaration',
         });
-        return;
-      }
-      if (loc.line.file !== file) return;
-      const elsewhere = first.file !== file;
-      issues.push({
-        line: loc.line.line,
-        startChar: loc.character,
-        length: span.rawLength,
-        severity: 'warning',
-        message: `"${span.raw}" was already declared at ${
-          elsewhere ? `${path.basename(first.file)}:` : ''
-        }line ${first.line + 1}.`,
-        code: 'duplicate-declaration',
       });
     });
   });
-
-  return issues;
 }
 
 function firstNonWs(lineText: string): number {
@@ -213,9 +241,18 @@ export function checkMacroDuplicateVariableDefinition(
   index: WorkspaceIndex,
   file: string
 ): DiagnosticIssue[] {
-  const issues: DiagnosticIssue[] = [];
+  return issuesForFile(macroDuplicateIssues, index, file, (add) =>
+    // eslint-disable-next-line no-use-before-define
+    collectMacroDuplicateVariableDefinitions(index, add)
+  );
+}
+
+function collectMacroDuplicateVariableDefinitions(
+  index: WorkspaceIndex,
+  add: (issueFile: string, issue: DiagnosticIssue) => void
+): void {
   const macroIndex = buildMacroIndex(findMacroDefinitions(index.order));
-  if (macroIndex.size === 0) return issues;
+  if (macroIndex.size === 0) return;
 
   const callsByMacro = new Map<
     string,
@@ -312,7 +349,7 @@ export function checkMacroDuplicateVariableDefinition(
           const conflict = occurrences?.find((o) =>
             branchPathsCompatible(o.branchPath, branchPath)
           );
-          if (conflict && callSite.file === file) {
+          if (conflict) {
             const elsewhere = conflict.callSite.file !== callSite.file;
             const earlierLoc = `${
               elsewhere ? `${path.basename(conflict.callSite.file)}:` : ''
@@ -334,7 +371,7 @@ export function checkMacroDuplicateVariableDefinition(
               detail = `This #${macro.name} call also expands to declare "${span.raw}" here, the same name the call at ${earlierLoc} already produces (with different arguments) — once expanded, the compiler will fail with "variable declared twice".`;
             }
 
-            issues.push({
+            add(callSite.file, {
               line: callSite.line,
               startChar: firstNonWs(callSite.text),
               length: Math.max(callSite.text.trim().length, 1),
@@ -354,6 +391,4 @@ export function checkMacroDuplicateVariableDefinition(
       });
     });
   });
-
-  return issues;
 }

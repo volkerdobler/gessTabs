@@ -16,8 +16,8 @@ import * as vscode from 'vscode';
 import * as path from 'path';
 import { buildWorkspaceIndex, WorkspaceIndex } from '../core/symbolIndex';
 import { fileListCache } from './lru';
+import { getAllFilenamesInDirectory } from './fsutils';
 import {
-  findWorkspaceFiles,
   fixDriveCasingInWindows,
   getWorkspaceFolderPath,
   normalizePath,
@@ -44,6 +44,21 @@ export function invalidateWorkspaceIndex(): void {
   generation += 1;
 }
 
+// Every file some index was ever built from (normalized, lower-cased) —
+// lets edits and disk churn in unrelated files (another language's
+// sources, GESStabs' own output: .txt/.sav/..., OneDrive sync) leave the
+// index alone, while still catching a change to an INCLUDEd file that
+// doesn't carry a .tab/.inc/.def extension. Only grows; a stale entry
+// merely costs one unneeded rebuild.
+const indexedFiles = new Set<string>();
+const fileKey = (file: string): string => normalizePath(file).toLowerCase();
+
+const SCRIPT_FILE = /\.(tab|inc|def)$/i;
+
+function affectsIndex(file: string): boolean {
+  return SCRIPT_FILE.test(file) || indexedFiles.has(fileKey(file));
+}
+
 // Same folder findWorkspaceFiles scans for `document`.
 function folderOf(document: vscode.TextDocument): string {
   return (
@@ -52,12 +67,17 @@ function folderOf(document: vscode.TextDocument): string {
   );
 }
 
-export function getWorkspaceIndex(
-  document: vscode.TextDocument,
+// The files the index for `folder` is built from — same list, same cache.
+export function workspaceScriptFiles(folder: string): Promise<string[]> {
+  return getAllFilenamesInDirectory(folder, '(tab|inc|def)');
+}
+
+export function getFolderIndex(
+  folder: string,
   options: WorkspaceIndexOptions = {}
 ): Promise<WorkspaceIndex> {
   const allActive = options.conditionalsAllActive ?? false;
-  const key = `${folderOf(document)}|${allActive ? 'all' : 'gated'}`;
+  const key = `${folder}|${allActive ? 'all' : 'gated'}`;
   const hit = entries.get(key);
   if (hit && hit.generation === generation) return hit.index;
 
@@ -68,11 +88,12 @@ export function getWorkspaceIndex(
   // move) share this one build.
   const builtAt = generation;
   const index = (async () => {
-    const files = await findWorkspaceFiles(document);
+    const files = await workspaceScriptFiles(folder);
     const started = Date.now();
     const result = buildWorkspaceIndex(files, workspaceReader(), {
       conditionalsAllActive: allActive,
     });
+    result.scopes.forEach((_scope, file) => indexedFiles.add(fileKey(file)));
     logger.debug(
       `gesstabs: workspace index (${allActive ? 'all' : 'gated'}) built in ${
         Date.now() - started
@@ -87,37 +108,30 @@ export function getWorkspaceIndex(
   return index;
 }
 
-// Whether `file` is one of the files a cached index was built from — lets
-// the watcher ignore disk churn in unrelated files (GESStabs' own output:
-// .txt/.sav/..., OneDrive sync) while still catching a change to an
-// INCLUDEd file that doesn't carry a .tab/.inc/.def extension.
-async function isIndexedFile(file: string): Promise<boolean> {
-  const needle = normalizePath(file).toLowerCase();
-  const indexes = await Promise.all(
-    Array.from(entries.values()).map((e) => e.index.catch(() => undefined))
-  );
-  return indexes.some(
-    (idx) =>
-      !!idx &&
-      Array.from(idx.scopes.keys()).some(
-        (f) => normalizePath(f).toLowerCase() === needle
-      )
-  );
+export function getWorkspaceIndex(
+  document: vscode.TextDocument,
+  options: WorkspaceIndexOptions = {}
+): Promise<WorkspaceIndex> {
+  return getFolderIndex(folderOf(document), options);
 }
-
-const SCRIPT_FILE = /\.(tab|inc|def)$/i;
 
 export function registerWorkspaceIndexInvalidation(
   context: vscode.ExtensionContext
 ): void {
   context.subscriptions.push(
     vscode.workspace.onDidChangeTextDocument((e) => {
-      if (e.document.uri.scheme === 'file' && e.contentChanges.length > 0) {
+      if (
+        e.document.uri.scheme === 'file' &&
+        e.contentChanges.length > 0 &&
+        affectsIndex(e.document.uri.fsPath)
+      ) {
         invalidateWorkspaceIndex();
       }
     }),
     vscode.workspace.onDidCloseTextDocument((document) => {
-      if (document.uri.scheme === 'file') invalidateWorkspaceIndex();
+      if (document.uri.scheme === 'file' && affectsIndex(document.uri.fsPath)) {
+        invalidateWorkspaceIndex();
+      }
     }),
     vscode.workspace.onDidChangeWorkspaceFolders(() => {
       fileListCache.clear();
@@ -127,18 +141,10 @@ export function registerWorkspaceIndexInvalidation(
 
   const watcher = vscode.workspace.createFileSystemWatcher('**/*');
   const onDisk = (uri: vscode.Uri, created: boolean): void => {
-    if (SCRIPT_FILE.test(uri.fsPath)) {
-      // A new/removed script changes the file list findWorkspaceFiles
-      // caches (5 min TTL) as well as the graph itself.
-      if (created) fileListCache.clear();
-      invalidateWorkspaceIndex();
-      return;
-    }
-    isIndexedFile(uri.fsPath)
-      .then((indexed) => {
-        if (indexed) invalidateWorkspaceIndex();
-      })
-      .catch(() => undefined);
+    // A new/removed script also changes the file list
+    // getAllFilenamesInDirectory caches (5 min TTL).
+    if (created && SCRIPT_FILE.test(uri.fsPath)) fileListCache.clear();
+    if (affectsIndex(uri.fsPath)) invalidateWorkspaceIndex();
   };
   context.subscriptions.push(
     watcher,

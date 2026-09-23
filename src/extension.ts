@@ -8,9 +8,7 @@ import * as logger from './util/logger';
 import { constVarName, macroDefRe, expandDefRe } from './core/regex';
 import { matchInScope } from './core/matching';
 import { findMatchingDirectiveLine } from './core/matchingDirective';
-import { getAllFilenamesInDirectory } from './util/fsutils';
 import {
-  buildWorkspaceIndex,
   findMacroProducedDefinition,
   WorkspaceIndex,
 } from './core/symbolIndex';
@@ -19,7 +17,11 @@ import {
   collectVariableOccurrences,
   primaryDefinitions,
 } from './core/variableModel';
-import { blankComments, FileReader, ResolvedLine } from './core/includeGraph';
+import {
+  blankComments,
+  ResolvedLine,
+  scopeForLines,
+} from './core/includeGraph';
 import { ExternalNameSource } from './core/externalNames';
 import { toLogicalStatements } from './core/statements';
 import { classifyStatement } from './core/variableStatements';
@@ -28,10 +30,13 @@ import {
   getWorkspaceFolderPath,
   normalizePath,
   resolvedLineRange,
+  workspaceReader,
 } from './util/workspaceFiles';
 import {
+  getFolderIndex,
   getWorkspaceIndex,
   registerWorkspaceIndexInvalidation,
+  workspaceScriptFiles,
 } from './util/workspaceIndexCache';
 import {
   GesstabsMacroHoverProvider,
@@ -284,25 +289,80 @@ export function activate(context: vscode.ExtensionContext) {
   const diagnosticsManager = new GesstabsDiagnosticsManager();
   context.subscriptions.push(diagnosticsManager);
 
-  const diagnosticsTimers = new Map<string, ReturnType<typeof setTimeout>>();
-  const scheduleDiagnostics = (document: vscode.TextDocument): void => {
-    const key = document.uri.toString();
-    const existing = diagnosticsTimers.get(key);
-    if (existing) clearTimeout(existing);
-    diagnosticsTimers.set(
-      key,
-      setTimeout(() => {
-        diagnosticsManager.refresh(document);
-        externalNamesManager.refresh(document).catch(() => undefined);
-      }, 300)
-    );
+  // Two tiers. The document-local checks (GesstabsDiagnosticsManager) only
+  // read the one document and run per document shortly after typing
+  // stops. The workspace-wide ones (GesstabsExternalNamesManager: data
+  // sources, undefined / duplicate variables, macro collisions) depend on
+  // every file of the program — an edit in one file can change any open
+  // document's result — and cost a full model build, so they run once for
+  // every open gessTabs document together, after a longer pause, sharing
+  // one workspace index and model. A newer edit abandons a pass that is
+  // still working through the documents.
+  const LOCAL_DIAGNOSTICS_DELAY_MS = 300;
+  const WORKSPACE_DIAGNOSTICS_DELAY_MS = 1000;
+  const isGesstabs = (document: vscode.TextDocument): boolean =>
+    document.languageId === 'gesstabs';
+  const localTimers = new Map<string, ReturnType<typeof setTimeout>>();
+  let workspaceTimer: ReturnType<typeof setTimeout> | undefined;
+  let workspacePass = 0;
+
+  const scheduleWorkspaceDiagnostics = (): void => {
+    if (workspaceTimer) clearTimeout(workspaceTimer);
+    workspacePass += 1;
+    const pass = workspacePass;
+    workspaceTimer = setTimeout(() => {
+      workspaceTimer = undefined;
+      // One document after the other, yielding to the event loop in
+      // between (setImmediate, not just a microtask): each refresh is
+      // mostly synchronous work, and this lets queued requests — other
+      // extensions' included — run between documents.
+      const yieldToEventLoop = (): Promise<void> =>
+        new Promise((resolve) => {
+          setImmediate(resolve);
+        });
+      vscode.workspace.textDocuments
+        .filter(isGesstabs)
+        .reduce(
+          (previous, document) =>
+            previous
+              .then(yieldToEventLoop)
+              .then(() =>
+                pass === workspacePass
+                  ? externalNamesManager
+                      .refresh(document)
+                      .catch(() => undefined)
+                  : undefined
+              ),
+          Promise.resolve()
+        );
+    }, WORKSPACE_DIAGNOSTICS_DELAY_MS);
   };
 
-  externalNamesManager.setOnChange(() => {
-    vscode.workspace.textDocuments.forEach((document) => {
-      if (document.languageId === 'gesstabs') scheduleDiagnostics(document);
-    });
+  const scheduleDiagnostics = (document: vscode.TextDocument): void => {
+    if (!isGesstabs(document)) return;
+    const key = document.uri.toString();
+    const existing = localTimers.get(key);
+    if (existing) clearTimeout(existing);
+    localTimers.set(
+      key,
+      setTimeout(() => {
+        localTimers.delete(key);
+        diagnosticsManager.refresh(document);
+      }, LOCAL_DIAGNOSTICS_DELAY_MS)
+    );
+    scheduleWorkspaceDiagnostics();
+  };
+
+  context.subscriptions.push({
+    dispose: () => {
+      localTimers.forEach((timer) => clearTimeout(timer));
+      localTimers.clear();
+      if (workspaceTimer) clearTimeout(workspaceTimer);
+      workspacePass += 1;
+    },
   });
+
+  externalNamesManager.setOnChange(scheduleWorkspaceDiagnostics);
 
   context.subscriptions.push(
     vscode.languages.registerDocumentLinkProvider(
@@ -332,7 +392,9 @@ export function activate(context: vscode.ExtensionContext) {
         externalNamesManager.noteDocumentsChanged();
       }
       sc.clearScopeCache(e.document);
-      scheduleDiagnostics(e.document);
+      // Only real content changes: a save / dirty-state flip fires this
+      // too, with no contentChanges, and must not restart the diagnostics.
+      if (e.contentChanges.length > 0) scheduleDiagnostics(e.document);
     })
   );
   context.subscriptions.push(
@@ -342,6 +404,10 @@ export function activate(context: vscode.ExtensionContext) {
   );
   context.subscriptions.push(
     vscode.workspace.onDidCloseTextDocument((document) => {
+      const key = document.uri.toString();
+      const pending = localTimers.get(key);
+      if (pending) clearTimeout(pending);
+      localTimers.delete(key);
       diagnosticsManager.clear(document);
       externalNamesManager.clear(document);
       sc.clearScopeCache(document);
@@ -367,10 +433,9 @@ export function activate(context: vscode.ExtensionContext) {
       vscode.workspace.textDocuments.forEach(scheduleDiagnostics);
     })
   );
-  vscode.workspace.textDocuments.forEach((document) => {
-    diagnosticsManager.refresh(document);
-    externalNamesManager.refresh(document).catch(() => undefined);
-  });
+  // Scheduled rather than run inline: activation itself stays quick, and
+  // the documents already open at startup share one workspace pass.
+  vscode.workspace.textDocuments.forEach(scheduleDiagnostics);
 
   context.subscriptions.push(
     vscode.languages.registerCodeActionsProvider(
@@ -1120,92 +1185,177 @@ class GesstabsDocumentSymbolProvider implements vscode.DocumentSymbolProvider {
   }
 }
 
+// Every workspace symbol Ctrl+T can list, unfiltered — see
+// GessTabsWorkspaceSymbolProvider below, which caches this per index.
+function collectWorkspaceSymbols(
+  files: string[],
+  index: WorkspaceIndex,
+  externalSources: ExternalNameSource[]
+): vscode.SymbolInformation[] {
+  const reader = workspaceReader();
+  const symbols: vscode.SymbolInformation[] = [];
+  const rangeFor = (file: string, line: number): vscode.Range => {
+    const lines = reader(file);
+    if (lines && line >= 0 && line < lines.length)
+      return new vscode.Range(line, 0, line, lines[line].length);
+    return new vscode.Range(line, 0, line, 0);
+  };
+  const push = (
+    kind: vscode.SymbolKind,
+    container: string,
+    name: string,
+    file: string,
+    line: number
+  ): void => {
+    if (!name) return;
+    symbols.push({
+      name,
+      kind,
+      location: new vscode.Location(
+        vscode.Uri.file(file),
+        rangeFor(file, line)
+      ),
+      containerName: container,
+    });
+  };
+
+  // Variables — the whole workspace's .tab/.inc/.def set feeds one symbol
+  // table (buildWorkspaceIndex treats a file no other file INCLUDEs as
+  // its own root, so every independent entry program is covered, not
+  // just whichever one is currently open — entry scripts are
+  // independent programs, see TODO.md), then only the real
+  // declaration(s) per symbol: §3.3 — a COMPUTE/IF…THEN reassignment is
+  // never a declaration, the same rule go-to-definition now enforces
+  // via primaryDefinitions() — so Ctrl+T doesn't drown a name in every
+  // place it's later reassigned, only where it's actually declared
+  // (still every branch of a genuine double declaration, e.g. one per
+  // #ifdef/#else).
+  const model = buildVariableModel(index, { externalNames: externalSources });
+  model.all().forEach((sym) => {
+    if (
+      sym.origin !== 'declared' &&
+      sym.origin !== 'virtual' &&
+      sym.origin !== 'external'
+    )
+      return;
+    primaryDefinitions(sym).forEach((d) => {
+      // The declaring statement's own keyword (compute/singleq/
+      // varfamily/…) rather than sym.kind: a bare COMPUTE's targetKind
+      // is 'unknown' until something narrows it (design §3 — COMPUTE
+      // doesn't say ALPHA/OPEN up front), which read as a bare
+      // "unknown" container in the Ctrl+T list with nothing more
+      // useful to show. An external symbol's "statement" is the
+      // CSVINFILE/SPSSINFILE/DATAFILE line — classifyStatement doesn't
+      // recognise it at all (it's not part of the §3 grammar), so name
+      // the container 'external' outright instead of falling through
+      // to the generic 'atomic'.
+      const declKeyword =
+        sym.origin === 'external'
+          ? 'external'
+          : classifyStatement(d.statement)?.keyword;
+      push(
+        vscode.SymbolKind.Variable,
+        declKeyword ?? sym.kind,
+        sym.displayName,
+        d.line.file,
+        d.line.line
+      );
+    });
+  });
+
+  // Macro / #EXPAND definitions + TABLE head/axis names — unrelated to
+  // the variable model (§3), same per-document regex/classifier scan
+  // GesstabsDocumentSymbolProvider already uses, just looped over every
+  // file in the workspace instead of one open document.
+  const macroRegExp: RegExp = macroDefRe('');
+  const expandRegExp: RegExp = expandDefRe('');
+  files.forEach((file) => {
+    const lines = reader(file);
+    if (!lines) return;
+    const scope = scopeForLines(lines);
+
+    lines.forEach((lineText, i) => {
+      if (lineText.length === 0) return;
+      const normalScope = (searchIndex: number) =>
+        scope.isNormalScope(i, searchIndex);
+
+      const macroMatch = matchInScope(lineText, macroRegExp, normalScope);
+      if (macroMatch && macroMatch[2]) {
+        push(vscode.SymbolKind.Function, 'macro', macroMatch[2], file, i);
+      }
+      const expandMatch = matchInScope(lineText, expandRegExp, normalScope);
+      if (expandMatch && expandMatch[2]) {
+        push(vscode.SymbolKind.Function, 'expand', expandMatch[2], file, i);
+      }
+    });
+
+    const order: ResolvedLine[] = lines.map((text, i) => ({
+      file,
+      line: i,
+      text: blankComments(scope, i, text),
+    }));
+    toLogicalStatements(order).forEach((stmt) => {
+      const cls = classifyStatement(stmt.text);
+      if (!cls || cls.kind !== 'table') return;
+      cls.references
+        .filter((r) => r.mode === 'always')
+        .forEach((r) => {
+          push(
+            vscode.SymbolKind.Variable,
+            'table',
+            r.span.raw,
+            file,
+            stmt.startLine
+          );
+        });
+    });
+  });
+
+  return symbols;
+}
+
 // Allow the user to quickly navigate to symbol definitions anywhere in the folder (workspace) opened in VS
 class GessTabsWorkspaceSymbolProvider
   implements vscode.WorkspaceSymbolProvider
 {
   constructor(private readonly externalNames?: GesstabsExternalNamesManager) {}
 
+  // The full, unfiltered symbol list for the index + data sources it was
+  // built from: VS Code asks again on every keystroke in the Ctrl+T box,
+  // and the list only changes with the (shared, cached) workspace index.
+  private cached:
+    | {
+        index: WorkspaceIndex;
+        sources: ExternalNameSource[];
+        symbols: vscode.SymbolInformation[];
+      }
+    | undefined;
+
   public async provideWorkspaceSymbols(
     query: string,
     token: vscode.CancellationToken
   ): Promise<vscode.SymbolInformation[]> {
+    const activeUri = vscode.window.activeTextEditor?.document.uri;
     const wsfolder =
-      getWorkspaceFolderPath(
-        vscode.window.activeTextEditor &&
-          vscode.window.activeTextEditor.document.uri
-      ) ||
-      fixDriveCasingInWindows(
-        path.dirname(
-          vscode &&
-            vscode.window &&
-            vscode.window.activeTextEditor &&
-            vscode.window.activeTextEditor.document
-            ? vscode.window.activeTextEditor.document.fileName
-            : ''
-        )
-      );
+      getWorkspaceFolderPath(activeUri) ||
+      (activeUri
+        ? fixDriveCasingInWindows(path.dirname(activeUri.fsPath))
+        : undefined);
+    if (!wsfolder) return [];
 
+    // The shared workspace index and the files it was built from, read
+    // through the same live-buffer-else-disk reader — this used to open
+    // every script via openTextDocument, which fired onDidOpenTextDocument
+    // (and with it a diagnostics pass) for every file in the folder.
     let files: string[];
+    let index: WorkspaceIndex;
     try {
-      files = await getAllFilenamesInDirectory(wsfolder, '(tab|inc|def)');
+      files = await workspaceScriptFiles(wsfolder);
+      index = await getFolderIndex(wsfolder, { conditionalsAllActive: true });
     } catch (e) {
       logger.error(`gesstabs: provideWorkspaceSymbols failed: ${e}`);
       return [];
     }
-    if (token && token.isCancellationRequested) return [];
-
-    const docs = await Promise.all(
-      files.map((file) => vscode.workspace.openTextDocument(file))
-    );
-    if (token && token.isCancellationRequested) return [];
-
-    const symbols: vscode.SymbolInformation[] = [];
-    const docByPath = new Map<string, vscode.TextDocument>();
-    docs.forEach((d) => docByPath.set(normalizePath(d.uri.fsPath), d));
-    const rangeFor = (file: string, line: number): vscode.Range => {
-      const doc = docByPath.get(normalizePath(file));
-      if (doc && line >= 0 && line < doc.lineCount)
-        return doc.lineAt(line).range;
-      return new vscode.Range(line, 0, line, 0);
-    };
-    const push = (
-      kind: vscode.SymbolKind,
-      container: string,
-      name: string,
-      file: string,
-      line: number
-    ): void => {
-      if (!name) return;
-      symbols.push({
-        name,
-        kind,
-        location: new vscode.Location(
-          vscode.Uri.file(file),
-          rangeFor(file, line)
-        ),
-        containerName: container,
-      });
-    };
-
-    // Variables — the whole workspace's .tab/.inc/.def set feeds one symbol
-    // table (buildWorkspaceIndex treats a file no other file INCLUDEs as
-    // its own root, so every independent entry program is covered, not
-    // just whichever one is currently open — entry scripts are
-    // independent programs, see TODO.md), then only the real
-    // declaration(s) per symbol: §3.3 — a COMPUTE/IF…THEN reassignment is
-    // never a declaration, the same rule go-to-definition now enforces
-    // via primaryDefinitions() — so Ctrl+T doesn't drown a name in every
-    // place it's later reassigned, only where it's actually declared
-    // (still every branch of a genuine double declaration, e.g. one per
-    // #ifdef/#else).
-    const readFile: FileReader = (filePath) => {
-      const doc = docByPath.get(normalizePath(filePath));
-      return doc ? doc.getText().split(/\r\n|\r|\n/) : undefined;
-    };
-    const index = buildWorkspaceIndex(files, readFile, {
-      conditionalsAllActive: true,
-    });
     if (token && token.isCancellationRequested) return [];
 
     // externalNames (P1.4): every entry program's data sources, unioned —
@@ -1230,101 +1380,19 @@ class GessTabsWorkspaceSymbolProvider
     }
     if (token && token.isCancellationRequested) return [];
 
-    const model = buildVariableModel(index, { externalNames: externalSources });
-    model.all().forEach((sym) => {
-      if (
-        sym.origin !== 'declared' &&
-        sym.origin !== 'virtual' &&
-        sym.origin !== 'external'
-      )
-        return;
-      primaryDefinitions(sym).forEach((d) => {
-        // The declaring statement's own keyword (compute/singleq/
-        // varfamily/…) rather than sym.kind: a bare COMPUTE's targetKind
-        // is 'unknown' until something narrows it (design §3 — COMPUTE
-        // doesn't say ALPHA/OPEN up front), which read as a bare
-        // "unknown" container in the Ctrl+T list with nothing more
-        // useful to show. An external symbol's "statement" is the
-        // CSVINFILE/SPSSINFILE/DATAFILE line — classifyStatement doesn't
-        // recognise it at all (it's not part of the §3 grammar), so name
-        // the container 'external' outright instead of falling through
-        // to the generic 'atomic'.
-        const declKeyword =
-          sym.origin === 'external'
-            ? 'external'
-            : classifyStatement(d.statement)?.keyword;
-        push(
-          vscode.SymbolKind.Variable,
-          declKeyword ?? sym.kind,
-          sym.displayName,
-          d.line.file,
-          d.line.line
-        );
-      });
-    });
-
-    // Macro / #EXPAND definitions + TABLE head/axis names — unrelated to
-    // the variable model (§3), same per-document regex/classifier scan
-    // GesstabsDocumentSymbolProvider already uses, just looped over every
-    // file in the workspace instead of one open document.
-    const macroRegExp: RegExp = macroDefRe('');
-    const expandRegExp: RegExp = expandDefRe('');
-    docs.forEach((document) => {
-      if (token && token.isCancellationRequested) return;
-      const scope = sc.getCachedScope(document);
-      const lines: string[] = [];
-      for (let i = 0; i < document.lineCount; i += 1) {
-        lines.push(document.lineAt(i).text);
-      }
-
-      lines.forEach((lineText, i) => {
-        if (lineText.length === 0) return;
-        const normalScope = (searchIndex: number) =>
-          scope.isNormalScope(i, searchIndex);
-
-        const macroMatch = matchInScope(lineText, macroRegExp, normalScope);
-        if (macroMatch && macroMatch[2]) {
-          push(
-            vscode.SymbolKind.Function,
-            'macro',
-            macroMatch[2],
-            document.uri.fsPath,
-            i
-          );
-        }
-        const expandMatch = matchInScope(lineText, expandRegExp, normalScope);
-        if (expandMatch && expandMatch[2]) {
-          push(
-            vscode.SymbolKind.Function,
-            'expand',
-            expandMatch[2],
-            document.uri.fsPath,
-            i
-          );
-        }
-      });
-
-      const order: ResolvedLine[] = lines.map((text, i) => ({
-        file: document.uri.fsPath,
-        line: i,
-        text: blankComments(scope, i, text),
-      }));
-      toLogicalStatements(order).forEach((stmt) => {
-        const cls = classifyStatement(stmt.text);
-        if (!cls || cls.kind !== 'table') return;
-        cls.references
-          .filter((r) => r.mode === 'always')
-          .forEach((r) => {
-            push(
-              vscode.SymbolKind.Variable,
-              'table',
-              r.span.raw,
-              document.uri.fsPath,
-              stmt.startLine
-            );
-          });
-      });
-    });
+    const hit = this.cached;
+    let symbols: vscode.SymbolInformation[];
+    if (
+      hit &&
+      hit.index === index &&
+      hit.sources.length === externalSources.length &&
+      hit.sources.every((src, i) => src === externalSources[i])
+    ) {
+      ({ symbols } = hit);
+    } else {
+      symbols = collectWorkspaceSymbols(files, index, externalSources);
+      this.cached = { index, sources: externalSources, symbols };
+    }
 
     if (!query) return symbols;
     const q = query.toLowerCase();

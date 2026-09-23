@@ -53,7 +53,7 @@ import {
 import { getWorkspaceIndex } from '../util/workspaceIndexCache';
 import * as logger from '../util/logger';
 import { diagnosticsEnabled, entryScriptPatterns } from '../util/config';
-import { resolveWildcardPath } from '../util/glob';
+import { globToRegExp, resolveWildcardPath } from '../util/glob';
 
 // listFiles for resolveWildcardPath: a plain synchronous directory read,
 // same fallback-to-empty-on-error convention as CachingBytesIO.listFiles
@@ -74,6 +74,36 @@ const WILDCARD_TOKEN = /[*?]/;
 // Enough to cover any CSV header line and virtually every .sav dictionary
 // (the dictionary sits at the front of the file).
 const MAX_DATA_BYTES = 4 * 1024 * 1024;
+
+// Whether a disk event at `fsPath` can change what `programs` resolved: a
+// script (.tab/.inc/.def — the programs' own graph), or a file some
+// data-source statement names — its literal path or any file its OS
+// wildcard matches, including one only now being created for a source that
+// was unresolved. Matched against the statement's own rawPath rather than
+// the resolved absPath, which an unresolved wildcard source doesn't have.
+// Nothing cached yet means nothing to invalidate.
+function affectsPrograms(
+  programs: EntryProgram[] | undefined,
+  fsPath: string
+): boolean {
+  if (/\.(tab|inc|def)$/i.test(fsPath)) return true;
+  if (!programs) return false;
+  const dir = normalizePath(path.dirname(fsPath)).toLowerCase();
+  const base = path.basename(fsPath);
+  return programs.some((prog) =>
+    prog.sources.some(({ statement }) => {
+      if (/[#&]/.test(statement.rawPath)) return false; // never resolvable
+      const target = path.resolve(
+        path.dirname(statement.file),
+        statement.rawPath
+      );
+      return (
+        normalizePath(path.dirname(target)).toLowerCase() === dir &&
+        globToRegExp(path.basename(target)).test(base)
+      );
+    })
+  );
+}
 
 // Reads up to MAX_DATA_BYTES from a data file, cached by path + mtime + size
 // so the on-typing diagnostic pass never re-hits the disk for an unchanged
@@ -184,6 +214,25 @@ export class GesstabsExternalNamesManager {
 
   private readonly bytesIO = new CachingBytesIO();
 
+  // Every #define name in a program's graph (collectAllDefineNames resolves
+  // the whole graph again). An EntryProgram object is rebuilt whenever its
+  // content may have changed (edit generation / watcher), so keying by the
+  // object keeps this exactly as fresh as the programs themselves, and
+  // every open document of the same program shares one walk.
+  private readonly defineNamesByProgram = new WeakMap<
+    EntryProgram,
+    Set<string>
+  >();
+
+  private defineNamesOf(prog: EntryProgram): Set<string> {
+    let names = this.defineNamesByProgram.get(prog);
+    if (!names) {
+      names = collectAllDefineNames(prog.entryFile, workspaceReader());
+      this.defineNamesByProgram.set(prog, names);
+    }
+    return names;
+  }
+
   public setOnChange(cb: () => void): void {
     this.onChangeCb = cb;
   }
@@ -257,18 +306,26 @@ export class GesstabsExternalNamesManager {
 
   private ensureWatcher(folder: string): void {
     if (this.watchers.has(folder)) return;
+    // Every file, filtered by affectsPrograms: a data source can have any
+    // extension, but most disk traffic in a project folder is unrelated —
+    // GESStabs' own output (macros.txt, error.txt, exported .sav/.txt) and
+    // OneDrive/SharePoint sync — and used to rebuild every entry program
+    // and re-run the workspace diagnostics of every open document.
     const watcher = vscode.workspace.createFileSystemWatcher(
-      new vscode.RelativePattern(folder, '**/*.{tab,inc,def,csv,sav,dat,txt}')
+      new vscode.RelativePattern(folder, '**/*')
     );
-    const bust = (): void => {
+    const onDisk = (uri: vscode.Uri): void => {
+      if (!affectsPrograms(this.programsByRoot.get(folder), uri.fsPath)) {
+        return;
+      }
       this.programsByRoot.delete(folder);
       this.buildsByRoot.delete(folder);
       this.bytesIO.clear();
       this.onChangeCb?.();
     };
-    watcher.onDidCreate(bust);
-    watcher.onDidChange(bust);
-    watcher.onDidDelete(bust);
+    watcher.onDidCreate(onDisk);
+    watcher.onDidChange(onDisk);
+    watcher.onDidDelete(onDisk);
     this.watchers.set(folder, watcher);
   }
 
@@ -433,10 +490,7 @@ export class GesstabsExternalNamesManager {
         const workspaceDefines =
           owningPrograms.length > 0
             ? owningPrograms.reduce((set, prog) => {
-                collectAllDefineNames(
-                  prog.entryFile,
-                  workspaceReader()
-                ).forEach((name) => set.add(name));
+                this.defineNamesOf(prog).forEach((name) => set.add(name));
                 return set;
               }, new Set<string>())
             : undefined;

@@ -140,7 +140,7 @@ function makeScopeDoc(lines: string[]) {
 // call simply never hits.
 const scopeByLines = new WeakMap<string[], Scope>();
 
-function scopeForLines(lines: string[]): Scope {
+export function scopeForLines(lines: string[]): Scope {
   let scope = scopeByLines.get(lines);
   if (!scope) {
     scope = new Scope(makeScopeDoc(lines) as any);
