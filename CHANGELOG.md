@@ -2,6 +2,21 @@
 
 All notable changes to the "GESStabs" extension will be documented in this file (last change first).
 
+## 1.0.2
+
+### Performance
+
+- Much faster on large projects. On a real 19,000-line project, the diagnostics after typing now take about 1 second for all open files instead of about 13 seconds for the edited file alone, and repeated hovers, Go to Definition, Find All References and the macro CodeLens answer instantly instead of rebuilding everything each time. The extension used to block the shared extension host for several seconds at a time, which also made other extensions sluggish.
+- The comment/string scanner was quadratic in line length; it is now linear.
+- Hovers, Go to Definition, Find All References, Rename, completion, CodeLens, workspace symbols (`Ctrl+T`) and the diagnostics now share one cached analysis of the INCLUDE graph per workspace folder. It is rebuilt only after an edit to a script, closing a file, or a change on disk to a file it actually read.
+- Macro-produced variables and the undefined-variable check no longer scan the whole program once per macro call or per reference.
+- `Ctrl+T` no longer opens every script in the folder in the background (which also triggered a diagnostics pass per file).
+
+### Diagnostics
+
+- The workspace-wide checks (undefined variables, duplicate declarations, system-variable redeclaration, `#MACRO` name collisions, data sources) now run once for all open GESStabs files, about a second after typing stops. Previously they were computed separately per file, and only the edited file was updated: an edit in one file now also updates the diagnostics of the other open files that depend on it.
+- Output that GESStabs itself writes (`macros.txt`, `error.txt`, exported `.sav`/`.txt` files) and cloud-sync activity (OneDrive, SharePoint) no longer trigger a rebuild of the data-source information and a full diagnostics pass. Only scripts and the data files a `CSVINFILE`/`SPSSINFILE`/`DATAFILE` statement actually names are watched.
+
 ## 1.0.1
 
 ### Diagnostics
