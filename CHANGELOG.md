@@ -2,6 +2,15 @@
 
 All notable changes to the "GESStabs" extension will be documented in this file (last change first).
 
+## 1.0.4
+
+### Diagnostics
+
+- Fixed: "was already declared" pointing at the very same line. An `.inc` included by several main scripts (e.g. `main.tab` and a variant of it) was checked once per program in one pass, so its declarations collided with themselves. The diagnostics now only look at the program(s) that include the current file, a shared include counted once, the same as Go to Definition and the hover already did. Hover, Go to Definition and Find All References no longer list such a declaration twice either.
+- Fixed: two declarations of the same variable in mutually exclusive `#ifdef`/`#else` arms were reported as a duplicate, although only one arm ever runs.
+- Separate blocks that test the same condition the opposite way are now treated as mutually exclusive too: `#ifdef X … #end` and a later `#ifndef X … #end`, and `#ifempty`/`#ifnempty` on the same argument. This no longer applies once `X` is `#define`d or `#undefine`d in between (or an `#expand` sits between the `#ifempty` tests). `#ifexist`/`#ifnexist` pairs are still checked, since a declaration in between changes their outcome.
+- `END;` stops the GESStabs run, so code after it is no longer checked (undefined variables, duplicate declarations, system variables, macro duplicates). An `END;` inside `#ifdef X … #end` only skips what runs on the `X` side; code after the `#end` is still checked. An `END;` inside `IFBLOCK`/`SETFILTER` doesn't count, since it only applies to some cases.
+
 ## 1.0.3
 
 ### Go to Definition, Find All References, Rename & hover
