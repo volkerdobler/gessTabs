@@ -446,14 +446,21 @@ export class GesstabsExternalNamesManager {
       // (GesstabsDiagnosticsManager, which only ever saw one document's own
       // lines — see its own header comment for why duplicate-declaration
       // moved here). Undefined-variable is skipped entirely when this
-      // document belongs to no known entry program (an orphan .inc, or one
+      // document belongs to no known entry program (an orphan .inc), one
       // of its owning programs' data sources is unresolved (design §9
       // "P1.6 (B)") — a project whose .sav/.csv isn't on the editing
-      // machine must not get false "undefined" noise. The other three are
-      // pure syntax checks, independent of any of that, so they always run.
+      // machine must not get false "undefined" noise — or one of them
+      // declares no data source at all: without a dataset there is no
+      // gessTabs run anyway (usually a temporary state), so the single
+      // "no data source" warning says all there is to say instead of one
+      // "undefined" per dataset variable. The other three are pure syntax
+      // checks, independent of any of that, so they always run.
       const owningPrograms = programsForFile(programs, file);
       const hasUnresolvedSource = externalSources.some(
         (s) => s.names === 'unresolved'
+      );
+      const hasProgramWithoutSource = owningPrograms.some(
+        (prog) => prog.sources.length === 0
       );
       try {
         const wsIndex = await getWorkspaceIndex(document, {
@@ -465,7 +472,9 @@ export class GesstabsExternalNamesManager {
         });
 
         const modelIssues =
-          owningPrograms.length > 0 && !hasUnresolvedSource
+          owningPrograms.length > 0 &&
+          !hasUnresolvedSource &&
+          !hasProgramWithoutSource
             ? checkUndefinedVariables(model, file)
             : [];
         modelIssues.push(...checkSystemVariableRedeclaration(model, file));

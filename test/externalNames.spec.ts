@@ -72,6 +72,20 @@ describe('findDataSourceStatements', () => {
     expect(findDataSourceStatements(commented)).to.have.length(0);
   });
 
+  it('finds a data source directly after ;-less #expand lines', () => {
+    // The GEERS main.TAB shape: two #expand lines, then the SPSSINFILE —
+    // it used to be glued onto the #expand statement and lost.
+    const st = findDataSourceStatements(
+      order(p('main.tab'), [
+        '#expand #powerchartvorlage "Vorlage.pptx"',
+        '#expand #powerchartoutput "Bericht.pptx"',
+        'spssinfile = "daten.sav";',
+      ])
+    );
+    expect(st).to.have.length(1);
+    expect(st[0]).to.include({ kind: 'spss', rawPath: 'daten.sav', line: 2 });
+  });
+
   it('treats INFILE as a documented synonym for DATAFILE', () => {
     const st = findDataSourceStatements(
       order(p('main.tab'), ['INFILE = old.dat;'])

@@ -97,6 +97,46 @@ describe('toLogicalStatements', () => {
     expect(out.map((s) => s.text)).to.deep.equal(['compute after = 1;']);
   });
 
+  it('ends a ;-less #expand / #define line at its own line end', () => {
+    const out = toLogicalStatements(
+      lines(
+        'a.tab',
+        '#expand #vorlage "v.pptx"\n#expand #out "o.pptx"\n#define X\nspssinfile = "d.sav";'
+      )
+    );
+    expect(out.map((s) => s.text)).to.deep.equal([
+      '#expand #vorlage "v.pptx"',
+      '#expand #out "o.pptx"',
+      '#define X',
+      'spssinfile = "d.sav";',
+    ]);
+    expect(out[3].startLine).to.equal(3);
+  });
+
+  it('lifts a directive line out of a multi-line statement without ending it', () => {
+    const out = toLogicalStatements(
+      lines(
+        'a.tab',
+        'groups g =\n#expand #x v eq 1;\n | "x" : v eq 1\n | "y" : v eq 2 ;'
+      )
+    );
+    expect(out.map((s) => s.text)).to.deep.equal([
+      '#expand #x v eq 1;',
+      'groups g =\n | "x" : v eq 1\n | "y" : v eq 2 ;',
+    ]);
+    expect(out[1].lines.map((l) => l.line)).to.deep.equal([0, 2, 3]);
+  });
+
+  it('ends a ;-less #expandinc line at its own line end too', () => {
+    const out = toLogicalStatements(
+      lines('a.tab', '#expandinc #n 1000\ncompute a = 1;')
+    );
+    expect(out.map((s) => s.text)).to.deep.equal([
+      '#expandinc #n 1000',
+      'compute a = 1;',
+    ]);
+  });
+
   // A column-1 macro/preprocessor call (#name(...), #DOMACRO(...) & co.) is
   // self-terminating at its own balanced ")" and, per the real reported
   // case, must NOT be followed by a ";" — without this, the scan below

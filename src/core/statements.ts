@@ -67,6 +67,21 @@ const macroCallStartRe = /^\s*#[A-Za-z_][\w.]*\s*\(/;
 const macroBlockStartRe = /^\s*#macro\b/i;
 const macroBlockEndRe = /^\s*#(?:endmacro|macroend)\b/i;
 
+// A line-oriented preprocessor directive — `#expand #name "value"`,
+// `#define NAME`, … — is one whole line and takes no `;`. For #EXPAND a
+// `;` would even be wrong: the replacement text is everything after the
+// name up to the line end, so a `;` there would be substituted into the
+// middle of whatever statement later uses `#name`. Opening a
+// statement with one used to swallow every following line up to the next
+// `;`: `#expand #a "x"` / `#expand #b "y"` / `spssinfile = "d.sav";` became
+// one statement starting with `#expand`, so the SPSSINFILE was never seen
+// and the program counted as having no data source at all. The #IF…/#ELSE/
+// #END family is normally consumed by the include graph before it gets
+// here, but is listed for any `order` that still carries it. `#macro` and
+// the `#domacro…(` calls have their own handling above/below.
+const lineDirectiveRe =
+  /^\s*#(?:define|undefine|expand|expandinc|expandindomacro|expandintoken|ignorecase|ifdef|ifndef|ifempty|ifnempty|ifexist|ifnexist|ifnexists|else|end)\b/i;
+
 interface Piece {
   line: ResolvedLine;
   text: string;
@@ -145,6 +160,17 @@ export function toLogicalStatements(order: ResolvedLine[]): LogicalStatement[] {
     }
 
     const { text } = rl;
+
+    // A directive line is always its own one-line statement — never part
+    // of, nor the end of, the statement around it. Between the lines of an
+    // unterminated statement it is emitted on its own and that statement
+    // just carries on after it (a `;` in the directive's text ends
+    // nothing either).
+    if (lineDirectiveRe.test(text)) {
+      flush([{ line: rl, text }], true, out);
+      continue;
+    }
+
     let segStart = 0;
     if (pieces.length === 0 && macroCallStartRe.test(text)) {
       macroCallDepth = 0;
