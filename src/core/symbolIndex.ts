@@ -44,11 +44,11 @@ export interface WorkspaceIndex {
   branchPaths: Map<string, BranchPath>;
   // The subset of `files` that were treated as entry points.
   rootFiles: string[];
-  // Every file in each root's resolved include graph (root first), keyed
-  // by root — which program(s) a file belongs to. A workspace folder often
-  // holds several unrelated programs (old copies in subfolders, an
-  // `_original` backup that nothing includes); see programFilesOf.
-  programFiles: Map<string, string[]>;
+  // Each root's own program, keyed by root: every file in its resolved
+  // include graph (root first) and its slice of `order`. A workspace folder
+  // often holds several unrelated programs (old copies in subfolders, an
+  // `_original` backup that nothing includes) — see programIndexFor.
+  programs: Map<string, { files: string[]; order: ResolvedLine[] }>;
 }
 
 export function buildWorkspaceIndex(
@@ -78,39 +78,91 @@ export function buildWorkspaceIndex(
   const order: ResolvedLine[] = [];
   const scopes = new Map<string, Scope>();
   const branchPaths = new Map<string, BranchPath>();
-  const programFiles = new Map<string, string[]>();
+  const programs = new Map<
+    string,
+    { files: string[]; order: ResolvedLine[] }
+  >();
 
   rootFiles.forEach((root) => {
     const graph = graphs.get(root);
     if (!graph) return;
-    programFiles.set(root, graph.files);
+    programs.set(root, { files: graph.files, order: graph.order });
     order.push(...graph.order);
     graph.scopes.forEach((scope, file) => scopes.set(file, scope));
     graph.branchPaths.forEach((path, key) => branchPaths.set(key, path));
   });
 
-  return { order, scopes, branchPaths, rootFiles, programFiles };
+  return { order, scopes, branchPaths, rootFiles, programs };
 }
 
-// Every file that belongs to the same program(s) as `file` — the union of
-// the include graphs of all roots whose graph contains it (a shared
-// include belongs to several programs). Lets a caller drop hits from
-// programs that can never run together with `file`, e.g. the VARTITLE in
-// `vonGess_Andreas/GEEbelabelung.inc` when hovering in `cleaning.inc`,
-// which only `main.TAB` includes. undefined when no root reaches `file`
-// (not indexed at all) — callers then keep everything.
-export function programFilesOf(
+// The roots whose program contains `file` (case-insensitive — Windows
+// paths).
+function rootsContaining(index: WorkspaceIndex, file: string): string[] {
+  const key = file.toLowerCase();
+  const roots: string[] = [];
+  index.programs.forEach(({ files }, root) => {
+    if (files.some((f) => f.toLowerCase() === key)) roots.push(root);
+  });
+  return roots;
+}
+
+// Kept per full index so the same restriction always hands back the same
+// object — buildVariableModel caches its model by index identity.
+const programIndexCache = new WeakMap<
+  WorkspaceIndex,
+  Map<string, WorkspaceIndex>
+>();
+
+// `index` narrowed to the program(s) `file` belongs to: only the lines of
+// the roots whose include graph contains it, in their program order, a shared
+// include's lines only once even when it sits in several of them.
+// What go-to-definition / references / the variable hover resolve against
+// — a definition, use or VARTITLE in an unrelated program in the same
+// folder (e.g. `vonGess_Andreas/` next to the real `main.TAB`) is not one
+// of this file's. Returns `index` itself when every root qualifies, or
+// when none does (a file the index doesn't reach — keep the old
+// whole-folder behaviour rather than finding nothing).
+export function programIndexFor(
   index: WorkspaceIndex,
   file: string
-): Set<string> | undefined {
-  const key = file.toLowerCase();
-  let result: Set<string> | undefined;
-  index.programFiles.forEach((files) => {
-    if (!files.some((f) => f.toLowerCase() === key)) return;
-    result = result ?? new Set<string>();
-    files.forEach((f) => result!.add(f.toLowerCase()));
+): WorkspaceIndex {
+  const roots = rootsContaining(index, file);
+  if (roots.length === 0 || roots.length === index.programs.size) {
+    return index;
+  }
+  const cacheKey = roots.join('|');
+  let perIndex = programIndexCache.get(index);
+  const hit = perIndex?.get(cacheKey);
+  if (hit) return hit;
+
+  // Deduplicated across roots only — a program that INCLUDEs the same file
+  // twice really does run those lines twice.
+  const order: ResolvedLine[] = [];
+  const seen = new Set<string>();
+  const programs: WorkspaceIndex['programs'] = new Map();
+  roots.forEach((root) => {
+    const program = index.programs.get(root);
+    if (!program) return;
+    programs.set(root, program);
+    const lines = program.order.filter(
+      (rl) => !seen.has(`${rl.file}:${rl.line}`)
+    );
+    lines.forEach((rl) => seen.add(`${rl.file}:${rl.line}`));
+    order.push(...lines);
   });
-  return result;
+  const restricted: WorkspaceIndex = {
+    order,
+    scopes: index.scopes,
+    branchPaths: index.branchPaths,
+    rootFiles: roots,
+    programs,
+  };
+  if (!perIndex) {
+    perIndex = new Map();
+    programIndexCache.set(index, perIndex);
+  }
+  perIndex.set(cacheKey, restricted);
+  return restricted;
 }
 
 export interface MacroProducedDefinition {

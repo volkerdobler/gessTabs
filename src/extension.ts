@@ -10,6 +10,7 @@ import { matchInScope } from './core/matching';
 import { findMatchingDirectiveLine } from './core/matchingDirective';
 import {
   findMacroProducedDefinition,
+  programIndexFor,
   WorkspaceIndex,
 } from './core/symbolIndex';
 import {
@@ -589,9 +590,10 @@ class GesstabsDefintionProvider implements vscode.DefinitionProvider {
     // symbol is.
     let index: WorkspaceIndex;
     try {
-      index = await getWorkspaceIndex(document, {
-        conditionalsAllActive: true,
-      });
+      index = programIndexFor(
+        await getWorkspaceIndex(document, { conditionalsAllActive: true }),
+        normalizePath(document.uri.fsPath)
+      );
     } catch (e) {
       logger.error(`gesstabs: provideDefinition failed: ${e}`);
       return null;
@@ -734,9 +736,10 @@ class GesstabsDefintionProvider implements vscode.DefinitionProvider {
     // the ordinary variable path above.
     let index: WorkspaceIndex;
     try {
-      index = await getWorkspaceIndex(document, {
-        conditionalsAllActive: true,
-      });
+      index = programIndexFor(
+        await getWorkspaceIndex(document, { conditionalsAllActive: true }),
+        normalizePath(document.uri.fsPath)
+      );
     } catch (e) {
       logger.error(`gesstabs: provideDefinition (hash-name) failed: ${e}`);
       return null;
@@ -854,9 +857,10 @@ class GesstabsReferenceProvider implements vscode.ReferenceProvider {
     // symbol is.
     let index: WorkspaceIndex;
     try {
-      index = await getWorkspaceIndex(document, {
-        conditionalsAllActive: true,
-      });
+      index = programIndexFor(
+        await getWorkspaceIndex(document, { conditionalsAllActive: true }),
+        normalizePath(document.uri.fsPath)
+      );
     } catch (e) {
       logger.error(`gesstabs: provideReferences failed: ${e}`);
       return null;
@@ -904,9 +908,10 @@ class GesstabsReferenceProvider implements vscode.ReferenceProvider {
     // compile is still real.
     let index: WorkspaceIndex;
     try {
-      index = await getWorkspaceIndex(document, {
-        conditionalsAllActive: true,
-      });
+      index = programIndexFor(
+        await getWorkspaceIndex(document, { conditionalsAllActive: true }),
+        normalizePath(document.uri.fsPath)
+      );
     } catch (e) {
       logger.error(`gesstabs: provideReferences (hash-name) failed: ${e}`);
       return null;
@@ -966,9 +971,10 @@ class GesstabsRenameProvider implements vscode.RenameProvider {
 
     let index: WorkspaceIndex;
     try {
-      index = await getWorkspaceIndex(document, {
-        conditionalsAllActive: true,
-      });
+      index = programIndexFor(
+        await getWorkspaceIndex(document, { conditionalsAllActive: true }),
+        normalizePath(document.uri.fsPath)
+      );
     } catch (e) {
       logger.error(`gesstabs: prepareRename failed: ${e}`);
       return wordRange;
@@ -1004,9 +1010,10 @@ class GesstabsRenameProvider implements vscode.RenameProvider {
     // symbol is.
     let index: WorkspaceIndex;
     try {
-      index = await getWorkspaceIndex(document, {
-        conditionalsAllActive: true,
-      });
+      index = programIndexFor(
+        await getWorkspaceIndex(document, { conditionalsAllActive: true }),
+        normalizePath(document.uri.fsPath)
+      );
     } catch (e) {
       logger.error(`gesstabs: provideRenameEdits failed: ${e}`);
       return null;

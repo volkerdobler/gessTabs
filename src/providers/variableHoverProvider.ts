@@ -27,7 +27,7 @@ import { getCachedScope } from '../core/scope';
 import { constVarName } from '../core/regex';
 import {
   findMacroProducedDefinition,
-  programFilesOf,
+  programIndexFor,
 } from '../core/symbolIndex';
 import { buildVariableModel, ModelAnnotation } from '../core/variableModel';
 import { findLogicalStatement } from '../core/statements';
@@ -151,12 +151,17 @@ export class GesstabsVariableHoverProvider implements vscode.HoverProvider {
       // — bail before the workspace-wide index build.
       if (keywordNames.has(word.toLowerCase())) return null;
 
-      const index = await getWorkspaceIndex(document, {
-        conditionalsAllActive: true,
-      });
+      const currentFile = normalizePath(document.uri.fsPath);
+      // Only the program(s) this file belongs to — the workspace folder may
+      // hold unrelated ones too (old copies in subfolders, unincluded
+      // backups), whose declarations and VARTITLE/VARTEXT/… look like
+      // duplicates of the real ones (programIndexFor).
+      const index = programIndexFor(
+        await getWorkspaceIndex(document, { conditionalsAllActive: true }),
+        currentFile
+      );
       if (token && token.isCancellationRequested) return null;
 
-      const currentFile = normalizePath(document.uri.fsPath);
       const key = word.toLowerCase();
 
       // Seed the model with the data-source (CSVINFILE/SPSSINFILE/DATAFILE)
@@ -262,17 +267,11 @@ export class GesstabsVariableHoverProvider implements vscode.HoverProvider {
 
       // The variable's VARTEXT / VARTITLE / VALUELABELS — including any on
       // a name the script never declares (a dataset variable) — minus the
-      // one on the line under the cursor, minus any from a program the
-      // current file isn't part of (the index spans every program in the
-      // workspace folder: old copies in subfolders, unincluded backups —
-      // their identical-looking annotations used to show up as
-      // "duplicates"), minus any kind the user turned off in
-      // gesstabs.hover.variableContent, ordered by ANNOTATION_ORDER.
-      const programFiles = programFilesOf(index, currentFile);
+      // one on the line under the cursor, minus any kind the user turned
+      // off in gesstabs.hover.variableContent, ordered by ANNOTATION_ORDER.
       const annotations = model
         .annotationsFor(word)
         .filter((a) => !(a.file === currentFile && a.line === position.line))
-        .filter((a) => !programFiles || programFiles.has(a.file.toLowerCase()))
         .filter((a) => {
           const part = ANNOTATION_PART[a.kind];
           return part === null || variableContentShows(part);

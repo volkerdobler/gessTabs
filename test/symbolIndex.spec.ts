@@ -7,7 +7,7 @@ import {
   findAllMacroProducedNames,
   findWordRangeInLine,
   findAllWordRangesInLine,
-  programFilesOf,
+  programIndexFor,
 } from '../src/core/symbolIndex';
 import {
   buildVariableModel,
@@ -71,37 +71,68 @@ describe('buildWorkspaceIndex', () => {
   });
 });
 
-describe('programFilesOf', () => {
-  // main.tab and old/main.tab are separate programs, each with its own
-  // labels.inc; shared.inc is included by both.
+describe('programIndexFor', () => {
+  // main.tab and old/main.tab are separate programs, each declaring and
+  // labelling its own `v`; shared.inc is included by both, backup.inc by
+  // neither.
   const files = {
     [p('main.tab')]:
-      'INCLUDE = labels.inc;\nINCLUDE = shared.inc;\nINCLUDE = clean.inc;',
-    [p('labels.inc')]: 'VARTITLE v = "t";',
-    [p('clean.inc')]: 'compute v = 1;',
+      'INCLUDE = decl.inc;\nINCLUDE = shared.inc;\nINCLUDE = clean.inc;',
+    [p('decl.inc')]: 'variable v = 1;\nVARTITLE v = "t";',
+    [p('clean.inc')]: 'compute w = v + 1;',
     [p('shared.inc')]: 'variable s = 1;',
-    [p('old', 'main.tab')]: 'INCLUDE = labels.inc;\nINCLUDE = ../shared.inc;',
-    [p('old', 'labels.inc')]: 'VARTITLE v = "t";',
+    [p('old', 'main.tab')]: 'INCLUDE = decl.inc;\nINCLUDE = ../shared.inc;',
+    [p('old', 'decl.inc')]: 'variable v = 2;\nVARTITLE v = "t";',
     [p('backup.inc')]: 'VARTITLE v = "t";',
   };
   const index = buildWorkspaceIndex(Object.keys(files), makeReader(files));
-  const lc = (...s: string[]) => p(...s).toLowerCase();
+  const filesOf = (i: typeof index) => new Set(i.order.map((l) => l.file));
 
-  it('returns only the files of the program(s) that include the file', () => {
-    const set = programFilesOf(index, p('clean.inc'));
-    expect(set?.has(lc('labels.inc'))).to.equal(true);
-    expect(set?.has(lc('old', 'labels.inc'))).to.equal(false);
-    expect(set?.has(lc('backup.inc'))).to.equal(false);
+  it('keeps only the lines of the program(s) the file belongs to', () => {
+    const restricted = programIndexFor(index, p('clean.inc'));
+    // (main.tab holds only INCLUDE lines, which order doesn't carry)
+    expect([...filesOf(restricted)]).to.have.members([
+      p('decl.inc'),
+      p('shared.inc'),
+      p('clean.inc'),
+    ]);
+    expect(restricted.rootFiles).to.deep.equal([p('main.tab')]);
   });
 
-  it('unions every program a shared include belongs to', () => {
-    const set = programFilesOf(index, p('shared.inc'));
-    expect(set?.has(lc('labels.inc'))).to.equal(true);
-    expect(set?.has(lc('old', 'labels.inc'))).to.equal(true);
+  it('resolves definitions, references and annotations in that program only', () => {
+    const model = buildVariableModel(programIndexFor(index, p('clean.inc')));
+    expect(
+      model.resolveAnywhere('v')?.definitions.map((d) => d.file)
+    ).to.deep.equal([p('decl.inc')]);
+    expect(model.annotationsFor('v').map((a) => a.file)).to.deep.equal([
+      p('decl.inc'),
+    ]);
+    const occ = collectVariableOccurrences(
+      programIndexFor(index, p('clean.inc')),
+      'v'
+    );
+    expect(new Set(occ.map((o) => o.line.file))).to.deep.equal(
+      new Set([p('decl.inc'), p('clean.inc')])
+    );
   });
 
-  it('returns undefined for a file no root reaches', () => {
-    expect(programFilesOf(index, p('nowhere.inc'))).to.equal(undefined);
+  it('unions every program a shared include belongs to, each shared line once', () => {
+    const restricted = programIndexFor(index, p('shared.inc'));
+    expect(filesOf(restricted).has(p('decl.inc'))).to.equal(true);
+    expect(filesOf(restricted).has(p('old', 'decl.inc'))).to.equal(true);
+    expect(filesOf(restricted).has(p('backup.inc'))).to.equal(false);
+    expect(
+      restricted.order.filter((l) => l.file === p('shared.inc'))
+    ).to.have.length(1);
+  });
+
+  it('matches the file case-insensitively and returns a stable object', () => {
+    const a = programIndexFor(index, p('clean.inc'));
+    expect(programIndexFor(index, p('clean.inc').toUpperCase())).to.equal(a);
+  });
+
+  it('returns the full index for a file no root reaches', () => {
+    expect(programIndexFor(index, p('nowhere.inc'))).to.equal(index);
   });
 });
 
