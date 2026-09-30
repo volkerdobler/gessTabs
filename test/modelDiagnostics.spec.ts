@@ -292,6 +292,48 @@ describe('checkDuplicateDeclarations', () => {
     // The INCLUDEd file itself has no duplicate on its own side.
     expect(checkDuplicateDeclarations(model, p('vars.inc'))).to.be.empty;
   });
+
+  it('does not flag declarations in mutually exclusive #ifdef/#else arms', () => {
+    const idx = indexOf(
+      [
+        '#ifdef PowerChart',
+        'vargroup f3mult = (a b c) eq 1;',
+        '#else',
+        'vargroup f3mult = (a c b) eq 1;',
+        '#end',
+      ].join('\n')
+    );
+    const model = buildVariableModel(idx);
+    expect(checkDuplicateDeclarations(model, p('main.tab'))).to.be.empty;
+  });
+
+  it('still flags a declaration after an #ifdef/#else pair that already declared it', () => {
+    const idx = indexOf(
+      [
+        '#ifdef PowerChart',
+        'variable x = 1;',
+        '#else',
+        'variable x = 2;',
+        '#end',
+        'variable x = 3;',
+      ].join('\n')
+    );
+    const model = buildVariableModel(idx);
+    const issues = checkDuplicateDeclarations(model, p('main.tab'));
+    expect(issues).to.have.length(1);
+    expect(issues[0]).to.deep.include({ line: 5 });
+    expect(issues[0].message).to.include('line 2');
+  });
+
+  it('still flags a duplicate inside the same #ifdef arm', () => {
+    const idx = indexOf(
+      ['#ifdef PowerChart', 'variable x = 1;', 'variable x = 2;', '#end'].join(
+        '\n'
+      )
+    );
+    const model = buildVariableModel(idx);
+    expect(checkDuplicateDeclarations(model, p('main.tab'))).to.have.length(1);
+  });
 });
 
 describe('checkMacroDuplicateVariableDefinition', () => {

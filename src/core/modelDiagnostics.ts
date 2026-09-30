@@ -159,24 +159,40 @@ export function checkSystemVariableRedeclaration(
 // `defKind === 'declaration'` gate (design doc §9 Q3): a COMPUTE/IF…THEN
 // re-assignment is never counted, even reusing an existing name — that's
 // normal, legal re-assignment.
+//
+// The model keeps every #ifdef/#else arm active, so two declarations in
+// mutually exclusive arms (`#ifdef X` `vargroup v = …;` `#else` `vargroup
+// v = …;` `#end`) both show up here — but only one of them ever compiles.
+// A declaration is only flagged against an earlier one that could run on
+// the same real build (branchPathsCompatible), same rule as
+// checkMacroDuplicateVariableDefinition below.
 export function checkDuplicateDeclarations(
   model: VariableModel,
   file: string
 ): DiagnosticIssue[] {
   return issuesForFile(duplicateDeclarationIssues, model, file, (add) => {
-    const firstSeenAt = new Map<string, { file: string; line: number }>();
+    const seenAt = new Map<
+      string,
+      { file: string; line: number; branchPath: BranchPath }[]
+    >();
 
     model.statements.forEach((stmt) => {
       const cls = classifyStatement(stmt.text);
       if (!cls || cls.defKind !== 'declaration') return;
       cls.defines.forEach((span) => {
         const loc = locateInStatement(stmt, span.rawStart);
-        const first = firstSeenAt.get(span.name);
+        const branchPath = model.branchPathAt(loc.line.file, loc.line.line);
+        const earlier = seenAt.get(span.name) ?? [];
+        const first = earlier.find((e) =>
+          branchPathsCompatible(e.branchPath, branchPath)
+        );
         if (!first) {
-          firstSeenAt.set(span.name, {
+          earlier.push({
             file: loc.line.file,
             line: loc.line.line,
+            branchPath,
           });
+          seenAt.set(span.name, earlier);
           return;
         }
         const elsewhere = first.file !== loc.line.file;

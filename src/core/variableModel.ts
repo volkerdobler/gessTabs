@@ -132,6 +132,9 @@ export interface VariableModel {
   // in the resolved program (the whole-index fallback the old
   // findDefinitionLine(-1) provided).
   resolveAnywhere(name: string): VariableSymbol | undefined;
+  // which #ifdef/#ifndef/... arm a resolved source line sits in (empty
+  // outside any conditional) — see src/core/branchPaths.ts.
+  branchPathAt(file: string, line: number): BranchPath;
 }
 
 export interface PrimaryDefinition {
@@ -815,6 +818,7 @@ function buildVariableModelUncached(
         ...(orphanAnnotations.get(k) ?? []),
       ];
     },
+    branchPathAt: pathAt,
   };
 }
 
