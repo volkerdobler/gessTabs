@@ -7,6 +7,7 @@ import {
   findAllMacroProducedNames,
   findWordRangeInLine,
   findAllWordRangesInLine,
+  programFilesOf,
 } from '../src/core/symbolIndex';
 import {
   buildVariableModel,
@@ -67,6 +68,40 @@ describe('buildWorkspaceIndex', () => {
     );
     expect(index.rootFiles).to.have.members([p('a.inc'), p('b.inc')]);
     expect(index.order.length).to.be.greaterThan(0);
+  });
+});
+
+describe('programFilesOf', () => {
+  // main.tab and old/main.tab are separate programs, each with its own
+  // labels.inc; shared.inc is included by both.
+  const files = {
+    [p('main.tab')]:
+      'INCLUDE = labels.inc;\nINCLUDE = shared.inc;\nINCLUDE = clean.inc;',
+    [p('labels.inc')]: 'VARTITLE v = "t";',
+    [p('clean.inc')]: 'compute v = 1;',
+    [p('shared.inc')]: 'variable s = 1;',
+    [p('old', 'main.tab')]: 'INCLUDE = labels.inc;\nINCLUDE = ../shared.inc;',
+    [p('old', 'labels.inc')]: 'VARTITLE v = "t";',
+    [p('backup.inc')]: 'VARTITLE v = "t";',
+  };
+  const index = buildWorkspaceIndex(Object.keys(files), makeReader(files));
+  const lc = (...s: string[]) => p(...s).toLowerCase();
+
+  it('returns only the files of the program(s) that include the file', () => {
+    const set = programFilesOf(index, p('clean.inc'));
+    expect(set?.has(lc('labels.inc'))).to.equal(true);
+    expect(set?.has(lc('old', 'labels.inc'))).to.equal(false);
+    expect(set?.has(lc('backup.inc'))).to.equal(false);
+  });
+
+  it('unions every program a shared include belongs to', () => {
+    const set = programFilesOf(index, p('shared.inc'));
+    expect(set?.has(lc('labels.inc'))).to.equal(true);
+    expect(set?.has(lc('old', 'labels.inc'))).to.equal(true);
+  });
+
+  it('returns undefined for a file no root reaches', () => {
+    expect(programFilesOf(index, p('nowhere.inc'))).to.equal(undefined);
   });
 });
 

@@ -44,6 +44,11 @@ export interface WorkspaceIndex {
   branchPaths: Map<string, BranchPath>;
   // The subset of `files` that were treated as entry points.
   rootFiles: string[];
+  // Every file in each root's resolved include graph (root first), keyed
+  // by root — which program(s) a file belongs to. A workspace folder often
+  // holds several unrelated programs (old copies in subfolders, an
+  // `_original` backup that nothing includes); see programFilesOf.
+  programFiles: Map<string, string[]>;
 }
 
 export function buildWorkspaceIndex(
@@ -73,16 +78,39 @@ export function buildWorkspaceIndex(
   const order: ResolvedLine[] = [];
   const scopes = new Map<string, Scope>();
   const branchPaths = new Map<string, BranchPath>();
+  const programFiles = new Map<string, string[]>();
 
   rootFiles.forEach((root) => {
     const graph = graphs.get(root);
     if (!graph) return;
+    programFiles.set(root, graph.files);
     order.push(...graph.order);
     graph.scopes.forEach((scope, file) => scopes.set(file, scope));
     graph.branchPaths.forEach((path, key) => branchPaths.set(key, path));
   });
 
-  return { order, scopes, branchPaths, rootFiles };
+  return { order, scopes, branchPaths, rootFiles, programFiles };
+}
+
+// Every file that belongs to the same program(s) as `file` — the union of
+// the include graphs of all roots whose graph contains it (a shared
+// include belongs to several programs). Lets a caller drop hits from
+// programs that can never run together with `file`, e.g. the VARTITLE in
+// `vonGess_Andreas/GEEbelabelung.inc` when hovering in `cleaning.inc`,
+// which only `main.TAB` includes. undefined when no root reaches `file`
+// (not indexed at all) — callers then keep everything.
+export function programFilesOf(
+  index: WorkspaceIndex,
+  file: string
+): Set<string> | undefined {
+  const key = file.toLowerCase();
+  let result: Set<string> | undefined;
+  index.programFiles.forEach((files) => {
+    if (!files.some((f) => f.toLowerCase() === key)) return;
+    result = result ?? new Set<string>();
+    files.forEach((f) => result!.add(f.toLowerCase()));
+  });
+  return result;
 }
 
 export interface MacroProducedDefinition {
