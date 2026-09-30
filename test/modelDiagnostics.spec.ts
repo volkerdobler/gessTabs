@@ -39,6 +39,12 @@ const externalSource = (
 });
 
 describe('checkUndefinedVariables', () => {
+  it('does not flag a reference after a top-level END;', () => {
+    const idx = indexOf('end;\ncompute y = alter + 1;');
+    const model = buildVariableModel(idx);
+    expect(checkUndefinedVariables(model, p('main.tab'))).to.be.empty;
+  });
+
   it('does not flag a reference to a name declared in-script', () => {
     const idx = indexOf('singleq alter = 1;\ncompute y = alter + 1;');
     const model = buildVariableModel(idx);
@@ -141,6 +147,12 @@ describe('checkUndefinedVariables', () => {
 });
 
 describe('checkSystemVariableRedeclaration', () => {
+  it('does not flag a system variable declared after END;', () => {
+    const idx = indexOf('end;\nsingleq SysMiss = 1;');
+    const model = buildVariableModel(idx);
+    expect(checkSystemVariableRedeclaration(model, p('main.tab'))).to.be.empty;
+  });
+
   it('flags a real declaration of a predefined system variable', () => {
     const idx = indexOf('singleq SysMiss = 1;');
     const model = buildVariableModel(idx);
@@ -325,6 +337,147 @@ describe('checkDuplicateDeclarations', () => {
     expect(issues[0].message).to.include('line 2');
   });
 
+  it('does not flag declarations in a separate #ifdef X and #ifndef X block', () => {
+    const idx = indexOf(
+      [
+        '#ifdef X',
+        'vargroup v = (a b) eq 1;',
+        '#end',
+        'singleq other = 1;',
+        '#ifndef X',
+        'vargroup v = (b a) eq 1;',
+        '#end',
+      ].join('\n')
+    );
+    const model = buildVariableModel(idx);
+    expect(checkDuplicateDeclarations(model, p('main.tab'))).to.be.empty;
+  });
+
+  it('pairs #ifndef X with the #else arm of an earlier #ifdef X', () => {
+    const idx = indexOf(
+      [
+        '#ifdef X',
+        'singleq a = 1;',
+        '#else',
+        'variable v = 1;',
+        '#end',
+        '#ifndef X',
+        'variable v = 2;',
+        '#end',
+      ].join('\n')
+    );
+    const model = buildVariableModel(idx);
+    expect(checkDuplicateDeclarations(model, p('main.tab'))).to.have.length(1);
+  });
+
+  it("flags #ifdef X / #ifndef X again once X is #define'd in between", () => {
+    const idx = indexOf(
+      [
+        '#ifdef X',
+        'variable v = 1;',
+        '#end',
+        '#define X',
+        '#ifndef X',
+        'variable v = 2;',
+        '#end',
+      ].join('\n')
+    );
+    const model = buildVariableModel(idx);
+    expect(checkDuplicateDeclarations(model, p('main.tab'))).to.have.length(1);
+  });
+
+  it('does not flag declarations in a separate #ifempty and #ifnempty block on the same argument', () => {
+    const idx = indexOf(
+      [
+        '#ifempty "&x"',
+        'variable v = 1;',
+        '#end',
+        '#ifnempty "&x"',
+        'variable v = 2;',
+        '#end',
+      ].join('\n')
+    );
+    const model = buildVariableModel(idx);
+    expect(checkDuplicateDeclarations(model, p('main.tab'))).to.be.empty;
+  });
+
+  it('still flags #ifexist / #ifnexist blocks — a declaration in between changes the answer', () => {
+    const idx = indexOf(
+      [
+        '#ifnexist v',
+        'variable v = 1;',
+        '#end',
+        '#ifexist v',
+        'variable v = 2;',
+        '#end',
+      ].join('\n')
+    );
+    const model = buildVariableModel(idx);
+    expect(checkDuplicateDeclarations(model, p('main.tab'))).to.have.length(1);
+  });
+
+  it('does not flag a declaration after an #ifdef arm that ends the run with END;', () => {
+    const idx = indexOf(
+      ['#ifdef x', 'variable v = 1;', 'end;', '#end', 'variable v = 2;'].join(
+        '\n'
+      )
+    );
+    const model = buildVariableModel(idx);
+    expect(checkDuplicateDeclarations(model, p('main.tab'))).to.be.empty;
+  });
+
+  it('still flags when the END; sits in a different arm than the earlier declaration', () => {
+    const idx = indexOf(
+      ['variable v = 1;', '#ifdef x', 'end;', '#end', 'variable v = 2;'].join(
+        '\n'
+      )
+    );
+    const model = buildVariableModel(idx);
+    expect(checkDuplicateDeclarations(model, p('main.tab'))).to.have.length(1);
+  });
+
+  it('ignores everything after a top-level END;', () => {
+    const idx = indexOf(
+      ['variable v = 1;', 'end;', 'variable v = 2;', 'variable v = 3;'].join(
+        '\n'
+      )
+    );
+    const model = buildVariableModel(idx);
+    expect(checkDuplicateDeclarations(model, p('main.tab'))).to.be.empty;
+  });
+
+  it('ignores the rest of an #ifdef arm after END;, but not the code after #end', () => {
+    const idx = indexOf(
+      [
+        '#ifdef x',
+        'end;',
+        'variable v = 1;',
+        'variable v = 2;',
+        '#end',
+        'variable w = 1;',
+        'variable w = 2;',
+      ].join('\n')
+    );
+    const model = buildVariableModel(idx);
+    const issues = checkDuplicateDeclarations(model, p('main.tab'));
+    expect(issues).to.have.length(1);
+    expect(issues[0]).to.deep.include({ line: 6 });
+  });
+
+  it('ignores an END; inside a runtime IFBLOCK', () => {
+    const idx = indexOf(
+      [
+        'variable v = 1;',
+        'ifblock w eq 1;',
+        'end;',
+        'endblock;',
+        'variable v = 2;',
+      ].join('\n')
+    );
+    const model = buildVariableModel(idx);
+    expect(checkDuplicateDeclarations(model, p('main.tab'))).to.have.length(1);
+  });
+
   it('still flags a duplicate inside the same #ifdef arm', () => {
     const idx = indexOf(
       ['#ifdef PowerChart', 'variable x = 1;', 'variable x = 2;', '#end'].join(
@@ -337,6 +490,21 @@ describe('checkDuplicateDeclarations', () => {
 });
 
 describe('checkMacroDuplicateVariableDefinition', () => {
+  it('ignores macro calls after a top-level END;', () => {
+    const idx = indexOf(
+      [
+        '#macro #x( &z )',
+        'groups fixedname = | "x" : v eq 1;',
+        '#endmacro',
+        '#x( a )',
+        'end;',
+        '#x( b )',
+      ].join('\n')
+    );
+    expect(checkMacroDuplicateVariableDefinition(idx, p('main.tab'))).to.be
+      .empty;
+  });
+
   it('flags a fixed-name GROUPS declared inside a macro called more than once', () => {
     const idx = indexOf(
       [
@@ -497,9 +665,8 @@ describe('checkMacroDuplicateVariableDefinition', () => {
     const issues = checkMacroDuplicateVariableDefinition(idx, p('main.tab'));
     expect(issues).to.have.length(1);
     expect(issues[0]).to.deep.include({ line: 2 }); // '#x( b )', the second call
-    expect(
-      checkMacroDuplicateVariableDefinition(idx, p('macros.inc'))
-    ).to.be.empty;
+    expect(checkMacroDuplicateVariableDefinition(idx, p('macros.inc'))).to.be
+      .empty;
   });
 
   it('does not flag two calls in mutually exclusive #ifdef / #else arms of the same conditional', () => {

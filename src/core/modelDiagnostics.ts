@@ -20,13 +20,22 @@
 //     it as a real syntax error).
 
 import * as path from 'path';
-import { locateInStatement } from './statements';
+import {
+  LogicalStatement,
+  locateInStatement,
+  toLogicalStatements,
+} from './statements';
 import { classifyStatement } from './variableStatements';
 import { VariableModel } from './variableModel';
 import { DiagnosticIssue } from './diagnostics';
 import { WorkspaceIndex, collectAllMacroCalls } from './symbolIndex';
 import { ResolvedLine } from './includeGraph';
-import { BranchPath, branchKey, branchPathsCompatible } from './branchPaths';
+import {
+  BranchPath,
+  branchKey,
+  branchPathImplies,
+  branchPathsCompatible,
+} from './branchPaths';
 import {
   findMacroDefinitions,
   buildMacroIndex,
@@ -72,6 +81,84 @@ function issuesForFile<K extends object>(
   return [...(byFile.get(file) ?? [])];
 }
 
+// `END;` stops the gessTabs run. Everything after one that can only run
+// on builds that also ran the END is dead code, and none of the checks
+// below look at it: a top-level END (empty branch path) ends everything
+// after it, one inside `#ifdef X … #end` ends what follows only on the
+// `X` side (branchPathImplies — a later `#ifndef X` arm, or code outside
+// the conditional, still runs). Only an END outside any runtime block
+// (IFBLOCK/SETFILTER/…) counts; inside one it may not run for the case.
+//
+// Returns the reachable statements in program order, each END that
+// still runs as its own step (`endPath` set) so a check can also forget
+// earlier state the END cuts off (checkDuplicateDeclarations).
+interface FlowStep {
+  stmt: LogicalStatement;
+  endPath?: BranchPath;
+}
+
+const endStatementRe = /^end\s*;$/i;
+
+function reachableFlow(
+  statements: LogicalStatement[],
+  pathAt: (file: string, line: number) => BranchPath
+): FlowStep[] {
+  const steps: FlowStep[] = [];
+  const endPaths: BranchPath[] = [];
+  let runtimeDepth = 0;
+  statements.forEach((stmt) => {
+    const stmtPath = pathAt(stmt.file, stmt.startLine);
+    const reachable = !endPaths.some((e) => branchPathImplies(stmtPath, e));
+    if (endStatementRe.test(stmt.text)) {
+      if (reachable && runtimeDepth === 0) {
+        endPaths.push(stmtPath);
+        steps.push({ stmt, endPath: stmtPath });
+      }
+      return;
+    }
+    const cls = classifyStatement(stmt.text);
+    if (cls?.block === 'open') runtimeDepth += 1;
+    else if (cls?.block === 'close' && runtimeDepth > 0) runtimeDepth -= 1;
+    if (reachable) steps.push({ stmt });
+  });
+  return steps;
+}
+
+const modelFlows = new WeakMap<VariableModel, FlowStep[]>();
+
+function modelFlow(model: VariableModel): FlowStep[] {
+  let flow = modelFlows.get(model);
+  if (!flow) {
+    flow = reachableFlow(model.statements, model.branchPathAt);
+    modelFlows.set(model, flow);
+  }
+  return flow;
+}
+
+function reachableStatements(model: VariableModel): LogicalStatement[] {
+  return modelFlow(model)
+    .filter((s) => !s.endPath)
+    .map((s) => s.stmt);
+}
+
+// `file line` of every source line only reachable past an END — for the
+// macro check, which works on the index (call sites) rather than a model.
+function unreachableLines(index: WorkspaceIndex): Set<string> {
+  const statements = toLogicalStatements(index.order);
+  const reachable = new Set(
+    reachableFlow(
+      statements,
+      (f, l) => index.branchPaths.get(branchKey(f, l)) ?? []
+    ).map((s) => s.stmt)
+  );
+  const out = new Set<string>();
+  statements.forEach((stmt) => {
+    if (reachable.has(stmt)) return;
+    stmt.lines.forEach((l) => out.add(branchKey(l.file, l.line)));
+  });
+  return out;
+}
+
 const undefinedVariableIssues = new WeakMap<VariableModel, IssuesByFile>();
 const systemVariableIssues = new WeakMap<VariableModel, IssuesByFile>();
 const duplicateDeclarationIssues = new WeakMap<VariableModel, IssuesByFile>();
@@ -91,7 +178,7 @@ export function checkUndefinedVariables(
   file: string
 ): DiagnosticIssue[] {
   return issuesForFile(undefinedVariableIssues, model, file, (add) =>
-    model.statements.forEach((stmt) => {
+    reachableStatements(model).forEach((stmt) => {
       const cls = classifyStatement(stmt.text);
       if (!cls) return;
       cls.references.forEach(({ span, mode }) => {
@@ -133,7 +220,7 @@ export function checkSystemVariableRedeclaration(
   file: string
 ): DiagnosticIssue[] {
   return issuesForFile(systemVariableIssues, model, file, (add) =>
-    model.statements.forEach((stmt) => {
+    reachableStatements(model).forEach((stmt) => {
       const cls = classifyStatement(stmt.text);
       if (!cls) return;
       cls.defines.forEach((span) => {
@@ -166,6 +253,10 @@ export function checkSystemVariableRedeclaration(
 // A declaration is only flagged against an earlier one that could run on
 // the same real build (branchPathsCompatible), same rule as
 // checkMacroDuplicateVariableDefinition below.
+//
+// An END in between (see reachableFlow) forgets every earlier declaration
+// that only runs on builds the END ends (`#ifdef X` `vargroup v …;`
+// `END;` `#end` `vargroup v …;` — the second one only runs without X).
 export function checkDuplicateDeclarations(
   model: VariableModel,
   file: string
@@ -176,7 +267,16 @@ export function checkDuplicateDeclarations(
       { file: string; line: number; branchPath: BranchPath }[]
     >();
 
-    model.statements.forEach((stmt) => {
+    modelFlow(model).forEach(({ stmt, endPath }) => {
+      if (endPath) {
+        seenAt.forEach((entries, name) =>
+          seenAt.set(
+            name,
+            entries.filter((e) => !branchPathImplies(e.branchPath, endPath))
+          )
+        );
+        return;
+      }
       const cls = classifyStatement(stmt.text);
       if (!cls || cls.defKind !== 'declaration') return;
       cls.defines.forEach((span) => {
@@ -270,12 +370,14 @@ function collectMacroDuplicateVariableDefinitions(
   const macroIndex = buildMacroIndex(findMacroDefinitions(index.order));
   if (macroIndex.size === 0) return;
 
+  const unreachable = unreachableLines(index);
   const callsByMacro = new Map<
     string,
     { macro: MacroDefinition; args: string[]; callSite: ResolvedLine }[]
   >();
   collectAllMacroCalls(index, macroIndex).forEach(
     ({ macro, args, callSite }) => {
+      if (unreachable.has(branchKey(callSite.file, callSite.line))) return;
       const key = `${macro.file}:${macro.defLine}`;
       const list = callsByMacro.get(key);
       if (list) {

@@ -91,6 +91,17 @@ const defineRe = /^\s*#define\s+(\S+)/i;
 const undefineRe = /^\s*#undefine\s+(\S+)/i;
 const ignoreCaseRe = /^\s*#ignorecase\s*=\s*(yes|no)/i;
 
+const expandRe = /^\s*#expand/i;
+
+// The tested argument of an #IFEMPTY/#IFNEMPTY — a quoted string, a
+// bracketed group, or the first token (the rest of the slice may be the
+// single-line body, `#ifnempty "&x" &x #else 1:99 #end`).
+function emptyTestArg(raw: string): string {
+  const trimmed = raw.trim();
+  const m = trimmed.match(/^("[^"]*"|'[^']*'|\[[^\]]*\]|\S+)/);
+  return m ? m[1].replace(/\s+/g, ' ') : '';
+}
+
 function parseNameList(raw: string): string[] {
   const trimmed = raw.trim();
   const bracketed = trimmed.match(/^\[\s*(.+?)\s*\]/);
@@ -209,7 +220,7 @@ class DefineSet {
     this.ignoreCase = value;
   }
 
-  private key(name: string): string {
+  key(name: string): string {
     return this.ignoreCase ? name.toLowerCase() : name;
   }
 
@@ -235,10 +246,16 @@ interface ConditionalFrame {
   conditionTrue: boolean;
   inElse: boolean;
   parentActive: boolean;
-  // unique per #ifdef/#ifndef/... opening — shared by its #else arm, so
-  // branchPaths can tell "different arms of the same conditional" apart
-  // from "two unrelated conditionals".
+  // shared by its #else arm, so branchPaths can tell "different arms of
+  // the same conditional" apart from "two unrelated conditionals". Also
+  // shared by a *separate* conditional testing the same thing with
+  // nothing in between that could change the answer (see conditionGroup
+  // in resolveIncludeGraph) — `#ifdef X … #end` and a later `#ifndef X …
+  // #end` can never both run either.
   groupId: number;
+  // #IFNDEF/#IFNEMPTY: its own `if` arm is the `else` arm of the group's
+  // positive test.
+  negated: boolean;
   // True when this conditional could not be statically decided —
   // #IF[N]EMPTY/#IF[N]EXIST(S) (never evaluated, see the module doc
   // comment) or a plain #ifdef/#ifndef whose name(s) are never touched by
@@ -299,6 +316,36 @@ export function resolveIncludeGraph(
   // *reassigned* outer binding there (even though this one is only ever
   // read synchronously, never stashed for later).
   const groupIdCounter = { next: 0 };
+  // Group id per tested condition, so separate conditionals on the same
+  // test (`#ifdef X` … `#end` … `#ifndef X` … `#end`) land in one group
+  // with opposite arms. The key carries an epoch that is bumped whenever
+  // something could change the test's answer in between:
+  //   - #IFDEF/#IFNDEF (single name only — `#ifndef [A B]` is "not A or
+  //     not B", not the complement of `#ifdef [A B]`): any #define/
+  //     #undefine of that name, active or not (conservative).
+  //   - #IFEMPTY/#IFNEMPTY: scoped to the enclosing #MACRO definition (a
+  //     `&x` means a different argument in every macro) and to the
+  //     #EXPAND lines seen so far (an #EXPAND can change the value).
+  //   - #IFEXIST/#IFNEXIST never share: any declaration in between
+  //     changes the answer (`#ifnexist v` `vargroup v …` `#end` followed
+  //     by `#ifexist v` runs both), so each stays its own group.
+  const conditionGroups = new Map<string, number>();
+  const nameEpochs = new Map<string, number>();
+  const bumpName = (name: string) => {
+    const k = name.toLowerCase();
+    nameEpochs.set(k, (nameEpochs.get(k) ?? 0) + 1);
+  };
+  const expandEpoch = { value: 0 };
+  const conditionGroup = (key: string | undefined): number => {
+    if (key !== undefined) {
+      const existing = conditionGroups.get(key);
+      if (existing !== undefined) return existing;
+    }
+    const id = groupIdCounter.next;
+    groupIdCounter.next += 1;
+    if (key !== undefined) conditionGroups.set(key, id);
+    return id;
+  };
 
   function visit(file: string, depth: number): void {
     if (depth > maxDepth) {
@@ -327,6 +374,9 @@ export function resolveIncludeGraph(
     const scope = scopeForLines(lines);
     scopes.set(file, scope);
     const stack: ConditionalFrame[] = [];
+    // the #MACRO definition the current line sits in, for scoping
+    // #IFEMPTY-family condition groups (see conditionGroups).
+    const macro: { scope?: string } = {};
 
     for (let i = 0; i < lines.length; i++) {
       const text = lines[i];
@@ -343,15 +393,27 @@ export function resolveIncludeGraph(
 
       const defineMatch = text.match(defineRe);
       if (defineMatch) {
+        bumpName(defineMatch[1]);
         if (active) defines.define(defineMatch[1]);
         continue;
       }
 
       const undefineMatch = text.match(undefineRe);
       if (undefineMatch) {
+        bumpName(undefineMatch[1]);
         if (active) defines.undefine(undefineMatch[1]);
         continue;
       }
+
+      if (expandRe.test(text)) expandEpoch.value += 1;
+
+      const directives = scanBlockDirectives(text, (col) =>
+        scope.isNormalScope(i, col)
+      );
+      directives.forEach((d) => {
+        if (d.kind === 'macro-start') macro.scope = `${file} ${i}`;
+        else if (d.kind === 'macro-end') macro.scope = undefined;
+      });
 
       // #IFDEF/#IFNDEF/#IF[N]EMPTY/#IF[N]EXIST(S), #ELSE and #END can all
       // sit on one line — `#ifnempty "&x" &x #else 1:99 #end` is a common
@@ -361,9 +423,9 @@ export function resolveIncludeGraph(
       // inline #END isn't dropped — a dropped one would leave a phantom
       // frame open and wrongly gate everything after it in the file,
       // including later #MACRO definitions.
-      const conds = scanBlockDirectives(text, (col) =>
-        scope.isNormalScope(i, col)
-      ).filter((d) => d.kind !== 'macro-start' && d.kind !== 'macro-end');
+      const conds = directives.filter(
+        (d) => d.kind !== 'macro-start' && d.kind !== 'macro-end'
+      );
       if (conds.length > 0) {
         let frameActive = allActive || evaluateActive(stack);
         conds.forEach((d, di) => {
@@ -405,14 +467,29 @@ export function resolveIncludeGraph(
               // real definitions inside either arm are still found.
               uncertain = true;
             }
+            let groupKey: string | undefined;
+            const negated = tok === '#ifndef' || tok === '#ifnempty';
+            if (tok === '#ifdef' || tok === '#ifndef') {
+              const names = parseNameList(argText);
+              if (names.length === 1) {
+                const epoch = nameEpochs.get(names[0].toLowerCase()) ?? 0;
+                groupKey = `def ${defines.key(names[0])} ${epoch}`;
+              }
+            } else if (tok === '#ifempty' || tok === '#ifnempty') {
+              const arg = emptyTestArg(argText);
+              if (arg)
+                groupKey = `empty ${macro.scope ?? file} ${
+                  expandEpoch.value
+                } ${arg}`;
+            }
             stack.push({
               conditionTrue,
               inElse: false,
               parentActive: frameActive,
-              groupId: groupIdCounter.next,
+              groupId: conditionGroup(groupKey),
+              negated,
               uncertain,
             });
-            groupIdCounter.next += 1;
           }
           frameActive = allActive || evaluateActive(stack);
         });
@@ -443,7 +520,7 @@ export function resolveIncludeGraph(
         stack.map(
           (f): BranchArm => ({
             group: f.groupId,
-            arm: f.inElse ? 'else' : 'if',
+            arm: f.inElse !== f.negated ? 'else' : 'if',
           })
         )
       );

@@ -41,6 +41,13 @@ export function branchKey(file: string, line: number): string {
 // present in only one path doesn't conflict: the other location simply
 // isn't nested in that particular conditional, which is compatible with
 // either of its arms.)
+// Whether every build that runs a location on path `a` also runs one on
+// path `b` — every arm `b` picks is picked by `a` too (an empty `b`, i.e.
+// outside any conditional, is implied by everything).
+export function branchPathImplies(a: BranchPath, b: BranchPath): boolean {
+  return b.every((x) => a.some((y) => y.group === x.group && y.arm === x.arm));
+}
+
 export function branchPathsCompatible(a: BranchPath, b: BranchPath): boolean {
   const arms = new Map<number, 'if' | 'else'>();
   a.forEach((x) => arms.set(x.group, x.arm));
