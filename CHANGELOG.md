@@ -2,6 +2,17 @@
 
 All notable changes to the "GESStabs" extension will be documented in this file (last change first).
 
+## 1.0.3
+
+### Go to Definition, Find All References, Rename & hover
+
+- A workspace folder often holds more than one program: older copies in subfolders, or a backup `.inc` that nothing includes. Go to Definition, Find All References, Rename and the variable hover now only look at the program(s) that actually include the current file. Previously they searched the whole folder. That caused the variable hover to list every `VARTITLE`/`VARTEXT` twice (once from the real file, once from a same-named copy in a subfolder), gave references in files that never run together, and made Rename also change those copies. A file included by several programs still sees all of them.
+
+### Diagnostics
+
+- Fixed: a data source directly after `#expand` lines was not recognized. `#expand` (like `#define`) takes no `;`: its replacement text runs to the end of the line. Such lines were joined with the following lines up to the next `;`, so a `spssinfile = "…";` right after two `#expand` lines was lost, and the program counted as having no data source at all. The same applied to any other statement directly after a `#expand`/`#define` line. A `;` inside such a line no longer ends a statement either.
+- When the data source is missing (no `SPSSINFILE`/`CSVINFILE`/`DATAFILE` in the program, or the named file doesn't exist), only that one warning is shown now, not an additional "undefined variable" for every variable from the dataset. Without a dataset there is no GESStabs run, and this is usually temporary. As soon as the data source can be read, genuinely undefined variables are reported again.
+
 ## 1.0.2
 
 ### Performance
