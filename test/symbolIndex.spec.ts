@@ -134,6 +134,22 @@ describe('programIndexFor', () => {
   it('returns the full index for a file no root reaches', () => {
     expect(programIndexFor(index, p('nowhere.inc'))).to.equal(index);
   });
+
+  it('keeps an include shared by every root only once — no self-collision', () => {
+    const shared = {
+      [p('a.tab')]: 'INCLUDE = tab.inc;',
+      [p('b.tab')]: 'INCLUDE = tab.inc;',
+      [p('tab.inc')]: 'groups k = | "x" : (w eq 1);',
+    };
+    const idx = buildWorkspaceIndex(Object.keys(shared), makeReader(shared));
+    // the full index concatenates both programs, tab.inc twice
+    expect(idx.order).to.have.length(2);
+    const restricted = programIndexFor(idx, p('tab.inc'));
+    expect(restricted.order).to.have.length(1);
+    expect(
+      buildVariableModel(restricted).resolveAnywhere('k')?.definitions
+    ).to.have.length(1);
+  });
 });
 
 describe('findMacroProducedDefinition', () => {

@@ -51,6 +51,7 @@ import {
   workspaceReader,
 } from '../util/workspaceFiles';
 import { getWorkspaceIndex } from '../util/workspaceIndexCache';
+import { programIndexFor } from '../core/symbolIndex';
 import * as logger from '../util/logger';
 import { diagnosticsEnabled, entryScriptPatterns } from '../util/config';
 import { globToRegExp, resolveWildcardPath } from '../util/glob';
@@ -463,9 +464,15 @@ export class GesstabsExternalNamesManager {
         (prog) => prog.sources.length === 0
       );
       try {
-        const wsIndex = await getWorkspaceIndex(document, {
-          conditionalsAllActive: true,
-        });
+        // Only the program(s) this file belongs to, a shared INCLUDE's
+        // lines once — the full index concatenates every root's program,
+        // so a file INCLUDEd by two main scripts would otherwise collide
+        // with its own declarations ("already declared" at the very same
+        // line) and see declarations from unrelated programs.
+        const wsIndex = programIndexFor(
+          await getWorkspaceIndex(document, { conditionalsAllActive: true }),
+          file
+        );
         const model = buildVariableModel(wsIndex, {
           externalNames: externalSources,
           macroExpansion: true,

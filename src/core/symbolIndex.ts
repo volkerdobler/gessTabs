@@ -119,15 +119,18 @@ const programIndexCache = new WeakMap<
 // What go-to-definition / references / the variable hover resolve against
 // — a definition, use or VARTITLE in an unrelated program in the same
 // folder (e.g. `vonGess_Andreas/` next to the real `main.TAB`) is not one
-// of this file's. Returns `index` itself when every root qualifies, or
-// when none does (a file the index doesn't reach — keep the old
-// whole-folder behaviour rather than finding nothing).
+// of this file's. Returns `index` itself when it holds just this one
+// program, or when no root qualifies (a file the index doesn't reach —
+// keep the old whole-folder behaviour rather than finding nothing). Every
+// root qualifying is NOT enough: the full `order` repeats a shared
+// include once per root, which made a declaration there collide with
+// itself ("already declared" at its own line).
 export function programIndexFor(
   index: WorkspaceIndex,
   file: string
 ): WorkspaceIndex {
   const roots = rootsContaining(index, file);
-  if (roots.length === 0 || roots.length === index.programs.size) {
+  if (roots.length === 0 || index.programs.size === 1) {
     return index;
   }
   const cacheKey = roots.join('|');
