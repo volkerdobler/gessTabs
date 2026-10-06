@@ -63,6 +63,13 @@ describe('buildVariableModel', () => {
     expect(fam?.members).to.deep.equal(['a', 'b', 'c']);
   });
 
+  it('resolves a LABELS reference to its DUMMYHEAD declaration', () => {
+    const m = modelOf('dummyhead = total;\nlabels total = 1 "Gesamt";');
+    const total = m.resolve('total', p('main.tab'), 1);
+    expect(total?.origin).to.equal('declared');
+    expect(total?.definitions[0].line).to.equal(0);
+  });
+
   it('honours no-forward-reference: a name is not visible before its declaration', () => {
     const m = modelOf('compute early = late;\nsingleq late = 1;');
     expect(m.resolve('late', p('main.tab'), 0)).to.be.undefined;

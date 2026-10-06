@@ -42,6 +42,7 @@ export type StatementKind =
   | 'assocvar'
   | 'clonevar'
   | 'labelvalue'
+  | 'dummyhead'
   | 'compute'
   | 'if-then'
   | 'varfamily'
@@ -682,6 +683,19 @@ function classifyVariablesBlock(tokens: Token[]): ClassifiedStatement {
   const { spans } = collectNames(tokens, 1, end);
   if (spans.length === 0) {
     cls.malformed = 'variables: no target name';
+    return cls;
+  }
+  return withDefines(cls, spans, 'declaration', 'atomic');
+}
+
+// DUMMYHEAD = <name>;  — the keyword is followed directly by `=`; the
+// variable it creates is the name on the RHS, not a reference.
+function classifyDummyHead(tokens: Token[]): ClassifiedStatement {
+  const cls = base('dummyhead', 'dummyhead');
+  const eq = topLevelEq(tokens);
+  const { spans } = collectNames(tokens, eq === -1 ? 1 : eq + 1, tokens.length);
+  if (spans.length === 0) {
+    cls.malformed = 'dummyhead: no target name';
     return cls;
   }
   return withDefines(cls, spans, 'declaration', 'atomic');
@@ -1333,6 +1347,9 @@ function classifyDispatch(
   }
   if (keyword === 'singlefromstring') {
     return classifySingleFromString(tokens);
+  }
+  if (keyword === 'dummyhead') {
+    return classifyDummyHead(tokens);
   }
 
   // --- multi-response constructs -------------------------------

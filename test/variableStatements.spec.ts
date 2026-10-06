@@ -140,6 +140,14 @@ describe('classifyStatement — definition forms (§3)', () => {
     expect(s.references.every((r) => r.mode === 'always')).to.be.true;
   });
 
+  it('DUMMYHEAD = v — the RHS name is the declared variable', () => {
+    const s = c('dummyhead = total;');
+    expect(s.kind).to.equal('dummyhead');
+    expect(defNames(s)).to.deep.equal(['total']);
+    expect(s.defKind).to.equal('declaration');
+    expect(s.references).to.be.empty;
+  });
+
   it('MAKEFAMILY x = 10 — RHS is a count, not a name', () => {
     const s = c('makefamily x = 10;');
     expect(defNames(s)).to.deep.equal(['x']);
