@@ -100,6 +100,19 @@ undefined. See git log for the detailed history (2026-09-06).
 
 Still open:
 
+- **Macro signature help ignores strings when picking the active parameter**
+  (noted 2026-10-08, for the next version). With `#macro #macro1 (&p1 &p2)`,
+  typing `#macro1 ("1 2` already highlights `&p2`, though the whole string is
+  `&p1`. Cause: `GesstabsMacroSignatureHelpProvider`
+  (`src/providers/macroProviders.ts`, ~line 544) counts arguments with a plain
+  `split(/\s+/)`, and its `[^)]*` regex also stops at a `)` inside a string.
+  Fix: count with the same quote-aware logic `macroExpansion.ts` already uses
+  (`findMatchingParen` / its whitespace-and-quote splitter), treating an open
+  string as part of the current argument. Check the counting itself too: an
+  unfinished first argument (`#macro1 (abc`, no trailing space) yields
+  `typedCount = 1` and so seems to highlight `&p2` already; the active index
+  should only advance after the whitespace that ends an argument. Add a test
+  case for each.
 - **`#DOMACRO3`/`#DOMACRO4`'s own looping expansion** — unlike their filename
   argument (handled by the DocumentLink provider above), the parameter list
   itself comes from a CSV file rather than the source text, genuine file I/O
