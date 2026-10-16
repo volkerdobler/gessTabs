@@ -80,11 +80,6 @@ undefined. See git log for the detailed history (2026-09-06).
 
 Still open:
 
-- **`#DOMACRO3`/`#DOMACRO4`'s own looping expansion** — unlike their filename
-  argument (handled by the DocumentLink provider above), the parameter list
-  itself comes from a CSV file rather than the source text, genuine file I/O
-  that `macroExpansion.ts` deliberately stays free of (same split as
-  `externalNames.ts`/`externalNamesProvider.ts`). Not attempted.
 - **Formatter: align `=` in option lists, wrap long `TABLEFORMAT`/`CELLELEMENTS`
   flag lists** — deferred; no authoritative gessTabs style guide to formalize
   against, so today only mechanical whitespace/indent changes are made.

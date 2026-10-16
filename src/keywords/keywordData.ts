@@ -52,8 +52,8 @@ export const keywordData: KeywordEntry[] = [
     argsHint: '( <macroname> <filename> )',
     syntax: '#DOMACRO3 ( <macroname> <filename> )',
     description: {
-      en: 'Like #DOMACRO and #DOMACRO2, the #DOMACRO3 statement serves the repeated processing of macros. The macro parameters are taken from a CSV file, which is most easily created with a spreadsheet program. This provides an interface for staff who are not experienced in scripting.…',
-      de: 'Wie #DOMACRO und #DOMACRO2 dient das #DOMACRO3-Statement der wiederholten Abarbeitung von Macros. Die Macro-Parameter werden hierbei aus einer CSV-Datei entnommen, die am einfachsten mit einem Tabellenverarbeitungsprogramm erzeugt werden kann. Dadurch bietet es eine Schnittstelle zu MitarbeiterInnen, die nicht im Scripting versiert sind.…',
+      en: 'Like #DOMACRO and #DOMACRO2, #DOMACRO3 processes a macro repeatedly, but takes the parameters from a CSV file (easiest to create with a spreadsheet program, so people not versed in scripting can supply them). First parameter: the macro name; second: the path of the CSV file. Each line of the file generates one macro call, its fields (separated by ;) being the individual parameters. Example: #DOMACRO3( table macrocalls.csv ) with the lines a11;a12; and a11;a13; calls #table( a11 a12 ) and #table( a11 a13 ).',
+      de: 'Wie #DOMACRO und #DOMACRO2 dient #DOMACRO3 der wiederholten Abarbeitung eines Macros, entnimmt die Parameter aber einer CSV-Datei (am einfachsten mit einem Tabellenverarbeitungsprogramm erzeugt, als Schnittstelle zu MitarbeiterInnen, die nicht im Scripting versiert sind). Erster Parameter: der Macroname; zweiter: der Pfad der CSV-Datei. Jede Zeile der Datei generiert einen Macro-Aufruf, ihre Felder (durch ; getrennt) sind die einzelnen Parameter. Beispiel: #DOMACRO3( table macrocalls.csv ) mit den Zeilen a11;a12; und a11;a13; ruft #table( a11 a12 ) und #table( a11 a13 ) auf.',
     },
   },
   {
@@ -61,8 +61,8 @@ export const keywordData: KeywordEntry[] = [
     argsHint: '( <filename> )',
     syntax: '#DOMACRO4 ( <filename> )',
     description: {
-      en: 'The #DOMACRO4 statement has a similar background. The difference is that the name of the macro is not fixed in the script but is given as the first field in the CSV file. The call',
-      de: 'Einen ähnlichen Hintergrund hat auch das #DOMACRO4-Statement. Der Unterschied ist, dass der Name des Macros nicht im Script festgelegt wird, sondern als erstes Feld in der CSV-Datei benannt wird. Der Aufruf',
+      en: 'Like #DOMACRO3, but the macro name is not fixed in the script: it is the first field of each line of the CSV file, the remaining fields (separated by ;) are its parameters. Each line generates one macro call. Example: #DOMACRO4( macrocalls4.csv ) with the lines table;a11;a12; and tablea;a11;a13; calls #table( a11 a12 ) and #tablea( a11 a13 ).',
+      de: 'Wie #DOMACRO3, nur wird der Name des Macros nicht im Script festgelegt, sondern als erstes Feld jeder Zeile der CSV-Datei benannt; die übrigen Felder (durch ; getrennt) sind seine Parameter. Jede Zeile generiert einen Macro-Aufruf. Beispiel: #DOMACRO4( macrocalls4.csv ) mit den Zeilen table;a11;a12; und tablea;a11;a13; ruft #table( a11 a12 ) und #tablea( a11 a13 ) auf.',
     },
   },
   {
