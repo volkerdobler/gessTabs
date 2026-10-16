@@ -1,4 +1,5 @@
 import { expect } from 'chai';
+import * as path from 'path';
 import { Scope } from '../src/core/scope';
 import {
   checkEmptyVarlist,
@@ -22,6 +23,7 @@ import {
   checkValuelabelsAddSingleVar,
   checkOvercodeRangeSpan,
   computeDiagnostics,
+  checkIncludeTargets,
 } from '../src/core/diagnostics';
 
 const alwaysNotInComment = () => true;
@@ -1042,5 +1044,76 @@ describe('computeDiagnostics', () => {
     const issues = computeDiagnostics(lines, alwaysNotInComment);
     const codes = issues.map((i) => i.code).sort();
     expect(codes).to.deep.equal(['empty-varlist', 'unmatched-endmacro']);
+  });
+});
+
+describe('checkIncludeTargets', () => {
+  const root = path.resolve('/gesstabs-include-test');
+  const p = (name: string) => path.join(root, name);
+  const reader = (files: Record<string, string>) => (f: string) =>
+    files[f] === undefined ? undefined : files[f].split('\n');
+
+  it('reports nothing when the INCLUDE target exists', () => {
+    const issues = checkIncludeTargets(
+      p('main.tab'),
+      reader({
+        [p('main.tab')]: 'INCLUDE = vars.inc;',
+        [p('vars.inc')]: 'variable a = 1;',
+      })
+    );
+    expect(issues).to.deep.equal([]);
+  });
+
+  it('warns on the path of an INCLUDE whose target is missing', () => {
+    const issues = checkIncludeTargets(
+      p('main.tab'),
+      reader({ [p('main.tab')]: 'variable a = 1;\nINCLUDE = "missing.inc";' })
+    );
+    expect(issues).to.have.length(1);
+    expect(issues[0]).to.include({
+      line: 1,
+      startChar: 11,
+      length: 'missing.inc'.length,
+      severity: 'warning',
+      code: 'include-not-found',
+    });
+  });
+
+  it('ignores a missing file included only from a nested include', () => {
+    const issues = checkIncludeTargets(
+      p('main.tab'),
+      reader({
+        [p('main.tab')]: 'INCLUDE = a.inc;',
+        [p('a.inc')]: 'INCLUDE = missing.inc;',
+      })
+    );
+    expect(issues).to.deep.equal([]);
+  });
+
+  it('skips an INCLUDE in a known-inactive #ifdef branch', () => {
+    const issues = checkIncludeTargets(
+      p('main.tab'),
+      reader({
+        [p('main.tab')]:
+          '#define A\n#ifdef B\nINCLUDE = missing.inc;\n#end\n#undefine B',
+      })
+    );
+    expect(issues).to.deep.equal([]);
+  });
+
+  it('skips paths built from macro parameters or #EXPAND tokens', () => {
+    const issues = checkIncludeTargets(
+      p('main.tab'),
+      reader({ [p('main.tab')]: 'INCLUDE = tab&land&.inc;' })
+    );
+    expect(issues).to.deep.equal([]);
+  });
+
+  it('skips an INCLUDE inside a comment', () => {
+    const issues = checkIncludeTargets(
+      p('main.tab'),
+      reader({ [p('main.tab')]: '// INCLUDE = missing.inc;' })
+    );
+    expect(issues).to.deep.equal([]);
   });
 });

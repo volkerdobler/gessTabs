@@ -54,19 +54,6 @@ cheap syntactic checks are done — see git log for the detailed history
 
 Still open:
 
-- **Warn when an `INCLUDE = "file";` target doesn't exist** (noted
-  2026-10-15). Today a missing include file is silently skipped.
-  `resolveIncludeGraph` (`src/core/includeGraph.ts`, ~line 362) already
-  records an `include-not-found` entry in its `errors` list, but nothing
-  reads `errors` — no provider turns it into a diagnostic. Two gaps to
-  close: (1) the entry carries only the *missing* file and `line: 0`, not
-  the including file + line/range of the `INCLUDE` statement, so it can't be
-  placed in the editor yet — record the referencing location at the call
-  site; (2) publish it as a `Warning` from `diagnosticsProvider.ts` on the
-  open document's own `INCLUDE` lines (resolve the path the same way the
-  graph / `fileReferenceLinkProvider.ts` do, relative to the entry script).
-  Skip includes inside inactive `#ifdef` branches. Same idea could cover
-  `max-depth-exceeded`. Add tests for a present and a missing file.
 - **Warn about the ellipsis character `…` (U+2026) in strings** (noted
   2026-10-15). gessTabs renders it badly in the output — observed at least
   at the *start* of a string literal, possibly anywhere in one (to be

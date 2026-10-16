@@ -11,6 +11,7 @@ import * as vscode from 'vscode';
 import { getCachedScope } from '../core/scope';
 import {
   computeDiagnostics,
+  checkIncludeTargets,
   findLastDeclaredVariableBefore,
   checkEmptyVarlist,
   hasStrictVarlistEnabled,
@@ -19,6 +20,7 @@ import {
 } from '../core/diagnostics';
 import * as logger from '../util/logger';
 import { diagnosticsEnabled } from '../util/config';
+import { workspaceReader } from '../util/workspaceFiles';
 
 function toVscodeSeverity(
   severity: DiagnosticSeverity
@@ -58,6 +60,11 @@ export class GesstabsDiagnosticsManager {
         (line, char) => scope.isNotInComment(line, char),
         (line, char) => scope.isNormalScope(line, char)
       );
+      if (document.uri.scheme === 'file') {
+        issues.push(
+          ...checkIncludeTargets(document.uri.fsPath, workspaceReader())
+        );
+      }
 
       const diagnostics = issues.map((issue) => {
         const range = new vscode.Range(

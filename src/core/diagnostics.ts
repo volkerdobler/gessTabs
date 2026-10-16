@@ -20,7 +20,7 @@
 // already covers).
 
 import { scanBlockDirectives } from './directives';
-import { ResolvedLine } from './includeGraph';
+import { FileReader, ResolvedLine, resolveIncludeGraph } from './includeGraph';
 import { toLogicalStatements, locateInStatement } from './statements';
 import { classifyStatement } from './variableStatements';
 import {
@@ -1335,6 +1335,43 @@ export function checkOvercodeRangeSpan(
     if (lineText.includes(';')) inOvercode = false;
   });
 
+  return issues;
+}
+
+// --- INCLUDE target doesn't exist -------------------------------------------
+// A missing INCLUDE file used to be skipped silently (resolveIncludeGraph
+// records it, but nothing read its `errors`). Unlike every other check in
+// this file this one needs file I/O, so it takes a FileReader and is called
+// separately by the diagnostics provider rather than from computeDiagnostics.
+// The open document is resolved as its own entry file: an INCLUDE in an
+// #ifdef branch known to be inactive (its switch is #define'd/#undefine'd in
+// this document's own graph) is skipped; a switch set only from outside
+// (a parent script, a CLI -D flag) is uncertain, so both arms are checked.
+// Only errors raised by this document's own INCLUDE lines are reported —
+// a missing file deeper in the graph shows up when its includer is opened.
+// A path built from #EXPAND / &macro-param& tokens can't be resolved
+// statically and is never flagged. (max-depth-exceeded is not surfaced: it
+// is always raised by the deepest INCLUDE line, never the entry's own.)
+export function checkIncludeTargets(
+  entryFile: string,
+  readFile: FileReader
+): DiagnosticIssue[] {
+  const { errors } = resolveIncludeGraph(entryFile, readFile);
+  const issues: DiagnosticIssue[] = [];
+  errors.forEach((e) => {
+    const { from } = e;
+    if (!from || from.file !== entryFile) return;
+    if (/[#&]/.test(from.rawPath)) return;
+    if (e.kind !== 'include-not-found') return;
+    issues.push({
+      line: from.line,
+      startChar: from.startChar,
+      length: from.length,
+      severity: 'warning',
+      message: `INCLUDE-file not found: "${from.rawPath}" (gessTabs error #28).`,
+      code: 'include-not-found',
+    });
+  });
   return issues;
 }
 

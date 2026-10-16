@@ -33,11 +33,25 @@ export type IncludeGraphErrorKind =
   | 'include-cycle'
   | 'max-depth-exceeded';
 
+export interface IncludeReference {
+  file: string;
+  line: number;
+  startChar: number;
+  length: number;
+  // the path exactly as written in the INCLUDE statement
+  rawPath: string;
+}
+
 export interface IncludeGraphError {
   kind: IncludeGraphErrorKind;
   file: string;
   line: number;
   message: string;
+  // The INCLUDE statement that led to this error — for include-not-found /
+  // max-depth-exceeded, `file`/`line` above name the *target* (with line
+  // 0), which can't be placed in an editor. `startChar`/`length` span the
+  // path as written. Absent for the entry file itself (nothing included it).
+  from?: IncludeReference;
 }
 
 export interface IncludeGraphResult {
@@ -347,13 +361,14 @@ export function resolveIncludeGraph(
     return id;
   };
 
-  function visit(file: string, depth: number): void {
+  function visit(file: string, depth: number, from?: IncludeReference): void {
     if (depth > maxDepth) {
       errors.push({
         kind: 'max-depth-exceeded',
         file,
         line: 0,
         message: `INCLUDE nesting exceeded ${maxDepth} levels at "${file}"`,
+        from,
       });
       return;
     }
@@ -365,6 +380,7 @@ export function resolveIncludeGraph(
         file,
         line: 0,
         message: `INCLUDE-file not found: "${file}"`,
+        from,
       });
       return;
     }
@@ -500,7 +516,8 @@ export function resolveIncludeGraph(
 
       const includeMatch = text.match(includeRe);
       if (includeMatch) {
-        const target = path.resolve(path.dirname(file), includeMatch[1].trim());
+        const rawPath = includeMatch[1].trim();
+        const target = path.resolve(path.dirname(file), rawPath);
         if (ancestors.has(target)) {
           errors.push({
             kind: 'include-cycle',
@@ -510,7 +527,13 @@ export function resolveIncludeGraph(
           });
           continue;
         }
-        visit(target, depth + 1);
+        visit(target, depth + 1, {
+          file,
+          line: i,
+          startChar: text.indexOf(rawPath, text.indexOf('=')),
+          length: rawPath.length,
+          rawPath,
+        });
         continue;
       }
 
