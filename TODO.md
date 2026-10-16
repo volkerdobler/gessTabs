@@ -46,19 +46,16 @@ Still open:
 Runtime-block folding + unmatched-block diagnostics (`IFBLOCK`/`ELSEBLOCK`/
 `ENDBLOCK`/`WHILEBLOCK`/named-and-unnamed `SETFILTER`/`ENDFILTER`/
 `#STARTEXPORT`/`#ENDEXPORT`), the cross-INCLUDE half of
-`checkDuplicateDeclarations`, the `CALCULATECOLUMN` single-`CELLELEMENT`
-rule, the `HARMONICMEAN`/`GEOMETRICMEAN`/`MEDIAN` cell-option
-incompatibilities, and the `VALUELABELS … = ADD`/`OVERCODE` range-span
-cheap syntactic checks are done — see git log for the detailed history
-(2026-09-05).
+`checkDuplicateDeclarations` and of `checkDefineCaseMismatch`, the
+`CALCULATECOLUMN` single-`CELLELEMENT` rule, the `HARMONICMEAN`/
+`GEOMETRICMEAN`/`MEDIAN` cell-option incompatibilities, the `VALUELABELS
+… = ADD`/`OVERCODE` range-span cheap syntactic checks, the deprecated-
+keyword warning (scoped to `UseFilter`/`MakeFilter`, the only retired
+ones), the missing-`INCLUDE`-target warning and the `…`-in-strings warning
+are done — see git log for the detailed history.
 
 Still open:
 
-- **`checkDefineCaseMismatch`'s own cross-INCLUDE half** — unlike
-  duplicate-declaration, `#define` visibility isn't tracked by the
-  `VariableModel` at all; `includeGraph.ts`'s `DefineSet` only exists
-  within `resolveIncludeGraph`'s own single pass, not exposed per-file.
-  Own follow-up, not attempted yet.
 - **`COLUMNPERCENT100` with a multi-response variable** — turned out
   fuzzier than "needs the model to know which variables are `MULTIQ`" on
   inspection: `keywordData.ts`'s own `COLUMNPERCENT100` entry names *four*
@@ -68,23 +65,6 @@ Still open:
   of the four is the `MULTIQ` check this item originally asked for. Left
   out rather than coding a rule the source doesn't actually specify that
   precisely.
-- **Deprecated-keyword diagnostic** — flagging retired keywords. **Reading
-  `Anhang > Historisches > Abgelöste Befehle` directly (2026-09-05) changes
-  this significantly**: of the 11 keywords originally listed here, only
-  `UseFilter`/`MakeFilter` is actually described as no longer working
-  ("seit Version 2.82 außer Dienst gestellt"). Every other one —
-  `AutoClear`, `AutoOverSort` (+ `IndentAutoOversort`), `CalcColLowAccuracy`,
-  `CHIQUMinimum`/`ChiQUColMinumum`/`ChiQURowMinimum`, `LowerCase`,
-  `MarkCells` (alte Version), `Nominations`/`NominationsTitle`, `Outfile`,
-  `TableType`, `YSignifInFront` — is explicitly described as **still
-  supported**, just superseded by a newer/preferred mechanism (e.g.
-  "`LOWERCASE` gibt es also zwar noch in GESStabs, aber nur aus Gründen der
-  Kompatibilität"; `MARKCELLS` alte Version "wird gegenwärtig noch
-  unterstützt"; `Outfile`/`TableType`/`NominationsTitle` are just permanent
-  synonyms; `AutoOverSort` legally coexists with the newer `AutoSortTree`).
-  A diagnostic flagging all 11 as "deprecated" would misinform users about
-  10 of them. If this is still wanted, scope it to just `UseFilter`/
-  `MakeFilter` rather than the full original list.
 
 ---
 
@@ -112,84 +92,6 @@ Still open:
   `"both"` | `"syntaxOnly"` | `"descriptionOnly"`), shaped like the existing
   `gesstabs.hover.macroExpansionStyle`. Build only if a real "denser hovers while
   editing" need actually surfaces.
-
----
-
-## P4 — Learned from the gessq sibling extension (comparison, 2026-09-09)
-
-The `gessq` VS Code extension (adjacent repo, `../gessq`) was compared against
-this one to find settings-reactivity gaps and reusable patterns in each
-direction. The gessq→gesstabs findings that actually applied were folded
-into that extension already (a centralized `onDidChangeConfiguration`
-dispatcher and granular `hover.*` settings — both patterns this extension
-already had and gessq copied). These three go the other way — things this
-extension does today that gessq's newer, smaller codebase happens to do more
-cleanly, worth adopting here. All three are independent, opportunistic,
-no dependency on the P1 variable-model work. Ordered by value/effort:
-
-- **Cache `Scope` per document instead of rebuilding it on every request.**
-  `new Scope(document)` (`src/core/scope.ts`) does a full character-by-character
-  scan of the whole document (comment/string delimiter tracking) and is
-  currently reconstructed from scratch, uncached, at 13 call sites across 8
-  provider files: `diagnosticsProvider.ts` (×3), `externalNamesProvider.ts`,
-  `fileReferenceLinkProvider.ts`, `foldingProvider.ts`, `formatterProvider.ts`,
-  `keywordProviders.ts`, `macroProviders.ts` (×2), `semanticTokensProvider.ts`,
-  `tableElementsProvider.ts`, `variableHoverProvider.ts` — every hover,
-  completion, fold, format, semantic-token and diagnostics pass repeats the
-  same full-document scan. (Note: this is a different cache from the
-  file-content/parsed-program cache `buildWorkspaceIndex` already benefits
-  from — see the `extension.ts:592` comment "program/bytes caches make this
-  basically free the second time"; that one exists, `Scope` has nothing
-  equivalent.) gessq's `src/core/scope.ts` has exactly this: a module-level
-  `Map<uri, {version, scope}>`, a `getCachedScope(document)` that recomputes
-  only when `document.version` changed, and a `clearScopeCache(document?)`
-  wired to `onDidChangeTextDocument`/`onDidSaveTextDocument`/
-  `onDidCloseTextDocument` in `extension.ts` so closed documents don't leak.
-  Directly portable: same shape, same trigger (`document.version`), same
-  three-event wiring.
-- **Output channel + leveled logger, replacing `console.log`-gated-by-boolean
-  debug output.** `printDebugMessage` (`src/util/workspaceFiles.ts:17-21`)
-  writes to `console.log`, gated by the plain boolean `gesstabs.debugMode` —
-  invisible to a user unless they open the Extension Host's dev tools
-  (Help > Toggle Developer Tools), which is not a realistic ask when
-  diagnosing a bug report. gessq's `src/infra/logger.ts` is a small (65-line),
-  directly portable module: a leveled `LogLevel` (`off`/`error`/`warn`/`info`/
-  `debug`) written to a real `vscode.window.createOutputChannel(...)`,
-  falling back to `console` only when no channel is registered (keeps it
-  test-friendly), plus a `refreshLogLevelFromConfig()` that reads the new
-  `logLevel` setting and falls back to the existing boolean `debugMode`
-  (`true` → `debug`) for backward compatibility — so `gesstabs.debugMode`
-  would not need to be removed, just deprecated the same way gessq did it.
-  Would need a new `gesstabs.logLevel` setting in `package.json` alongside
-  the existing `gesstabs.debugMode`.
-- **Centralize config access into one typed module.**
-  `vscode.workspace.getConfiguration('gesstabs')` is currently called ad hoc
-  at 13+ sites across 8 files (`workspaceFiles.ts`, `diagnosticsProvider.ts`
-  ×2, `completionProviders.ts`, `externalNamesProvider.ts` ×2,
-  `variableHoverProvider.ts` ×2, `tableElementsProvider.ts`,
-  `macroProviders.ts` ×3, `keywordProviders.ts` ×3), each re-typing the key
-  string and default inline. Checked for drift across call sites — none
-  found today (e.g. every `hover.enabled` / `diagnostics.enabled` read uses
-  the same default) — but the pattern invites it, and none of the
-  string-valued settings (`hover.macroExpansionStyle`, `hover.language`) are
-  validated against their known enum values the way gessq's equivalent
-  accessors are (`hoverReferenceDetail()` / `codeLensDefinitions()` in
-  `gessq/src/infra/config.ts` explicitly fall back to the documented default
-  for an unrecognised string, e.g. a stale value left over from a removed
-  enum option or a hand-edited `settings.json`). Adopting gessq's pattern:
-  one `src/infra/config.ts`-style module, one small function per setting,
-  each documented with the exact key it reads. Larger surface than the two
-  items above (touches every provider file that reads config) but
-  mechanical, low-risk, and a prerequisite for making config-change
-  reactivity easy to audit in one place the way P4's first two items are.
-- **Release notes shown once after an update** (lower priority — a UX
-  nicety, not a correctness fix). gessq has `src/infra/releaseNotes.ts`: a
-  command plus a "show once after install/update" trigger gated by a
-  `releaseNotes.showOnUpdate` setting. gesstabs has no equivalent — the
-  detailed `docs/HISTORY.md` this repo already maintains is invisible to
-  users unless they go looking for it on disk/GitHub. Worth doing only if
-  actually surfacing changelog entries to users (not just future sessions
-  reading git log) is a goal; skip otherwise.
 
 ---
 
