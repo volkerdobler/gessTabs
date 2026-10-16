@@ -27,6 +27,7 @@ import {
   resolveExpandIncValueAt,
   findHashNameOccurrences,
   MacroSourceLine,
+  findActiveMacroArgument,
 } from '../src/core/macroExpansion';
 
 function src(text: string, file = '/main.tab'): MacroSourceLine[] {
@@ -853,5 +854,62 @@ describe('#EXPANDINC', () => {
     const line = '#expandinc #keyvalue 1000';
     expect(isExpandIncDefinitionNameAt(line, 14)).to.be.true;
     expect(isExpandIncDefinitionNameAt(line, 22)).to.be.false;
+  });
+});
+
+describe('findActiveMacroArgument', () => {
+  const at = (text: string) => findActiveMacroArgument(text);
+
+  it('is on the first argument right after the opening paren', () => {
+    expect(at('#macro1 (')).to.deep.equal({ name: 'macro1', index: 0 });
+  });
+
+  it('stays on an unfinished first argument until whitespace ends it', () => {
+    expect(at('#macro1 (abc')).to.deep.equal({ name: 'macro1', index: 0 });
+    expect(at('#macro1 (abc ')).to.deep.equal({ name: 'macro1', index: 1 });
+    expect(at('#macro1 (abc   def')).to.deep.equal({
+      name: 'macro1',
+      index: 1,
+    });
+  });
+
+  it('treats whitespace inside an open string as part of the argument', () => {
+    expect(at('#macro1 ("1 2')).to.deep.equal({ name: 'macro1', index: 0 });
+    expect(at("#macro1 ('a b c")).to.deep.equal({ name: 'macro1', index: 0 });
+    expect(at('#macro1 ("1 2"')).to.deep.equal({ name: 'macro1', index: 0 });
+    expect(at('#macro1 ("1 2" ')).to.deep.equal({ name: 'macro1', index: 1 });
+  });
+
+  it('ignores a ")" inside a string', () => {
+    expect(at('#scorecard("Total" "(1 eq 1)" ')).to.deep.equal({
+      name: 'scorecard',
+      index: 2,
+    });
+  });
+
+  it('counts an empty quoted argument', () => {
+    expect(at('#m("" ')).to.deep.equal({ name: 'm', index: 1 });
+  });
+
+  it('keeps a plain nested paren within the current argument', () => {
+    expect(at('#m(a (1 eq')).to.deep.equal({ name: 'm', index: 1 });
+    expect(at('#m(a (1 eq 1) ')).to.deep.equal({ name: 'm', index: 2 });
+  });
+
+  it('reports the innermost open macro call', () => {
+    expect(at('#outer(x #inner(a ')).to.deep.equal({
+      name: 'inner',
+      index: 1,
+    });
+    expect(at('#outer(x #inner(a b) ')).to.deep.equal({
+      name: 'outer',
+      index: 2,
+    });
+  });
+
+  it('returns undefined once the call is closed or there is none', () => {
+    expect(at('#m(a b)')).to.equal(undefined);
+    expect(at('variable a = (1')).to.equal(undefined);
+    expect(at('#m')).to.equal(undefined);
   });
 });

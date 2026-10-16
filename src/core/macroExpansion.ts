@@ -271,6 +271,58 @@ export function findMacroCalls(text: string): MacroCall[] {
   ];
 }
 
+// For signature help: the innermost still-open "#name(" call in the text
+// before the cursor, and which of its arguments the cursor is in. Same
+// quote handling as findMatchingParen / parseTokenList — a quoted string
+// is one argument, whatever whitespace or ")" it contains, and an
+// unfinished string still belongs to the current argument. An argument only
+// counts as done once whitespace outside a string follows it, so `#m(abc`
+// is still on the first argument and `#m(abc ` on the second. A plain "("
+// inside an argument (`#m((1 eq 1)`) nests without starting a new call.
+export function findActiveMacroArgument(
+  textBeforeCursor: string
+): { name: string; index: number } | undefined {
+  interface OpenParen {
+    name?: string;
+    index: number; // completed arguments so far (macro calls only)
+    inToken: boolean;
+  }
+  const stack: OpenParen[] = [];
+  let quote: string | null = null;
+  const text = textBeforeCursor;
+  for (let i = 0; i < text.length; i++) {
+    const ch = text[i];
+    const call = stack.length > 0 ? stack[stack.length - 1] : undefined;
+    if (quote) {
+      if (ch === quote) quote = null;
+    } else if (ch === '"' || ch === "'") {
+      quote = ch;
+      if (call) call.inToken = true;
+    } else if (ch === '(') {
+      const m = text.slice(0, i).match(/#([A-Za-z_][\w.]*)\s*$/);
+      if (call) call.inToken = true;
+      stack.push({ name: m ? m[1] : undefined, index: 0, inToken: false });
+    } else if (ch === ')') {
+      stack.pop();
+    } else if (/\s/.test(ch)) {
+      if (call && call.inToken) {
+        call.index++;
+        call.inToken = false;
+      }
+    } else if (call) {
+      call.inToken = true;
+    }
+  }
+  // A plain "(" nested inside an argument doesn't move the macro's own
+  // argument index: report the innermost enclosing macro call as it stood
+  // when that nested paren opened.
+  for (let s = stack.length - 1; s >= 0; s--) {
+    const { name, index } = stack[s];
+    if (name !== undefined) return { name, index };
+  }
+  return undefined;
+}
+
 // A "1:100"-shaped range token in a #DOMACRO/#DOMACRO2 looplist (manual:
 // "Solche Zahlenfolgen kann man ... durch die Form 1 : 100 abkürzen") — the
 // space around ":" is optional, both "1:100" and "1 : 100" appear in the

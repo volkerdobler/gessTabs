@@ -30,6 +30,7 @@ import {
   findExpandIncDefinitions,
   isExpandIncDefinitionNameAt,
   resolveExpandIncValueAt,
+  findActiveMacroArgument,
   MacroDefinition,
 } from '../core/macroExpansion';
 import {
@@ -510,8 +511,8 @@ export class GesstabsMacroSignatureHelpProvider
       const textBeforeCursor = document
         .lineAt(position.line)
         .text.slice(0, position.character);
-      const match = textBeforeCursor.match(/#([A-Za-z_]\w*)\s*\(([^)]*)$/);
-      if (!match) return null;
+      const active = findActiveMacroArgument(textBeforeCursor);
+      if (!active) return null;
 
       const scope = getCachedScope(document);
       if (!scope.isNotInComment(position.line, position.character)) {
@@ -524,9 +525,9 @@ export class GesstabsMacroSignatureHelpProvider
       const { index, macroIndex } = await buildMacroContext(document);
       if (token && token.isCancellationRequested) return null;
 
-      const target = macroIndex.get(match[1].toLowerCase());
+      const target = macroIndex.get(active.name.toLowerCase());
       if (!target) {
-        logger.debug(diagnoseMissingMacro(document, match[1], index));
+        logger.debug(diagnoseMissingMacro(document, active.name, index));
         return null;
       }
 
@@ -541,11 +542,8 @@ export class GesstabsMacroSignatureHelpProvider
       help.signatures = [signature];
       help.activeSignature = 0;
 
-      const typedArgs = match[2].trim();
-      const typedCount =
-        typedArgs.length > 0 ? typedArgs.split(/\s+/).length : 0;
       help.activeParameter = Math.min(
-        typedCount,
+        active.index,
         Math.max(target.params.length - 1, 0)
       );
       return help;
