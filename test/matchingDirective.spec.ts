@@ -52,9 +52,15 @@ describe('findMatchingDirectiveLine', () => {
       const c = withComment[line].indexOf('//');
       return c === -1 || char < c;
     };
-    expect(
-      findMatchingDirectiveLine(withComment, 3, notInComment)
-    ).to.be.undefined;
+    expect(findMatchingDirectiveLine(withComment, 3, notInComment)).to.be
+      .undefined;
     expect(findMatchingDirectiveLine(withComment, 0, notInComment)).to.equal(2);
+  });
+
+  it('pairs #IFDEF with #END across an #ELSE, and an empty block too', () => {
+    const lines = ['#ifdef X', 'a;', '#else', 'b;', '#end', '#ifdef Y', '#end'];
+    expect(findMatchingDirectiveLine(lines, 0)).to.equal(4);
+    expect(findMatchingDirectiveLine(lines, 4)).to.equal(0);
+    expect(findMatchingDirectiveLine(lines, 5)).to.equal(6);
   });
 });

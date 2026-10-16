@@ -32,14 +32,40 @@ describe('findFoldRanges', () => {
       return c === -1 || char < c;
     };
     expect(findFoldRanges(lines, notInComment)).to.deep.equal([
-      { startLine: 0, endLine: 2, kind: 'conditional' },
+      { startLine: 0, endLine: 1, kind: 'conditional' },
     ]);
   });
 
-  it('folds an #IFDEF/#END block', () => {
+  it('folds an #IFDEF/#END block, keeping the #end line visible', () => {
     const lines = ['#ifdef FOO', 'variable x = 1;', '#end'];
     expect(findFoldRanges(lines)).to.deep.equal([
+      { startLine: 0, endLine: 1, kind: 'conditional' },
+    ]);
+  });
+
+  it('folds each branch of #IFDEF/#ELSE/#END separately', () => {
+    const lines = ['#ifdef FOO', 'a;', 'b;', '#else', 'c;', 'd;', '#end'];
+    expect(findFoldRanges(lines)).to.deep.equal([
       { startLine: 0, endLine: 2, kind: 'conditional' },
+      { startLine: 3, endLine: 5, kind: 'conditional' },
+    ]);
+  });
+
+  it('skips an empty branch and splits only the innermost conditional at #else', () => {
+    const lines = [
+      '#ifdef FOO', // 0
+      '#else', // 1 — empty if-branch, no range
+      '#ifdef BAR', // 2
+      'a;', // 3
+      '#else', // 4
+      'b;', // 5
+      '#end', // 6
+      '#end', // 7
+    ];
+    expect(findFoldRanges(lines)).to.deep.equal([
+      { startLine: 2, endLine: 3, kind: 'conditional' },
+      { startLine: 4, endLine: 5, kind: 'conditional' },
+      { startLine: 1, endLine: 6, kind: 'conditional' },
     ]);
   });
 
@@ -52,8 +78,8 @@ describe('findFoldRanges', () => {
       '#end',
     ];
     expect(findFoldRanges(lines)).to.deep.equal([
-      { startLine: 1, endLine: 3, kind: 'conditional' },
-      { startLine: 0, endLine: 4, kind: 'conditional' },
+      { startLine: 1, endLine: 2, kind: 'conditional' },
+      { startLine: 0, endLine: 3, kind: 'conditional' },
     ]);
   });
 
@@ -69,7 +95,7 @@ describe('findFoldRanges', () => {
     ].forEach((opener) => {
       const ranges = findFoldRanges([opener, 'x;', '#end']);
       expect(ranges, opener).to.deep.equal([
-        { startLine: 0, endLine: 2, kind: 'conditional' },
+        { startLine: 0, endLine: 1, kind: 'conditional' },
       ]);
     });
   });
@@ -119,23 +145,29 @@ describe('findFoldRanges', () => {
       'endblock',
     ];
     expect(findFoldRanges(lines)).to.deep.equal([
-      { startLine: 1, endLine: 3, kind: 'block' },
-      { startLine: 0, endLine: 4, kind: 'block' },
+      { startLine: 1, endLine: 2, kind: 'block' },
+      { startLine: 0, endLine: 3, kind: 'block' },
     ]);
   });
 
-  it('does not fold an unclosed IFBLOCK, and ELSEBLOCK never opens its own fold', () => {
+  it('does not fold an unclosed IFBLOCK', () => {
     expect(findFoldRanges(['ifblock x eq 1 then', 'compute y = 1;'])).to.be
       .empty;
+  });
+
+  it('folds each branch of IFBLOCK/ELSEBLOCK/ENDBLOCK separately', () => {
     const lines = [
       'ifblock x eq 1 then',
       'compute y = 1;',
+      'compute z = 1;',
       'elseblock',
       'compute y = 2;',
-      'endblock',
+      'compute z = 2;',
+      'endblock;',
     ];
     expect(findFoldRanges(lines)).to.deep.equal([
-      { startLine: 0, endLine: 4, kind: 'block' },
+      { startLine: 0, endLine: 2, kind: 'block' },
+      { startLine: 3, endLine: 5, kind: 'block' },
     ]);
   });
 

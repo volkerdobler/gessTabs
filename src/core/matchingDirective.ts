@@ -5,13 +5,13 @@
 // of keyword pairs, so #MACRO/#ENDMACRO and the other gessTabs block
 // delimiters need their own command.
 //
-// The pairing is exactly what code folding already computes, so this
-// reuses findFoldRanges (nesting-aware, comment-aware) and covers every
+// The pairing is the one code folding is built on, so this reuses
+// findBlockPairs (nesting-aware, comment-aware) and covers every
 // block kind it does: #MACRO/#ENDMACRO, the #IFDEF-family/#END,
 // #STARTEXPORT/#ENDEXPORT, IFBLOCK|WHILEBLOCK/ENDBLOCK and
 // SETFILTER/ENDFILTER.
 
-import { findFoldRanges } from './foldingRanges';
+import { findBlockPairs } from './foldingRanges';
 
 // The line holding the delimiter that pairs with the one on `cursorLine`
 // — its #ENDMACRO for a #MACRO line and vice versa — or undefined when
@@ -24,7 +24,7 @@ export function findMatchingDirectiveLine(
   cursorLine: number,
   isNotInComment: (line: number, char: number) => boolean = () => true
 ): number | undefined {
-  const ranges = findFoldRanges(lines, isNotInComment);
+  const ranges = findBlockPairs(lines, isNotInComment);
   const closes = ranges.find((r) => r.endLine === cursorLine);
   if (closes) return closes.startLine;
   const opens = ranges.find((r) => r.startLine === cursorLine);
