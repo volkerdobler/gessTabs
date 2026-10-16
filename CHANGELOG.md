@@ -2,6 +2,31 @@
 
 All notable changes to the "GESStabs" extension will be documented in this file (last change first).
 
+## 1.0.5
+
+### Diagnostics
+
+- New warning when an `INCLUDE = "file";` target doesn't exist (GESStabs reports this as error #28 at run time). Until now a missing include file was skipped silently. The path in the `INCLUDE` statement is underlined. Not checked: an `INCLUDE` in an `#ifdef` branch that is known not to run, in a comment, or with a path built from `&param&`/`#EXPAND` tokens.
+- New warning for the ellipsis character `…` inside strings: GESStabs renders it badly in the output. A quick fix replaces it with `...`, one at a time or all in the file at once.
+
+### Variables
+
+- `DUMMYHEAD = <name>` now declares `<name>`. Go to Definition and the hover on later references (e.g. in `LABELS`) used to find nothing.
+
+### Folding
+
+- `#ifdef … #else … #end` and `IFBLOCK … ELSEBLOCK … ENDBLOCK` now fold per branch, like `#if`/`#else`/`#endif` in C/C++: the `if` part and the `else` part each have their own fold, so the `#else`/`ELSEBLOCK` line stays visible. Folding both leaves only the `#ifdef`/`#else`/`#end` lines.
+- The closing line stays visible when folding: `#end`, `ENDBLOCK`, `#ENDMACRO`/`#MACROEND`.
+
+### Macros
+
+- Signature help for macro calls now picks the right parameter when arguments contain strings: `#macro1 ("1 2` still highlights the first parameter (it used to jump to the second at the space inside the string), and a `)` inside a string no longer ends the call. A parameter only counts as done once a space follows it, so `#macro1 (abc` is still on the first one.
+
+### Keyword hover
+
+- Fixed keyword descriptions that showed a fragment of another keyword's text, rewritten from the online manual: `VALUELABELS`, `VARTITLE`, `ELSE`, `ELSEBLOCK`, `EXTREME`, `LSLICE`, `COPYFILTER`, `NIL`, `ALPHA`, `AUTOSIGNFORMAT`, `CELLELEMENT`, `SIZE`.
+- Added descriptions for `IF`, `IFBLOCK` and `ENDBLOCK`, completed `#DOMACRO3`/`#DOMACRO4` (they stopped mid-sentence), and corrected the syntax of `COMPUTE` (it only showed the `COMPUTE LOAD` variant) and `VALUELABELS` (cut off; now with `ADD`, `COPY`/`AS`, `LABELFROMFILE` and the label options).
+
 ## 1.0.4
 
 ### Diagnostics
