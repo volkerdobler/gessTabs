@@ -2,21 +2,21 @@ import { expect } from 'chai';
 import { findFoldRanges } from '../src/core/foldingRanges';
 
 describe('findFoldRanges', () => {
-  it('folds a #MACRO/#ENDMACRO block', () => {
+  it('folds a #MACRO/#ENDMACRO block, keeping the #endmacro line visible', () => {
     const lines = [
       '#macro #example( &parameter )',
       'compute  &parameter = 1;',
       '#endmacro',
     ];
     expect(findFoldRanges(lines)).to.deep.equal([
-      { startLine: 0, endLine: 2, kind: 'macro' },
+      { startLine: 0, endLine: 1, kind: 'macro' },
     ]);
   });
 
   it('folds #MACROEND as an alternate closer', () => {
     const lines = ['#macro #example( &p )', 'compute &p = 1;', '#macroend'];
     expect(findFoldRanges(lines)).to.deep.equal([
-      { startLine: 0, endLine: 2, kind: 'macro' },
+      { startLine: 0, endLine: 1, kind: 'macro' },
     ]);
   });
 
@@ -110,8 +110,8 @@ describe('findFoldRanges', () => {
       '#endmacro',
     ];
     expect(findFoldRanges(lines)).to.deep.equal([
-      { startLine: 1, endLine: 3, kind: 'macro' },
-      { startLine: 0, endLine: 5, kind: 'macro' },
+      { startLine: 1, endLine: 2, kind: 'macro' },
+      { startLine: 0, endLine: 4, kind: 'macro' },
     ]);
   });
 
@@ -122,7 +122,12 @@ describe('findFoldRanges', () => {
   });
 
   it('ignores a directive-shaped line inside a comment via isCodeLine', () => {
-    const lines = ['{ #macro #old( &p ) }', '#macro #real( &p )', '#endmacro'];
+    const lines = [
+      '{ #macro #old( &p ) }',
+      '#macro #real( &p )',
+      'compute &p = 1;',
+      '#endmacro',
+    ];
     const isCodeLine = (i: number) => i !== 0;
     expect(findFoldRanges(lines, isCodeLine)).to.deep.equal([
       { startLine: 1, endLine: 2, kind: 'macro' },

@@ -172,9 +172,10 @@ export function findBlockPairs(
 }
 
 // Conditionals and IFBLOCKs fold per branch, ending on the line before the
-// next #else/ELSEBLOCK or the closer (see the file header); every other
-// block folds as one range including its closer. A branch that would hide
-// no line yields no range.
+// next #else/ELSEBLOCK or the closer (see the file header). #MACRO keeps
+// its #ENDMACRO/#MACROEND visible the same way (one branch, no #else).
+// #STARTEXPORT and SETFILTER blocks still fold as one range including
+// their closer. A branch that would hide no line yields no range.
 export function findFoldRanges(
   lines: string[],
   isNotInComment: (line: number, char: number) => boolean = () => true
@@ -182,7 +183,7 @@ export function findFoldRanges(
   const ranges: FoldRange[] = [];
   findBlockPairs(lines, isNotInComment).forEach((pair) => {
     const { kind } = pair;
-    if (kind !== 'conditional' && kind !== 'block') {
+    if (kind === 'export' || kind === 'filter') {
       ranges.push({ startLine: pair.startLine, endLine: pair.endLine, kind });
       return;
     }
