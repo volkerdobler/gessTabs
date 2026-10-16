@@ -99,17 +99,18 @@ Still open:
 
 - **Keyword database gaps.** `src/keywords/keywordData.ts` is the hand-maintained
   source of record now (the manuals moved online and won't be re-extracted).
-  Patch entries directly as gaps/errors are noticed. Known issue: some
-  `description`s are extraction artifacts — a fragment of a neighbouring
-  keyword's text, starting mid-sentence. `VALUELABELS` was one (fixed
-  2026-10-16); `VARTITLE` is another (its text is about `TABSELECTBYCODE
-  VARTITLE`). A scan for `en` descriptions starting lowercase gives 32
-  candidates to check against the manual (not all are necessarily broken):
-  ALLOWASYMMETRY, CARD, COLMEANRANK, COLPERCENTIRANK, COLPERCENTRANK,
-  COMPUTE, COPYFILTER, COUNT, DATE, DIV, ELSE, EXP, EXTREME, HTMLDOCUMENT,
-  HTMLHEADER, INDEXCHARS, LSLICE, MISSINGCHAR, NEG, NIL, PHYSICALRECORDS,
-  PROJECTION, RECODE, SELECT, SPACE, TABSELECT, USEMISSING, VARGROUP,
-  VARNAME, VARTITLE, WEIGHT, WEIGHTOUT.
+  Patch entries directly as gaps/errors are noticed. Description fragments
+  copied from a neighbouring keyword (extraction artifacts) were swept on
+  2026-10-16 — scanning for texts that start mid-sentence, with an article/
+  preposition or with code — and fixed from the manual (`VALUELABELS`,
+  `VARTITLE`, `ELSE`, `ELSEBLOCK`, `EXTREME`, `LSLICE`, `COPYFILTER`, `NIL`,
+  `ALPHA`, `AUTOSIGNFORMAT`, `CELLELEMENT`, `SIZE`; plus the empty `IF`/
+  `IFBLOCK`/`ENDBLOCK` and `COMPUTE`'s syntax). A fragment that happens to
+  start like a real sentence would not have been caught. The bigger gap:
+  **1132 of 1514 entries have no description at all** (only a name, often
+  no syntax either) — fill them from the manual as keywords come up, most-
+  used first. Descriptions are rendered as Markdown in the hover: wrap
+  anything with backslashes in backticks.
 - **Mine the online manual further.** It has substantially more detail than the
   extension currently reflects — worth revisiting during any refactor, not just
   the P1 rework.

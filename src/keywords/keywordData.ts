@@ -558,10 +558,11 @@ export const keywordData: KeywordEntry[] = [
   },
   {
     name: 'ALPHA',
-    syntax: 'ALPHA <varlist> = YES;',
+    syntax:
+      'ALPHA <varlist> = YES;\nSINGLEQ <varname> = [ TITLE "String" ] ALPHA;',
     description: {
-      en: '1 100 20 ; In this case the names of politicians are punched in the fields 1-20, 21-40, etc. which makes coding by hand superfluous. If using input from a COLBIN file then the key word ALPHA can obviously not be used. Generally the use of an asterisk instead of the initial column is processed the same as in a SINGLEQ. MULTIQs can also be defined as relocatable.…',
-      de: '',
+      en: 'defines a variable as alphanumeric in the input: the field in the data set is read as a string, not as a number. Strings can be of any length, all characters are significant. Internally the variable still gets numeric values in order of first appearance (first string = 1, second = 2, ...): the data holds the VALUELABEL text, and an unknown text creates a new label. Case is ignored for label identity unless ALPHACASESENSITIVE says otherwise; labels defined with VALUELABELS count as found first.',
+      de: 'definiert eine Variable als alphanumerisch in der Eingabe: Das Inputfeld im Datensatz wird nicht numerisch, sondern als Zeichenkette interpretiert. Die Zeichenketten dürfen beliebig lang sein, alle Zeichen sind signifikant. Intern erhält die Variable dennoch numerische Werte in der Reihenfolge des Auftretens (erste Zeichenkette = 1, zweite = 2, ...): Im Datensatz steht der VALUELABEL-Text, ein unbekannter Text erzeugt ein neues Label. Groß-/Kleinschreibung ist für die Identität der Labels irrelevant, es sei denn, ALPHACASESENSITIVE legt anderes fest; mit VALUELABELS definierte Labels gelten als zuerst vorgefunden.',
     },
   },
   {
@@ -932,8 +933,8 @@ export const keywordData: KeywordEntry[] = [
     name: 'AUTOSIGNFORMAT',
     syntax: 'AUTOSIGNFORMAT = "<formatstring>";',
     description: {
-      en: '5. Logging of the significance calculation 460: STATTESTDUMP. Subject of the significance test: TestColumns. If you do not specify any TESTCOLUMNS, all columns are tested against each other per variable.',
-      de: '5.Protokollierung der Signifikanzberechnung 460: STATTESTDUMP Gegenstand des Signifikanztests TestColumns Gibt man keine TESTCOLUMNS an, werden je Variable alle Spalten gegeneinander getestet.',
+      en: "formats the significance letters shown in the label boxes (VALUELABELS) when a significance test is requested. By default only the letter is shown. All characters of the format string are taken over; # is replaced by the INDEXCHAR. Example: `AUTOSIGNFORMAT = '#\\';` adds a line break after the index char (index char at the start of the label), `AUTOSIGNFORMAT = '\\#';` one before it (index char at the end).",
+      de: "formatiert die in den Labelkästchen (VALUELABELS) angezeigten Signifikanzbuchstaben bei angefordertem Signifikanztest. Standardmäßig wird nur der Buchstabe übernommen. Alle Zeichen des Formatstrings werden übernommen; # wird durch den INDEXCHAR ersetzt. Beispiel: `AUTOSIGNFORMAT = '#\\';` erzeugt nach dem Indexchar einen Zeilenvorschub (Indexchar am Anfang des Labels), `AUTOSIGNFORMAT = '\\#';` einen davor (Indexchar am Ende des Labels).",
     },
   },
   {
@@ -1438,10 +1439,10 @@ export const keywordData: KeywordEntry[] = [
   },
   {
     name: 'CELLELEMENT',
-    syntax: '',
+    syntax: 'CELLELEMENT = <cellelement>;',
     description: {
-      en: '[ MINIMUM <number> ] minimum percentage value to be shown in the PIE',
-      de: '[ MINIMUM <number> ] minimale im PIE abzubildende %-Zahl',
+      en: "singular form of CELLELEMENTS, e.g. CELLELEMENT = COLUMNPERCENT;. Also the general term for one element of a table cell's content (ABSOLUTE, COLUMNPERCENT, MEAN, ...).",
+      de: 'Einzahlform von CELLELEMENTS, z.B. CELLELEMENT = COLUMNPERCENT;. Zugleich die allgemeine Bezeichnung für ein Element des Zelleninhalts einer Tabelle (ABSOLUTE, COLUMNPERCENT, MEAN, ...).',
     },
   },
   {
@@ -2452,7 +2453,8 @@ export const keywordData: KeywordEntry[] = [
   },
   {
     name: 'COMPUTE',
-    syntax: 'COMPUTE LOAD <zielvar> = <varlist> ;',
+    syntax:
+      'COMPUTE <result> { <result> }*n = <arithmetic_expression> ;\nCOMPUTE [ ADD | ALPHA | ASCEND | DESCEND | CONCAT | COPY | ELIMINATE | INIT | LOAD | ... ] ...',
     description: {
       en: 'allows the new calculation of variables by means of four basic arithmetical operations. New variables can be defined or existent variables can have their values changed. If there is a variable in the left half of the COMPUTE statement which the compiler does not yet recognise then it is produced. This is then valid as the "current" variable.…',
       de: 'Neuberechnung atomarer Variablen COMPUTE ADD Ergänzende Speicherung definierter Werte COMPUTE ALPHA Verknüpfung von String-Elementen COMPUTE ASCEND/DESCEND Sortierung der Werte (vor deren Übertrag in Zielvariable) COMPUTE CONCAT Verkettung von Labels und Textkonstanten COMPUTE COPY Kopieren von Variablenbereichen COMPUTE ELIMINATE Löschen einer definierten Wertemenge COMPUTE INIT Übertrag einer…',
@@ -2742,10 +2744,10 @@ export const keywordData: KeywordEntry[] = [
   },
   {
     name: 'COPYFILTER',
-    syntax: '',
+    syntax: 'COPYFILTER <varname> = <varname>;',
     description: {
-      en: 'defines a variable (or list of variables) as filtered according to a condition: the filtered variables then never flow into the tables if the condition is FALSE. The most frequently used use is probably the filtering of questionnaires. This filtering can also be used to steer GESS input. SETFILTER is however also useful for limiting the valid range for VARGROUPS and VARFAMILY.…',
-      de: '',
+      en: 'passes the (possibly complex) SETFILTER filtering of the variable on the right on to the variable on the left, typically a newly computed one. Mostly useful for tabulation purposes. IGNORESETFILTER = YES; runs the script as if there were no SETFILTER/COPYFILTER/ENDFILTER at all.',
+      de: 'vererbt die (ggf. komplexe) SETFILTER-Filterung der rechts genannten Variablen an die links genannte, typischerweise eine neu berechnete Variable. Dies ist überwiegend für Tabellierungszwecke sinnvoll. IGNORESETFILTER = YES; führt das Skript so aus, als seien keinerlei SETFILTER/COPYFILTER/ENDFILTER vorhanden.',
     },
   },
   {
@@ -3461,18 +3463,19 @@ export const keywordData: KeywordEntry[] = [
   },
   {
     name: 'ELSE',
-    syntax: '',
+    syntax: 'IF <condition> THEN <statement> [ ELSE <statement> ] ;',
     description: {
-      en: 'x = e / ( d + c ); The ELSE part of the command can be omitted, e.g. IF a EQ 3 THEN d = 5; Compared with the set operator IN easily allows the test for the existence of values in multi-response variables. The test can look like this: IF 4 IN famvar_01 THEN ... A variable must always be on the right side.…',
-      de: "CONCAT neue = 'xx' '-' 'yy' '-' xx1 '-' x5; übersichtlicher ist oft die Verwendung von IFBLOCK/ELSEBLOCK/ENDBLOCK anstelle von IF/ELSE: IFBLOCK [ 2 3 ] IN x7 THEN COMPUTE CONCAT neue = 'aa' '-' 'bb' '-' xx1 '-' x5; COMPUTE SUBSTR PART = neue 1 20;",
+      en: 'introduces the alternative branch of an IF statement: executed when the condition is not true. The THEN and ELSE parts are written like a COMPUTE formula. The ELSE part can be omitted. Example: IF a GE 3 THEN x = c * ( 4 - d ) ELSE x = e / ( d + c ); For several statements per branch use IFBLOCK/ELSEBLOCK/ENDBLOCK.',
+      de: 'leitet den Alternativzweig einer IF-Anweisung ein: wird ausgeführt, wenn die Bedingung nicht zutrifft. THEN- und ELSE-Teil werden wie eine COMPUTE-Formel geschrieben. Der ELSE-Teil kann auch weggelassen werden. Beispiel: IF a GE 3 THEN x = c * ( 4 - d ) ELSE x = e / ( d + c ); Für mehrere Anweisungen je Zweig gibt es IFBLOCK/ELSEBLOCK/ENDBLOCK.',
     },
   },
   {
     name: 'ELSEBLOCK',
-    syntax: '',
+    syntax:
+      'IFBLOCK <condition> THEN\n  <statements>\n[ ELSEBLOCK\n  <statements> ]\nENDBLOCK;',
     description: {
-      en: '//several computes/ifs etc. can appear here ENDBLOCK; The ELSEBLOCK component is optional. Affected by this logic are: all COMPUTE, all forms of IF (IF ... THEN, IF ... PRINT 48, IF ... LOAD), all RECODE, COUNT and MEAN. All other statements ignore the IFBLOCK directives. Several IFBLOCKs can be nested within each other.…',
-      de: '//hier können mehrere computes/ifs etc stehen ENDBLOCK; Die Komponente ELSEBLOCK ist optional. Von dieser Logik betroffen sind: alle COMPUTEs, alle Formen von IF (IF ... THEN, IF ... PRINT 48, IF ... LOAD) alle RECODEs, COUNT und MEAN. Alle übrigen Statements ignorieren die IFBLOCK-Anweisungen. Mehrere IFBLOCKs können ineinander geschachtelt werden.…',
+      en: 'starts the optional alternative part of an IFBLOCK: its statements run when the IFBLOCK condition is not true. Affected by this logic are all COMPUTEs, all forms of IF (IF ... THEN, IF ... PRINT, IF ... LOAD), all RECODEs, COUNT and MEAN; all other statements ignore the IFBLOCK directives. IFBLOCKs can be nested up to a depth of 512.',
+      de: 'leitet den optionalen Alternativteil eines IFBLOCK ein: Dessen Anweisungen laufen, wenn die IFBLOCK-Bedingung nicht zutrifft. Von dieser Logik betroffen sind alle COMPUTEs, alle Formen von IF (IF ... THEN, IF ... PRINT, IF ... LOAD), alle RECODEs, COUNT und MEAN; alle übrigen Statements ignorieren die IFBLOCK-Anweisungen. IFBLOCKs können bis zu einer Tiefe von 512 geschachtelt werden.',
     },
   },
   {
@@ -3533,10 +3536,11 @@ export const keywordData: KeywordEntry[] = [
   },
   {
     name: 'ENDBLOCK',
-    syntax: '',
+    syntax:
+      'IFBLOCK <condition> THEN\n  <statements>\n[ ELSEBLOCK\n  <statements> ]\nENDBLOCK;',
     description: {
-      en: '',
-      de: '',
+      en: 'closes an IFBLOCK (or WHILEBLOCK) block.',
+      de: 'schließt einen IFBLOCK- (bzw. WHILEBLOCK-) Block ab.',
     },
   },
   {
@@ -4186,10 +4190,10 @@ export const keywordData: KeywordEntry[] = [
   },
   {
     name: 'EXTREME',
-    syntax: '',
+    syntax: 'TABLE = ... SORT <criterion> EXTREME <number> ;',
     description: {
-      en: 'of the distribution (EXTREME) can be selected. Examples: TABLE = a MEAN( b ) BY c SORT MEAN PANE 2 EXTREME 20; // 20 from each end of the distribution. TABLE = a BY c SORT ABSOLUTE TOP 80; // the top 80',
-      de: 'der Verteilung (EXTREME) können selektiert werden. Beispiele: TABLE = a MEAN( b ) BY c SORT MEAN PANE 2 EXTREME 20; // jeweils 20 von jedem Ende der Verteilung TABLE = a BY c SORT ABSOLUTE TOP 80; // die obersten 80',
+      en: 'with SORT, limits the output to both ends of the distribution: <number> rows from each end (TOP selects the upper part, BOTTOM the lower part). Example: TABLE = a MEAN( b ) BY c SORT MEAN PANE 2 EXTREME 20; // 20 from each end of the distribution',
+      de: 'beschränkt im Zusammenhang mit SORT die Ausgabe auf die beiden Enden der Verteilung: jeweils <number> Zeilen von jedem Ende (TOP wählt den oberen, BOTTOM den unteren Teil). Beispiel: TABLE = a MEAN( b ) BY c SORT MEAN PANE 2 EXTREME 20; // jeweils 20 von jedem Ende der Verteilung',
     },
   },
   {
@@ -5372,10 +5376,10 @@ export const keywordData: KeywordEntry[] = [
   {
     name: 'IF',
     syntax:
-      'IF <logical condition> PRINT "ErrorText" <varlist> [ GOTO <varname> ];',
+      'IF <condition> THEN <statement> [ ELSE <statement> ] ;\nIF <condition> PRINT "ErrorText" <varlist> [ GOTO <varname> ] ;',
     description: {
-      en: '',
-      de: '',
+      en: 'recalculates variables under the control of a logical condition, combined with THEN and ELSE. <statement> is any COMPUTE statement without the keyword COMPUTE. The ELSE part can be omitted. Example: IF a GE 3 THEN x = c * ( 4 - d ) ELSE x = e / ( d + c ); IF ... PRINT outputs an error text with the listed variables when the condition holds (plausibility checks). FIF works the same but respects SETFILTER filters; IFBLOCK groups several statements.',
+      de: 'erlaubt in Kombination mit THEN und ELSE die Neuberechnung von Variablen unter der Kontrolle von logischen Bedingungen. <statement> ist ein beliebiges COMPUTE-Statement unter Weglassen des Keywords COMPUTE. Der ELSE-Teil kann weggelassen werden. Beispiel: IF a GE 3 THEN x = c * ( 4 - d ) ELSE x = e / ( d + c ); IF ... PRINT gibt bei zutreffender Bedingung einen Fehlertext mit den genannten Variablen aus (Plausibilitätsprüfung). FIF funktioniert genauso, beachtet aber mit SETFILTER gesetzte Filter; IFBLOCK fasst mehrere Anweisungen zusammen.',
     },
   },
   {
@@ -5388,10 +5392,11 @@ export const keywordData: KeywordEntry[] = [
   },
   {
     name: 'IFBLOCK',
-    syntax: 'IFBLOCK <condition> THEN',
+    syntax:
+      'IFBLOCK <condition> THEN\n  <statements>\n[ ELSEBLOCK\n  <statements> ]\nENDBLOCK;',
     description: {
-      en: '',
-      de: '',
+      en: 'a block of IFBLOCK (, ELSEBLOCK) and ENDBLOCK can hold any number of statements, run only when the condition is true (the ELSEBLOCK part otherwise). Affected by this logic are all COMPUTEs, all forms of IF (IF ... THEN, IF ... PRINT, IF ... LOAD), all RECODEs, COUNT and MEAN; all other statements ignore the IFBLOCK directives. Blocks can be nested up to a depth of 512.',
+      de: 'in einem Block aus IFBLOCK (, ELSEBLOCK) und ENDBLOCK können beliebig viele Statements stehen, die nur bei zutreffender Bedingung ausgeführt werden (sonst der ELSEBLOCK-Teil). Von dieser Logik betroffen sind alle COMPUTEs, alle Formen von IF (IF ... THEN, IF ... PRINT, IF ... LOAD), alle RECODEs, COUNT und MEAN; alle übrigen Statements ignorieren die IFBLOCK-Anweisungen. Blöcke können bis zu einer Tiefe von 512 geschachtelt werden.',
     },
   },
   {
@@ -6283,10 +6288,10 @@ export const keywordData: KeywordEntry[] = [
   },
   {
     name: 'LSLICE',
-    syntax: '',
+    syntax: 'TABLE = ... SORT <criterion> LSLICE <number> ;',
     description: {
-      en: 'split into individual tables. TABLE = a BY b SORT ABSOLUTE DESCEND SLICE 15; This splits a table with e.g. 55 individual items in the variable b into 4 pages. If a split would produce a leftover page with only one response, this response is printed on the previous page. A table with 61 items would thus be printed on 4 and not on 5 pages.',
-      de: 'von Einzeltabellen zerlegen. TABLE = a BY b SORT ABSOLUTE DESCEND SLICE 15; Hiermit wird eine Tabelle mit z.B. 55 Einzelitems in der Variablen b in 4 Seiten zerlegt. Falls eine Zerlegung eine Restseite mit nur einer Nennung ergeben würde, wird diese Nennung mit auf die Vorseite gedruckt. Eine Tabelle mit 61 Items würde also auf 4 und nicht auf 5 Seiten gedruckt.',
+      en: '(short for LineSLICE) splits a long table after every <number> label lines, unlike SLICE, which counts data rows. Gives a more even print layout for tables whose label lengths vary a lot. Example: TABLE = a BY b SORT ABSOLUTE DESCEND LSLICE 30;',
+      de: '(kurz für LineSLICE) zerlegt eine lange Tabelle nach jeweils <number> Labelzeilen, anders als SLICE, das Datenzeilen zählt. Führt zu einem ausgeglicheneren Druckbild bei Tabellen mit stark variierenden Labellängen. Beispiel: TABLE = a BY b SORT ABSOLUTE DESCEND LSLICE 30;',
     },
   },
   {
@@ -7082,8 +7087,8 @@ export const keywordData: KeywordEntry[] = [
     name: 'NIL',
     syntax: '',
     description: {
-      en: 'empty variable (useful e.g. with TABLE ADD). Attempting to generate your own variables with these names results in an error. HIDDENTOVARLIST controls whether system variables should be included when naming variable lists 20 (via TO).',
-      de: 'leere Variable (praktisch z.B. bei TABLE ADD) Der Versuch, eigene Variablen mit diesen Namen zu generieren, führt zu einem Fehler. Mit HIDDENTOVARLIST kann gesteuert werden, ob Systemvariablen bei der Nennung von Variablenlisten 20 (mittels TO) mit erfasst werden sollen.',
+      en: 'system variable: empty variable (useful e.g. with TABLE ADD). Attempting to generate your own variables with this name results in an error. HIDDENTOVARLIST controls whether system variables are included when naming variable lists (via TO).',
+      de: 'Systemvariable: leere Variable (praktisch z.B. bei TABLE ADD). Der Versuch, eigene Variablen mit diesem Namen zu generieren, führt zu einem Fehler. Mit HIDDENTOVARLIST kann gesteuert werden, ob Systemvariablen bei der Nennung von Variablenlisten (mittels TO) mit erfasst werden sollen.',
     },
   },
   {
@@ -9639,10 +9644,10 @@ export const keywordData: KeywordEntry[] = [
   },
   {
     name: 'SIZE',
-    syntax: 'SIZE X/Y <points>',
+    syntax: 'USEFONT [ <target> = ] <fontname> SIZE <number>;',
     description: {
-      en: '; If the option MISSING is defined, all variables with MISSING VALUES are output. With EXCLUDEVALUES and RESTRICTVALUES a list of the affected variables with the EXCLUDEVALUES or RESTRICTVALUES found is output. POSTPONE is a special option in connection with INVERTOUT 94 :…',
-      de: '; Ist die Option MISSING definiert, werden alle Variablen mit MISSING VALUES ausgegeben. Bei EXCLUDEVALUES und RESTRICTVALUES wird eine Liste der betroffenen Variablen mit den vorgefundenen EXCLUDEVALUES bzw. RESTRICTVALUES ausgegeben. POSTPONE ist ein Spezial-Option im Zusammenhang mit INVERTOUT 94 :…',
+      en: 'font size in points, given after USEFONT: in a USEFONT statement (USEFONT MEAN = "Courier" SIZE 12;), as a LabelOption of VALUELABELS, in TITLEPAGE elements and in LOCALTEXTFORMAT. In the Office export, :SIZE X / :SIZE Y set the size of an element in points.',
+      de: 'Schriftgröße in Punkt, angegeben nach USEFONT: im USEFONT-Statement (USEFONT MEAN = "Courier" SIZE 12;), als LabelOption bei VALUELABELS, in TITLEPAGE-Elementen und bei LOCALTEXTFORMAT. Im Office-Export legen :SIZE X / :SIZE Y die Größe eines Elements in Punkt fest.',
     },
   },
   {
@@ -11775,10 +11780,11 @@ export const keywordData: KeywordEntry[] = [
   },
   {
     name: 'VARTITLE',
-    syntax: 'VARTITLE <VarList> = "String";',
+    syntax:
+      'VARTITLE [ <VarList> ] = "String";\nTITLE [ <VarList> ] = "String";',
     description: {
-      en: 'writes the VARTITLE in front of the label text. Example: TABSELECTBYCODE VARTITLE buland( 1 ) ; In this case the VARTITLE is output in front of the label text in the selection description.',
-      de: 'schreibt den VARTITLE vor den Labeltext Beispiel: TABSELECTBYCODE VARTITLE buland( 1 ) ; In diesem fall wird in der Selektionsbeschreibung vor dem Labeltext der VARTITLE ausgegeben.',
+      en: 'gives each variable of <VarList> a title, a kind of heading or short description (synonym: TITLE). Without <VarList> it applies to the variable created last (forbidden with STRICTVARLIST = YES;). Example: VARTITLE V1 = "Federal state"; COPYTITLE takes over an existing title for other variables.',
+      de: 'versieht jede Variable der <VarList> mit einem Titel, einer Art Überschrift oder kurzer Beschreibung (Synonym: TITLE). Ohne <VarList> gilt er für die zuletzt erzeugte Variable (mit STRICTVARLIST = YES; verboten). Beispiel: VARTITLE V1 = "Bundesland"; Mit COPYTITLE kann ein bestehender Titel für andere Variablen übernommen werden.',
     },
   },
   {
