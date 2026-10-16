@@ -24,6 +24,7 @@ import {
   checkOvercodeRangeSpan,
   computeDiagnostics,
   checkIncludeTargets,
+  checkEllipsisInStrings,
 } from '../src/core/diagnostics';
 
 const alwaysNotInComment = () => true;
@@ -1115,5 +1116,43 @@ describe('checkIncludeTargets', () => {
       reader({ [p('main.tab')]: '// INCLUDE = missing.inc;' })
     );
     expect(issues).to.deep.equal([]);
+  });
+});
+
+describe('checkEllipsisInStrings', () => {
+  const check = (text: string) => {
+    const scope = scopeOf(text);
+    return checkEllipsisInStrings(
+      text.split('\n'),
+      (l, c) => scope.isNotInComment(l, c),
+      (l, c) => scope.isNormalScope(l, c)
+    );
+  };
+
+  it('flags an ellipsis at the start of a string', () => {
+    const issues = check('vartitle v1 = "\u2026 und weiter";');
+    expect(issues).to.have.length(1);
+    expect(issues[0]).to.include({
+      line: 0,
+      startChar: 15,
+      length: 1,
+      severity: 'warning',
+      code: 'ellipsis-in-string',
+    });
+  });
+
+  it('flags an ellipsis in the middle of a string, each one separately', () => {
+    const issues = check("labels v1 = 1 'ja\u2026' 2 'nein \u2026 oder doch';");
+    expect(issues.map((i) => i.startChar)).to.deep.equal([17, 28]);
+  });
+
+  it('ignores an ellipsis in a comment', () => {
+    expect(check('// so \u2026\n{ und \u2026 }\nvariable a = 1;')).to.deep.equal(
+      []
+    );
+  });
+
+  it('ignores an ellipsis outside strings', () => {
+    expect(check('#expand x \u2026')).to.deep.equal([]);
   });
 });

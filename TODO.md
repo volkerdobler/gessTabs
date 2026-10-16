@@ -54,14 +54,6 @@ cheap syntactic checks are done — see git log for the detailed history
 
 Still open:
 
-- **Warn about the ellipsis character `…` (U+2026) in strings** (noted
-  2026-10-15). gessTabs renders it badly in the output — observed at least
-  at the *start* of a string literal, possibly anywhere in one (to be
-  verified in gessTabs before deciding the rule's scope). Add a `warning`
-  check to `computeDiagnostics` (`src/core/diagnostics.ts`) that flags `…`
-  inside string literals (skip comments), suggesting `...` instead; a quick
-  fix replacing it with `...` would be a natural follow-up. Add tests for
-  `…` at the start, in the middle, and in a comment (no warning).
 - **`checkDefineCaseMismatch`'s own cross-INCLUDE half** — unlike
   duplicate-declaration, `#define` visibility isn't tracked by the
   `VariableModel` at all; `includeGraph.ts`'s `DefineSet` only exists

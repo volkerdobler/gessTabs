@@ -204,6 +204,54 @@ export class GesstabsStrictVarlistCodeActionProvider
   }
 }
 
+// Quick fix for the ellipsis-in-string diagnostic: replace "…" with "...".
+// Offers a second, document-wide action when more than one is flagged.
+export class GesstabsEllipsisCodeActionProvider
+  implements vscode.CodeActionProvider
+{
+  public static readonly providedCodeActionKinds = [
+    vscode.CodeActionKind.QuickFix,
+  ];
+
+  public provideCodeActions(
+    document: vscode.TextDocument,
+    _range: vscode.Range | vscode.Selection,
+    context: vscode.CodeActionContext
+  ): vscode.CodeAction[] {
+    const isEllipsis = (d: vscode.Diagnostic) =>
+      d.source === 'gesstabs' && d.code === 'ellipsis-in-string';
+    const relevant = context.diagnostics.filter(isEllipsis);
+    if (relevant.length === 0) return [];
+
+    const actions = relevant.map((diagnostic) => {
+      const action = new vscode.CodeAction(
+        'Replace "…" with "..."',
+        vscode.CodeActionKind.QuickFix
+      );
+      action.diagnostics = [diagnostic];
+      action.isPreferred = true;
+      action.edit = new vscode.WorkspaceEdit();
+      action.edit.replace(document.uri, diagnostic.range, '...');
+      return action;
+    });
+
+    const all = vscode.languages
+      .getDiagnostics(document.uri)
+      .filter(isEllipsis);
+    if (all.length > 1) {
+      const action = new vscode.CodeAction(
+        'Replace every "…" in strings of this file with "..."',
+        vscode.CodeActionKind.QuickFix
+      );
+      action.diagnostics = all;
+      action.edit = new vscode.WorkspaceEdit();
+      all.forEach((d) => action.edit?.replace(document.uri, d.range, '...'));
+      actions.push(action);
+    }
+    return actions;
+  }
+}
+
 // F5's quick fix for the nested-block-comment diagnostic: rather than try
 // to repair the (ambiguous, see core/diagnostics.ts's
 // scanBlockCommentGroups) intended "{ … }" range, it sidesteps the whole

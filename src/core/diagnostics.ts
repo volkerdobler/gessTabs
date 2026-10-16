@@ -1338,6 +1338,39 @@ export function checkOvercodeRangeSpan(
   return issues;
 }
 
+// --- Ellipsis character in strings --------------------------------------
+// gessTabs renders the typographic ellipsis "…" (U+2026) badly in its output
+// — observed at the start of a label, flagged anywhere in a string literal
+// since three dots are always a safe replacement. Comments and code outside
+// strings are skipped. The quick fix lives in diagnosticsProvider.ts.
+const ELLIPSIS = '…';
+
+export function checkEllipsisInStrings(
+  lines: string[],
+  isNotInComment: IsNotInComment,
+  isNormalScope: IsNotInComment
+): DiagnosticIssue[] {
+  const issues: DiagnosticIssue[] = [];
+  lines.forEach((lineText, i) => {
+    let c = lineText.indexOf(ELLIPSIS);
+    while (c !== -1) {
+      if (isNotInComment(i, c) && !isNormalScope(i, c)) {
+        issues.push({
+          line: i,
+          startChar: c,
+          length: 1,
+          severity: 'warning',
+          message:
+            'The ellipsis character "…" is rendered badly in the gessTabs output — use "..." instead.',
+          code: 'ellipsis-in-string',
+        });
+      }
+      c = lineText.indexOf(ELLIPSIS, c + 1);
+    }
+  });
+  return issues;
+}
+
 // --- INCLUDE target doesn't exist -------------------------------------------
 // A missing INCLUDE file used to be skipped silently (resolveIncludeGraph
 // records it, but nothing read its `errors`). Unlike every other check in
@@ -1402,5 +1435,6 @@ export function computeDiagnostics(
     ...checkCalculateColumnSingleCellElement(lines, isNotInComment),
     ...checkValuelabelsAddSingleVar(lines, isNotInComment),
     ...checkOvercodeRangeSpan(lines, isNotInComment),
+    ...checkEllipsisInStrings(lines, isNotInComment, isNormalScope),
   ];
 }

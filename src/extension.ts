@@ -76,6 +76,7 @@ import {
   GesstabsEmptyVarlistCodeActionProvider,
   GesstabsStrictVarlistCodeActionProvider,
   GesstabsNestedBlockCommentCodeActionProvider,
+  GesstabsEllipsisCodeActionProvider,
 } from './providers/diagnosticsProvider';
 import {
   GesstabsExternalNamesManager,
@@ -467,6 +468,17 @@ export function activate(context: vscode.ExtensionContext) {
       {
         providedCodeActionKinds:
           GesstabsNestedBlockCommentCodeActionProvider.providedCodeActionKinds,
+      }
+    )
+  );
+
+  context.subscriptions.push(
+    vscode.languages.registerCodeActionsProvider(
+      { language: 'gesstabs', scheme: 'file' },
+      new GesstabsEllipsisCodeActionProvider(),
+      {
+        providedCodeActionKinds:
+          GesstabsEllipsisCodeActionProvider.providedCodeActionKinds,
       }
     )
   );
