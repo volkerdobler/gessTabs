@@ -197,10 +197,17 @@ no dependency on the P1 variable-model work. Ordered by value/effort:
 
 - **Keyword database gaps.** `src/keywords/keywordData.ts` is the hand-maintained
   source of record now (the manuals moved online and won't be re-extracted).
-  Patch entries directly as gaps/errors are noticed. Known issue: the
-  `VALUELABELS` entry's `description` is actually about the STRICTVARLIST /
-  empty-varlist error (an extraction artifact) — replace it with a real
-  description from the Texte / Label-Eigenschaften pages.
+  Patch entries directly as gaps/errors are noticed. Known issue: some
+  `description`s are extraction artifacts — a fragment of a neighbouring
+  keyword's text, starting mid-sentence. `VALUELABELS` was one (fixed
+  2026-10-16); `VARTITLE` is another (its text is about `TABSELECTBYCODE
+  VARTITLE`). A scan for `en` descriptions starting lowercase gives 32
+  candidates to check against the manual (not all are necessarily broken):
+  ALLOWASYMMETRY, CARD, COLMEANRANK, COLPERCENTIRANK, COLPERCENTRANK,
+  COMPUTE, COPYFILTER, COUNT, DATE, DIV, ELSE, EXP, EXTREME, HTMLDOCUMENT,
+  HTMLHEADER, INDEXCHARS, LSLICE, MISSINGCHAR, NEG, NIL, PHYSICALRECORDS,
+  PROJECTION, RECODE, SELECT, SPACE, TABSELECT, USEMISSING, VARGROUP,
+  VARNAME, VARTITLE, WEIGHT, WEIGHTOUT.
 - **Mine the online manual further.** It has substantially more detail than the
   extension currently reflects — worth revisiting during any refactor, not just
   the P1 rework.

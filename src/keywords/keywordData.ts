@@ -11636,10 +11636,10 @@ export const keywordData: KeywordEntry[] = [
   {
     name: 'VALUELABELS',
     syntax:
-      'VALUELABELS <VarList> = [ ADD ]\n{ LabelEntry }*n ;\nLabelEntry ::=\n[<number> "String" | OVERCODE [ SUM ] [<name>] { <number> [ :<number>\n] }*n "String" ] [ LabelOption ]\nLabelOption ::=',
+      'VALUELABELS <VarList> = [ ADD ]\n{ LabelEntry }*n ;\nVALUELABELS <VarList> [ COPY | AS ] <source-variable> ;\nVALUELABELS <VarList> = LABELFROMFILE <filename> ;\nLabelEntry ::=\n[ <number> "String" | OVERCODE [ SUM ] [ <name> ] { <number> [ :<number> ] }*n "String" ] [ LabelOption ]\nLabelOption ::=\n{ SORTCLASS <number> | BOTTOM | NORANKING | LEVEL <number> | USEFONT <fontspecifier> | SIZE <fontsize> | CSSCLASS <value> | NOCITATION | NEWPAGE | SLICE | CELLELEMENTS ( <cellelements> ) | RECODE <value> }*n',
     description: {
-      en: 'an error is output if you use syntax variants without an explicit variable name. For example: COMPUTE f222 = Q17_1; VARTITLE = "formerly Q17_1"; The \'=\' after VARTITLE would trigger the error message. Background: instructions such as RECODE 7:88 = 4; often come after a COMPUTE that is meant to create the variable to be recoded.…',
-      de: 'ein Fehler ausgegeben, wenn man Syntaxvarianten ohne explizite Variablennennung benutzt. Zum Beispiel: COMPUTE f222 = Q17_1; VARTITLE = "ehemals Q17_1"; Das \'=\' hinter VARTITLE würde die Fehlermeldung auslösen. Zum Hintergrund: Anweisungen wie z.B. RECODE 7:88 = 4;stehen oft nach einem COMPUTE, das die zu rekodierende Variable erzeugen soll.…',
+      en: 'Value labels (synonym: LABELS) describe the values of a variable: each value is assigned a text. The order of the labels is free and carried over into the TABLE output; values without a label are printed as their number. ADD extends or changes an existing label list instead of replacing it (only one variable per statement, otherwise syntax error 528). COPY/AS take over the labels of another variable; LABELFROMFILE reads them from a CSV file. Each LabelEntry can carry further LabelOptions, and OVERCODE combines several values under one label.',
+      de: 'Wertelabels (Synonym: LABELS) beschreiben die Werte einer Variablen: Jedem Wert wird ein Text zugeordnet. Die Reihenfolge der Labels ist beliebig und wird in die TABLE-Ausgabe übernommen; Werte ohne Label werden als Zahl ausgegeben. ADD ergänzt bzw. ändert eine bestehende Labelliste, statt sie zu ersetzen (nur eine Variable je Anweisung, sonst Syntaxfehler 528). COPY/AS übernehmen die Labels einer anderen Variablen; LABELFROMFILE liest sie aus einer CSV-Datei. Jeder LabelEntry kann weitere LabelOptions tragen, OVERCODE fasst mehrere Werte unter einem Label zusammen.',
     },
   },
   {
